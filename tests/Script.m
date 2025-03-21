@@ -1,0 +1,1 @@
+a = model.ECDBase({'C:\P&D\AppTributar\DataBase\Meas_Sondas\SPED-ECD 2022.txt'});
