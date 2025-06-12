@@ -29,7 +29,6 @@ classdef ECDBase < handle
             2,   {'REG', 'LECD', 'DT_INI', 'DT_FIN', 'NOME', 'CNPJ', 'UF', 'IE', 'COD_MUN', 'IM', 'IND_SIT_ESP', 'IND_SIT_INI_PER', 'IND_NIRE', 'IND_FIN_ESC', 'COD_HASH_SUB', 'NIRE_SUBST', 'IND_EMP_GRD_PRT'}, {}; ...
             3,   {'REG', 'LECD', 'DT_INI', 'DT_FIN', 'NOME', 'CNPJ', 'UF', 'IE', 'COD_MUN', 'IM', 'IND_SIT_ESP', 'IND_SIT_INI_PER', 'IND_NIRE', 'IND_FIN_ESC', 'COD_HASH_SUB', 'NIRE_SUBST', 'IND_GRANDE_PORTE', 'TIP_ECD', 'COD_SCP'}, {}; ...
             4    {'REG', 'LECD', 'DT_INI', 'DT_FIN', 'NOME', 'CNPJ', 'UF', 'IE', 'COD_MUN', 'IM', 'IND_SIT_ESP', 'IND_SIT_INI_PER', 'IND_NIRE', 'IND_FIN_ESC', 'COD_HASH_SUB', 'NIRE_SUBST', 'IND_GRANDE_PORTE', 'TIP_ECD', 'COD_SCP', 'IDENT_MF'}, {}; ...
-
             5:7, {'REG', 'LECD', 'DT_INI', 'DT_FIN', 'NOME', 'CNPJ', 'UF', 'IE', 'COD_MUN', 'IM', 'IND_SIT_ESP', 'IND_SIT_INI_PER', 'IND_NIRE', 'IND_FIN_ESC', 'COD_HASH_SUB', 'IND_GRANDE_PORTE', 'TIP_ECD', 'COD_SCP', 'IDENT_MF', 'IND_ESC_CONS'}, {}; ...
             8:9, {'REG', 'LECD', 'DT_INI', 'DT_FIN', 'NOME', 'CNPJ', 'UF', 'IE', 'COD_MUN', 'IM', 'IND_SIT_ESP', 'IND_SIT_INI_PER', 'IND_NIRE', 'IND_FIN_ESC', 'COD_HASH_SUB', 'IND_GRANDE_PORTE', 'TIP_ECD', 'COD_SCP', 'IDENT_MF', 'IND_ESC_CONS', 'IND_CENTRALIZADA', 'IND_MUDANC_PC', 'COD_PLAN_REF'}, {}}
 
@@ -37,8 +36,7 @@ classdef ECDBase < handle
 
         x0007 =  {1:9,   {'REG',	'COD_ENT_REF',	'COD_INSCR'}, {}}
 
-        x0020 =  {1:8,   {'REG',	'IND_DEC',	'CNPJ',	'UF',	'IE',	'COD_MUN',	'IM',	'NIRE'} {}; ...
-            9,   {'REG', 'IND_DEC',	'UF',	'IE',	'COD_MUN',	'IM',	'NIRE'}, {}}
+        x0020 =  {1:9,   {'REG',	'IND_DEC',	'CNPJ',	'UF',	'IE',	'COD_MUN',	'IM',	'NIRE'}, {}}
 
         x0035 =  {1:9,   {'REG',	'COD_SCP',	'NOME_SCP'}, {}}
 
@@ -47,7 +45,6 @@ classdef ECDBase < handle
         x0180 =  {1:9,   {'REG',	'COD_REL',	'DT_INI_REL',	'DT_FIN_REL'}, {}}
 
         x0990 =  {1:9,   {'REG',	'QTD_LIN_0'}, {}}
-
 
         % Bloco C: Informações recuperadas a escrituração contábil anterior
         xC001 =  {1:7,   {}, {}; ...
@@ -80,7 +77,6 @@ classdef ECDBase < handle
         xC990 =  {1:7,   {}, {}; ...
             8:9,   {'REG',	'QTD_LIN_0'}, {}}
 
-
         % Bloco I: Informações recuperadas a escrituração contábil anterior
         xI001 = {1:9, {'REG', 'IND_DAD'}, {}}
 
@@ -98,7 +94,8 @@ classdef ECDBase < handle
 
         xI050 = {1:9, {'REG', 'DT_ALT', 'COD_NAT', 'IND_CTA', 'NIVEL', 'COD_CTA', 'COD_CTA_SUP', 'CTA'}, {}}
 
-        xI051 = {1:9,   {'REG', 'COD_CCUS', 'COD_CTA_REF'}, {}}
+        xI051 = {1:7,   {'REG', 'COD_PLAN_REF', 'COD_CCUS', 'COD_CTA_REF'}, {}; ...
+            8:9,   {'REG', 'COD_CCUS', 'COD_CTA_REF'}, {}}
 
         xI052 = {1:9,   {'REG', 'COD_CCUS', 'COD_AGL'}, {}}
 
@@ -113,29 +110,43 @@ classdef ECDBase < handle
         xI155 = {1:4, {'REG', 'COD_CTA', 'COD_CCUS', 'VL_SLD_INI', 'IND_DC_INI', 'VL_DEB', 'VL_CRED', 'VL_SLD_FIN', 'IND_DC_FIN'}, {'VL_SLD_INI_AUX', 'IND_DC_INI_AUX', 'VL_DEB_AUX', 'VL_CRED_AUX', 'VL_SLD_FIN_AUX', 'IND_DC_FIN_AUX'}; ...
             5:8, {'REG', 'COD_CTA', 'COD_CCUS', 'VL_SLD_INI', 'IND_DC_INI', 'VL_DEB', 'VL_CRED', 'VL_SLD_FIN', 'IND_DC_FIN'}, {'VL_SLD_INI_MF', 'IND_DC_INI_MF', 'VL_DEB_MF', 'VL_CRED_MF', 'VL_SLD_FIN_MF', 'IND_DC_FIN_MF'}; ...
             9,   {'REG', 'COD_CTA', 'COD_CCUS', 'VL_SLD_INI', 'IND_DC_INI', 'VL_DEB', 'VL_CRED', 'VL_SLD_FIN', 'IND_DC_FIN'}, {'VL_SLD_INI_MF', 'IND_DC_INI_MF', 'VL_DEB_MF', 'VL_CRED_MF', 'VL_SLD_FIN_MF', 'IND_DC_FIN_MF'}}
+       
         xI157 = {1,   {}, {}; ...
             2:4, {'REG', 'COD_CTA', 'COD_CCUS', 'VL_SLD_INI', 'IND_DC_INI'}, {'VL_SLD_INI_AUX',	'IND_DC_INI_AUX'}; ...
             5:9, {'REG', 'COD_CTA', 'COD_CCUS', 'VL_SLD_INI', 'IND_DC_INI'}, {'VL_SLD_INI_MF', 'IND_DC_INI_MF'}}
+        
         xI200 = {1:4, {'REG', 'NUM_LCTO', 'DT_LCTO', 'VL_LCTO', 'IND_LCTO'}, {'VL_LCTO_AUX'}; ...
             5:6, {'REG', 'NUM_LCTO', 'DT_LCTO', 'VL_LCTO', 'IND_LCTO'}, {'VL_LCTO_MF'}; ...
             7:9, {'REG', 'NUM_LCTO', 'DT_LCTO', 'VL_LCTO', 'IND_LCTO', 'DT_LCTO_EXT'}, {'VL_LCTO_MF'}}
+        
         xI250 = {1:4, {'REG', 'COD_CTA', 'COD_CCUS', 'VL_DC', 'IND_DC', 'NUM_ARQ', 'COD_HIST_PAD', 'HIST', 'COD_PART'}, {'VL_DC_AUX', 'IND_DC_AUX'}; ...
             5:9, {'REG', 'COD_CTA', 'COD_CCUS', 'VL_DC', 'IND_DC', 'NUM_ARQ', 'COD_HIST_PAD', 'HIST', 'COD_PART'}, {'VL_DC_MF', 'IND_DC_MF'}}
+        
         xI300 = {1:9,   {'REG', 'DT_BCTE'}, {}}
+       
         xI310 = {1:4,   {'REG', 'COD_CTA', 'COD_CCUS', 'VAL_DEBD', 'VAL_CREDD'}, {'VAL_DEB_AUX', 'VAL_CRED_AUX'}; ...
             5:9, {'REG', 'COD_CTA', 'COD_CCUS', 'VAL_DEBD', 'VAL_CREDD'}, {'VAL_DEB_MF', 'VAL_CRED_MF'}}
+        
         xI350 = {1:9, {'REG', 'DT_RES'}, {}}
+        
         xI355 = {1:4, {'REG', 'COD_CTA', 'COD_CCUS', 'VL_CTA', 'IND_DC'}, {'VL_CTA_AUX', 'IND_DC_AUX'}; ...
             5:9, {'REG', 'COD_CTA', 'COD_CCUS', 'VL_CTA', 'IND_DC'}, {'VL_CTA_MF', 'IND_DC_MF'}}
+        
         xI500 = {1:9, {'REG', 'TAM_FONTE'}, {}}
+        
         xI510 = {1:9, {'REG', 'NM_CAMPO', 'DESC_CAMPO',	'TIPO_CAMPO', 'TAM_CAMPO', 'DEC_CAMPO',	'COL_CAMPO'}, {}}
-        xI550 = {1:9, {'REG', 'RZ_CONT'}, {}}
-        xI555 = {1:9, {'REG', 'RZ_CONT_TOT'}, {}}
+        
+        xI550 = {1:9, {'REG', 'NM_CAMPO', 'DESC_CAMPO',	'TIPO_CAMPO', 'TAM_CAMPO', 'DEC_CAMPO',	'COL_CAMPO'}, {}}
+        
+        xI555 = {1:9, {'REG', 'NM_CAMPO', 'DESC_CAMPO',	'TIPO_CAMPO', 'TAM_CAMPO', 'DEC_CAMPO',	'COL_CAMPO'}, {}}
+        
         xI990 = {1:9, {'REG', 'QTD_LIN_I'}, {}}
 
         % Bloco J: Demonstrações contábeis
         xJ001 = {1:9, {'REG',	'IND_DAD'}, {}}
+
         xJ005 = {1:9, {'REG', 'DT_INI', 'DT_FIN', 'ID_DEM', 'CAB_DEM'}, {}}
+        
         xJ100 = {1,   {'REG', 'COD_AGL', 'NIVEL_AGL', 'IND_GRP_BAL', 'DESCR_COD_AGL', 'VL_CTA', 'IND_DC_BAL'}, {}; ...
             2:5, {'REG', 'COD_AGL', 'NIVEL_AGL', 'IND_GRP_BAL', 'DESCR_COD_AGL', 'VL_CTA', 'IND_DC_BAL', 'VL_CTA_INI', 'IND_DC_BAL_INI'}, {}; ...
             6,   {'REG', 'COD_AGL', 'NIVEL_AGL', 'IND_GRP_BAL', 'DESCR_COD_AGL', 'VL_CTA', 'IND_DC_BAL', 'VL_CTA_INI', 'IND_DC_BAL_INI', 'NOTA_EXP_REF'}, {}; ...
@@ -152,50 +163,69 @@ classdef ECDBase < handle
             7:9,{'REG', 'IND_TIP', 'COD_AGL', 'DESCR_COD_AGL', 'VL_CTA_INI', 'IND_DC_CTA_INI', 'VL_CTA_FIN', 'IND_DC_CTA_FIN', 'NOTAS_EXP_REF'}, {}}
 
         xJ215 = {1:6, {'REG', 'COD_HIST_FAT', 'VL_FAT_CONT', 'IND_DC_FAT'}, {}; ...
-            7:9, {'REG', 'COD_HIST_FAT', 'VL_FAT_CONT',	'IND_DC_FAT'}, {}}
+            7:9, {'REG', 'COD_HIST_FAT', 'DESC_FAT', 'VL_FAT_CONT',	'IND_DC_FAT'}, {}}
+        
         xJ800 = {1:4, {'REG', 'ARQ_RTF', 'IND_FIM_RTF'}, {}; ...
             5:9, {'REG', 'TIPO_DOC', 'DESC_RTF', 'HASH_RTF', 'ARQ_RTF', 'IND_FIM_RTF'}, {}}
+        
         xJ801 = {1:4, {}, {}; ...
-            5, {'REG',	'TIPO_DOC',	'DESC_RTF',	'HASH_RTF',	'ARQ_RTF',	'IND_FIM_RTF'}, {};...
-            6:9, {'REG', 'TIPO_DOC', 'DESC_RTF', 'COD_MOT_SUBS', 'HASH_RTF', 'ARQ_RTF',	'IND_FIM_RTF'}, {}}
+            5:9, {'REG', 'TIPO_DOC', 'DESC_RTF', 'COD_MOT_SUBS', 'HASH_RTF', 'ARQ_RTF',	'IND_FIM_RTF'}, {}}
+        
         xJ900 = {1:9, {'REG', 'DNRC_ENCER', 'NUM_ORD', 'NAT_LIVRO', 'NOME',	'QTD_LIN', 'DT_INI_ESCR', 'DT_FIN_ESCR'}, {}}
+        
         xJ930 = {1,   {'REG', 'IDENT_NOM', 'IDENT_CPF', 'IDENT_QUALIF', 'COD_ASSIN', 'IND_CRC'}, {}; ...
             2:4, {'REG', 'IDENT_NOM', 'IDENT_CPF', 'IDENT_QUALIF', 'COD_ASSIN', 'IND_CRC', 'EMAIL', 'FONE', 'UF_CRC', 'NUM_SEQ_CRC', 'DT_CRC'}, {}; ...
             5:9, {'REG', 'IDENT_NOM', 'IDENT_CPF_CNPJ', 'IDENT_QUALIF', 'COD_ASSIN', 'IND_CRC', 'EMAIL', 'FONE', 'UF_CRC', 'NUM_SEQ_CRC', 'DT_CRC', 'IND_RESP_LEGAL'}, {}}
+        
         xJ932 = {1:6, {}, {}; ...
             7:9, {'REG', 'IDENT_NOM_T',	'IDENT_CPF_CNPJ_T',	'IDENT_QUALIF_T', 'COD_ASSIN_T', 'IND_CRC_T', 'EMAIL_T', 'FONE_T', 'UF_CRC_T', 'NUM_SEQ_CRC_T', 'DT_CRC_T'}, {}}
+        
         xJ935 = {1:6, {'REG', 'NOME_AUDITOR', 'COD_CVM_AUDITOR'}, {}; ...
             7:9, {'REG', 'NI_CPF_CNPJ', 'NOME_AUDITOR_FIRMA', 'COD_CVM_AUDITOR'}, {}}
+        
         xJ990 = {1:9, {'REG', 'QTD_LIN_J'}, {}}
 
         % Bloco K: Conglomerados econômicos
         xK001 = {1:4,   {}, {}; ...
             5:9, {'REG', 'IND_DAD'}, {}}
+        
         xK030 = {1:4,   {}, {}; ...
             5:9, {'REG', 'DT_INI', 'DT_FIN'}, {}}
+        
         xK100 = {1:4,   {}, {}; ...
             5:9, {'REG', 'COD_PAIS', 'EMP_COD',	'CNPJ',	'NOME',	'PER_PART',	'EVENTO',	'PER_CONS',	'DATA_INI_EMP',	'DATA_FIN_EMP'}, {}}
+        
         xK110 = {1:4,   {}, {}; ...
             5:9, {'REG', 'EVENTO', 'DT_EVENTO'}, {}}
+        
         xK115 = {1:4,   {}, {}; ...
             5:9, {'REG', 'EMP_COD_PART', 'COND_PART', 'PER_EVT'}, {}}
+        
         xK200 = {1:4,   {}, {}; ...
             5:9, {'REG', 'COD_NAT', 'IND_CTA', 'NIVEL', 'COD_CTA', 'COD_CTA_SUP', 'CTA'}, {}}
+        
         xK210 = {1:4,   {}, {}; ...
             5:9, {'REG', 'COD_EMP',	'COD_CTA_EMP'}, {}}
+        
         xK300 = {1:4,   {}, {}; ...
             5:9, {'REG', 'COD_CTA',	'VAL_AG', 'IND_VAL_AG', 'VAL_EL', 'IND_VAL_EL',	'VAL_CS', 'IND_VAL_CS'}, {}}
+        
         xK310 = {1:4,   {}, {}; ...
             5:9, {'REG', 'EMP_COD_PARTE', 'VALOR', 'IND_VALOR'}, {}}
+        
         xK315 = {1:4,   {}, {}; ...
             5:9, {'REG', 'EMP_COD_CONTRA', 'COD_CONTRA', 'VALOR', 'IND_VALOR'}, {}}
+        
         xK990 = {1:4,   {}, {}; ...
             5:9, {'REG', 'QTD_LIN_K'}, {}}
 
         % Bloco 9: Controle e encerramento do arquivo digital
         x9001 = {1:9,   {'REG',	'IND_DAD'}, {}}
+        
         x9900 = {1:9,   {'REG',	'REG_BLC', 'QTD_REG_BLC'}, {}}
+        
         x9990 = {1:9,   {'REG', 'QTD_LIN_9'}, {}}
+        
         x9999 = {1:9,   {'REG',	'QTD_LIN'}, {}}
     end
 
@@ -251,6 +281,7 @@ classdef ECDBase < handle
         DATA_INI_EMP = struct('DataType', 'cell', 'Description', 'Data inicial do período da escrituração contábil da empresa que foi consolidada.')
         DEC_CAMPO = struct('DataType', 'cell', 'Description', 'Quantidade de casas decimais para campos tipo “N”.')
         DESC_CAMPO = struct('DataType', 'cell', 'Description', 'Descrição do campo (utilizada na visualização do Livro Auxiliar)')
+        DESC_FAT = struct('DataType', 'cell', 'Description', 'Descrição do Fato Contábil.')
         DESC_MUN = struct('DataType', 'cell', 'Description', ' Município.')
         DESC_RTF = struct('DataType', 'cell', 'Description', 'Descrição do arquivo .rtf.')
         DESCR_COD_AGL = struct('DataType', 'cell', 'Description', 'Descrição do Código de aglutinação.')
