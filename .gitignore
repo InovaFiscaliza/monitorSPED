@@ -33,3 +33,4 @@ codegen/
 .MATLABDriveTag
 
 /tests/output/
+/tests/resources/
