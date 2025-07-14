@@ -346,10 +346,13 @@ classdef ECD < model.ECDBase
         end
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         function [linesTabletype1, linesTabletype2, linesTabletype3, linesIniIdxTabletype1, linesIniIdxTabletype2, linesIniIdxTabletype3] = tableTypesLines (obj, Tabletype)
             % switch typeCase
             %     case 1
 =======
+=======
+>>>>>>> Stashed changes
         %-----------------------------------------------------------------%
         function [linesTabletype1, linesIniIdxTabletype2] = tableTypesLines (obj, tableId,  Tabletype, typeCase)
             switch typeCase
@@ -777,9 +780,12 @@ classdef ECD < model.ECDBase
 
                     case 2
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
                         [linesTabletype1, linesTabletype2, ~, linesIniIdxTabletype1, linesIniIdxTabletype2, ~] = tableTypesLines (obj, Tabletype);
 =======
+=======
+>>>>>>> Stashed changes
                         [linesTabletype1, linesIniIdxTabletype2] = tableTypesLines (obj, tableId{1}, Tabletype, 1);
 >>>>>>> Stashed changes
     
@@ -818,6 +824,9 @@ classdef ECD < model.ECDBase
                     tableOutAll{3}     = removevars(tableOutAll{3}, 'REG');
                     tableOutAll{3}     = removevars(tableOutAll{3}, 'COD_CCUS');
                     tableOutOthers     = [tableOutAll{1}, tableOutAll{2}, tableOutAll{3}];
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
                 % otherwise
@@ -849,6 +858,7 @@ classdef ECD < model.ECDBase
             end            
           
             for ii = 1: 1:height(Cod_CTA_I155_Din)
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
                 index_COD_CTA_Din = find(strcmp(Table_I200_I250_IND_LCTO_N.COD_CTA, Cod_CTA_I155_Din{ii}));
                 Table_I200_I250_COD_CTA_Din = Table_I200_I250_IND_LCTO_N(index_COD_CTA_Din,:);
@@ -887,6 +897,11 @@ classdef ECD < model.ECDBase
                 index_COD_CTA_Din = strcmp(Table_I200_I250_IND_LCTO_N.COD_CTA, Cod_CTA_I155_Din{ii});
                 Val_Mes = zeros(1, 12);
 
+=======
+                index_COD_CTA_Din = strcmp(Table_I200_I250_IND_LCTO_N.COD_CTA, Cod_CTA_I155_Din{ii});
+                Val_Mes = zeros(1, 12);
+
+>>>>>>> Stashed changes
                  Table_I200_I250_COD_CTA_Din = Table_I200_I250_IND_LCTO_N(index_COD_CTA_Din, :);
 
                  months_Table_I200_I250 = unique(month(Table_I200_I250_COD_CTA_Din.DT_LCTO));
@@ -971,6 +986,9 @@ classdef ECD < model.ECDBase
 
             tableBalancete = tableDinamicaTotal(:, {'COD_NAT', 'CTA_AGRUP',  'CLASS_DRE', 'NIVEL', 'COD_CTA', 'DESC_CONTA', 'MES01', ...
                                                     'MES02', 'MES03', 'MES04', 'MES05', 'MES06', 'MES07', 'MES08', 'MES09', 'MES10', 'MES11', 'MES12', 'MesTotal_Geral'});
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
             % tableBalancete.COD_NAT = string(tableBalancete.COD_NAT);
