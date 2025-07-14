@@ -345,22 +345,9 @@ classdef ECD < model.ECDBase
           
         end
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         function [linesTabletype1, linesTabletype2, linesTabletype3, linesIniIdxTabletype1, linesIniIdxTabletype2, linesIniIdxTabletype3] = tableTypesLines (obj, Tabletype)
             % switch typeCase
             %     case 1
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-        %-----------------------------------------------------------------%
-        function [linesTabletype1, linesIniIdxTabletype2] = tableTypesLines (obj, tableId,  Tabletype, typeCase)
-            switch typeCase
-                case 1
->>>>>>> Stashed changes
                     tabletypeFirst  = Tabletype{1};
                     tabletypeSecond = Tabletype{2};
 
@@ -418,7 +405,6 @@ classdef ECD < model.ECDBase
 
         end
 
-        %-----------------------------------------------------------------%
         function tableI150_I155_CTA = inseriCodCTA(obj, tableI150_I155)
             I050_CTA = obj.Table.xI050;
 
@@ -449,7 +435,6 @@ classdef ECD < model.ECDBase
             % Aplicar nova ordem
             tableI150_I155_CTA = tableI150_I155_CTA(:, varNames);
         end
-        
         %-----------------------------------------------------------------%
         function [tableOutAllTypes, soma_Mov_I155, soma_Mov_I355] = parseSplitLine(obj, tableId)
             arguments
@@ -782,18 +767,8 @@ classdef ECD < model.ECDBase
 
 
                     case 2
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 
                         [linesTabletype1, linesTabletype2, ~, linesIniIdxTabletype1, linesIniIdxTabletype2, ~] = tableTypesLines (obj, Tabletype);
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-                        [linesTabletype1, linesIniIdxTabletype2] = tableTypesLines (obj, tableId{1}, Tabletype, 1);
->>>>>>> Stashed changes
     
                         switch nTabletype
                             case 2
@@ -814,29 +789,14 @@ classdef ECD < model.ECDBase
                 case 2
                     tableOutAll{2}.REG = strcat(tableOutAll{2}.REG, '-', tableOutAll{1}.REG);
                     tableOutAll{1}     = removevars(tableOutAll{1}, 'REG');
-                    tableOutOthers     = [tableOutAll{2}, tableOutAll{1}];
+                    tableOutOthers    = [tableOutAll{2}, tableOutAll{1}];
 
-<<<<<<< Updated upstream
                 % case 3
                 %     tableOutAll{1}.REG = strcat(tableOutAll{1}.REG, '-', tableOutAll{2}.REG, '-', tableOutAll{3}.REG);
                 %     tableOutAll{2}     = removevars(tableOutAll{2}, 'REG');
                 %     tableOutAll{3}     = removevars(tableOutAll{3}, 'REG');
                 %     tableOutAll{3}     = removevars(tableOutAll{3}, 'COD_CCUS');
                 %     tableOutOthers    = [tableOutAll{1}, tableOutAll{2}, tableOutAll{3}];
-=======
-                case 3
-                    tableOutAll{1}.REG = strcat(tableOutAll{1}.REG, '-', tableOutAll{2}.REG, '-', tableOutAll{3}.REG);
-                    tableOutAll{2}     = removevars(tableOutAll{2}, 'REG');
-                    tableOutAll{3}     = removevars(tableOutAll{3}, 'REG');
-                    tableOutAll{3}     = removevars(tableOutAll{3}, 'COD_CCUS');
-                    tableOutOthers     = [tableOutAll{1}, tableOutAll{2}, tableOutAll{3}];
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
                 % otherwise
                 %     error('Unexpected value')
@@ -867,9 +827,6 @@ classdef ECD < model.ECDBase
             end            
           
             for ii = 1: 1:height(Cod_CTA_I155_Din)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                 index_COD_CTA_Din = find(strcmp(Table_I200_I250_IND_LCTO_N.COD_CTA, Cod_CTA_I155_Din{ii}));
                 Table_I200_I250_COD_CTA_Din = Table_I200_I250_IND_LCTO_N(index_COD_CTA_Din,:);
                 kk = 1;
@@ -903,34 +860,11 @@ classdef ECD < model.ECDBase
                     tableDinamica(ii,:) = [ { Cod_CTA_I155_Din(ii) }, num2cell([Val_Mes, Valor_Total_Mes]) ];
                 else
                     tableDinamica(ii,:) = [ cellstr(Cod_CTA_I155_Din(ii)), num2cell([Val_Mes, Valor_Total_Mes]) ];
-=======
-                index_COD_CTA_Din = strcmp(Table_I200_I250_IND_LCTO_N.COD_CTA, Cod_CTA_I155_Din{ii});
-                Val_Mes = zeros(1, 12);
-
-=======
-                index_COD_CTA_Din = strcmp(Table_I200_I250_IND_LCTO_N.COD_CTA, Cod_CTA_I155_Din{ii});
-                Val_Mes = zeros(1, 12);
-
->>>>>>> Stashed changes
-=======
-                index_COD_CTA_Din = strcmp(Table_I200_I250_IND_LCTO_N.COD_CTA, Cod_CTA_I155_Din{ii});
-                Val_Mes = zeros(1, 12);
-
->>>>>>> Stashed changes
-                 Table_I200_I250_COD_CTA_Din = Table_I200_I250_IND_LCTO_N(index_COD_CTA_Din, :);
-
-                 months_Table_I200_I250 = unique(month(Table_I200_I250_COD_CTA_Din.DT_LCTO));
-
-                for jj = 1:numel(months_Table_I200_I250)
-                    Value_Month = Table_I200_I250_COD_CTA_Din(month(Table_I200_I250_COD_CTA_Din.DT_LCTO) == months_Table_I200_I250(jj),:);
-                    Val_Mes(months_Table_I200_I250(jj)) = sum(Value_Month.VL_DC);
->>>>>>> Stashed changes
                 end
 
             end
         end
 
-        %-----------------------------------------------------------------%
         function tableBalancete = Balancete(obj, tableDinamica, Table_I050_I051_I052, Table_J005_J150)
             arguments
                 obj
@@ -970,7 +904,6 @@ classdef ECD < model.ECDBase
 
                 tableDinamicaTotal.Properties.VariableNames{'COD_AGL'} = 'CTA_AGRUP';
 
-<<<<<<< Updated upstream
                 tableDinamicaTotal.Properties.VariableNames{'CTA'} = 'DESC_CONTA';
 
                 tableBalancete = tableDinamicaTotal(:, {'COD_NAT', 'CTA_AGRUP',  'CLASS_DRE', 'NIVEL', 'COD_CTA', 'DESC_CONTA', 'MES01', ...
@@ -995,22 +928,7 @@ classdef ECD < model.ECDBase
                 tableBalancete = tableBalancete(tableBalancete.COD_NAT == "04", :);
             end
 
-=======
-            tableDinamicaTotal.Properties.VariableNames{'COD_AGL'} = 'CTA_AGRUP';
-            tableDinamicaTotal.Properties.VariableNames{'CTA'}     = 'DESC_CONTA';
 
-            tableBalancete = tableDinamicaTotal(:, {'COD_NAT', 'CTA_AGRUP',  'CLASS_DRE', 'NIVEL', 'COD_CTA', 'DESC_CONTA', 'MES01', ...
-                                                    'MES02', 'MES03', 'MES04', 'MES05', 'MES06', 'MES07', 'MES08', 'MES09', 'MES10', 'MES11', 'MES12', 'MesTotal_Geral'});
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-
-            % tableBalancete.COD_NAT = string(tableBalancete.COD_NAT);
-            tableBalancete = tableBalancete(strcmp(tableBalancete.COD_NAT, '04'), :);
         end
     end
     
