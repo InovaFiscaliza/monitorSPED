@@ -817,32 +817,50 @@ classdef ECD < model.ECDBase
                                      'VariableTypes', {'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'}, ...
                                      'VariableNames',  {'COD_CTA'	'MES01',	'MES02',	'MES03',	'MES04',	'MES05',	'MES06',	'MES07',	'MES08',	'MES09',	'MES10',	'MES11',	'MES12',	'MesTotal_Geral'});
 
-            Table_I200_I250_IND_LCTO_N = Table_I200_I250(Table_I200_I250.IND_LCTO == "N",:);
-            idx_IND_DC_D = find(Table_I200_I250_IND_LCTO_N.IND_DC == "D");
-            Table_I200_I250_IND_LCTO_N.VL_DC(idx_IND_DC_D) = -abs(Table_I200_I250_IND_LCTO_N.VL_DC(idx_IND_DC_D));
+            if ~isempty(Table_I200_I250)
+                Table_I200_I250_IND_LCTO_N = Table_I200_I250(Table_I200_I250.IND_LCTO == "N",:);
+                idx_IND_DC_D = find(Table_I200_I250_IND_LCTO_N.IND_DC == "D");
+                Table_I200_I250_IND_LCTO_N.VL_DC(idx_IND_DC_D) = -abs(Table_I200_I250_IND_LCTO_N.VL_DC(idx_IND_DC_D));
+            else
+                Table_I200_I250_IND_LCTO_N = Table_I150_I155_I350_I355;
+            end            
           
-            
             for ii = 1: 1:height(Cod_CTA_I155_Din)
                 index_COD_CTA_Din = find(strcmp(Table_I200_I250_IND_LCTO_N.COD_CTA, Cod_CTA_I155_Din{ii}));
-                % if ~isempty(index_COD_CTA_Din)
-                    Table_I200_I250_COD_CTA_Din = Table_I200_I250_IND_LCTO_N(index_COD_CTA_Din,:);
-                % else
-                %     index_COD_CTA_Din = find(strcmp(Table_I150_I155_I350_I355.COD_CTA, Cod_CTA_I155_Din{ii}));
-                %     Table_I200_I250_COD_CTA_Din = Table_I150_I155_I350_I355(index_COD_CTA_Din,:);
-                % end
+                Table_I200_I250_COD_CTA_Din = Table_I200_I250_IND_LCTO_N(index_COD_CTA_Din,:);
                 kk = 1;
                 Val_Mes = zeros(1, 12);
 
-
-                 months_Table_I200_I250 = unique(month(Table_I200_I250_COD_CTA_Din.DT_LCTO));
-
-                for jj = 1:numel(months_Table_I200_I250)
-                    Value_Month = Table_I200_I250_COD_CTA_Din(month(Table_I200_I250_COD_CTA_Din.DT_LCTO) == months_Table_I200_I250(jj),:);
-                    Val_Mes(months_Table_I200_I250(jj)) = sum(Value_Month.VL_DC);
+                try
+                    months_Table_I200_I250 = unique(month(Table_I200_I250_COD_CTA_Din.DT_LCTO));
+                catch
+                    months_Table_I200_I250 = unique(month(Table_I200_I250_COD_CTA_Din.DT_INI));
                 end
-                Valor_Total_Mes = sum(Val_Mes);
+                    
 
-                tableDinamica(ii,:) = [ { Cod_CTA_I155_Din(ii) }, num2cell([Val_Mes, Valor_Total_Mes]) ];
+                    if ~isempty(months_Table_I200_I250)
+                        for jj = 1:numel(months_Table_I200_I250)
+                            try
+                                Value_Month = Table_I200_I250_COD_CTA_Din(month(Table_I200_I250_COD_CTA_Din.DT_LCTO) == months_Table_I200_I250(jj),:);
+                                Val_Mes(months_Table_I200_I250(jj)) = sum(Value_Month.VL_DC);
+                            catch
+                                Value_Month = Table_I200_I250_COD_CTA_Din(month(Table_I200_I250_COD_CTA_Din.DT_INI) == months_Table_I200_I250(jj),:);
+                                Val_Mes(months_Table_I200_I250(jj)) = sum(Value_Month.VL_CRED);
+                            end
+                            
+
+                            Valor_Total_Mes = sum(Val_Mes);
+                        end
+                    else
+                        Valor_Total_Mes = sum(Val_Mes);
+                    end
+
+                if iscell(Cod_CTA_I155_Din)
+                    tableDinamica(ii,:) = [ { Cod_CTA_I155_Din(ii) }, num2cell([Val_Mes, Valor_Total_Mes]) ];
+                else
+                    tableDinamica(ii,:) = [ cellstr(Cod_CTA_I155_Din(ii)), num2cell([Val_Mes, Valor_Total_Mes]) ];
+                end
+
             end
         end
 
@@ -878,21 +896,37 @@ classdef ECD < model.ECDBase
                     'Keys', 'COD_AGL', ...
                     'MergeKeys', true, ...
                     'Type', 'full');
+                % Remove linhas duplicadas (todas as colunas iguais)
+                tableDinamicaTotal = unique(tableDinamicaTotal);
+
+                tableDinamicaTotal = rmmissing(tableDinamicaTotal, 'DataVariables', {'COD_CTA'});
+
+                tableDinamicaTotal.Properties.VariableNames{'COD_AGL'} = 'CTA_AGRUP';
+
+                tableDinamicaTotal.Properties.VariableNames{'CTA'} = 'DESC_CONTA';
+
+                tableBalancete = tableDinamicaTotal(:, {'COD_NAT', 'CTA_AGRUP',  'CLASS_DRE', 'NIVEL', 'COD_CTA', 'DESC_CONTA', 'MES01', ...
+                    'MES02', 'MES03', 'MES04', 'MES05', 'MES06', 'MES07', 'MES08', 'MES09', 'MES10', 'MES11', 'MES12', 'MesTotal_Geral'});
+
+                tableBalancete.COD_NAT = string(tableBalancete.COD_NAT);
+                tableBalancete = tableBalancete(tableBalancete.COD_NAT == "04", :);
+            else
+                % Remove linhas duplicadas (todas as colunas iguais)
+                tableDinamicaTotal = tableDinamicaParcial;
+
+                tableDinamicaTotal = rmmissing(tableDinamicaTotal, 'DataVariables', {'COD_CTA'});
+
+                tableDinamicaTotal.Properties.VariableNames{'COD_AGL'} = 'CTA_AGRUP';
+
+                tableDinamicaTotal.Properties.VariableNames{'CTA'} = 'DESC_CONTA';
+
+                tableBalancete = tableDinamicaTotal(:, {'COD_NAT', 'CTA_AGRUP',  'NIVEL', 'COD_CTA', 'DESC_CONTA', 'MES01', ...
+                    'MES02', 'MES03', 'MES04', 'MES05', 'MES06', 'MES07', 'MES08', 'MES09', 'MES10', 'MES11', 'MES12', 'MesTotal_Geral'});
+
+                tableBalancete.COD_NAT = string(tableBalancete.COD_NAT);
+                tableBalancete = tableBalancete(tableBalancete.COD_NAT == "04", :);
             end
-            % Remove linhas duplicadas (todas as colunas iguais)
-            tableDinamicaTotal = unique(tableDinamicaTotal);
 
-            tableDinamicaTotal = rmmissing(tableDinamicaTotal, 'DataVariables', {'COD_CTA'});
-
-            tableDinamicaTotal.Properties.VariableNames{'COD_AGL'} = 'CTA_AGRUP';
-
-            tableDinamicaTotal.Properties.VariableNames{'CTA'} = 'DESC_CONTA';
-
-            tableBalancete = tableDinamicaTotal(:, {'COD_NAT', 'CTA_AGRUP',  'CLASS_DRE', 'NIVEL', 'COD_CTA', 'DESC_CONTA', 'MES01', ...
-                'MES02', 'MES03', 'MES04', 'MES05', 'MES06', 'MES07', 'MES08', 'MES09', 'MES10', 'MES11', 'MES12', 'MesTotal_Geral'});
-
-            tableBalancete.COD_NAT = string(tableBalancete.COD_NAT);
-            tableBalancete = tableBalancete(tableBalancete.COD_NAT == "04", :);
 
         end
     end
