@@ -1,0 +1,6 @@
+{
+  "VersionFile": "https://raw.githubusercontent.com/InovaFiscaliza/.github/main/releases/VersionFile.json",
+  "monitorSPED": {
+      "Sharepoint": "https://anatel365.sharepoint.com/sites/InovaFiscaliza/SitePages/monitorSPED.aspx"
+  }
+}

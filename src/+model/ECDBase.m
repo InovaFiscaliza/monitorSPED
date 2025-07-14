@@ -3,17 +3,6 @@ classdef ECDBase < handle
     % dos arquivos. Na pasta "doc" consta os PDFs descrevendo cada layout,
     % mas outras informações podem ser obtidas em http://sped.rfb.gov.br/
 
-    % ToDo:
-    % • Inseridos todos os IDs dos campos, mas mapeados apenas alguns deles.
-    %   Avaliar quais deles precisam ser mapeados para execução da auditoria.
-
-    % • Pendente confirmar os campos adicionais, além da ficha I020, dos
-    %   layouts 1 a 8.
-
-    % • Pendente cadastrar campos "COD_CVM_AUDITOR", "IDENT_CPF", "IND_DC_BAL",
-    %   "IND_DC_BAL_INI", "IND_DC_CTA", "IND_VL" "IND_VL_ULT_DRE", "NIRE_SUBST",
-    %   "NOME_AUDITOR", "VL_CTA_ULT_DRE" que aparecem nos primeiros layouts.
-
     properties (Access = protected, Constant = true)
         %-------------------------------------------------------%
         % TABELAS SOB ANÁLISE
