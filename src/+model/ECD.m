@@ -8,16 +8,19 @@ classdef ECD < model.ECDBase
 
     properties
         %-----------------------------------------------------------------%
-        CompanyName 
+        CompanyName
+        CompanyId
         CompanyInfo = struct('CNPJ', {}, 'IE', {}, 'IM', {}, 'UF', {}, 'City', {})
         Period  = []
 
         FileName
         FileFullName
+        FileStatus = 0 % Pesquisa à base da Receita Federal: -1 (Diverge) | 0 (Pendente) | 1 (Coincide)
 
         Content
         Layout
         Table
+        TableGUI
     end
 
 
@@ -69,6 +72,7 @@ classdef ECD < model.ECDBase
 
                     if isfield(obj(idx).Table, 'x0000') && ~isempty(obj(idx).Table.x0000)
                         obj(idx).CompanyName = obj(idx).Table.x0000.NOME{1};
+                        obj(idx).CompanyId   = checkCNPJOrCPF(obj(idx).Table.x0000.CNPJ{1}, 'NumberValidation');
                         obj(idx).CompanyInfo = struct('CNPJ',  obj(idx).Table.x0000.CNPJ{1}, ...
                                                       'IE',    obj(idx).Table.x0000.IE{1},   ...
                                                       'IM',    obj(idx).Table.x0000.IM{1},   ...

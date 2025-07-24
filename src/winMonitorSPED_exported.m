@@ -7,30 +7,32 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         popupContainerGrid             matlab.ui.container.GridLayout
         SplashScreen                   matlab.ui.control.Image
         menu_Grid                      matlab.ui.container.GridLayout
+        GridLayout3                    matlab.ui.container.GridLayout
+        jsBackDoor                     matlab.ui.control.HTML
+        FigurePosition                 matlab.ui.control.Image
+        AppInfo                        matlab.ui.control.Image
         DataHubLamp                    matlab.ui.control.Lamp
         dockModule_Close               matlab.ui.control.Image
         dockModule_Undock              matlab.ui.control.Image
-        AppInfo                        matlab.ui.control.Image
-        FigurePosition                 matlab.ui.control.Image
-        jsBackDoor                     matlab.ui.control.HTML
+        NOMEDAEMPRESAMetadadosOutrascoisasLabel_2  matlab.ui.control.Label
         menu_Button4                   matlab.ui.control.StateButton
         menu_Separator2                matlab.ui.control.Image
         menu_Button2                   matlab.ui.control.StateButton
-        menu_Separator1                matlab.ui.control.Image
         menu_Button1                   matlab.ui.control.StateButton
         TabGroup                       matlab.ui.container.TabGroup
         Tab1_File                      matlab.ui.container.Tab
         file_Grid                      matlab.ui.container.GridLayout
-        file_toolGrid                  matlab.ui.container.GridLayout
-        file_OpenFileButton            matlab.ui.control.Image
-        file_Metadata                  matlab.ui.control.Label
-        file_MetadataLabel             matlab.ui.control.Label
         file_Tree                      matlab.ui.container.Tree
-        file_TreeLabel                 matlab.ui.control.Label
-        file_TitleGridLine             matlab.ui.control.Image
-        file_TitleGrid                 matlab.ui.container.GridLayout
-        file_Title                     matlab.ui.control.Label
-        file_TitleIcon                 matlab.ui.control.Image
+        file_Metadata                  matlab.ui.control.Label
+        TabGroup2                      matlab.ui.container.TabGroup
+        ARQUIVOSTab                    matlab.ui.container.Tab
+        GridLayout2                    matlab.ui.container.GridLayout
+        NOMEDAEMPRESAMetadadosOutrascoisasLabel  matlab.ui.control.Label
+        file_toolGrid                  matlab.ui.container.GridLayout
+        file_CheckRFB                  matlab.ui.control.Image
+        file_MergeFiles                matlab.ui.control.Image
+        Image                          matlab.ui.control.Image
+        file_OpenFileButton            matlab.ui.control.Image
         Tab2_Playback                  matlab.ui.container.Tab
         Tab5_RFDataHub                 matlab.ui.container.Tab
         Tab6_Config                    matlab.ui.container.Tab
@@ -422,15 +424,31 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 delete(app.file_Tree.Children)
             end
 
-            for ii = 1:numel(app.ecdObj)
-                treeText = app.ecdObj(ii).FileName;
-                uitreenode(app.file_Tree, 'Text', treeText, 'NodeData', ii);
-            end
+            idsList = {app.ecdObj.CompanyId};            
 
-            if ~isempty(app.ecdObj)
-                app.file_Tree.SelectedNodes = app.file_Tree.Children(1);
+            if ~isempty(idsList)
+                ids = unique(idsList);
+                for id = ids
+                    idIndexes = find(strcmp(idsList, id));
+                    [~, idSortedIndexes] = sort(arrayfun(@(x) x.Period(1), app.ecdObj(idIndexes)));
+    
+                    treeNodeParent = uitreenode(app.file_Tree, ...
+                        'Text', sprintf('%s (CNPJ nº %s)', app.ecdObj(idIndexes(1)).CompanyName, app.ecdObj(idIndexes(1)).CompanyId), ...
+                        'NodeData', idIndexes, 'ContextMenu', app.file_ContextMenu_Tree);
+    
+                    for idx = idIndexes(idSortedIndexes)
+                        uitreenode(treeNodeParent, ...
+                            'Text', strjoin(string(app.ecdObj(idx).Period), ' a '), ...
+                            'NodeData', idx, 'ContextMenu', app.file_ContextMenu_Tree);
+                    end
+                end
+                expand(app.file_Tree, 'all')
+    
+                if ~isempty(app.ecdObj)
+                    app.file_Tree.SelectedNodes = app.file_Tree.Children(1).Children(1);
+                end
+                file_TreeSelectionChanged(app)
             end
-            file_TreeSelectionChanged(app)
         end
 
         %-----------------------------------------------------------------%
@@ -640,12 +658,29 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         % Selection changed function: file_Tree
         function file_TreeSelectionChanged(app, event)
             
-            if isscalar(app.file_Tree.SelectedNodes)
-                idxData = app.file_Tree.SelectedNodes.NodeData;
-                selectedECD = app.ecdObj(idxData);                
-                app.file_Metadata.Text  = sprintf('Empresa: %s\nIDs: %s\nPeríodo: %s\nLayout: %d', selectedECD.CompanyName, jsonencode(selectedECD.CompanyInfo), strjoin(string(selectedECD.Period), ' a '), selectedECD.Layout);
+            nodeData = [];
+            if ~isempty(app.file_Tree.SelectedNodes)
+                nodeData = unique([app.file_Tree.SelectedNodes.NodeData]);
+            end
+
+            if isequal(app.file_Metadata.UserData, nodeData)
+                return
+            end
+
+            app.file_MergeFiles.Enable = 0;
+            if isempty(nodeData)
+                app.file_Metadata.Text = '';
+                app.file_Metadata.UserData = [];
+                app.file_CheckRFB.Enable = 0;
+
             else
-                app.file_Metadata.Text  = '';
+                app.file_Metadata.Text = util.HtmlTextGenerator.File(app.ecdObj(nodeData));
+                app.file_Metadata.UserData = nodeData;
+                app.file_CheckRFB.Enable = 1;
+
+                if ~isscalar(nodeData)
+                    app.file_MergeFiles.Enable = 1;
+                end
             end
 
             if isempty(app.ecdObj)
@@ -670,6 +705,35 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 app.ecdObj(idx) = [];
                 file_TreeBuilding(app)
             end
+
+        end
+
+        % Image clicked function: file_MergeFiles
+        function file_MergeFilesImageClicked(app, event)
+            
+            nodeData = [];
+            if ~isempty(app.file_Tree.SelectedNodes)
+                nodeData = unique([app.file_Tree.SelectedNodes.NodeData]);
+            end
+
+            nodeData
+
+            % Retornar erro caso se trate de empresas distintas (com CNPJs 
+            % diferentes)
+
+        end
+
+        % Image clicked function: file_CheckRFB
+        function file_CheckRFBClicked(app, event)
+            
+            nodeData = [];
+            if ~isempty(app.file_Tree.SelectedNodes)
+                nodeData = unique([app.file_Tree.SelectedNodes.NodeData]);
+            end
+
+            nodeData
+
+            % Refatorar código do Elio/Sérgio em função em "+util"
 
         end
     end
@@ -710,124 +774,129 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create Tab1_File
             app.Tab1_File = uitab(app.TabGroup);
-            app.Tab1_File.Title = 'FILE';
+            app.Tab1_File.BackgroundColor = 'none';
 
             % Create file_Grid
             app.file_Grid = uigridlayout(app.Tab1_File);
-            app.file_Grid.ColumnWidth = {5, 320, '1x', 10, 304, 16, 5};
-            app.file_Grid.RowHeight = {23, 3, 5, 22, 5, '1x', 5, 34};
+            app.file_Grid.ColumnWidth = {5, 320, '1x', 10, 320, 5};
+            app.file_Grid.RowHeight = {84, 10, '1x', 5, 34};
             app.file_Grid.ColumnSpacing = 0;
             app.file_Grid.RowSpacing = 0;
-            app.file_Grid.Padding = [0 0 0 24];
+            app.file_Grid.Padding = [0 0 0 26];
             app.file_Grid.BackgroundColor = [1 1 1];
-
-            % Create file_TitleGrid
-            app.file_TitleGrid = uigridlayout(app.file_Grid);
-            app.file_TitleGrid.ColumnWidth = {18, '1x'};
-            app.file_TitleGrid.RowHeight = {23};
-            app.file_TitleGrid.ColumnSpacing = 3;
-            app.file_TitleGrid.RowSpacing = 0;
-            app.file_TitleGrid.Padding = [2 0 0 0];
-            app.file_TitleGrid.Tag = 'COLORLOCKED';
-            app.file_TitleGrid.Layout.Row = 1;
-            app.file_TitleGrid.Layout.Column = 2;
-            app.file_TitleGrid.BackgroundColor = [0.749 0.749 0.749];
-
-            % Create file_TitleIcon
-            app.file_TitleIcon = uiimage(app.file_TitleGrid);
-            app.file_TitleIcon.ScaleMethod = 'none';
-            app.file_TitleIcon.Layout.Row = 1;
-            app.file_TitleIcon.Layout.Column = 1;
-            app.file_TitleIcon.HorizontalAlignment = 'left';
-            app.file_TitleIcon.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'addFiles_18.png');
-
-            % Create file_Title
-            app.file_Title = uilabel(app.file_TitleGrid);
-            app.file_Title.FontSize = 11;
-            app.file_Title.Layout.Row = 1;
-            app.file_Title.Layout.Column = 2;
-            app.file_Title.Text = 'ARQUIVOS';
-
-            % Create file_TitleGridLine
-            app.file_TitleGridLine = uiimage(app.file_Grid);
-            app.file_TitleGridLine.ScaleMethod = 'none';
-            app.file_TitleGridLine.Layout.Row = 2;
-            app.file_TitleGridLine.Layout.Column = 2;
-            app.file_TitleGridLine.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineH.svg');
-
-            % Create file_TreeLabel
-            app.file_TreeLabel = uilabel(app.file_Grid);
-            app.file_TreeLabel.VerticalAlignment = 'bottom';
-            app.file_TreeLabel.FontSize = 10;
-            app.file_TreeLabel.Layout.Row = 4;
-            app.file_TreeLabel.Layout.Column = 2;
-            app.file_TreeLabel.Text = 'LISTA DE ARQUIVOS';
-
-            % Create file_Tree
-            app.file_Tree = uitree(app.file_Grid);
-            app.file_Tree.Multiselect = 'on';
-            app.file_Tree.SelectionChangedFcn = createCallbackFcn(app, @file_TreeSelectionChanged, true);
-            app.file_Tree.FontSize = 10;
-            app.file_Tree.Layout.Row = 6;
-            app.file_Tree.Layout.Column = [2 3];
-
-            % Create file_MetadataLabel
-            app.file_MetadataLabel = uilabel(app.file_Grid);
-            app.file_MetadataLabel.VerticalAlignment = 'bottom';
-            app.file_MetadataLabel.FontSize = 10;
-            app.file_MetadataLabel.Layout.Row = 4;
-            app.file_MetadataLabel.Layout.Column = 5;
-            app.file_MetadataLabel.Text = 'METADADOS';
-
-            % Create file_Metadata
-            app.file_Metadata = uilabel(app.file_Grid);
-            app.file_Metadata.VerticalAlignment = 'top';
-            app.file_Metadata.WordWrap = 'on';
-            app.file_Metadata.FontSize = 11;
-            app.file_Metadata.Layout.Row = 6;
-            app.file_Metadata.Layout.Column = [5 6];
-            app.file_Metadata.Interpreter = 'html';
-            app.file_Metadata.Text = '';
 
             % Create file_toolGrid
             app.file_toolGrid = uigridlayout(app.file_Grid);
-            app.file_toolGrid.ColumnWidth = {22, 110, '1x'};
+            app.file_toolGrid.ColumnWidth = {22, 5, 22, 22, '1x'};
             app.file_toolGrid.RowHeight = {3, 17, 2};
             app.file_toolGrid.ColumnSpacing = 5;
             app.file_toolGrid.RowSpacing = 0;
             app.file_toolGrid.Padding = [5 6 5 6];
-            app.file_toolGrid.Layout.Row = 8;
-            app.file_toolGrid.Layout.Column = [1 7];
+            app.file_toolGrid.Layout.Row = 5;
+            app.file_toolGrid.Layout.Column = [1 6];
 
             % Create file_OpenFileButton
             app.file_OpenFileButton = uiimage(app.file_toolGrid);
             app.file_OpenFileButton.ScaleMethod = 'none';
             app.file_OpenFileButton.ImageClickedFcn = createCallbackFcn(app, @file_ButtonPushed_OpenFile, true);
             app.file_OpenFileButton.Tooltip = {'Seleciona arquivos'};
-            app.file_OpenFileButton.Layout.Row = 2;
+            app.file_OpenFileButton.Layout.Row = [1 3];
             app.file_OpenFileButton.Layout.Column = 1;
             app.file_OpenFileButton.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Import_16.png');
+
+            % Create Image
+            app.Image = uiimage(app.file_toolGrid);
+            app.Image.ScaleMethod = 'none';
+            app.Image.Enable = 'off';
+            app.Image.Layout.Row = [1 3];
+            app.Image.Layout.Column = 2;
+            app.Image.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV.svg');
+
+            % Create file_MergeFiles
+            app.file_MergeFiles = uiimage(app.file_toolGrid);
+            app.file_MergeFiles.ImageClickedFcn = createCallbackFcn(app, @file_MergeFilesImageClicked, true);
+            app.file_MergeFiles.Enable = 'off';
+            app.file_MergeFiles.Tooltip = {'Mescla informação contábil'};
+            app.file_MergeFiles.Layout.Row = [1 3];
+            app.file_MergeFiles.Layout.Column = 4;
+            app.file_MergeFiles.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Merge_32.png');
+
+            % Create file_CheckRFB
+            app.file_CheckRFB = uiimage(app.file_toolGrid);
+            app.file_CheckRFB.ImageClickedFcn = createCallbackFcn(app, @file_CheckRFBClicked, true);
+            app.file_CheckRFB.Enable = 'off';
+            app.file_CheckRFB.Tooltip = {'Consulta à Receita Federal'};
+            app.file_CheckRFB.Layout.Row = [1 3];
+            app.file_CheckRFB.Layout.Column = 3;
+            app.file_CheckRFB.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'receita-federal-novo-logo-png_seeklogo-203693.png');
+
+            % Create TabGroup2
+            app.TabGroup2 = uitabgroup(app.file_Grid);
+            app.TabGroup2.AutoResizeChildren = 'off';
+            app.TabGroup2.Layout.Row = 1;
+            app.TabGroup2.Layout.Column = [2 5];
+
+            % Create ARQUIVOSTab
+            app.ARQUIVOSTab = uitab(app.TabGroup2);
+            app.ARQUIVOSTab.AutoResizeChildren = 'off';
+            app.ARQUIVOSTab.Title = '📄 ARQUIVOS';
+            app.ARQUIVOSTab.BackgroundColor = 'none';
+
+            % Create GridLayout2
+            app.GridLayout2 = uigridlayout(app.ARQUIVOSTab);
+            app.GridLayout2.ColumnWidth = {'1x'};
+            app.GridLayout2.RowHeight = {'1x'};
+            app.GridLayout2.Padding = [5 5 5 6];
+            app.GridLayout2.BackgroundColor = [0.9608 0.9608 0.9608];
+
+            % Create NOMEDAEMPRESAMetadadosOutrascoisasLabel
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel = uilabel(app.GridLayout2);
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel.VerticalAlignment = 'top';
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel.WordWrap = 'on';
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel.FontSize = 11;
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel.FontColor = [0.149 0.149 0.149];
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel.Layout.Row = 1;
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel.Layout.Column = 1;
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel.Text = 'Este aplicativo permite a leitura de arquivos textuais da Escrituração Contábil Digital (ECD), organizando as informações por CNPJ e períodos fiscais. Também realiza a validação dos arquivos, verificando se os arquivos lidos são os que constam na base de dados da Receita Federal. E, por fim, possibilita anotação dos dados e geração de relatório de fiscalização.';
+
+            % Create file_Metadata
+            app.file_Metadata = uilabel(app.file_Grid);
+            app.file_Metadata.VerticalAlignment = 'top';
+            app.file_Metadata.WordWrap = 'on';
+            app.file_Metadata.FontSize = 11;
+            app.file_Metadata.Layout.Row = 3;
+            app.file_Metadata.Layout.Column = 5;
+            app.file_Metadata.Interpreter = 'html';
+            app.file_Metadata.Text = '';
+
+            % Create file_Tree
+            app.file_Tree = uitree(app.file_Grid);
+            app.file_Tree.Multiselect = 'on';
+            app.file_Tree.SelectionChangedFcn = createCallbackFcn(app, @file_TreeSelectionChanged, true);
+            app.file_Tree.FontSize = 10;
+            app.file_Tree.Layout.Row = 3;
+            app.file_Tree.Layout.Column = [2 3];
 
             % Create Tab2_Playback
             app.Tab2_Playback = uitab(app.TabGroup);
             app.Tab2_Playback.AutoResizeChildren = 'off';
-            app.Tab2_Playback.Title = 'PREDICTION';
+            app.Tab2_Playback.BackgroundColor = 'none';
 
             % Create Tab5_RFDataHub
             app.Tab5_RFDataHub = uitab(app.TabGroup);
-            app.Tab5_RFDataHub.Title = 'RFDATAHUB';
+            app.Tab5_RFDataHub.BackgroundColor = 'none';
 
             % Create Tab6_Config
             app.Tab6_Config = uitab(app.TabGroup);
-            app.Tab6_Config.Title = 'CONFIG';
+            app.Tab6_Config.BackgroundColor = 'none';
 
             % Create menu_Grid
             app.menu_Grid = uigridlayout(app.GridLayout);
-            app.menu_Grid.ColumnWidth = {28, 5, 28, 5, 28, '1x', 20, 20, 20, 20, 0, 0};
+            app.menu_Grid.ColumnWidth = {'1x', 28, 28, 5, 28, '1x'};
             app.menu_Grid.RowHeight = {7, 20, 7};
             app.menu_Grid.ColumnSpacing = 5;
             app.menu_Grid.RowSpacing = 0;
-            app.menu_Grid.Padding = [5 5 5 5];
+            app.menu_Grid.Padding = [10 5 5 5];
             app.menu_Grid.Tag = 'COLORLOCKED';
             app.menu_Grid.Layout.Row = 1;
             app.menu_Grid.Layout.Column = 1;
@@ -844,23 +913,15 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.menu_Button1.BackgroundColor = [0.2 0.2 0.2];
             app.menu_Button1.FontSize = 11;
             app.menu_Button1.Layout.Row = [1 3];
-            app.menu_Button1.Layout.Column = 1;
+            app.menu_Button1.Layout.Column = 2;
             app.menu_Button1.Value = true;
-
-            % Create menu_Separator1
-            app.menu_Separator1 = uiimage(app.menu_Grid);
-            app.menu_Separator1.ScaleMethod = 'none';
-            app.menu_Separator1.Enable = 'off';
-            app.menu_Separator1.Layout.Row = [1 3];
-            app.menu_Separator1.Layout.Column = 2;
-            app.menu_Separator1.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV_White.svg');
 
             % Create menu_Button2
             app.menu_Button2 = uibutton(app.menu_Grid, 'state');
             app.menu_Button2.ValueChangedFcn = createCallbackFcn(app, @menu_mainButtonPushed, true);
             app.menu_Button2.Tag = 'ECD';
             app.menu_Button2.Enable = 'off';
-            app.menu_Button2.Tooltip = {'ECD'};
+            app.menu_Button2.Tooltip = {'Escrituração Contábil Digital'};
             app.menu_Button2.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'Playback_32White.png');
             app.menu_Button2.IconAlignment = 'top';
             app.menu_Button2.Text = '';
@@ -890,56 +951,77 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.menu_Button4.Layout.Row = [1 3];
             app.menu_Button4.Layout.Column = 5;
 
-            % Create jsBackDoor
-            app.jsBackDoor = uihtml(app.menu_Grid);
-            app.jsBackDoor.Layout.Row = [1 3];
-            app.jsBackDoor.Layout.Column = 7;
+            % Create NOMEDAEMPRESAMetadadosOutrascoisasLabel_2
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2 = uilabel(app.menu_Grid);
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.WordWrap = 'on';
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.FontSize = 9;
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.FontColor = [1 1 1];
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.Layout.Row = [1 3];
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.Layout.Column = 1;
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.Interpreter = 'html';
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.Text = {'<font style="font-size: 11px; font-weight: bold;">monitorSPED</font> v. 1.0.0 '; 'R2024a'};
 
-            % Create FigurePosition
-            app.FigurePosition = uiimage(app.menu_Grid);
-            app.FigurePosition.ImageClickedFcn = createCallbackFcn(app, @menu_ToolbarImageCliced, true);
-            app.FigurePosition.Visible = 'off';
-            app.FigurePosition.Tooltip = {'Reposiciona janela'};
-            app.FigurePosition.Layout.Row = 2;
-            app.FigurePosition.Layout.Column = 9;
-            app.FigurePosition.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'layout1_32White.png');
-
-            % Create AppInfo
-            app.AppInfo = uiimage(app.menu_Grid);
-            app.AppInfo.ImageClickedFcn = createCallbackFcn(app, @menu_ToolbarImageCliced, true);
-            app.AppInfo.Tooltip = {'Informações gerais'};
-            app.AppInfo.Layout.Row = 2;
-            app.AppInfo.Layout.Column = 10;
-            app.AppInfo.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Dots_32White.png');
+            % Create GridLayout3
+            app.GridLayout3 = uigridlayout(app.menu_Grid);
+            app.GridLayout3.ColumnWidth = {'1x', 20, 20, 20, 20, 0, 0};
+            app.GridLayout3.RowHeight = {'1x'};
+            app.GridLayout3.ColumnSpacing = 5;
+            app.GridLayout3.Padding = [0 0 0 0];
+            app.GridLayout3.Tag = 'MenuSubGrid';
+            app.GridLayout3.Layout.Row = 2;
+            app.GridLayout3.Layout.Column = 6;
+            app.GridLayout3.BackgroundColor = [0.2 0.2 0.2];
 
             % Create dockModule_Undock
-            app.dockModule_Undock = uiimage(app.menu_Grid);
+            app.dockModule_Undock = uiimage(app.GridLayout3);
             app.dockModule_Undock.ScaleMethod = 'none';
             app.dockModule_Undock.ImageClickedFcn = createCallbackFcn(app, @menu_DockButtonPushed, true);
             app.dockModule_Undock.Tag = 'DRIVETEST';
             app.dockModule_Undock.Tooltip = {'Reabre módulo em outra janela'};
-            app.dockModule_Undock.Layout.Row = 2;
-            app.dockModule_Undock.Layout.Column = 11;
+            app.dockModule_Undock.Layout.Row = 1;
+            app.dockModule_Undock.Layout.Column = 6;
             app.dockModule_Undock.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Undock_18White.png');
 
             % Create dockModule_Close
-            app.dockModule_Close = uiimage(app.menu_Grid);
+            app.dockModule_Close = uiimage(app.GridLayout3);
             app.dockModule_Close.ScaleMethod = 'none';
             app.dockModule_Close.ImageClickedFcn = createCallbackFcn(app, @menu_DockButtonPushed, true);
             app.dockModule_Close.Tag = 'DRIVETEST';
             app.dockModule_Close.Tooltip = {'Fecha módulo'};
-            app.dockModule_Close.Layout.Row = 2;
-            app.dockModule_Close.Layout.Column = 12;
+            app.dockModule_Close.Layout.Row = 1;
+            app.dockModule_Close.Layout.Column = 7;
             app.dockModule_Close.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Delete_12SVG_white.svg');
 
             % Create DataHubLamp
-            app.DataHubLamp = uilamp(app.menu_Grid);
+            app.DataHubLamp = uilamp(app.GridLayout3);
             app.DataHubLamp.Enable = 'off';
             app.DataHubLamp.Visible = 'off';
             app.DataHubLamp.Tooltip = {'Pendente mapear pasta do Sharepoint'};
-            app.DataHubLamp.Layout.Row = 2;
-            app.DataHubLamp.Layout.Column = 8;
+            app.DataHubLamp.Layout.Row = 1;
+            app.DataHubLamp.Layout.Column = 3;
             app.DataHubLamp.Color = [1 0 0];
+
+            % Create AppInfo
+            app.AppInfo = uiimage(app.GridLayout3);
+            app.AppInfo.ImageClickedFcn = createCallbackFcn(app, @menu_ToolbarImageCliced, true);
+            app.AppInfo.Tooltip = {'Informações gerais'};
+            app.AppInfo.Layout.Row = 1;
+            app.AppInfo.Layout.Column = 5;
+            app.AppInfo.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Dots_32White.png');
+
+            % Create FigurePosition
+            app.FigurePosition = uiimage(app.GridLayout3);
+            app.FigurePosition.ImageClickedFcn = createCallbackFcn(app, @menu_ToolbarImageCliced, true);
+            app.FigurePosition.Visible = 'off';
+            app.FigurePosition.Tooltip = {'Reposiciona janela'};
+            app.FigurePosition.Layout.Row = 1;
+            app.FigurePosition.Layout.Column = 4;
+            app.FigurePosition.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'layout1_32White.png');
+
+            % Create jsBackDoor
+            app.jsBackDoor = uihtml(app.GridLayout3);
+            app.jsBackDoor.Layout.Row = 1;
+            app.jsBackDoor.Layout.Column = 2;
 
             % Create popupContainerGrid
             app.popupContainerGrid = uigridlayout(app.GridLayout);
