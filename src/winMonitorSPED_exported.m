@@ -173,6 +173,15 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         switch operationType
                             case 'closeFcn'
                                 closeModule(app.tabGroupController, "ECD", app.General)
+                            case 'updateTreeView'
+                                if ~isempty(app.file_Tree.SelectedNodes)
+                                    nodeData = unique([app.file_Tree.SelectedNodes.NodeData]);
+
+                                    if isequal(nodeData, varargin{1})
+                                        app.file_Metadata.UserData = [];
+                                        file_TreeSelectionChanged(app)
+                                    end
+                                end
                             otherwise
                                 error('UnexpectedCall')
                         end
@@ -424,21 +433,23 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 delete(app.file_Tree.Children)
             end
 
-            idsList = {app.ecdObj.CompanyId};            
+            idsList = {app.ecdObj.CompanyId};
 
             if ~isempty(idsList)
-                ids = unique(idsList);
-                for id = ids
+                [ids, idsIndexes] = unique(idsList, 'stable');
+                [~, idsSortedIndexes] = sort({app.ecdObj(idsIndexes).CompanyName});
+
+                for id = ids(idsSortedIndexes)
                     idIndexes = find(strcmp(idsList, id));
                     [~, idSortedIndexes] = sort(arrayfun(@(x) x.Period(1), app.ecdObj(idIndexes)));
     
                     treeNodeParent = uitreenode(app.file_Tree, ...
-                        'Text', sprintf('%s (CNPJ nº %s)', app.ecdObj(idIndexes(1)).CompanyName, app.ecdObj(idIndexes(1)).CompanyId), ...
+                        'Text', sprintf('%s (CNPJ nº %s) (Id: %s)', app.ecdObj(idIndexes(1)).CompanyName, app.ecdObj(idIndexes(1)).CompanyId, strjoin(string(idIndexes), ', ')), ...
                         'NodeData', idIndexes, 'ContextMenu', app.file_ContextMenu_Tree);
     
                     for idx = idIndexes(idSortedIndexes)
                         uitreenode(treeNodeParent, ...
-                            'Text', strjoin(string(app.ecdObj(idx).Period), ' a '), ...
+                            'Text', sprintf('%s (Id: %d)', strjoin(string(app.ecdObj(idx).Period), ' a '), idx), ...
                             'NodeData', idx, 'ContextMenu', app.file_ContextMenu_Tree);
                     end
                 end
@@ -623,11 +634,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             d = appUtil.modalWindow(app.UIFigure, "progressdlg", "Em andamento...");
             
             fileFullName = fullfile(filePath, fileName);
-            filesInCache = {};
             filesError   = struct('File', {}, 'Error', {});
 
             for ii = 1:numel(fileFullName)
-                d.Message = sprintf('Em andamento a leitura do arquivo %d de %d:<br>• <b>%s</b>', ii, numel(fileFullName), fileName{ii});
+                d.Message = sprintf('<font style="font-size: 12px;">Em andamento a leitura do arquivo %d de %d:<br>• <b>%s</b></font>', ii, numel(fileFullName), fileName{ii});
 
                 % Verifica se arquivo já foi lido, comparando o seu nome com 
                 % a variável app.ecdObj.
@@ -635,8 +645,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     [app.ecdObj, msg] = app.ecdObj.addFiles(fileFullName{ii});
 
                     if ~isempty(msg)
-                        filesError(end+1) = struct('File', fileName{ii}, 'Error', strjoin(msg));
-                        % ccTools.fcn.OperationSystem('openFile', fileFullName{ii})
+                        filesError(end+1) = struct('File', sprintf('"%s"', fileName{ii}), 'Error', strjoin(msg));
                         continue
                     end
                 end
@@ -644,8 +653,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % LOG
             if ~isempty(filesError)
-                msgWarning = sprintf('Arquivos que apresentaram erro na leitura:\n%s\n\n', strjoin(strcat({'<font style="font-size: 11px;">•&thinsp;'}, {filesError.File}, {': '}, {filesError.Error}), '</font>\n'));
-                appUtil.modalWindow(app.UIFigure, "warning", msgWarning);                
+                msgWarning = sprintf('<font style="font-size: 12px;">Arquivos que apresentaram erro na leitura:\n%s\n\n</font>', strjoin(strcat({'•&thinsp;<b>'}, {filesError.File}, {'</b>: <i>'}, {filesError.Error}), '</i>\n\n'));
+                appUtil.modalWindow(app.UIFigure, "error", msgWarning);                
             end
             
             % Atualiza app.file_Tree.

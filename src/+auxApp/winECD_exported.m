@@ -2,60 +2,68 @@ classdef winECD_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure                      matlab.ui.Figure
-        editionFontContainer          matlab.ui.container.Panel
-        GridLayout                    matlab.ui.container.GridLayout
-        EXIBIDASTODASAS22LINHASLabel  matlab.ui.control.Label
-        Image5                        matlab.ui.control.Image
-        Label                         matlab.ui.control.Label
-        Image6                        matlab.ui.control.Image
-        TabGroup                      matlab.ui.container.TabGroup
-        ASPECTOSGERAISTab             matlab.ui.container.Tab
-        GridLayout3                   matlab.ui.container.GridLayout
-        Hyperlink                     matlab.ui.control.Hyperlink
-        TreeDropDown_2                matlab.ui.control.DropDown
-        FichaLabel                    matlab.ui.control.Label
-        PerodofiscalLabel             matlab.ui.control.Label
-        TreeDropDown                  matlab.ui.control.DropDown
-        EmpresaLabel                  matlab.ui.control.Label
-        ArquivodedadosDropDown        matlab.ui.control.DropDown
-        LAYOUTTab                     matlab.ui.container.Tab
-        GridLayout_2                  matlab.ui.container.GridLayout
-        Image_6                       matlab.ui.control.Image
-        Image_5                       matlab.ui.control.Image
-        Image_4                       matlab.ui.control.Image
-        ColorPicker_2                 matlab.ui.control.ColorPicker
-        ColorPicker                   matlab.ui.control.ColorPicker
-        DropDown_5                    matlab.ui.control.DropDown
-        DropDown_4                    matlab.ui.control.DropDown
-        Image_3                       matlab.ui.control.Image
-        Image_2                       matlab.ui.control.Image
-        Image                         matlab.ui.control.Image
-        FILTRAGEMTab                  matlab.ui.container.Tab
-        GridLayout4                   matlab.ui.container.GridLayout
-        filter_SecondaryTextList_2    matlab.ui.control.DropDown
-        filter_SecondaryTextList      matlab.ui.control.DropDown
-        EditField_2                   matlab.ui.control.EditField
-        EditField                     matlab.ui.control.EditField
-        DropDown_10                   matlab.ui.control.DropDown
-        DropDown_9                    matlab.ui.control.DropDown
-        DropDown_8                    matlab.ui.control.DropDown
-        DropDown_7                    matlab.ui.control.DropDown
-        CheckBox                      matlab.ui.control.CheckBox
-        DropDown_6                    matlab.ui.control.DropDown
-        Image4_3                      matlab.ui.control.Image
-        TABELACUSTOMIZADATab          matlab.ui.container.Tab
-        UITable                       matlab.ui.control.Table
-        UITable2                      matlab.ui.control.Table
-        toolGrid                      matlab.ui.container.GridLayout
+        UIFigure                    matlab.ui.Figure
+        GridLayout                  matlab.ui.container.GridLayout
+        Image5_2                    matlab.ui.control.Image
+        DE0Label_2                  matlab.ui.control.Label
+        CONTAGEM0Label_2            matlab.ui.control.Label
+        Image6_2                    matlab.ui.control.Image
+        DE0Label                    matlab.ui.control.Label
+        Image5                      matlab.ui.control.Image
+        CONTAGEM0Label              matlab.ui.control.Label
+        Image6                      matlab.ui.control.Image
+        TabGroup                    matlab.ui.container.TabGroup
+        ASPECTOSGERAISTab           matlab.ui.container.Tab
+        GridLayout3                 matlab.ui.container.GridLayout
+        ReadAllSheets               matlab.ui.control.Hyperlink
+        SheetList                   matlab.ui.control.DropDown
+        SheetListLabel              matlab.ui.control.Label
+        TimePeriodList              matlab.ui.control.DropDown
+        TimePeriodListLabel         matlab.ui.control.Label
+        CompanyNameList             matlab.ui.control.DropDown
+        CompanyNameListLabel        matlab.ui.control.Label
+        LAYOUTTab                   matlab.ui.container.Tab
+        GridLayout_2                matlab.ui.container.GridLayout
+        FontColor                   matlab.ui.control.ColorPicker
+        FontBackground              matlab.ui.control.ColorPicker
+        FontAlign3                  matlab.ui.control.Image
+        FontAlign2                  matlab.ui.control.Image
+        FontAlign1                  matlab.ui.control.Image
+        FontUnderline               matlab.ui.control.Button
+        FontStyle                   matlab.ui.control.Button
+        FontWeight                  matlab.ui.control.Button
+        FontSize                    matlab.ui.control.DropDown
+        FontFamilyList              matlab.ui.control.DropDown
+        Separator                   matlab.ui.control.Image
+        SheetHeight_Second          matlab.ui.control.Spinner
+        SheetView_Second            matlab.ui.control.DropDown
+        SheetHeight_First           matlab.ui.control.Spinner
+        SheetView_First             matlab.ui.control.DropDown
+        SheetViewStatus             matlab.ui.control.StateButton
+        FILTRAGEMTab                matlab.ui.container.Tab
+        GridLayout4                 matlab.ui.container.GridLayout
+        filter_SecondaryTextList_2  matlab.ui.control.DropDown
+        filter_SecondaryTextList    matlab.ui.control.DropDown
+        EditField_2                 matlab.ui.control.EditField
+        EditField                   matlab.ui.control.EditField
+        DropDown_10                 matlab.ui.control.DropDown
+        DropDown_9                  matlab.ui.control.DropDown
+        DropDown_8                  matlab.ui.control.DropDown
+        DropDown_7                  matlab.ui.control.DropDown
+        CheckBox                    matlab.ui.control.CheckBox
+        DropDown_6                  matlab.ui.control.DropDown
+        Image4_3                    matlab.ui.control.Image
+        TABELACUSTOMIZADATab        matlab.ui.container.Tab
+        UITable                     matlab.ui.control.Table
+        UITable2                    matlab.ui.control.Table
+        toolGrid                    matlab.ui.container.GridLayout
         NOMEDAEMPRESAMetadadosOutrascoisasLabel_2  matlab.ui.control.Label
-        tool_tableNRowsIcon           matlab.ui.control.Image
-        tool_ExportButton             matlab.ui.control.Image
-        tool_Separator                matlab.ui.control.Image
-        tool_RFLinkButton             matlab.ui.control.Image
-        filter_ContextMenu            matlab.ui.container.ContextMenu
-        filter_delButton              matlab.ui.container.Menu
-        filter_delAllButton           matlab.ui.container.Menu
+        tool_tableNRowsIcon         matlab.ui.control.Image
+        tool_ExportButton           matlab.ui.control.Image
+        tool_Separator              matlab.ui.control.Image
+        filter_ContextMenu          matlab.ui.container.ContextMenu
+        filter_delButton            matlab.ui.container.Menu
+        filter_delAllButton         matlab.ui.container.Menu
     end
 
     
@@ -139,21 +147,10 @@ classdef winECD_exported < matlab.apps.AppBase
                         return
                     end
 
-                    appName = class(app);
-
                     customizationStatus(tabIndex) = true;
                     switch tabIndex
                         case 1 % ECD
-                            pause(1)
-                            app.editionFontContainer.UserData.id = struct(app.editionFontContainer).Controller.ViewModel.Id;
-
-                            sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', {        ...
-                                struct('appName',    appName,                                      ...
-                                       'dataTag',    app.editionFontContainer.UserData.id,         ...
-                                       'generation', 0,                                            ...
-                                       'style',      struct('borderRadius', '5px',                 ...
-                                                            'boxShadow', '0 2px 5px 1px #a6a6a6')) ...
-                            });
+                            % ...
 
                         case 2 % CONFIGURAÇÕES GERAIS
                             % ...
@@ -201,11 +198,34 @@ classdef winECD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function startup_GUIComponents(app)
-            % Dropdown com nomes dos arquivos:
             if ~isempty(app.ecdObj)
-                app.ArquivodedadosDropDown.Items = {app.ecdObj.FileName};
-                app.tool_RFLinkButton.Enable = 1;
-                ArquivodedadosDropDownValueChanged(app)
+                idsList = {app.ecdObj.CompanyId};                
+                [ids, idsFirstIndexes] = unique(idsList, 'stable');
+                idsNames = {app.ecdObj(idsFirstIndexes).CompanyName};
+
+                mappingIds = dictionary();
+                for ii = 1:numel(ids)
+                    idIndexes = find(strcmp(idsList, ids{ii}));
+                    [~, idSortedIndexes] = sort(arrayfun(@(x) x.Period(1), app.ecdObj(idIndexes)));
+
+                    mappingIds = mappingIds.insert(string(idsNames{ii}), {idIndexes(idSortedIndexes)});
+                end
+
+                % Empresas:
+                app.CompanyNameList.Items = sort(idsNames);
+                app.CompanyNameList.UserData = mappingIds;
+
+                % A seleção buscará respeitar aquilo que estiver selecionado 
+                % em winMonitorSPED.mlapp.
+                fileIndex = 1;
+                if ~isempty(app.mainApp.file_Tree.SelectedNodes)
+                    fileIndex = unique([app.mainApp.file_Tree.SelectedNodes.NodeData], 'stable');
+                    fileIndex = fileIndex(1);
+                end
+
+                app.CompanyNameList.Value = app.ecdObj(fileIndex).CompanyName;
+                app.TimePeriodList.Items  = {periodInformation(app, fileIndex)};
+                CompanyNameListValueChanged(app)
             end
 
             app.UITable.RowName = 'numbered';
@@ -219,26 +239,30 @@ classdef winECD_exported < matlab.apps.AppBase
 
     methods (Access = private)
         %-----------------------------------------------------------------%
-        function TreeBuilding(app)
-            if ~isempty(app.TreeDropDown.Items)
-                app.TreeDropDown.Items = {};
-            end
+        function companyIndexes = selectedFileIndexByCompany(app)
+            companyIndexes = cell2mat(app.CompanyNameList.UserData(app.CompanyNameList.Value));
+        end
 
-            idxData = find(strcmp(app.ArquivodedadosDropDown.Items, app.ArquivodedadosDropDown.Value), 1);
-            selectedECD = app.ecdObj(idxData);
+        %-----------------------------------------------------------------%
+        function fileIndex = selectedFileIndex(app)
+            companyIndexes = selectedFileIndexByCompany(app);
+            fileIndex      = companyIndexes(strcmp(app.TimePeriodList.Items, app.TimePeriodList.Value));
+        end
 
-            Fichas = sort(fieldnames(selectedECD.Table));
-            for ii = 1:numel(Fichas)
-                fichaNome = Fichas{ii};
+        %-----------------------------------------------------------------%
+        function updateSheetList(app)
+            fileIndex      = selectedFileIndex(app);
+            selectedECD    = app.ecdObj(fileIndex);
 
-                if ~isempty(selectedECD.Table.(fichaNome))
-                    app.TreeDropDown.Items{end+1} = fichaNome(2:end);
-                end
-            end
+            sheetsNames    = fieldnames(selectedECD.Table);
+            nonemptySheets = sheetsNames(cellfun(@(x) ~isempty(selectedECD.Table.(x)), sheetsNames));
 
-            if~isempty(app.TreeDropDown.Items)
-                TreeSelectionChanged(app)
-            end
+            app.SheetList.Items = extractAfter(sort(nonemptySheets), 'x');
+        end
+
+        %-----------------------------------------------------------------%
+        function info = periodInformation(app, fileIndex)
+            info = char(strjoin(string(app.ecdObj(fileIndex).Period), ' a '));
         end
     end
     
@@ -276,34 +300,62 @@ classdef winECD_exported < matlab.apps.AppBase
             
         end
 
-        % Value changed function: ArquivodedadosDropDown
-        function ArquivodedadosDropDownValueChanged(app, event)
-            
-            TreeBuilding(app)
+        % Value changed function: CompanyNameList
+        function CompanyNameListValueChanged(app, event)
+
+            companyIndexes = selectedFileIndexByCompany(app);
+
+            periodList = {};
+            for fileIndex = companyIndexes
+                periodList{end+1} = periodInformation(app, fileIndex);
+            end
+
+            app.TimePeriodList.Items = periodList;
+            TimePeriodListValueChanged(app)
 
         end
 
-        % Value changed function: TreeDropDown
-        function TreeSelectionChanged(app, event)
+        % Value changed function: TimePeriodList
+        function TimePeriodListValueChanged(app, event)
             
-            idxData = find(strcmp(app.ArquivodedadosDropDown.Items, app.ArquivodedadosDropDown.Value), 1);
-            selectedECD = app.ecdObj(idxData);
+            fileIndex   = selectedFileIndex(app);
+            selectedECD = app.ecdObj(fileIndex);
 
-            fichaNome = ['x' app.TreeDropDown.Value];
+            updateSheetList(app)
+            app.SheetList.Value = app.SheetList.Items{1};
+            SheetListValueChanged(app)
+
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.Text = sprintf('<font style="font-size: 11px; font-weight: bold;">%s</font> CNPJ %s \n%s ', ...
+                selectedECD.CompanyName, selectedECD.CompanyId, strjoin(string(selectedECD.Period), ' a '));
             
-            app.UITable.Data = selectedECD.Table.(fichaNome);
+        end
+
+        % Value changed function: SheetList
+        function SheetListValueChanged(app, event)
+            
+            fileIndex   = selectedFileIndex(app);
+            selectedECD = app.ecdObj(fileIndex);
+            
+            app.UITable.Data = selectedECD.Table.(['x' app.SheetList.Value]);
             app.UITable.ColumnName = app.UITable.Data.Properties.VariableNames;
 
+            if height(app.UITable.Data) > 1
+                numberOfRowsText = sprintf('%d DE %d REGISTROS ', height(app.UITable.Data), height(app.UITable.Data)); % PENDENTE FILTRAGEM
+            else
+                numberOfRowsText = sprintf('%d DE %d REGISTRO ',  height(app.UITable.Data), height(app.UITable.Data)); % PENDENTE FILTRAGEM
+            end
+            app.DE0Label.Text = numberOfRowsText;
+
         end
 
-        % Callback function: Hyperlink, tool_RFLinkButton
-        function LerfichasButtonPushed(app, event)
+        % Callback function: ReadAllSheets
+        function ReadAllSheetsButtonPushed(app, event)
             
             app.progressDialog.Visible = 'visible';
 
             try
-                idxData = find(strcmp(app.ArquivodedadosDropDown.Items, app.ArquivodedadosDropDown.Value), 1);
-                selectedECD = app.ecdObj(idxData);
+                fileIndex   = selectedFileIndex(app);
+                selectedECD = app.ecdObj(fileIndex);
 
                 parseTableAndAddToCache(selectedECD, {'0000', '0007', '0020', '0035', '0150', '0180', '0990', 'C001', 'C040', 'C050', 'C051', 'C052', 'C150', 'C155', ...
                                                       'C600', 'C650', 'C990', 'I001', 'I010', 'I001', 'I012', 'I015', 'I020', 'I030', 'I050', 'I051', 'I052', 'I053', ...
@@ -323,7 +375,8 @@ classdef winECD_exported < matlab.apps.AppBase
                     selectedECD.Table.xBalancete       = Balancete(selectedECD, selectedECD.Table.xTabelaDinamica, selectedECD.Table.xI050_I051_I052, selectedECD.Table.xJ005_J150);
                 end
 
-                TreeBuilding(app)
+                updateSheetList(app)
+                ipcMainMatlabCallsHandler(app.mainApp, app, 'updateTreeView', fileIndex)
 
             catch ME
                 appUtil.modalWindow(app.UIFigure, 'error', ME.message);
@@ -386,7 +439,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 app.UITable.UserData.Selection = app.UITable.Selection;
 
                 if isempty(app.UITable.Selection)
-                    app.Label.Text = '  CONTAGEM: 0';
+                    app.CONTAGEM0Label.Text = '  CONTAGEM: 0';
 
                 else
                     selectedCols = unique(app.UITable.Selection(:, 2));
@@ -415,9 +468,9 @@ classdef winECD_exported < matlab.apps.AppBase
                                 cellsAverage = cellsSum/cellsCount;
                         end
     
-                        app.Label.Text = sprintf('  CONTAGEM: %d     SOMA: %.2f     MÉDIA: %.2f', cellsCount, cellsSum, cellsAverage);
+                        app.CONTAGEM0Label.Text = sprintf('  CONTAGEM: %d     SOMA: %.2f     MÉDIA: %.2f', cellsCount, cellsSum, cellsAverage);
                     else
-                        app.Label.Text = sprintf('  CONTAGEM: %d', cellsCount);
+                        app.CONTAGEM0Label.Text = sprintf('  CONTAGEM: %d', cellsCount);
                     end
                 end
             end
@@ -495,6 +548,44 @@ classdef winECD_exported < matlab.apps.AppBase
 
             
         end
+
+        % Value changed function: SheetViewStatus
+        function SheetViewStatusValueChanged(app, event)
+            
+            if app.SheetViewStatus.Value
+                app.SheetView_Second.Enable = "on";
+                app.SheetHeight_First.Enable     = 'on';
+
+                app.SheetHeight_Second.Limits(1) = 1;
+                set(app.SheetHeight_Second, 'Enable', 'on', 'Value', app.SheetHeight_First.Value)
+                
+                app.UITable2.Visible   = 'on';
+                
+                rowHeight = {10,2,18};
+                
+            else
+                app.SheetView_Second.Enable = "off";
+                app.SheetHeight_First.Enable     = 'off';
+                
+                app.SheetHeight_Second.Limits(1) = 0;
+                set(app.SheetHeight_Second, 'Enable', 'off', 'Value', 0)
+
+                app.UITable2.Visible   = 'off';                
+                
+                rowHeight = {0,0,0};
+            end
+
+            SpinnerValueChanged(app, struct('Source', app.SheetHeight_First))
+            app.GridLayout.RowHeight([7,9,10]) = rowHeight;
+            
+        end
+
+        % Value changed function: SheetHeight_First, SheetHeight_Second
+        function SpinnerValueChanged(app, event)
+            
+            app.GridLayout.RowHeight([4,8]) = {sprintf('%dx', app.SheetHeight_First.Value), sprintf('%dx', app.SheetHeight_Second.Value)};
+
+        end
     end
 
     % Component initialization
@@ -534,7 +625,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create GridLayout
             app.GridLayout = uigridlayout(app.Container);
             app.GridLayout.ColumnWidth = {5, 18, 320, 5, 90, 5, 5, 5, '1x', 5, 5, 5, 330, 18, 5};
-            app.GridLayout.RowHeight = {7, 84, 10, '0.4x', 2, 18, 10, 160, 5, 34};
+            app.GridLayout.RowHeight = {7, 84, 10, '1x', 2, 18, 0, 0, 0, 0, 5, 34};
             app.GridLayout.ColumnSpacing = 0;
             app.GridLayout.RowSpacing = 0;
             app.GridLayout.Padding = [0 0 0 0];
@@ -542,32 +633,21 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create toolGrid
             app.toolGrid = uigridlayout(app.GridLayout);
-            app.toolGrid.ColumnWidth = {22, 22, 5, 22, '1x'};
+            app.toolGrid.ColumnWidth = {22, 5, 22, '1x'};
             app.toolGrid.RowHeight = {4, 17, 2};
             app.toolGrid.ColumnSpacing = 5;
             app.toolGrid.RowSpacing = 0;
             app.toolGrid.Padding = [2 5 5 5];
-            app.toolGrid.Layout.Row = 10;
+            app.toolGrid.Layout.Row = 12;
             app.toolGrid.Layout.Column = [1 15];
             app.toolGrid.BackgroundColor = [0.9412 0.9412 0.9412];
-
-            % Create tool_RFLinkButton
-            app.tool_RFLinkButton = uiimage(app.toolGrid);
-            app.tool_RFLinkButton.ScaleMethod = 'none';
-            app.tool_RFLinkButton.ImageClickedFcn = createCallbackFcn(app, @LerfichasButtonPushed, true);
-            app.tool_RFLinkButton.Enable = 'off';
-            app.tool_RFLinkButton.Tooltip = {'Perfil de terreno entre registro selecionado (TX) '; 'e estação de referência (RX)'};
-            app.tool_RFLinkButton.Layout.Row = 2;
-            app.tool_RFLinkButton.Layout.Column = 1;
-            app.tool_RFLinkButton.VerticalAlignment = 'top';
-            app.tool_RFLinkButton.ImageSource = 'Publish_HTML_16.png';
 
             % Create tool_Separator
             app.tool_Separator = uiimage(app.toolGrid);
             app.tool_Separator.ScaleMethod = 'none';
             app.tool_Separator.Enable = 'off';
             app.tool_Separator.Layout.Row = [1 3];
-            app.tool_Separator.Layout.Column = 3;
+            app.tool_Separator.Layout.Column = 2;
             app.tool_Separator.VerticalAlignment = 'bottom';
             app.tool_Separator.ImageSource = 'LineV.svg';
 
@@ -576,7 +656,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_ExportButton.ScaleMethod = 'none';
             app.tool_ExportButton.Enable = 'off';
             app.tool_ExportButton.Layout.Row = 2;
-            app.tool_ExportButton.Layout.Column = 4;
+            app.tool_ExportButton.Layout.Column = 3;
             app.tool_ExportButton.ImageSource = 'Export_16.png';
 
             % Create tool_tableNRowsIcon
@@ -584,7 +664,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_tableNRowsIcon.ScaleMethod = 'none';
             app.tool_tableNRowsIcon.Enable = 'off';
             app.tool_tableNRowsIcon.Layout.Row = 2;
-            app.tool_tableNRowsIcon.Layout.Column = 2;
+            app.tool_tableNRowsIcon.Layout.Column = 1;
             app.tool_tableNRowsIcon.ImageSource = 'Filter_18.png';
 
             % Create NOMEDAEMPRESAMetadadosOutrascoisasLabel_2
@@ -595,17 +675,19 @@ classdef winECD_exported < matlab.apps.AppBase
             app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.FontSize = 9;
             app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.FontColor = [0.149 0.149 0.149];
             app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.Layout.Row = [1 3];
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.Layout.Column = 5;
+            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.Layout.Column = 4;
             app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.Interpreter = 'html';
             app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.Text = {'<font style="font-size: 11px; font-weight: bold;">NOME DA EMPRESA</font> CNPJ 10.101.101/0001-02 '; '01/01/2023 - 31/12/2023 '};
 
             % Create UITable2
             app.UITable2 = uitable(app.GridLayout);
             app.UITable2.BackgroundColor = [1 1 1;0.9412 0.9412 0.9412];
-            app.UITable2.ColumnName = {'TABELA APURAÇÃO'};
+            app.UITable2.ColumnName = '';
             app.UITable2.RowName = {};
+            app.UITable2.ColumnSortable = true;
             app.UITable2.ClickedFcn = createCallbackFcn(app, @UIFigureWindowButtonDown, true);
             app.UITable2.ForegroundColor = [0.149 0.149 0.149];
+            app.UITable2.Visible = 'off';
             app.UITable2.Layout.Row = 8;
             app.UITable2.Layout.Column = [2 14];
             app.UITable2.FontSize = 10.5;
@@ -635,79 +717,81 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create GridLayout3
             app.GridLayout3 = uigridlayout(app.ASPECTOSGERAISTab);
-            app.GridLayout3.ColumnWidth = {90, 220, 70, 110, '1x', 110};
+            app.GridLayout3.ColumnWidth = {90, 230, 46, 229, '1x', 110};
             app.GridLayout3.RowHeight = {22, 22};
             app.GridLayout3.RowSpacing = 5;
             app.GridLayout3.Padding = [5 5 5 6];
             app.GridLayout3.BackgroundColor = [0.9608 0.9608 0.9608];
 
-            % Create ArquivodedadosDropDown
-            app.ArquivodedadosDropDown = uidropdown(app.GridLayout3);
-            app.ArquivodedadosDropDown.Items = {};
-            app.ArquivodedadosDropDown.ValueChangedFcn = createCallbackFcn(app, @ArquivodedadosDropDownValueChanged, true);
-            app.ArquivodedadosDropDown.FontSize = 11;
-            app.ArquivodedadosDropDown.FontColor = [0.149 0.149 0.149];
-            app.ArquivodedadosDropDown.BackgroundColor = [1 1 1];
-            app.ArquivodedadosDropDown.Layout.Row = 1;
-            app.ArquivodedadosDropDown.Layout.Column = [2 4];
-            app.ArquivodedadosDropDown.Value = {};
+            % Create CompanyNameListLabel
+            app.CompanyNameListLabel = uilabel(app.GridLayout3);
+            app.CompanyNameListLabel.FontSize = 11;
+            app.CompanyNameListLabel.FontColor = [0.149 0.149 0.149];
+            app.CompanyNameListLabel.Layout.Row = 1;
+            app.CompanyNameListLabel.Layout.Column = 1;
+            app.CompanyNameListLabel.Text = 'Empresa:';
 
-            % Create EmpresaLabel
-            app.EmpresaLabel = uilabel(app.GridLayout3);
-            app.EmpresaLabel.FontSize = 11;
-            app.EmpresaLabel.FontColor = [0.149 0.149 0.149];
-            app.EmpresaLabel.Layout.Row = 1;
-            app.EmpresaLabel.Layout.Column = 1;
-            app.EmpresaLabel.Text = 'Empresa:';
+            % Create CompanyNameList
+            app.CompanyNameList = uidropdown(app.GridLayout3);
+            app.CompanyNameList.Items = {};
+            app.CompanyNameList.ValueChangedFcn = createCallbackFcn(app, @CompanyNameListValueChanged, true);
+            app.CompanyNameList.FontSize = 11;
+            app.CompanyNameList.FontColor = [0.149 0.149 0.149];
+            app.CompanyNameList.BackgroundColor = [1 1 1];
+            app.CompanyNameList.Layout.Row = 1;
+            app.CompanyNameList.Layout.Column = [2 4];
+            app.CompanyNameList.Value = {};
 
-            % Create TreeDropDown
-            app.TreeDropDown = uidropdown(app.GridLayout3);
-            app.TreeDropDown.Items = {};
-            app.TreeDropDown.ValueChangedFcn = createCallbackFcn(app, @TreeSelectionChanged, true);
-            app.TreeDropDown.FontSize = 11;
-            app.TreeDropDown.FontColor = [0.149 0.149 0.149];
-            app.TreeDropDown.BackgroundColor = [1 1 1];
-            app.TreeDropDown.Layout.Row = 2;
-            app.TreeDropDown.Layout.Column = 4;
-            app.TreeDropDown.Value = {};
+            % Create TimePeriodListLabel
+            app.TimePeriodListLabel = uilabel(app.GridLayout3);
+            app.TimePeriodListLabel.FontSize = 11;
+            app.TimePeriodListLabel.FontColor = [0.149 0.149 0.149];
+            app.TimePeriodListLabel.Layout.Row = 2;
+            app.TimePeriodListLabel.Layout.Column = 1;
+            app.TimePeriodListLabel.Text = 'Período fiscal:';
 
-            % Create PerodofiscalLabel
-            app.PerodofiscalLabel = uilabel(app.GridLayout3);
-            app.PerodofiscalLabel.FontSize = 11;
-            app.PerodofiscalLabel.FontColor = [0.149 0.149 0.149];
-            app.PerodofiscalLabel.Layout.Row = 2;
-            app.PerodofiscalLabel.Layout.Column = 1;
-            app.PerodofiscalLabel.Text = 'Período fiscal:';
+            % Create TimePeriodList
+            app.TimePeriodList = uidropdown(app.GridLayout3);
+            app.TimePeriodList.Items = {};
+            app.TimePeriodList.ValueChangedFcn = createCallbackFcn(app, @TimePeriodListValueChanged, true);
+            app.TimePeriodList.FontSize = 11;
+            app.TimePeriodList.FontColor = [0.149 0.149 0.149];
+            app.TimePeriodList.BackgroundColor = [1 1 1];
+            app.TimePeriodList.Layout.Row = 2;
+            app.TimePeriodList.Layout.Column = 2;
+            app.TimePeriodList.Value = {};
 
-            % Create FichaLabel
-            app.FichaLabel = uilabel(app.GridLayout3);
-            app.FichaLabel.FontSize = 11;
-            app.FichaLabel.FontColor = [0.149 0.149 0.149];
-            app.FichaLabel.Layout.Row = 2;
-            app.FichaLabel.Layout.Column = 3;
-            app.FichaLabel.Text = 'Ficha:';
+            % Create SheetListLabel
+            app.SheetListLabel = uilabel(app.GridLayout3);
+            app.SheetListLabel.HorizontalAlignment = 'right';
+            app.SheetListLabel.FontSize = 11;
+            app.SheetListLabel.FontColor = [0.149 0.149 0.149];
+            app.SheetListLabel.Layout.Row = 2;
+            app.SheetListLabel.Layout.Column = 3;
+            app.SheetListLabel.Text = 'Ficha:';
 
-            % Create TreeDropDown_2
-            app.TreeDropDown_2 = uidropdown(app.GridLayout3);
-            app.TreeDropDown_2.Items = {};
-            app.TreeDropDown_2.FontSize = 11;
-            app.TreeDropDown_2.FontColor = [0.149 0.149 0.149];
-            app.TreeDropDown_2.BackgroundColor = [1 1 1];
-            app.TreeDropDown_2.Layout.Row = 2;
-            app.TreeDropDown_2.Layout.Column = 2;
-            app.TreeDropDown_2.Value = {};
+            % Create SheetList
+            app.SheetList = uidropdown(app.GridLayout3);
+            app.SheetList.Items = {};
+            app.SheetList.ValueChangedFcn = createCallbackFcn(app, @SheetListValueChanged, true);
+            app.SheetList.FontSize = 11;
+            app.SheetList.FontColor = [0.149 0.149 0.149];
+            app.SheetList.BackgroundColor = [1 1 1];
+            app.SheetList.Layout.Row = 2;
+            app.SheetList.Layout.Column = 4;
+            app.SheetList.Value = {};
 
-            % Create Hyperlink
-            app.Hyperlink = uihyperlink(app.GridLayout3);
-            app.Hyperlink.HyperlinkClickedFcn = createCallbackFcn(app, @LerfichasButtonPushed, true);
-            app.Hyperlink.VisitedColor = [1 0 0];
-            app.Hyperlink.HorizontalAlignment = 'right';
-            app.Hyperlink.VerticalAlignment = 'bottom';
-            app.Hyperlink.FontSize = 10;
-            app.Hyperlink.FontColor = [1 0 0];
-            app.Hyperlink.Layout.Row = 2;
-            app.Hyperlink.Layout.Column = 6;
-            app.Hyperlink.Text = ' Ler todas as fichas ';
+            % Create ReadAllSheets
+            app.ReadAllSheets = uihyperlink(app.GridLayout3);
+            app.ReadAllSheets.HyperlinkClickedFcn = createCallbackFcn(app, @ReadAllSheetsButtonPushed, true);
+            app.ReadAllSheets.VisitedColor = [1 0 0];
+            app.ReadAllSheets.HorizontalAlignment = 'right';
+            app.ReadAllSheets.VerticalAlignment = 'bottom';
+            app.ReadAllSheets.FontSize = 10;
+            app.ReadAllSheets.FontColor = [1 0 0];
+            app.ReadAllSheets.Layout.Row = 2;
+            app.ReadAllSheets.Layout.Column = 6;
+            app.ReadAllSheets.Text = ' Ler todas as fichas ';
 
             % Create LAYOUTTab
             app.LAYOUTTab = uitab(app.TabGroup);
@@ -717,96 +801,155 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create GridLayout_2
             app.GridLayout_2 = uigridlayout(app.LAYOUTTab);
-            app.GridLayout_2.ColumnWidth = {22, 22, 22, 22, 22, 22, 36, 36, 3, '1x'};
+            app.GridLayout_2.ColumnWidth = {44, 226, 40, 3, 22, 22, 22, 22, 22, 22, 35, 35, 3, '1x'};
             app.GridLayout_2.RowHeight = {22, 22};
             app.GridLayout_2.RowSpacing = 5;
             app.GridLayout_2.Padding = [5 5 5 6];
             app.GridLayout_2.BackgroundColor = [0.9608 0.9608 0.9608];
 
-            % Create Image
-            app.Image = uiimage(app.GridLayout_2);
-            app.Image.ScaleMethod = 'none';
-            app.Image.BackgroundColor = [0.9412 0.9412 0.9412];
-            app.Image.Tooltip = {'Negrito'};
-            app.Image.Layout.Row = 2;
-            app.Image.Layout.Column = 1;
-            app.Image.ImageSource = '_Bold.png';
+            % Create SheetViewStatus
+            app.SheetViewStatus = uibutton(app.GridLayout_2, 'state');
+            app.SheetViewStatus.ValueChangedFcn = createCallbackFcn(app, @SheetViewStatusValueChanged, true);
+            app.SheetViewStatus.Icon = 'split_top_bottom_ts_24-a602190eb092f2373c13f20ec5875137.png';
+            app.SheetViewStatus.IconAlignment = 'top';
+            app.SheetViewStatus.Text = 'Fichas';
+            app.SheetViewStatus.BackgroundColor = [0.9608 0.9608 0.9608];
+            app.SheetViewStatus.FontSize = 11;
+            app.SheetViewStatus.Layout.Row = [1 2];
+            app.SheetViewStatus.Layout.Column = 1;
 
-            % Create Image_2
-            app.Image_2 = uiimage(app.GridLayout_2);
-            app.Image_2.ScaleMethod = 'none';
-            app.Image_2.BackgroundColor = [0.9412 0.9412 0.9412];
-            app.Image_2.Tooltip = {'Itálico'};
-            app.Image_2.Layout.Row = 2;
-            app.Image_2.Layout.Column = 2;
-            app.Image_2.ImageSource = '_Italic.png';
+            % Create SheetView_First
+            app.SheetView_First = uidropdown(app.GridLayout_2);
+            app.SheetView_First.Items = {};
+            app.SheetView_First.FontSize = 11;
+            app.SheetView_First.BackgroundColor = [1 1 1];
+            app.SheetView_First.Layout.Row = 1;
+            app.SheetView_First.Layout.Column = 2;
+            app.SheetView_First.Value = {};
 
-            % Create Image_3
-            app.Image_3 = uiimage(app.GridLayout_2);
-            app.Image_3.ScaleMethod = 'none';
-            app.Image_3.BackgroundColor = [0.9412 0.9412 0.9412];
-            app.Image_3.Tooltip = {'Sublinhado'};
-            app.Image_3.Layout.Row = 2;
-            app.Image_3.Layout.Column = 3;
-            app.Image_3.ImageSource = '_Underline.png';
+            % Create SheetHeight_First
+            app.SheetHeight_First = uispinner(app.GridLayout_2);
+            app.SheetHeight_First.Limits = [1 5];
+            app.SheetHeight_First.RoundFractionalValues = 'on';
+            app.SheetHeight_First.ValueDisplayFormat = '%d';
+            app.SheetHeight_First.ValueChangedFcn = createCallbackFcn(app, @SpinnerValueChanged, true);
+            app.SheetHeight_First.FontSize = 11;
+            app.SheetHeight_First.Enable = 'off';
+            app.SheetHeight_First.Layout.Row = 1;
+            app.SheetHeight_First.Layout.Column = 3;
+            app.SheetHeight_First.Value = 1;
 
-            % Create DropDown_4
-            app.DropDown_4 = uidropdown(app.GridLayout_2);
-            app.DropDown_4.Items = {};
-            app.DropDown_4.Tooltip = {'Fonte'};
-            app.DropDown_4.FontSize = 11;
-            app.DropDown_4.BackgroundColor = [1 1 1];
-            app.DropDown_4.Layout.Row = 1;
-            app.DropDown_4.Layout.Column = [1 6];
-            app.DropDown_4.Value = {};
+            % Create SheetView_Second
+            app.SheetView_Second = uidropdown(app.GridLayout_2);
+            app.SheetView_Second.Items = {};
+            app.SheetView_Second.Enable = 'off';
+            app.SheetView_Second.FontSize = 11;
+            app.SheetView_Second.BackgroundColor = [1 1 1];
+            app.SheetView_Second.Layout.Row = 2;
+            app.SheetView_Second.Layout.Column = 2;
+            app.SheetView_Second.Value = {};
 
-            % Create DropDown_5
-            app.DropDown_5 = uidropdown(app.GridLayout_2);
-            app.DropDown_5.Items = {'10', '11', '12', '13', '14'};
-            app.DropDown_5.Tooltip = {'Tamanho da fonte'};
-            app.DropDown_5.FontSize = 11;
-            app.DropDown_5.BackgroundColor = [1 1 1];
-            app.DropDown_5.Layout.Row = 1;
-            app.DropDown_5.Layout.Column = [7 8];
-            app.DropDown_5.Value = '10';
+            % Create SheetHeight_Second
+            app.SheetHeight_Second = uispinner(app.GridLayout_2);
+            app.SheetHeight_Second.Limits = [0 5];
+            app.SheetHeight_Second.RoundFractionalValues = 'on';
+            app.SheetHeight_Second.ValueDisplayFormat = '%d';
+            app.SheetHeight_Second.ValueChangedFcn = createCallbackFcn(app, @SpinnerValueChanged, true);
+            app.SheetHeight_Second.FontSize = 11;
+            app.SheetHeight_Second.Enable = 'off';
+            app.SheetHeight_Second.Layout.Row = 2;
+            app.SheetHeight_Second.Layout.Column = 3;
 
-            % Create ColorPicker
-            app.ColorPicker = uicolorpicker(app.GridLayout_2);
-            app.ColorPicker.Icon = '_Background.png';
-            app.ColorPicker.Layout.Row = 2;
-            app.ColorPicker.Layout.Column = 7;
-            app.ColorPicker.BackgroundColor = [1 1 1];
+            % Create Separator
+            app.Separator = uiimage(app.GridLayout_2);
+            app.Separator.Enable = 'off';
+            app.Separator.Layout.Row = [1 2];
+            app.Separator.Layout.Column = 4;
+            app.Separator.ImageSource = 'LineV.svg';
 
-            % Create ColorPicker_2
-            app.ColorPicker_2 = uicolorpicker(app.GridLayout_2);
-            app.ColorPicker_2.Icon = '_Color.png';
-            app.ColorPicker_2.Layout.Row = 2;
-            app.ColorPicker_2.Layout.Column = 8;
-            app.ColorPicker_2.BackgroundColor = [1 1 1];
+            % Create FontFamilyList
+            app.FontFamilyList = uidropdown(app.GridLayout_2);
+            app.FontFamilyList.Items = {};
+            app.FontFamilyList.Tooltip = {'Fonte'};
+            app.FontFamilyList.FontSize = 11;
+            app.FontFamilyList.BackgroundColor = [1 1 1];
+            app.FontFamilyList.Layout.Row = 1;
+            app.FontFamilyList.Layout.Column = [5 10];
+            app.FontFamilyList.Value = {};
 
-            % Create Image_4
-            app.Image_4 = uiimage(app.GridLayout_2);
-            app.Image_4.ScaleMethod = 'none';
-            app.Image_4.Tooltip = {'Sublinhado'};
-            app.Image_4.Layout.Row = 2;
-            app.Image_4.Layout.Column = 4;
-            app.Image_4.ImageSource = 'left-align-18.png';
+            % Create FontSize
+            app.FontSize = uidropdown(app.GridLayout_2);
+            app.FontSize.Items = {'10', '11', '12', '13', '14'};
+            app.FontSize.Tooltip = {'Tamanho da fonte'};
+            app.FontSize.FontSize = 11;
+            app.FontSize.BackgroundColor = [1 1 1];
+            app.FontSize.Layout.Row = 1;
+            app.FontSize.Layout.Column = [11 12];
+            app.FontSize.Value = '10';
 
-            % Create Image_5
-            app.Image_5 = uiimage(app.GridLayout_2);
-            app.Image_5.ScaleMethod = 'none';
-            app.Image_5.Tooltip = {'Sublinhado'};
-            app.Image_5.Layout.Row = 2;
-            app.Image_5.Layout.Column = 5;
-            app.Image_5.ImageSource = 'center-align-18.png';
+            % Create FontWeight
+            app.FontWeight = uibutton(app.GridLayout_2, 'push');
+            app.FontWeight.BackgroundColor = [1 1 1];
+            app.FontWeight.FontName = 'Century';
+            app.FontWeight.FontWeight = 'bold';
+            app.FontWeight.Layout.Row = 2;
+            app.FontWeight.Layout.Column = 5;
+            app.FontWeight.Text = 'B';
 
-            % Create Image_6
-            app.Image_6 = uiimage(app.GridLayout_2);
-            app.Image_6.ScaleMethod = 'none';
-            app.Image_6.Tooltip = {'Sublinhado'};
-            app.Image_6.Layout.Row = 2;
-            app.Image_6.Layout.Column = 6;
-            app.Image_6.ImageSource = 'right-align-18.png';
+            % Create FontStyle
+            app.FontStyle = uibutton(app.GridLayout_2, 'push');
+            app.FontStyle.BackgroundColor = [1 1 1];
+            app.FontStyle.FontName = 'Century';
+            app.FontStyle.FontAngle = 'italic';
+            app.FontStyle.Layout.Row = 2;
+            app.FontStyle.Layout.Column = 6;
+            app.FontStyle.Text = 'I ';
+
+            % Create FontUnderline
+            app.FontUnderline = uibutton(app.GridLayout_2, 'push');
+            app.FontUnderline.BackgroundColor = [1 1 1];
+            app.FontUnderline.FontName = 'Century';
+            app.FontUnderline.Layout.Row = 2;
+            app.FontUnderline.Layout.Column = 7;
+            app.FontUnderline.Text = 'U̲';
+
+            % Create FontAlign1
+            app.FontAlign1 = uiimage(app.GridLayout_2);
+            app.FontAlign1.ScaleMethod = 'none';
+            app.FontAlign1.Tooltip = {'Sublinhado'};
+            app.FontAlign1.Layout.Row = 2;
+            app.FontAlign1.Layout.Column = 8;
+            app.FontAlign1.ImageSource = 'AlignedLeft_16-7f46662cd6fd7221119660e14bdcea56.png';
+
+            % Create FontAlign2
+            app.FontAlign2 = uiimage(app.GridLayout_2);
+            app.FontAlign2.ScaleMethod = 'none';
+            app.FontAlign2.Tooltip = {'Sublinhado'};
+            app.FontAlign2.Layout.Row = 2;
+            app.FontAlign2.Layout.Column = 9;
+            app.FontAlign2.ImageSource = 'AlignedCenter_16-b91485db227234029c43b7823c09ebff.png';
+
+            % Create FontAlign3
+            app.FontAlign3 = uiimage(app.GridLayout_2);
+            app.FontAlign3.ScaleMethod = 'none';
+            app.FontAlign3.Tooltip = {'Sublinhado'};
+            app.FontAlign3.Layout.Row = 2;
+            app.FontAlign3.Layout.Column = 10;
+            app.FontAlign3.ImageSource = 'AlignedRight_16-7827788943408c9bac98181b7ad0efb5.png';
+
+            % Create FontBackground
+            app.FontBackground = uicolorpicker(app.GridLayout_2);
+            app.FontBackground.Icon = '_Background.png';
+            app.FontBackground.Layout.Row = 2;
+            app.FontBackground.Layout.Column = 11;
+            app.FontBackground.BackgroundColor = [1 1 1];
+
+            % Create FontColor
+            app.FontColor = uicolorpicker(app.GridLayout_2);
+            app.FontColor.Icon = '_Color.png';
+            app.FontColor.Layout.Row = 2;
+            app.FontColor.Layout.Column = 12;
+            app.FontColor.BackgroundColor = [1 1 1];
 
             % Create FILTRAGEMTab
             app.FILTRAGEMTab = uitab(app.TabGroup);
@@ -816,7 +959,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create GridLayout4
             app.GridLayout4 = uigridlayout(app.FILTRAGEMTab);
-            app.GridLayout4.ColumnWidth = {14, 40, 206, 40, 270, 3, '1x'};
+            app.GridLayout4.ColumnWidth = {14, 40, 206, 40, 285, 3, '1x'};
             app.GridLayout4.RowHeight = {22, 22};
             app.GridLayout4.RowSpacing = 5;
             app.GridLayout4.Padding = [5 5 5 6];
@@ -927,13 +1070,13 @@ classdef winECD_exported < matlab.apps.AppBase
             app.Image6.Layout.Column = 2;
             app.Image6.ImageSource = 'selectColumn.png';
 
-            % Create Label
-            app.Label = uilabel(app.GridLayout);
-            app.Label.FontSize = 10;
-            app.Label.FontColor = [0.502 0.502 0.502];
-            app.Label.Layout.Row = 6;
-            app.Label.Layout.Column = [3 9];
-            app.Label.Text = '';
+            % Create CONTAGEM0Label
+            app.CONTAGEM0Label = uilabel(app.GridLayout);
+            app.CONTAGEM0Label.FontSize = 10;
+            app.CONTAGEM0Label.FontColor = [0.502 0.502 0.502];
+            app.CONTAGEM0Label.Layout.Row = 6;
+            app.CONTAGEM0Label.Layout.Column = [3 9];
+            app.CONTAGEM0Label.Text = ' CONTAGEM : 0';
 
             % Create Image5
             app.Image5 = uiimage(app.GridLayout);
@@ -943,21 +1086,46 @@ classdef winECD_exported < matlab.apps.AppBase
             app.Image5.Layout.Column = 14;
             app.Image5.ImageSource = 'Filter_18.png';
 
-            % Create EXIBIDASTODASAS22LINHASLabel
-            app.EXIBIDASTODASAS22LINHASLabel = uilabel(app.GridLayout);
-            app.EXIBIDASTODASAS22LINHASLabel.HorizontalAlignment = 'right';
-            app.EXIBIDASTODASAS22LINHASLabel.FontSize = 10;
-            app.EXIBIDASTODASAS22LINHASLabel.FontColor = [0.502 0.502 0.502];
-            app.EXIBIDASTODASAS22LINHASLabel.Layout.Row = 6;
-            app.EXIBIDASTODASAS22LINHASLabel.Layout.Column = 13;
-            app.EXIBIDASTODASAS22LINHASLabel.Text = 'EXIBIDAS TODAS AS 22 LINHAS  ';
+            % Create DE0Label
+            app.DE0Label = uilabel(app.GridLayout);
+            app.DE0Label.HorizontalAlignment = 'right';
+            app.DE0Label.FontSize = 10;
+            app.DE0Label.FontColor = [0.502 0.502 0.502];
+            app.DE0Label.Layout.Row = 6;
+            app.DE0Label.Layout.Column = 13;
+            app.DE0Label.Text = '0 DE 0 ';
 
-            % Create editionFontContainer
-            app.editionFontContainer = uipanel(app.UIFigure);
-            app.editionFontContainer.AutoResizeChildren = 'off';
-            app.editionFontContainer.BorderType = 'none';
-            app.editionFontContainer.Visible = 'off';
-            app.editionFontContainer.Position = [1260 4 260 70];
+            % Create Image6_2
+            app.Image6_2 = uiimage(app.GridLayout);
+            app.Image6_2.ScaleMethod = 'none';
+            app.Image6_2.Layout.Row = 10;
+            app.Image6_2.Layout.Column = 2;
+            app.Image6_2.ImageSource = 'selectColumn.png';
+
+            % Create CONTAGEM0Label_2
+            app.CONTAGEM0Label_2 = uilabel(app.GridLayout);
+            app.CONTAGEM0Label_2.FontSize = 10;
+            app.CONTAGEM0Label_2.FontColor = [0.502 0.502 0.502];
+            app.CONTAGEM0Label_2.Layout.Row = 10;
+            app.CONTAGEM0Label_2.Layout.Column = [3 9];
+            app.CONTAGEM0Label_2.Text = ' CONTAGEM: 0';
+
+            % Create DE0Label_2
+            app.DE0Label_2 = uilabel(app.GridLayout);
+            app.DE0Label_2.HorizontalAlignment = 'right';
+            app.DE0Label_2.FontSize = 10;
+            app.DE0Label_2.FontColor = [0.502 0.502 0.502];
+            app.DE0Label_2.Layout.Row = 10;
+            app.DE0Label_2.Layout.Column = [10 13];
+            app.DE0Label_2.Text = '0 DE 0';
+
+            % Create Image5_2
+            app.Image5_2 = uiimage(app.GridLayout);
+            app.Image5_2.ScaleMethod = 'none';
+            app.Image5_2.Enable = 'off';
+            app.Image5_2.Layout.Row = 10;
+            app.Image5_2.Layout.Column = [14 15];
+            app.Image5_2.ImageSource = 'Filter_18.png';
 
             % Create filter_ContextMenu
             app.filter_ContextMenu = uicontextmenu(app.UIFigure);

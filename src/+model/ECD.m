@@ -78,7 +78,9 @@ classdef ECD < model.ECDBase
                                                       'IM',    obj(idx).Table.x0000.IM{1},   ...
                                                       'UF',    obj(idx).Table.x0000.UF{1},   ...
                                                       'City',  obj(idx).Table.x0000.COD_MUN{1});
-                        obj(idx).Period      = [obj(idx).Table.x0000.DT_INI(1), obj(idx).Table.x0000.DT_FIN(1)];
+
+                        obj(idx).Period        = [obj(idx).Table.x0000.DT_INI(1), obj(idx).Table.x0000.DT_FIN(1)];
+                        obj(idx).Period.Format = 'dd/MM/yyyy';
                     end
 
                 catch ME

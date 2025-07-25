@@ -61,11 +61,14 @@ classdef (Abstract) HtmlTextGenerator
                     case  1; colorStatus = 'blue'; textStatus = 'COINCIDE ARQUIVO RECEITA FEDERAL';
                 end
 
+                sheetsNames     = fieldnames(ecdObj.Table);
+                nonemptySheets  = sheetsNames(cellfun(@(x) ~isempty(ecdObj.Table.(x)), sheetsNames));
+
                 dataStruct(1)   = struct('group', 'FileName', 'value', sprintf('"%s"', ecdObj.FileName)); % textFormatGUI.cellstr2ListWithQuotes({...})
                 dataStruct(2)   = struct('group', 'Period',   'value', strjoin(string(ecdObj.Period), ' a '));
                 dataStruct(3)   = struct('group', 'Content',  'value', [strjoin(strtrim(splitlines(ecdObj.Content(1:500))), '\n') '<br><font style="color: red;">... [texto truncado]</font>']);
                 dataStruct(4)   = struct('group', 'Layout',   'value', string(ecdObj.Layout));
-                dataStruct(5)   = struct('group', 'Table',    'value', strjoin(extractAfter(fields(ecdObj.Table), 'x'), ', '));
+                dataStruct(5)   = struct('group', 'Table',    'value', strjoin(extractAfter(sort(nonemptySheets), 'x'), ', '));
 
                 freeInitialText = [sprintf('<font style="font-size: 10px; color: white; background-color: %s; display: inline-block; vertical-align: middle; padding: 5px; border-radius: 5px;">%s</font><br><br>', colorStatus, textStatus) ...
                                    sprintf('<font style="font-size: 16px;"><b>%s</b></font><br>', ecdObj.CompanyName)                                                                                                                        ...
