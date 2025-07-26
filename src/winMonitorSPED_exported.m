@@ -139,6 +139,16 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 end
                         end
 
+                    case 'getCssPropertyValue'
+                        objHandle = eval(event.HTMLEventData.componentName);
+                        cssProp   = event.HTMLEventData.propertyName;
+                        cssValue  = event.HTMLEventData.propertyValue;
+
+                        if ~isprop(objHandle, 'StyleObservations')
+                            objHandle.addprop('StyleObservations');
+                        end
+                        objHandle.StyleObservations.(cssProp) = cssValue;
+
                     otherwise
                         error('UnexpectedEvent')
                 end
@@ -444,12 +454,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     [~, idSortedIndexes] = sort(arrayfun(@(x) x.Period(1), app.ecdObj(idIndexes)));
     
                     treeNodeParent = uitreenode(app.file_Tree, ...
-                        'Text', sprintf('%s (CNPJ nº %s) (Id: %s)', app.ecdObj(idIndexes(1)).CompanyName, app.ecdObj(idIndexes(1)).CompanyId, strjoin(string(idIndexes), ', ')), ...
+                        'Text', sprintf('%s (CNPJ nº %s)', app.ecdObj(idIndexes(1)).CompanyName, app.ecdObj(idIndexes(1)).CompanyId), ...
                         'NodeData', idIndexes, 'ContextMenu', app.file_ContextMenu_Tree);
     
                     for idx = idIndexes(idSortedIndexes)
                         uitreenode(treeNodeParent, ...
-                            'Text', sprintf('%s (Id: %d)', strjoin(string(app.ecdObj(idx).Period), ' a '), idx), ...
+                            'Text', sprintf('%s', strjoin(string(app.ecdObj(idx).Period), ' a ')), ...
                             'NodeData', idx, 'ContextMenu', app.file_ContextMenu_Tree);
                     end
                 end
@@ -788,7 +798,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % Create file_Grid
             app.file_Grid = uigridlayout(app.Tab1_File);
             app.file_Grid.ColumnWidth = {5, 320, '1x', 10, 320, 5};
-            app.file_Grid.RowHeight = {84, 10, '1x', 5, 34};
+            app.file_Grid.RowHeight = {94, 10, '1x', 5, 34};
             app.file_Grid.ColumnSpacing = 0;
             app.file_Grid.RowSpacing = 0;
             app.file_Grid.Padding = [0 0 0 26];
@@ -855,7 +865,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.GridLayout2 = uigridlayout(app.ARQUIVOSTab);
             app.GridLayout2.ColumnWidth = {'1x'};
             app.GridLayout2.RowHeight = {'1x'};
-            app.GridLayout2.Padding = [5 5 5 6];
             app.GridLayout2.BackgroundColor = [0.9608 0.9608 0.9608];
 
             % Create NOMEDAEMPRESAMetadadosOutrascoisasLabel
