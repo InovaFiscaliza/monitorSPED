@@ -34,8 +34,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         Image                          matlab.ui.control.Image
         file_OpenFileButton            matlab.ui.control.Image
         Tab2_Playback                  matlab.ui.container.Tab
-        Tab5_RFDataHub                 matlab.ui.container.Tab
-        Tab6_Config                    matlab.ui.container.Tab
+        Tab3_Config                    matlab.ui.container.Tab
         file_ContextMenu_Tree          matlab.ui.container.ContextMenu
         file_ContextMenu_delTree1Node  matlab.ui.container.Menu
     end
@@ -140,14 +139,29 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         end
 
                     case 'getCssPropertyValue'
-                        objHandle = eval(event.HTMLEventData.componentName);
-                        cssProp   = event.HTMLEventData.propertyName;
-                        cssValue  = event.HTMLEventData.propertyValue;
+                        componentName = event.HTMLEventData.componentName;
 
-                        if ~isprop(objHandle, 'StyleObservations')
-                            objHandle.addprop('StyleObservations');
+                        if ~isempty(componentName)
+                            if ~isprop(app, 'isDocked') % mainApp (app container)
+                                auxAppTag = event.HTMLEventData.auxAppTag;
+                                if ~isempty(auxAppTag)
+                                    hAuxApp   = auxAppHandle(app, auxAppTag);
+                                    objHandle = hAuxApp.(componentName);
+                                else
+                                    objHandle = eval(['app.' componentName]);
+                                end
+                            else
+                                objHandle = eval(['app.' componentName]);
+                            end
+                            
+                            cssProp  = event.HTMLEventData.propertyName;
+                            cssValue = event.HTMLEventData.propertyValue;
+    
+                            if ~isprop(objHandle, 'StyleObservations')
+                                objHandle.addprop('StyleObservations');
+                            end
+                            objHandle.StyleObservations.(cssProp) = cssValue;
                         end
-                        objHandle.StyleObservations.(cssProp) = cssValue;
 
                     otherwise
                         error('UnexpectedEvent')
@@ -422,7 +436,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tabGroupController = tabGroupGraphicMenu(app.menu_Grid, app.TabGroup, app.progressDialog, @app.jsBackDoor_Customizations, []);
             addComponent(app.tabGroupController, "Built-in", "",                      app.menu_Button1, "AlwaysOn", struct('On', 'OpenFile_32Yellow.png', 'Off', 'OpenFile_32White.png'), matlab.graphics.GraphicsPlaceholder, 1)
             addComponent(app.tabGroupController, "External", "auxApp.winECD",         app.menu_Button2, "AlwaysOn", struct('On', 'Playback_32Yellow.png', 'Off', 'Playback_32White.png'), app.menu_Button1,                    2)
-            addComponent(app.tabGroupController, "External", "auxApp.winConfig",      app.menu_Button4, "AlwaysOn", struct('On', 'Settings_36Yellow.png', 'Off', 'Settings_36White.png'), app.menu_Button1,                    4)
+            addComponent(app.tabGroupController, "External", "auxApp.winConfig",      app.menu_Button4, "AlwaysOn", struct('On', 'Settings_36Yellow.png', 'Off', 'Settings_36White.png'), app.menu_Button1,                    3)
 
             % Alerta, caso não tenha sido feito mapemanto de pasta do sharepoint.
             DataHubWarningLamp(app)
@@ -900,13 +914,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab2_Playback.AutoResizeChildren = 'off';
             app.Tab2_Playback.BackgroundColor = 'none';
 
-            % Create Tab5_RFDataHub
-            app.Tab5_RFDataHub = uitab(app.TabGroup);
-            app.Tab5_RFDataHub.BackgroundColor = 'none';
-
-            % Create Tab6_Config
-            app.Tab6_Config = uitab(app.TabGroup);
-            app.Tab6_Config.BackgroundColor = 'none';
+            % Create Tab3_Config
+            app.Tab3_Config = uitab(app.TabGroup);
+            app.Tab3_Config.BackgroundColor = 'none';
 
             % Create menu_Grid
             app.menu_Grid = uigridlayout(app.GridLayout);

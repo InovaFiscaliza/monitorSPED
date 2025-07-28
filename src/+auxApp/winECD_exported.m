@@ -2,64 +2,67 @@ classdef winECD_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure                     matlab.ui.Figure
-        GridLayout                   matlab.ui.container.GridLayout
-        toolGrid                     matlab.ui.container.GridLayout
+        UIFigure                    matlab.ui.Figure
+        GridLayout                  matlab.ui.container.GridLayout
+        toolGrid                    matlab.ui.container.GridLayout
         NOMEDAEMPRESAMetadadosOutrascoisasLabel_2  matlab.ui.control.Label
-        tool_ExportButton            matlab.ui.control.Image
-        UITable2_FilterText          matlab.ui.control.Label
-        UITable2_CountText           matlab.ui.control.Label
-        UITable2_CountIcon           matlab.ui.control.Image
-        UITable2                     matlab.ui.control.Table
-        UITable1_FilterText          matlab.ui.control.Label
-        UITable1_CountText           matlab.ui.control.Label
-        UITable1_CountIcon           matlab.ui.control.Image
-        UITable1                     matlab.ui.control.Table
-        TabGroup                     matlab.ui.container.TabGroup
-        ASPECTOSGERAISTab            matlab.ui.container.Tab
-        GridLayout3                  matlab.ui.container.GridLayout
-        ReadAllSheets                matlab.ui.control.Hyperlink
-        SheetList                    matlab.ui.control.DropDown
-        SheetListLabel               matlab.ui.control.Label
-        TimePeriodList               matlab.ui.control.DropDown
-        TimePeriodListLabel          matlab.ui.control.Label
-        CompanyNameList              matlab.ui.control.DropDown
-        CompanyNameListLabel         matlab.ui.control.Label
-        LAYOUTTab                    matlab.ui.container.Tab
-        GridLayout_2                 matlab.ui.container.GridLayout
-        AumentaralturadalinhaButton  matlab.ui.control.Button
-        Lamp                         matlab.ui.control.Lamp
-        FontColor                    matlab.ui.control.ColorPicker
-        FontBackground               matlab.ui.control.ColorPicker
-        FontAlign3                   matlab.ui.control.Image
-        FontAlign2                   matlab.ui.control.Image
-        FontAlign1                   matlab.ui.control.Image
-        FontStyle                    matlab.ui.control.Button
-        FontWeight                   matlab.ui.control.Button
-        FontFamily                   matlab.ui.control.DropDown
-        Separator                    matlab.ui.control.Image
-        SheetHeight_Second           matlab.ui.control.Spinner
-        SheetView_Second             matlab.ui.control.DropDown
-        SheetHeight_First            matlab.ui.control.Spinner
-        SheetView_First              matlab.ui.control.DropDown
-        SheetViewStatus              matlab.ui.control.StateButton
-        FILTRAGEMTab                 matlab.ui.container.Tab
-        GridLayout4                  matlab.ui.container.GridLayout
-        filter_SecondaryTextList_2   matlab.ui.control.DropDown
-        filter_SecondaryTextList     matlab.ui.control.DropDown
-        EditField_2                  matlab.ui.control.EditField
-        EditField                    matlab.ui.control.EditField
-        DropDown_10                  matlab.ui.control.DropDown
-        DropDown_9                   matlab.ui.control.DropDown
-        DropDown_8                   matlab.ui.control.DropDown
-        DropDown_7                   matlab.ui.control.DropDown
-        CheckBox                     matlab.ui.control.CheckBox
-        DropDown_6                   matlab.ui.control.DropDown
-        Image4_3                     matlab.ui.control.Image
-        TABELACUSTOMIZADATab         matlab.ui.container.Tab
-        filter_ContextMenu           matlab.ui.container.ContextMenu
-        filter_delButton             matlab.ui.container.Menu
-        filter_delAllButton          matlab.ui.container.Menu
+        tool_ExportButton           matlab.ui.control.Image
+        UITable2_FilterText         matlab.ui.control.Label
+        UITable2_CountText          matlab.ui.control.Label
+        UITable2_CountIcon          matlab.ui.control.Image
+        UITable2                    matlab.ui.control.Table
+        UITable1_FilterText         matlab.ui.control.Label
+        UITable1_CountText          matlab.ui.control.Label
+        UITable1_CountIcon          matlab.ui.control.Image
+        UITable1                    matlab.ui.control.Table
+        TabGroup                    matlab.ui.container.TabGroup
+        ASPECTOSGERAISTab           matlab.ui.container.Tab
+        GridLayout3                 matlab.ui.container.GridLayout
+        ReadAllSheets               matlab.ui.control.Hyperlink
+        SheetList                   matlab.ui.control.DropDown
+        SheetListLabel              matlab.ui.control.Label
+        TimePeriodList              matlab.ui.control.DropDown
+        TimePeriodListLabel         matlab.ui.control.Label
+        CompanyNameList             matlab.ui.control.DropDown
+        CompanyNameListLabel        matlab.ui.control.Label
+        LAYOUTTab                   matlab.ui.container.Tab
+        GridLayout_2                matlab.ui.container.GridLayout
+        FontColor                   matlab.ui.control.ColorPicker
+        FontBackground              matlab.ui.control.ColorPicker
+        FontAlign3                  matlab.ui.control.Image
+        FontAlign2                  matlab.ui.control.Image
+        FontAlign1                  matlab.ui.control.Image
+        FontStyle                   matlab.ui.control.Button
+        FontWeight                  matlab.ui.control.Button
+        FontFamily                  matlab.ui.control.DropDown
+        Separator2                  matlab.ui.control.Image
+        RowHeightOffsetLabel        matlab.ui.control.Label
+        RowHeightOffset             matlab.ui.control.Spinner
+        Separator1                  matlab.ui.control.Image
+        SheetOnFocus                matlab.ui.control.Lamp
+        SheetHeight_Second          matlab.ui.control.Spinner
+        SheetView_Second            matlab.ui.control.DropDown
+        SheetHeight_First           matlab.ui.control.Spinner
+        SheetView_First             matlab.ui.control.DropDown
+        SheetViewStatus             matlab.ui.control.StateButton
+        FILTRAGEMTab                matlab.ui.container.Tab
+        GridLayout4                 matlab.ui.container.GridLayout
+        filter_SecondaryTextList_2  matlab.ui.control.DropDown
+        filter_SecondaryTextList    matlab.ui.control.DropDown
+        EditField_2                 matlab.ui.control.EditField
+        EditField                   matlab.ui.control.EditField
+        DropDown_10                 matlab.ui.control.DropDown
+        DropDown_9                  matlab.ui.control.DropDown
+        DropDown_8                  matlab.ui.control.DropDown
+        DropDown_7                  matlab.ui.control.DropDown
+        CheckBox                    matlab.ui.control.CheckBox
+        DropDown_6                  matlab.ui.control.DropDown
+        Image4_3                    matlab.ui.control.Image
+        TABELACUSTOMIZADATab        matlab.ui.container.Tab
+        GridLayout5                 matlab.ui.container.GridLayout
+        filter_ContextMenu          matlab.ui.container.ContextMenu
+        filter_delButton            matlab.ui.container.Menu
+        filter_delAllButton         matlab.ui.container.Menu
     end
 
     
@@ -100,14 +103,27 @@ classdef winECD_exported < matlab.apps.AppBase
                         startup_Controller(app)
 
                     case 'getCssPropertyValue'
-                        objHandle = eval(event.HTMLEventData.componentName);
-                        cssProp   = event.HTMLEventData.propertyName;
-                        cssValue  = event.HTMLEventData.propertyValue;
-
-                        if ~isprop(objHandle, 'StyleObservations')
-                            objHandle.addprop('StyleObservations');
+                        if ~isempty(event.HTMLEventData.componentName)
+                            if ~isprop(app, 'isDocked') % mainApp (app container)
+                                auxAppTag = event.HTMLEventData.auxAppTag;
+                                if ~isempty(auxAppTag)
+                                    hAuxApp   = auxAppHandle(app, auxAppTag);
+                                    objHandle = hAuxApp.(componentName);
+                                else
+                                    objHandle = eval(['app.' event.HTMLEventData.componentName]);
+                                end
+                            else
+                                objHandle = eval(['app.' event.HTMLEventData.componentName]);
+                            end
+                            
+                            cssProp  = event.HTMLEventData.propertyName;
+                            cssValue = event.HTMLEventData.propertyValue;
+    
+                            if ~isprop(objHandle, 'StyleObservations')
+                                objHandle.addprop('StyleObservations');
+                            end
+                            objHandle.StyleObservations.(cssProp) = cssValue;
                         end
-                        objHandle.StyleObservations.(cssProp) = cssValue;
 
                     otherwise
                         error('UnexpectedEvent')
@@ -277,15 +293,32 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function restartTableSelectionControl(app, clickedTable, tableCountText)
-            clickedTable.Selection = [];
+        function updateTable(app, hTable, hTableCountText, hTableFilterText, sheetId)
+            fileIndex   = selectedFileIndex(app);
+            selectedECD = app.ecdObj(fileIndex);
+
+            hTable.Data = selectedECD.Table.(['x' sheetId]);
+            hTable.ColumnName = hTable.Data.Properties.VariableNames;
+            restartTableSelectionControl(app, hTable, hTableCountText)
+
+            if height(hTable.Data) > 1
+                numberOfRowsText = sprintf('%d DE %d REGISTROS ', height(hTable.Data), height(hTable.Data)); % PENDENTE FILTRAGEM
+            else
+                numberOfRowsText = sprintf('%d DE %d REGISTRO ',  height(hTable.Data), height(hTable.Data)); % PENDENTE FILTRAGEM
+            end
+            hTableFilterText.Text = numberOfRowsText;
+        end
+
+        %-----------------------------------------------------------------%
+        function restartTableSelectionControl(app, hTable, hTableCountText)
+            hTable.Selection = [];
             
             % ().UserData.id armazenará o "data-tag" do componente, caso haja
             % alguma customização em curso.
-            clickedTable.UserData.Selection = [];
-            clickedTable.UserData.SelectionType = 'none';
+            hTable.UserData.Selection = [];
+            hTable.UserData.SelectionType = 'none';
 
-            tableCountText.Text = '  CONTAGEM: 0';
+            hTableCountText.Text = '  CONTAGEM: 0';
         end
 
         %-----------------------------------------------------------------%
@@ -294,13 +327,25 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function [clickedTable, clickedTableName] = onFocusTable(app)
-            if app.Lamp.Layout.Row == 1
-                clickedTable = app.UITable1;
-                clickedTableName = 'app.UITable1';
+        function [hTable, hTableName] = onFocusTable(app)
+            if app.SheetOnFocus.Layout.Row == 1
+                hTable     = app.UITable1;
+                hTableName = 'app.UITable1';
             else
-                clickedTable = app.UITable2;
-                clickedTableName = 'app.UITable2';
+                hTable     = app.UITable2;
+                hTableName = 'app.UITable2';
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function waitForPropertyCreation(app, objHandle, propertyName)
+            tWaitFor = tic;
+            while toc(tWaitFor) < 2
+                if isprop(objHandle, propertyName)
+                    toc
+                    break
+                end
+                pause(.010)
             end
         end
     end
@@ -379,40 +424,16 @@ classdef winECD_exported < matlab.apps.AppBase
                     app.SheetView_First.Value = app.SheetList.Value;
                 case app.SheetView_First
                     app.SheetList.Value = app.SheetView_First.Value;
-            end            
-
-            fileIndex   = selectedFileIndex(app);
-            selectedECD = app.ecdObj(fileIndex);
-            
-            app.UITable1.Data = selectedECD.Table.(['x' app.SheetList.Value]);
-            app.UITable1.ColumnName = app.UITable1.Data.Properties.VariableNames;
-            restartTableSelectionControl(app, app.UITable1, app.UITable1_CountText)
-
-            if height(app.UITable1.Data) > 1
-                numberOfRowsText = sprintf('%d DE %d REGISTROS ', height(app.UITable1.Data), height(app.UITable1.Data)); % PENDENTE FILTRAGEM
-            else
-                numberOfRowsText = sprintf('%d DE %d REGISTRO ',  height(app.UITable1.Data), height(app.UITable1.Data)); % PENDENTE FILTRAGEM
             end
-            app.UITable1_FilterText.Text = numberOfRowsText;
+
+            updateTable(app, app.UITable1, app.UITable1_CountText, app.UITable1_FilterText, app.SheetList.Value)
 
         end
 
         % Value changed function: SheetView_Second
         function SheetView_SecondValueChanged(app, event)
             
-            fileIndex   = selectedFileIndex(app);
-            selectedECD = app.ecdObj(fileIndex);
-            
-            app.UITable2.Data = selectedECD.Table.(['x' app.SheetView_Second.Value]);
-            app.UITable2.ColumnName = app.UITable2.Data.Properties.VariableNames;
-            restartTableSelectionControl(app, app.UITable2, app.UITable2_CountText)
-
-            if height(app.UITable2.Data) > 1
-                numberOfRowsText = sprintf('%d DE %d REGISTROS ', height(app.UITable2.Data), height(app.UITable2.Data)); % PENDENTE FILTRAGEM
-            else
-                numberOfRowsText = sprintf('%d DE %d REGISTRO ',  height(app.UITable2.Data), height(app.UITable2.Data)); % PENDENTE FILTRAGEM
-            end
-            app.UITable2_FilterText.Text = numberOfRowsText;
+            updateTable(app, app.UITable2, app.UITable2_CountText, app.UITable2_FilterText, app.SheetView_Second.Value)
             
         end
 
@@ -473,9 +494,9 @@ classdef winECD_exported < matlab.apps.AppBase
             % Altera tabela em evidência (uilamp), além de definir o tipo
             % de seleção (no caso de clique fora da região de células,
             % limpa-se a seleção prévia):
-            if app.Lamp.Layout.Row ~= lampPositionRow
+            if app.SheetOnFocus.Layout.Row ~= lampPositionRow
                 if ~isempty(clickedRow) || ~isempty(clickedCol)
-                    app.Lamp.Layout.Row = lampPositionRow;
+                    app.SheetOnFocus.Layout.Row = lampPositionRow;
                 end
             end
 
@@ -609,26 +630,28 @@ classdef winECD_exported < matlab.apps.AppBase
         function SheetViewStatusValueChanged(app, event)
             
             if app.SheetViewStatus.Value
-                app.SheetView_Second.Enable = "on";
-                app.SheetHeight_First.Enable     = 'on';
+                app.SheetView_Second.Enable  = "on";
+                app.SheetHeight_First.Enable = 'on';
 
                 app.SheetHeight_Second.Limits(1) = 1;
                 set(app.SheetHeight_Second, 'Enable', 'on', 'Value', app.SheetHeight_First.Value)
                 
-                app.UITable2.Visible   = 'on';
-                
+                app.UITable2.Visible = 'on';
                 rowHeight = {10,2,18};
                 
             else
-                app.SheetView_Second.Enable = "off";
-                app.SheetHeight_First.Enable     = 'off';
+                app.SheetView_Second.Enable  = "off";
+                app.SheetHeight_First.Enable = 'off';
                 
                 app.SheetHeight_Second.Limits(1) = 0;
                 set(app.SheetHeight_Second, 'Enable', 'off', 'Value', 0)
 
-                app.UITable2.Visible   = 'off';                
-                
+                app.UITable2.Visible = 'off';
                 rowHeight = {0,0,0};
+
+                if app.SheetOnFocus.Layout.Row ~= 1
+                    app.SheetOnFocus.Layout.Row = 1;
+                end
             end
 
             SpinnerValueChanged(app, struct('Source', app.SheetHeight_First))
@@ -643,28 +666,53 @@ classdef winECD_exported < matlab.apps.AppBase
 
         end
 
-        % Button pushed function: AumentaralturadalinhaButton
+        % Value changed function: RowHeightOffset
         function AumentaralturadalinhaButtonPushed(app, event)
-            
-            clickedTable = onFocusTable(app);
+
+            % ToDo:
+            % Inserir comando pra forçar a renderização.
+
+            hTable = onFocusTable(app);
             propertyName = 'height';
 
-            if ~isempty(clickedTable.Data) &&                            ...
-              (~isprop(clickedTable, 'StyleObservations')             || ...
-               ~isfield(clickedTable.StyleObservations, propertyName) || ...
-                isempty(clickedTable.StyleObservations.(propertyName)))
+            try
+                if ~isempty(hTable.Data) &&                            ...
+                  (~isprop(hTable, 'StyleObservations')             || ...
+                   ~isfield(hTable.StyleObservations, propertyName) || ...
+                    isempty(hTable.StyleObservations.(propertyName)))
+    
+                    hTableName  = ui.CustomizationBase.getPropertyName(hTable, 'ECD');
+                    customEvent = struct('auxAppTag',     'ECD',              ...
+                                         'componentName', hTableName,         ...
+                                         'dataTag',       hTable.UserData.id, ...
+                                         'childClass',    'mw-table-row',     ...
+                                         'propertyName',  propertyName);
 
-                elName = ui.CustomizationBase.getElementName(clickedTable);
-                sendEventToHTMLSource(app.jsBackDoor, 'getCssPropertyValue', struct('componentName', elName,                   ...
-                                                                                    'dataTag',       clickedTable.UserData.id, ...
-                                                                                    'childClass',    'mw-table-row',           ...
-                                                                                    'propertyName',  propertyName));
+                    sendEventToHTMLSource(app.jsBackDoor, 'getCssPropertyValue', customEvent);
+                    waitForPropertyCreation(app, hTable, propertyName)
+                end
+                
+                if app.RowHeightOffset.Value
+                    defaultProp   = regexp(hTable.StyleObservations.height, '(?<height>\d+[.]?\d*)px', 'names');
+                    defaultHeight = str2double(defaultProp.height);
+
+                    sendEventToHTMLSource(app.jsBackDoor, 'changeTableRowHeight', defaultHeight + app.RowHeightOffset.Value);
+                else
+                    sendEventToHTMLSource(app.jsBackDoor, 'changeTableRowHeight', 'default');
+                end
+
+                % A simples troca do foco do elemento força a sua renderização,
+                % evitando uso de manipulações diretas em JavaScript.
+                pause(.100)
+                if app.SheetViewStatus.Value && ~isequal(hTable, app.UITable2)
+                    focus(hTable)
+                    pause(.100)
+                end
+                focus(hTable)
+
+            catch ME
+                appUtil.modalWindow(app.UIFigure, 'error', ME.message);
             end
-
-            sendEventToHTMLSource(app.jsBackDoor, 'changeTableRowHeight', 37)
-            %sendEventToHTMLSource(app.jsBackDoor, 'changeTableRowHeight', 'default')
-
-            % Inserir comando pra forçar a renderização.
 
         end
     end
@@ -726,18 +774,18 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create GridLayout3
             app.GridLayout3 = uigridlayout(app.ASPECTOSGERAISTab);
-            app.GridLayout3.ColumnWidth = {90, 230, 46, 229, '1x', 110};
+            app.GridLayout3.ColumnWidth = {90, 230, 46, 229, '1x', 130};
             app.GridLayout3.RowHeight = {22, 22};
             app.GridLayout3.RowSpacing = 5;
             app.GridLayout3.BackgroundColor = [0.9608 0.9608 0.9608];
 
             % Create CompanyNameListLabel
             app.CompanyNameListLabel = uilabel(app.GridLayout3);
-            app.CompanyNameListLabel.FontSize = 11;
+            app.CompanyNameListLabel.FontSize = 10;
             app.CompanyNameListLabel.FontColor = [0.149 0.149 0.149];
             app.CompanyNameListLabel.Layout.Row = 1;
             app.CompanyNameListLabel.Layout.Column = 1;
-            app.CompanyNameListLabel.Text = 'Empresa:';
+            app.CompanyNameListLabel.Text = 'EMPRESA:';
 
             % Create CompanyNameList
             app.CompanyNameList = uidropdown(app.GridLayout3);
@@ -752,11 +800,11 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create TimePeriodListLabel
             app.TimePeriodListLabel = uilabel(app.GridLayout3);
-            app.TimePeriodListLabel.FontSize = 11;
+            app.TimePeriodListLabel.FontSize = 10;
             app.TimePeriodListLabel.FontColor = [0.149 0.149 0.149];
             app.TimePeriodListLabel.Layout.Row = 2;
             app.TimePeriodListLabel.Layout.Column = 1;
-            app.TimePeriodListLabel.Text = 'Período fiscal:';
+            app.TimePeriodListLabel.Text = 'PERÍODO FISCAL:';
 
             % Create TimePeriodList
             app.TimePeriodList = uidropdown(app.GridLayout3);
@@ -772,11 +820,11 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create SheetListLabel
             app.SheetListLabel = uilabel(app.GridLayout3);
             app.SheetListLabel.HorizontalAlignment = 'right';
-            app.SheetListLabel.FontSize = 11;
+            app.SheetListLabel.FontSize = 10;
             app.SheetListLabel.FontColor = [0.149 0.149 0.149];
             app.SheetListLabel.Layout.Row = 2;
             app.SheetListLabel.Layout.Column = 3;
-            app.SheetListLabel.Text = 'Ficha:';
+            app.SheetListLabel.Text = 'FICHA:';
 
             % Create SheetList
             app.SheetList = uidropdown(app.GridLayout3);
@@ -799,7 +847,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ReadAllSheets.FontColor = [1 0 0];
             app.ReadAllSheets.Layout.Row = 2;
             app.ReadAllSheets.Layout.Column = 6;
-            app.ReadAllSheets.Text = ' Ler todas as fichas ';
+            app.ReadAllSheets.Text = ' LER TODAS AS FICHAS ';
 
             % Create LAYOUTTab
             app.LAYOUTTab = uitab(app.TabGroup);
@@ -809,7 +857,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create GridLayout_2
             app.GridLayout_2 = uigridlayout(app.LAYOUTTab);
-            app.GridLayout_2.ColumnWidth = {44, 226, 40, 10, 3, 22, 22, 22, 22, 22, 44, 44, 3, '1x'};
+            app.GridLayout_2.ColumnWidth = {44, 226, 40, 10, 3, 90, 3, 22, 22, 22, 22, 22, 44, 44};
             app.GridLayout_2.RowHeight = {22, 22};
             app.GridLayout_2.RowSpacing = 5;
             app.GridLayout_2.BackgroundColor = [0.9608 0.9608 0.9608];
@@ -819,9 +867,9 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetViewStatus.ValueChangedFcn = createCallbackFcn(app, @SheetViewStatusValueChanged, true);
             app.SheetViewStatus.Icon = 'split_top_bottom_ts_24-a602190eb092f2373c13f20ec5875137.png';
             app.SheetViewStatus.IconAlignment = 'top';
-            app.SheetViewStatus.Text = 'Fichas';
+            app.SheetViewStatus.Text = 'TELA';
             app.SheetViewStatus.BackgroundColor = [0.9608 0.9608 0.9608];
-            app.SheetViewStatus.FontSize = 11;
+            app.SheetViewStatus.FontSize = 10;
             app.SheetViewStatus.Layout.Row = [1 2];
             app.SheetViewStatus.Layout.Column = 1;
 
@@ -869,12 +917,46 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetHeight_Second.Layout.Row = 2;
             app.SheetHeight_Second.Layout.Column = 3;
 
-            % Create Separator
-            app.Separator = uiimage(app.GridLayout_2);
-            app.Separator.Enable = 'off';
-            app.Separator.Layout.Row = [1 2];
-            app.Separator.Layout.Column = 5;
-            app.Separator.ImageSource = 'LineV.svg';
+            % Create SheetOnFocus
+            app.SheetOnFocus = uilamp(app.GridLayout_2);
+            app.SheetOnFocus.Tooltip = {'Tabela em evidência'};
+            app.SheetOnFocus.Layout.Row = 1;
+            app.SheetOnFocus.Layout.Column = 4;
+            app.SheetOnFocus.Color = [0.7059 0.8706 1];
+
+            % Create Separator1
+            app.Separator1 = uiimage(app.GridLayout_2);
+            app.Separator1.Enable = 'off';
+            app.Separator1.Layout.Row = [1 2];
+            app.Separator1.Layout.Column = 5;
+            app.Separator1.ImageSource = 'LineV.svg';
+
+            % Create RowHeightOffset
+            app.RowHeightOffset = uispinner(app.GridLayout_2);
+            app.RowHeightOffset.Step = 5;
+            app.RowHeightOffset.Limits = [0 50];
+            app.RowHeightOffset.RoundFractionalValues = 'on';
+            app.RowHeightOffset.ValueDisplayFormat = '%d';
+            app.RowHeightOffset.ValueChangedFcn = createCallbackFcn(app, @AumentaralturadalinhaButtonPushed, true);
+            app.RowHeightOffset.FontSize = 11;
+            app.RowHeightOffset.Layout.Row = 1;
+            app.RowHeightOffset.Layout.Column = 6;
+
+            % Create RowHeightOffsetLabel
+            app.RowHeightOffsetLabel = uilabel(app.GridLayout_2);
+            app.RowHeightOffsetLabel.HorizontalAlignment = 'center';
+            app.RowHeightOffsetLabel.WordWrap = 'on';
+            app.RowHeightOffsetLabel.FontSize = 10;
+            app.RowHeightOffsetLabel.Layout.Row = 2;
+            app.RowHeightOffsetLabel.Layout.Column = 6;
+            app.RowHeightOffsetLabel.Text = {'ALTURA LINHA'; '(offset)'};
+
+            % Create Separator2
+            app.Separator2 = uiimage(app.GridLayout_2);
+            app.Separator2.Enable = 'off';
+            app.Separator2.Layout.Row = [1 2];
+            app.Separator2.Layout.Column = 7;
+            app.Separator2.ImageSource = 'LineV.svg';
 
             % Create FontFamily
             app.FontFamily = uidropdown(app.GridLayout_2);
@@ -884,7 +966,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontFamily.FontSize = 11;
             app.FontFamily.BackgroundColor = [1 1 1];
             app.FontFamily.Layout.Row = 1;
-            app.FontFamily.Layout.Column = [6 12];
+            app.FontFamily.Layout.Column = [8 14];
             app.FontFamily.Value = {};
 
             % Create FontWeight
@@ -894,7 +976,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontWeight.FontName = 'Century';
             app.FontWeight.FontWeight = 'bold';
             app.FontWeight.Layout.Row = 2;
-            app.FontWeight.Layout.Column = 6;
+            app.FontWeight.Layout.Column = 8;
             app.FontWeight.Text = 'B';
 
             % Create FontStyle
@@ -904,7 +986,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontStyle.FontName = 'Century';
             app.FontStyle.FontAngle = 'italic';
             app.FontStyle.Layout.Row = 2;
-            app.FontStyle.Layout.Column = 7;
+            app.FontStyle.Layout.Column = 9;
             app.FontStyle.Text = 'I ';
 
             % Create FontAlign1
@@ -913,7 +995,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign1.ImageClickedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontAlign1.Tooltip = {'Sublinhado'};
             app.FontAlign1.Layout.Row = 2;
-            app.FontAlign1.Layout.Column = 8;
+            app.FontAlign1.Layout.Column = 10;
             app.FontAlign1.ImageSource = 'AlignedLeft_16-7f46662cd6fd7221119660e14bdcea56.png';
 
             % Create FontAlign2
@@ -922,7 +1004,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign2.ImageClickedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontAlign2.Tooltip = {'Sublinhado'};
             app.FontAlign2.Layout.Row = 2;
-            app.FontAlign2.Layout.Column = 9;
+            app.FontAlign2.Layout.Column = 11;
             app.FontAlign2.ImageSource = 'AlignedCenter_16-b91485db227234029c43b7823c09ebff.png';
 
             % Create FontAlign3
@@ -931,7 +1013,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign3.ImageClickedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontAlign3.Tooltip = {'Sublinhado'};
             app.FontAlign3.Layout.Row = 2;
-            app.FontAlign3.Layout.Column = 10;
+            app.FontAlign3.Layout.Column = 12;
             app.FontAlign3.ImageSource = 'AlignedRight_16-7827788943408c9bac98181b7ad0efb5.png';
 
             % Create FontBackground
@@ -940,7 +1022,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontBackground.Icon = '_Background.png';
             app.FontBackground.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontBackground.Layout.Row = 2;
-            app.FontBackground.Layout.Column = 11;
+            app.FontBackground.Layout.Column = 13;
             app.FontBackground.BackgroundColor = [1 1 1];
 
             % Create FontColor
@@ -949,22 +1031,8 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontColor.Icon = '_Color.png';
             app.FontColor.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontColor.Layout.Row = 2;
-            app.FontColor.Layout.Column = 12;
+            app.FontColor.Layout.Column = 14;
             app.FontColor.BackgroundColor = [1 1 1];
-
-            % Create Lamp
-            app.Lamp = uilamp(app.GridLayout_2);
-            app.Lamp.Tooltip = {'Tabela em evidência'};
-            app.Lamp.Layout.Row = 1;
-            app.Lamp.Layout.Column = 4;
-            app.Lamp.Color = [0.7059 0.8706 1];
-
-            % Create AumentaralturadalinhaButton
-            app.AumentaralturadalinhaButton = uibutton(app.GridLayout_2, 'push');
-            app.AumentaralturadalinhaButton.ButtonPushedFcn = createCallbackFcn(app, @AumentaralturadalinhaButtonPushed, true);
-            app.AumentaralturadalinhaButton.Layout.Row = [1 2];
-            app.AumentaralturadalinhaButton.Layout.Column = 14;
-            app.AumentaralturadalinhaButton.Text = 'Aumentar altura da linha';
 
             % Create FILTRAGEMTab
             app.FILTRAGEMTab = uitab(app.TabGroup);
@@ -1076,6 +1144,11 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create TABELACUSTOMIZADATab
             app.TABELACUSTOMIZADATab = uitab(app.TabGroup);
             app.TABELACUSTOMIZADATab.Title = '⌗ TABELA CUSTOMIZADA';
+
+            % Create GridLayout5
+            app.GridLayout5 = uigridlayout(app.TABELACUSTOMIZADATab);
+            app.GridLayout5.ColumnWidth = {'1x', '1x', '1x', '1x', '1x', '1x'};
+            app.GridLayout5.BackgroundColor = [0.9608 0.9608 0.9608];
 
             % Create UITable1
             app.UITable1 = uitable(app.GridLayout);
