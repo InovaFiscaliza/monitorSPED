@@ -11,7 +11,9 @@ classdef ECD < model.ECDBase
         CompanyName
         CompanyId
         CompanyInfo = struct('CNPJ', {}, 'IE', {}, 'IM', {}, 'UF', {}, 'City', {})
-        Period  = []
+
+        Period = []
+        PeriodMerged = false
 
         FileName
         FileFullName
@@ -29,11 +31,12 @@ classdef ECD < model.ECDBase
         % MÉTODOS RELACIONADOS AO OBJETO VISTO COMO UM ARRAY
         % (ESCALAR, OU NÃO)
         %-----------------------------------------------------------------%
-        function [obj, msg] = addFiles(obj, fileNameList, tableIdList)
+        function [obj, msg] = addFiles(obj, fileNameList, tableIdList, mergedFileFlag)
             arguments
                 obj
                 fileNameList
-                tableIdList (1,:) cell = {'0000'}
+                tableIdList (1,:) cell = {'0000', '9900'}
+                mergedFileFlag (1,1) logical = false
             end
 
             if ~iscellstr(fileNameList)
@@ -63,7 +66,7 @@ classdef ECD < model.ECDBase
                     % considera-se que o layout é igual a 1, mas depois de 
                     % lida a ficha, o valor é atualizado.
 
-                    % A outra ficha lida no início do processo é a "I020",
+                    % A outra ficha lida no início do processo é a "I010",
                     % que registra os campos opcionais, caso aplicável.
                     obj(idx).Layout       = 1;
                     parseTableAndAddToCache(obj(idx), {'I010'})
@@ -79,9 +82,11 @@ classdef ECD < model.ECDBase
                                                       'UF',    obj(idx).Table.x0000.UF{1},   ...
                                                       'City',  obj(idx).Table.x0000.COD_MUN{1});
 
-                        obj(idx).Period        = [obj(idx).Table.x0000.DT_INI(1), obj(idx).Table.x0000.DT_FIN(1)];
+                        obj(idx).Period        = [min(obj(idx).Table.x0000.DT_INI), max(obj(idx).Table.x0000.DT_FIN)];
                         obj(idx).Period.Format = 'dd/MM/yyyy';
                     end
+
+                    obj(idx).PeriodMerged = mergedFileFlag;
 
                 catch ME
                     delete(obj(idx))
@@ -320,9 +325,18 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
+        function [obj, msg] = mergeFiles(obj, mergedIndexes, tempPath)
+            mergedContent  = strjoin({obj(mergedIndexes).Content}, '\n');
+            mergedTempFile = [appUtil.DefaultFileName(tempPath, 'monitorSPED', -1) '.txt'];
+            writematrix(mergedContent, mergedTempFile, "FileType", "text", "QuoteStrings", "none");
+
+            [obj, msg] = obj.addFiles(mergedTempFile, {'0000', '9900'}, true);
+        end
+
+        %-----------------------------------------------------------------%
         function tableOutIdtypes = tableTypes1And3 (obj, idtype, tabletype)
 
-                % Filtras as linhas com as informações do primeiro  do segundo tabletype
+                % Filtras as linhas com as informações do primeiro e do segundo tabletype
                 regexPattern = ['^\|(' tabletype{idtype} '|' tabletype{idtype + 1} ')\|[^\r\n]*'];
                 regexMatches = regexp(obj.Content, regexPattern, 'match', 'lineanchors')';
                 regexMatchesTabletypesFirstAndSecond = cellfun(@(x) x(2:end-1), regexMatches, 'UniformOutput', false);
@@ -352,15 +366,9 @@ classdef ECD < model.ECDBase
         end
 
         function [linesTabletype1, linesTabletype2, linesTabletype3, linesIniIdxTabletype1, linesIniIdxTabletype2, linesIniIdxTabletype3] = tableTypesLines (obj, Tabletype)
-            % switch typeCase
-            %     case 1
-                    tabletypeFirst  = Tabletype{1};
-                    tabletypeSecond = Tabletype{2};
+            tabletypeFirst  = Tabletype{1};
+            tabletypeSecond = Tabletype{2};
 
-                % case 2
-                %     tabletypeFirst  = Tabletype{1};
-                %     tabletypeSecond = Tabletype{3};
-            % end
             regexPattern = ['^\|(' tabletypeFirst '|' tabletypeSecond ')\|[^\r\n]*'];
             regexMatches = regexp(obj.Content, regexPattern, 'match', 'lineanchors')';
             regexMatchesTabletype1Tabletype2 = cellfun(@(x) x(2:end-1), regexMatches, 'UniformOutput', false);
@@ -416,6 +424,7 @@ classdef ECD < model.ECDBase
 
             % Selecionar apenas a coluna 'CTA' e a chave
             I050_CTA_reduzida = I050_CTA(:, {'COD_CTA', 'CTA'});
+            I050_CTA_reduzida = unique(I050_CTA_reduzida, 'rows');
 
             tableI150_I155.ordem_original = (1:height(tableI150_I155))';
 
@@ -671,110 +680,129 @@ classdef ECD < model.ECDBase
                         if nTabletype ==2
                             tableOutAll = x1;
                         else
-                            [linesTabletype1, linesTabletype2, linesTabletype3, linesIniIdxTabletype1, linesIniIdxTabletype2, linesIniIdxTabletype3] = tableTypesLines (obj, Tabletype);
-
-                            % Cria tabela de nulos de x2 com mesmo número de linhas de x1
-                            tableOutAll{1} = x1;
-
-                            % Cria tabela de nulos de x2 com mesmo número de linhas de x1
-                            tableOutAll{2} = table('Size', [height(x1), width(x2)], ...
+                             % Cria tabela de nulos de x2 com mesmo número de linhas de x1
+                            tableOutAll{2} = table('Size', [height(x2), width(x2)], ...
                                 'VariableTypes', varfun(@class, x2, 'OutputFormat', 'cell'), ...
                                 'VariableNames', x2.Properties.VariableNames);
 
                             tableOutAll{2}.REG(:,:)         = {char};
                             tableOutAll{2}.COD_CCUS(:,:)    = {char};
                             tableOutAll{2}.COD_CTA_REF(:,:) = {char};
-                            tableOutAll{2}.REG(1:end) = cellstr(Tabletype{2});
 
                             % Cria tabela de nulos de x3 com mesmo número de linhas de x1
-                            tableOutAll{3} = table('Size', [height(tableOutAll{1}), width(x3)], ...
+                            tableOutAll{3} = table('Size', [height(x3), width(x3)], ...
                                 'VariableTypes', varfun(@class, x3, 'OutputFormat', 'cell'), ...
                                 'VariableNames', x3.Properties.VariableNames);
 
                             tableOutAll{3}.REG(:,:)      = {char};
                             tableOutAll{3}.COD_CCUS(:,:) = {char};
                             tableOutAll{3}.COD_AGL(:,:)  = {char};
-                            tableOutAll{3}.REG(1:end) = cellstr(Tabletype{3});
 
-                            kk = 0;
-                            filter_linesTabletype2_dif1 = linesTabletype2 ~= 1;
-                            filter_linesTabletype3_dif1 = linesTabletype3 ~= 1;
-                            idx_x1 = 0;
-                            idx_x2 = 0;
-                            yy = 0;
-                            ww = 0;
+                            regexPattern = ['^\|(' Tabletype{1} '|' Tabletype{2} '|' Tabletype{3} ')\|[^\r\n]*'];
+                            regexMatches = regexp(obj.Content, regexPattern, 'match', 'lineanchors')';
+                            regexMatchesTabletype1_2_3_First = cellfun(@(x) x(2:end-1), regexMatches, 'UniformOutput', false);
 
-                            for ii = 1:height(filter_linesTabletype2_dif1)
+                            info_1_2_3 = string(extractBefore(regexMatchesTabletype1_2_3_First, '|'));
+
+                            tableOutAll{1} = x1;
+                            tableOutAll{1} = addvars(tableOutAll{1}, (1:height(tableOutAll{1}))', 'Before', 1, 'NewVariableNames', 'ID_1_2_3');
+                            tableOutAll{1}.ID_1_2_3 = strings(height(tableOutAll{1}), 1);
+                            tableOutAll{2} = x2;
+                            tableOutAll{2} = addvars(tableOutAll{2}, (1:height(tableOutAll{2}))', 'Before', 1, 'NewVariableNames', 'ID_1_2_3');
+                            tableOutAll{2}.ID_1_2_3 = strings(height(tableOutAll{2}), 1);
+                            tableOutAll{3} = x3;
+                            tableOutAll{3} = addvars(tableOutAll{3}, (1:height(tableOutAll{3}))', 'Before', 1, 'NewVariableNames', 'ID_1_2_3');
+                            tableOutAll{3}.ID_1_2_3 = strings(height(tableOutAll{3}), 1);
+
+                            jj = 1;
+                            xx = 1;
+                            yy = 1;
+                            zz = 1;
+                            acum1 = 0;
+                            acum2 = 0;
+                            acum3 = 0;
+                            for ii = 1:height(info_1_2_3) - 1                              
+                                if     info_1_2_3(ii) == Tabletype{1} && info_1_2_3(ii + 1) == Tabletype{1}
+                                    acum1 = acum1 + 1;
+
+                                elseif info_1_2_3(ii) == Tabletype{1} && info_1_2_3(ii + 1) == Tabletype{2}
+                                    tableOutAll{1}.ID_1_2_3(acum1 + xx) = string(jj);
                                 
-                                if filter_linesTabletype2_dif1(ii) == 1
-                                    numReps_x1  = linesTabletype2(ii) - 1;
-                                    idx_x1      = idx_x1 + linesTabletype1(ii);
-                                    copyline_x1 = x1(idx_x1, :);
-                                    newRows_x1  = repmat(copyline_x1, numReps_x1, 1);
-                                    tableOutAll{1} = [tableOutAll{1}(1:idx_x1 + kk, :); newRows_x1; tableOutAll{1}(idx_x1 + kk + 1:end, :)];
-
-                                    newRows_x2  = repmat(tableOutAll{2}(end, :), numReps_x1, 1);
-                                    % Inserir a linha, insertLine, de tableOutAll{2}
-                                    tableOutAll{2} = [tableOutAll{2}(1:idx_x1 + kk, :); newRows_x2; tableOutAll{2}(idx_x1 + kk + 1:end, :)];
-
-                                    % if filter_linesTabletype3_dif1(ii) == 1
-                                        newRows_x3  = repmat(tableOutAll{3}(end, :), numReps_x1, 1);
-                                        % Inserir a linha, insertLine, de tableOutAll{3}
-                                        tableOutAll{3} = [tableOutAll{3}(1:idx_x1 + kk, :); newRows_x3; tableOutAll{3}(idx_x1 + kk + 1:end, :)];
-                                    % end
-
-
-                                    kk = kk + numReps_x1;
-                                    pp = 0;
-                                    for jj = 1:linesTabletype2(ii)
-                                        newRow = x2(jj + yy,:);
-                                        tableOutAll{2}(linesIniIdxTabletype2(jj + yy) - ii,:) = newRow;
-                                        pp = pp + 1;
-                                    end
-                                    yy = yy + pp;
-                                    
-                                else
-                                    idx_x1      = idx_x1 + linesTabletype1(ii);
-
-                                    newRow = x2(yy + 1,:);
-                                    tableOutAll{2}(linesIniIdxTabletype2(yy + 1) - ii, :) = newRow; 
+                                elseif info_1_2_3(ii) == Tabletype{1} && info_1_2_3(ii + 1) == Tabletype{3}
+                                    tableOutAll{1}.ID_1_2_3(acum1 + xx) = string(jj);
+                                
+                                elseif info_1_2_3(ii) == Tabletype{2} && info_1_2_3(ii + 1) == Tabletype{2}
+                                    tableOutAll{2}.ID_1_2_3(acum2 + yy) = string(jj);
+                                    acum2 = acum2 + 1;
+                                
+                                elseif info_1_2_3(ii) == Tabletype{2} && info_1_2_3(ii + 1) == Tabletype{3}
+                                    tableOutAll{2}.ID_1_2_3(acum2 + yy) = string(jj);
+                                
+                                elseif info_1_2_3(ii) == Tabletype{3} && info_1_2_3(ii + 1) == Tabletype{3}
+                                    tableOutAll{3}.ID_1_2_3(acum3 + zz) = string(jj);
+                                    acum3 = acum3 + 1;
+                                
+                                elseif info_1_2_3(ii) == Tabletype{2} && info_1_2_3(ii + 1) == Tabletype{1}
+                                    tableOutAll{2}.ID_1_2_3(acum2 + yy) = string(jj);
+                                    xx = xx + 1;
                                     yy = yy + 1;
+                                    zz = zz + 1;
+                                    jj = jj + 1;
+                                
+                                elseif info_1_2_3(ii) == Tabletype{3} && info_1_2_3(ii + 1) == Tabletype{1}
+                                    tableOutAll{3}.ID_1_2_3(acum3 + zz) = string(jj);                             
+                                    xx = xx + 1;
+                                    yy = yy + 1;
+                                    zz = zz + 1;
+                                    jj = jj + 1;
                                 end
 
-                                if ii <= height(filter_linesTabletype3_dif1) 
-                                    if filter_linesTabletype3_dif1(ii) == 1
-                                        pp = 0;
-                                        for mm = 1:linesTabletype2(ii)
-                                            newRow = x3(mm + ww,:);
-                                            tableOutAll{3}(linesIniIdxTabletype3(mm + ww) - ii,:) = newRow;
-                                            pp = pp + 1;
-                                        end
-                                        ww = ww + pp;
-                                    else
-                                        newRow = x3(ww + 1,:);
-                                        tableOutAll{3}(linesIniIdxTabletype3(ww + 1) - ii, :) = newRow;
-                                        ww = ww + 1;
-                                    end
-                                else
-                                    ok = 1;
-                                end
                             end
+
+                            T1 = tableOutAll{1};
+                            T2 = tableOutAll{2};
+                            T3 = tableOutAll{3};
+                            T3(end, :) = [];
+
+                            T3 = T3(~cellfun(@isempty, T3{:,2}), :);
+
+
+                            T1.ordem_original = (1:height(T1))';
+
+                            % Primeiro join entre T1 e T2
+                            J1 = outerjoin(T1, T2, ...
+                                'Keys', 'ID_1_2_3', ...
+                                'Type', 'left', ...
+                                'MergeKeys', true);
+
+                            J1.COD_CCUS = string(J1.COD_CCUS);
+                            T3.COD_CCUS = string(T3.COD_CCUS);
+                           
+                            % Depois join entre o resultado e T3
+                            Jfinal = outerjoin(J1, T3, ...
+                                'Keys', {'ID_1_2_3', 'COD_CCUS'}, ...
+                                'Type', 'left', ...
+                                'MergeKeys', true);
+
+                            Jfinal = unique(Jfinal, 'rows');
                             
-                            tableOutAll{1}.REG = strcat(tableOutAll{1}.REG, '-', tableOutAll{2}.REG);
-                            tableOutAll{2}     = removevars(tableOutAll{2}, 'REG');
-                            tableOutAll_1_2 = [tableOutAll{1},  tableOutAll{2}];
+                            Jfinal = sortrows(Jfinal, 'ordem_original');
 
-                            tableOutAll_1_2 .REG = strcat(tableOutAll_1_2.REG, '-', tableOutAll{3}.REG);
-                            tableOutAll{3}     = removevars(tableOutAll{3}, 'REG');
-                            tableOutAll{3}     = removevars(tableOutAll{3}, 'COD_CCUS');
+                            Jfinal.REG_T1 = repmat({[Tabletype{1}, '-', Tabletype{2}, '-', Tabletype{3}]}, height(Jfinal), 1);
+                            Jfinal = removevars(Jfinal, 'ID_1_2_3');
+                            Jfinal = removevars(Jfinal, 'ordem_original');
+                            Jfinal     = removevars(Jfinal, 'REG_T2');
+                            Jfinal     = removevars(Jfinal, 'REG');
+                            % Jfinal     = removevars(Jfinal, 'COD_CCUS_T3');
+                            % Jfinal.Properties.VariableNames('COD_CCUS_J1') = {'COD_CCUS'};
+                            Jfinal.Properties.VariableNames('REG_T1') = {'REG'};
 
-                            tableOutOthers    = [tableOutAll_1_2,  tableOutAll{3}];
+                            tableOutOthers = Jfinal;
                         end
-
 
                     case 2
 
-                        [linesTabletype1, linesTabletype2, ~, linesIniIdxTabletype1, linesIniIdxTabletype2, ~] = tableTypesLines (obj, Tabletype);
+                        [linesTabletype1, ~, ~, ~, ~, ~] = tableTypesLines (obj, Tabletype);
     
                         switch nTabletype
                             case 2
@@ -796,13 +824,6 @@ classdef ECD < model.ECDBase
                     tableOutAll{2}.REG = strcat(tableOutAll{2}.REG, '-', tableOutAll{1}.REG);
                     tableOutAll{1}     = removevars(tableOutAll{1}, 'REG');
                     tableOutOthers    = [tableOutAll{2}, tableOutAll{1}];
-
-                % case 3
-                %     tableOutAll{1}.REG = strcat(tableOutAll{1}.REG, '-', tableOutAll{2}.REG, '-', tableOutAll{3}.REG);
-                %     tableOutAll{2}     = removevars(tableOutAll{2}, 'REG');
-                %     tableOutAll{3}     = removevars(tableOutAll{3}, 'REG');
-                %     tableOutAll{3}     = removevars(tableOutAll{3}, 'COD_CCUS');
-                %     tableOutOthers    = [tableOutAll{1}, tableOutAll{2}, tableOutAll{3}];
 
                 % otherwise
                 %     error('Unexpected value')
@@ -833,8 +854,8 @@ classdef ECD < model.ECDBase
             end            
           
             for ii = 1: 1:height(Cod_CTA_I155_Din)
-                index_COD_CTA_Din = find(strcmp(Table_I200_I250_IND_LCTO_N.COD_CTA, Cod_CTA_I155_Din{ii}));
-                Table_I200_I250_COD_CTA_Din = Table_I200_I250_IND_LCTO_N(index_COD_CTA_Din,:);
+                index_COD_CTA_Din = strcmp(Table_I200_I250_IND_LCTO_N.COD_CTA, Cod_CTA_I155_Din{ii});
+                Table_I200_I250_COD_CTA_Din = Table_I200_I250_IND_LCTO_N(index_COD_CTA_Din, :);
                 kk = 1;
                 Val_Mes = zeros(1, 12);
 
@@ -868,6 +889,24 @@ classdef ECD < model.ECDBase
                     tableDinamica(ii,:) = [ cellstr(Cod_CTA_I155_Din(ii)), num2cell([Val_Mes, Valor_Total_Mes]) ];
                 end
 
+                 if ii == height(Cod_CTA_I155_Din)
+                    % tableDinamica.COD_CTA(ii+1) = {''};
+                    tableDinamica.COD_CTA(ii+1) = {'Somatório'};
+                    tableDinamica.MES01(ii+1) = round(sum(tableDinamica.MES01),3);
+                    tableDinamica.MES02(ii+1) = round(sum(tableDinamica.MES02),3);
+                    tableDinamica.MES03(ii+1) = round(sum(tableDinamica.MES03),3);
+                    tableDinamica.MES04(ii+1) = round(sum(tableDinamica.MES04),3);
+                    tableDinamica.MES05(ii+1) = round(sum(tableDinamica.MES05),3);
+                    tableDinamica.MES06(ii+1) = round(sum(tableDinamica.MES06),3);
+                    tableDinamica.MES07(ii+1) = round(sum(tableDinamica.MES07),3);
+                    tableDinamica.MES08(ii+1) = round(sum(tableDinamica.MES08),3);
+                    tableDinamica.MES09(ii+1) = round(sum(tableDinamica.MES09),3);
+                    tableDinamica.MES10(ii+1) = round(sum(tableDinamica.MES10),3);
+                    tableDinamica.MES11(ii+1) = round(sum(tableDinamica.MES11),3);
+                    tableDinamica.MES12(ii+1) = round(sum(tableDinamica.MES12),3);
+                    tableDinamica.MesTotal_Geral(ii+1) = round(sum(tableDinamica.MesTotal_Geral),3);
+                end
+
             end
         end
 
@@ -891,7 +930,6 @@ classdef ECD < model.ECDBase
 
             Table_I050_I051_I052_parcial = Table_I050_I051_I052(:, {'COD_CTA', 'COD_NAT', 'COD_CTA_SUP', 'CTA', 'NIVEL', 'COD_AGL'});
             Table_I050_I051_I052_parcial.COD_CTA = string(Table_I050_I051_I052_parcial.COD_CTA);
-            Table_I050_I051_I052_parcial.COD_AGL = string(Table_I050_I051_I052_parcial.COD_AGL);
 
             tableDinamicaParcial = outerjoin(tableDinamica, Table_I050_I051_I052_parcial, ...
                 'Keys', 'COD_CTA', ...

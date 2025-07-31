@@ -472,8 +472,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         'NodeData', idIndexes, 'ContextMenu', app.file_ContextMenu_Tree);
     
                     for idx = idIndexes(idSortedIndexes)
+                        textNode = sprintf('%s', strjoin(string(app.ecdObj(idx).Period), ' a '));
+                        if app.ecdObj(idx).PeriodMerged
+                            textNode = [textNode ' (PERÍODOS MESCLADOS)'];
+                        end
+
                         uitreenode(treeNodeParent, ...
-                            'Text', sprintf('%s', strjoin(string(app.ecdObj(idx).Period), ' a ')), ...
+                            'Text', textNode, ...
                             'NodeData', idx, 'ContextMenu', app.file_ContextMenu_Tree);
                     end
                 end
@@ -744,15 +749,30 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         % Image clicked function: file_MergeFiles
         function file_MergeFilesImageClicked(app, event)
             
-            nodeData = [];
+            mergedIndexes = [];
             if ~isempty(app.file_Tree.SelectedNodes)
-                nodeData = unique([app.file_Tree.SelectedNodes.NodeData]);
+                mergedIndexes = unique([app.file_Tree.SelectedNodes.NodeData]);
             end
 
-            nodeData
+            if numel(mergedIndexes) >= 2
+                app.progressDialog.Visible = 'visible';
+
+                [app.ecdObj, msg] = app.ecdObj.mergeFiles(mergedIndexes, app.General.fileFolder.tempPath);
+                if isempty(msg)
+                    file_TreeBuilding(app)
+                else
+                    appUtil.modalWindow(app.UIFigure, "error", msg); 
+                end
+
+                app.progressDialog.Visible = 'hidden';
+            end
+
+            % !! ToDo !!
 
             % Retornar erro caso se trate de empresas distintas (com CNPJs 
-            % diferentes)
+            % diferentes).
+
+            % !! ToDo !!
 
         end
 
