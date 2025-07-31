@@ -620,8 +620,6 @@ classdef winECD_exported < matlab.apps.AppBase
                 s.(fieldName) = fieldValue{1};
             end
 
-            s
-
             addStyle(clickedTable, s, "cell", clickedTable.Selection)
             
         end
