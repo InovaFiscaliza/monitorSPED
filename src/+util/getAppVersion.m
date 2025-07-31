@@ -14,8 +14,11 @@ function appVersion = getAppVersion(rootFolder, entryPointFolder, temporaryDir)
                                             'version',    class.Constants.appVersion, ...
                                             'rootFolder', rootFolder,                 ...
                                             'entryPointFolder',  entryPointFolder,    ...
-                                            'ctfRoot',           ctfroot,             ...
                                             'tempSessionFolder', temporaryDir));
+
+    if exist('ctfroot', 'file')
+        appVersion.(appName).ctfRoot = ctfroot;
+    end
 
     % OS
     appVersion.machine = struct('platform',     ccTools.fcn.OperationSystem('platform'),     ...
@@ -26,8 +29,7 @@ function appVersion = getAppVersion(rootFolder, entryPointFolder, temporaryDir)
     % OpenGL
     graphRender = '';
     try
-        graphRender = opengl('data');
-        graphRender = rmfield(graphRender, {'MaxTextureSize', 'Visual', 'SupportsGraphicsSmoothing', 'SupportsDepthPeelTransparency', 'SupportsAlignVertexCenters', 'Extensions', 'MaxFrameBufferSize'});
+        graphRender = jsonencode(rendererinfo);
     catch
     end
 
@@ -38,5 +40,5 @@ function appVersion = getAppVersion(rootFolder, entryPointFolder, temporaryDir)
                                'pid',      feature('getpid'),                                              ...
                                'rootPath', matlabroot,                                                     ...
                                'products', strjoin(matProducts.Name + " v. " + matProducts.Version, ', '), ...
-                               'openGL',   graphRender);
+                               'renderer', graphRender);
 end
