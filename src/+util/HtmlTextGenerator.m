@@ -64,7 +64,7 @@ classdef (Abstract) HtmlTextGenerator
                 sheetsNames     = fieldnames(ecdObj.Table);
                 nonemptySheets  = sheetsNames(cellfun(@(x) ~isempty(ecdObj.Table.(x)), sheetsNames));
 
-                dataStruct(1)   = struct('group', 'FileName', 'value', sprintf('"%s"', ecdObj.FileName)); % textFormatGUI.cellstr2ListWithQuotes({...})
+                dataStruct(1)   = struct('group', 'FileName', 'value', sprintf('"%s" (%s)', ecdObj.FileName, ecdObj.FileEncoding)); % textFormatGUI.cellstr2ListWithQuotes({...})
                 dataStruct(2)   = struct('group', 'Period',   'value', strjoin(string(ecdObj.Period), ' a '));
                 dataStruct(3)   = struct('group', 'Content',  'value', [strjoin(strtrim(splitlines(ecdObj.Content(1:500))), '\n') '<br><font style="color: red;">... [texto truncado]</font>']);
                 dataStruct(4)   = struct('group', 'Layout',   'value', string(ecdObj.Layout));

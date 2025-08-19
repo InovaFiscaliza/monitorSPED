@@ -29,6 +29,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         GridLayout2                    matlab.ui.container.GridLayout
         NOMEDAEMPRESAMetadadosOutrascoisasLabel  matlab.ui.control.Label
         file_toolGrid                  matlab.ui.container.GridLayout
+        PLACEHOLDERENCODINGLabel       matlab.ui.control.Label
         file_CheckRFB                  matlab.ui.control.Image
         file_MergeFiles                matlab.ui.control.Image
         Image                          matlab.ui.control.Image
@@ -671,7 +672,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 % Verifica se arquivo já foi lido, comparando o seu nome com 
                 % a variável app.ecdObj.
                 if ~ismember(fileName{ii}, {app.ecdObj.FileName})
-                    [app.ecdObj, msg] = app.ecdObj.addFiles(fileFullName{ii});
+                    [app.ecdObj, msg] = app.ecdObj.addFiles(fileFullName{ii}, {app.General.sped.encoding.value});
 
                     if ~isempty(msg)
                         filesError(end+1) = struct('File', sprintf('"%s"', fileName{ii}), 'Error', strjoin(msg));
@@ -882,6 +883,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.file_CheckRFB.Layout.Row = [1 3];
             app.file_CheckRFB.Layout.Column = 3;
             app.file_CheckRFB.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'receita-federal-novo-logo-png_seeklogo-203693.png');
+
+            % Create PLACEHOLDERENCODINGLabel
+            app.PLACEHOLDERENCODINGLabel = uilabel(app.file_toolGrid);
+            app.PLACEHOLDERENCODINGLabel.HorizontalAlignment = 'right';
+            app.PLACEHOLDERENCODINGLabel.Layout.Row = 2;
+            app.PLACEHOLDERENCODINGLabel.Layout.Column = 5;
+            app.PLACEHOLDERENCODINGLabel.Text = 'PLACE HOLDER ENCODING';
 
             % Create TabGroup2
             app.TabGroup2 = uitabgroup(app.file_Grid);

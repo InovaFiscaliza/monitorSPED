@@ -16,6 +16,8 @@ classdef winConfig_exported < matlab.apps.AppBase
         config_FolderMapLabel    matlab.ui.control.Label
         CustomPlotGrid           matlab.ui.container.GridLayout
         general_FilePanel        matlab.ui.container.Panel
+        EncodingLabel            matlab.ui.control.Label
+        EncodingDropDown_2       matlab.ui.control.DropDown
         general_FileLabel        matlab.ui.control.Label
         General_Grid             matlab.ui.container.GridLayout
         openAuxiliarApp2Debug    matlab.ui.control.CheckBox
@@ -166,6 +168,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             end
 
             General_updatePanel(app)
+            Analysis_updatePanel(app)
             Folder_updatePanel(app)
         end
 
@@ -191,6 +194,11 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Modo de operação:
             app.openAuxiliarAppAsDocked.Value   = app.mainApp.General.operationMode.Dock;
             app.openAuxiliarApp2Debug.Value     = app.mainApp.General.operationMode.Debug;
+        end
+
+        %-----------------------------------------------------------------%
+        function Analysis_updatePanel(app)
+            app.EncodingDropDown_2.Items = app.mainApp.General.sped.encoding.options;
         end
 
         %-----------------------------------------------------------------%
@@ -353,6 +361,14 @@ classdef winConfig_exported < matlab.apps.AppBase
         function openDevToolsClicked(app, event)
             
             ipcMainMatlabCallsHandler(app.mainApp, app, 'openDevTools')
+
+        end
+
+        % Value changed function: EncodingDropDown_2
+        function EncodingDropDown_2ValueChanged(app, event)
+                        
+            app.mainApp.General_I.sped.encoding.value = app.EncodingDropDown_2.Value;
+            saveGeneralSettings(app)
 
         end
     end
@@ -595,6 +611,18 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.general_FilePanel = uipanel(app.CustomPlotGrid);
             app.general_FilePanel.Layout.Row = 2;
             app.general_FilePanel.Layout.Column = [1 2];
+
+            % Create EncodingDropDown_2
+            app.EncodingDropDown_2 = uidropdown(app.general_FilePanel);
+            app.EncodingDropDown_2.Items = {};
+            app.EncodingDropDown_2.ValueChangedFcn = createCallbackFcn(app, @EncodingDropDown_2ValueChanged, true);
+            app.EncodingDropDown_2.Position = [129 201 198 22];
+            app.EncodingDropDown_2.Value = {};
+
+            % Create EncodingLabel
+            app.EncodingLabel = uilabel(app.general_FilePanel);
+            app.EncodingLabel.Position = [130 267 58 22];
+            app.EncodingLabel.Text = 'Encoding:';
 
             % Create Folders_Grid
             app.Folders_Grid = uigridlayout(app.GridLayout);

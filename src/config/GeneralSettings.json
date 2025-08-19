@@ -1,5 +1,5 @@
 {
-    "version": 0.04,
+    "version": 0.07,
     "operationMode": {
         "Debug": false,
         "Dock": false,
@@ -23,6 +23,17 @@
         "lastVisited": ""
     },
     "openGL": "hardware",
+    "sped": {
+        "encoding": {
+            "options": [
+                "ISO-8859-1",
+                "UTF-8",
+                "windows-1251",
+                "windows-1252"
+                ],
+            "value": "ISO-8859-1"
+        }
+    },
     "eFiscaliza": {
         "internal": {
             "originId": "G",

@@ -17,6 +17,7 @@ classdef ECD < model.ECDBase
 
         FileName
         FileFullName
+        FileEncoding
         FileStatus = 0 % Pesquisa à base da Receita Federal: -1 (Diverge) | 0 (Pendente) | 1 (Coincide)
 
         Content
@@ -25,17 +26,18 @@ classdef ECD < model.ECDBase
         TableGUI
     end
 
-
     methods (Access = public)
         %-----------------------------------------------------------------%
         % MÉTODOS RELACIONADOS AO OBJETO VISTO COMO UM ARRAY
         % (ESCALAR, OU NÃO)
         %-----------------------------------------------------------------%
-        function [obj, msg] = addFiles(obj, fileNameList, tableIdList, mergedFileFlag)
+
+        function [obj, msg] = addFiles(obj, fileNameList, fileEncoding, tableIdList, mergedFileFlag)
             arguments
                 obj
                 fileNameList
-                tableIdList (1,:) cell = {'0000', '9900'}
+                fileEncoding   (1,:) cell = {}
+                tableIdList    (1,:) cell = {'0000', '9900','I030'}
                 mergedFileFlag (1,1) logical = false
             end
 
@@ -54,12 +56,19 @@ classdef ECD < model.ECDBase
                     continue
                 end
 
-                idx = numel(obj)+1;
+                idx = numel(obj)+1;                
 
                 try
                     obj(idx).FileName     = fileName;
                     obj(idx).FileFullName = fileFullName;
-                    obj(idx).Content      = fileread(fileFullName);
+
+                    % Leitura do conteúdo do arquivo, identificando a sua
+                    % codificação textual.
+                    if isempty(fileEncoding)
+                        fileEncoding = {'ISO-8859-1', 'UTF-8'};
+                    end
+                    [obj(idx).Content, ...
+                     obj(idx).FileEncoding] = textAnalysis.fileread(fileFullName, '^\|[^|]+\|[^\r\n]*', fileEncoding);
 
                     % Leitura da ficha "I010", identificando o layout do
                     % arquivo. Como essa ficha não mudou ao longo do tempo, 
@@ -68,9 +77,10 @@ classdef ECD < model.ECDBase
 
                     % A outra ficha lida no início do processo é a "I010",
                     % que registra os campos opcionais, caso aplicável.
-                    obj(idx).Layout       = 1;
+                    obj(idx).Layout = 1;
                     parseTableAndAddToCache(obj(idx), {'I010'})
-                    obj(idx).Layout       = obj(idx).Table.xI010.COD_VER_LC(1);                    
+
+                    obj(idx).Layout = obj(idx).Table.xI010.COD_VER_LC(1);                    
                     parseTableAndAddToCache(obj(idx), tableIdList)
 
                     if isfield(obj(idx).Table, 'x0000') && ~isempty(obj(idx).Table.x0000)
@@ -82,7 +92,7 @@ classdef ECD < model.ECDBase
                                                       'UF',    obj(idx).Table.x0000.UF{1},   ...
                                                       'City',  obj(idx).Table.x0000.COD_MUN{1});
 
-                        obj(idx).Period        = [min(obj(idx).Table.x0000.DT_INI), max(obj(idx).Table.x0000.DT_FIN)];
+                        obj(idx).Period = [min(obj(idx).Table.x0000.DT_INI), max(obj(idx).Table.x0000.DT_FIN)];
                         obj(idx).Period.Format = 'dd/MM/yyyy';
                     end
 
@@ -94,7 +104,10 @@ classdef ECD < model.ECDBase
                     msg{end+1} = ME.message;
                 end
             end
+
+            msg = strjoin(msg, '\n');
         end
+
 
         %-----------------------------------------------------------------%
         function parseTableAndAddToCache(obj, tableIdList)
@@ -326,11 +339,17 @@ classdef ECD < model.ECDBase
 
         %-----------------------------------------------------------------%
         function [obj, msg] = mergeFiles(obj, mergedIndexes, tempPath)
-            mergedContent  = strjoin({obj(mergedIndexes).Content}, '\n');
-            mergedTempFile = [appUtil.DefaultFileName(tempPath, 'monitorSPED', -1) '.txt'];
-            writematrix(mergedContent, mergedTempFile, "FileType", "text", "QuoteStrings", "none");
+            try
+                mergedContent  = strjoin({obj(mergedIndexes).Content}, '\n');    
+                mergedTempFile = [appUtil.DefaultFileName(tempPath, 'monitorSPED', -1) '.txt'];
 
-            [obj, msg] = obj.addFiles(mergedTempFile, {'0000', '9900'}, true);
+                fileEncoding   = 'ISO-8859-1';
+                writematrix(mergedContent, mergedTempFile, "FileType", "text", "QuoteStrings", "none", "Encoding", fileEncoding);
+    
+                [obj, msg] = obj.addFiles(mergedTempFile, {fileEncoding}, {'0000', '9900'}, true);
+            catch ME
+                msg = ME.message;
+            end
         end
 
         %-----------------------------------------------------------------%
@@ -365,7 +384,7 @@ classdef ECD < model.ECDBase
           
         end
 
-        function [linesTabletype1, linesTabletype2, linesTabletype3, linesIniIdxTabletype1, linesIniIdxTabletype2, linesIniIdxTabletype3] = tableTypesLines (obj, Tabletype)
+        function linesTabletype1 = tableTypesLines (obj, Tabletype)
             tabletypeFirst  = Tabletype{1};
             tabletypeSecond = Tabletype{2};
 
@@ -380,43 +399,6 @@ classdef ECD < model.ECDBase
             startIndices = find(diffValues == 1); % Início de um grupo
             endIndices = find(diffValues == -1) - 1; % Fim de um grupo
             linesTabletype1 = endIndices - startIndices + 1;
-
-            % Criar vetor lógico indicando onde I355 aparece
-            isMatch = contains(regexMatchesTabletype1Tabletype2, Tabletype{2});
-            % Identifica o númeor de linhas que contém as sequências consecutivas de REG em "I355"
-            diffValues = diff([0; isMatch; 0]); % Adiciona zeros no início e fim para capturar grupos
-            startIndices = find(diffValues == 1); % Início de um grupo
-            endIndices = find(diffValues == -1) - 1; % Fim de um grupo
-            linesTabletype2 = endIndices - startIndices + 1;
-
-
-            % Identifica as linhas com a informações de tableId
-            linesIniIdxTabletype1 = find(contains(regexMatchesTabletype1Tabletype2, tabletypeFirst));
-
-            % Identifica as linhas com a informações de tableId
-            linesIniIdxTabletype2 = find(contains(regexMatchesTabletype1Tabletype2, tabletypeSecond));
-
-            linesTabletype3 = [];
-            linesIniIdxTabletype3 = [];
-
-            if numel(Tabletype)==3
-                tabletypeThird  = Tabletype{3};
-                regexPattern = ['^\|(' tabletypeFirst '|' tabletypeThird ')\|[^\r\n]*'];
-                regexMatches = regexp(obj.Content, regexPattern, 'match', 'lineanchors')';
-                regexMatchesTabletype1Tabletype3 = cellfun(@(x) x(2:end-1), regexMatches, 'UniformOutput', false);
-
-                % Criar vetor lógico indicando onde I355 aparece
-                isMatch = contains(regexMatchesTabletype1Tabletype3, Tabletype{3});
-                % Identifica o númeor de linhas que contém as sequências consecutivas de REG em "I355"
-                diffValues = diff([0; isMatch; 0]); % Adiciona zeros no início e fim para capturar grupos
-                startIndices = find(diffValues == 1); % Início de um grupo
-                endIndices = find(diffValues == -1) - 1; % Fim de um grupo
-                linesTabletype3 = endIndices - startIndices + 1;
-
-                % Identifica as linhas com a informações de tableId
-                linesIniIdxTabletype3 = find(contains(regexMatchesTabletype1Tabletype3, tabletypeThird));
-            end
-
         end
 
         function tableI150_I155_CTA = inseriCodCTA(obj, tableI150_I155)
@@ -433,7 +415,6 @@ classdef ECD < model.ECDBase
                 'Keys', 'COD_CTA', ...
                 'MergeKeys', true, ...
                 'Type', 'left');
-
 
             tableI150_I155_CTA = sortrows(tableI150_I155_CTA, 'ordem_original');
             tableI150_I155_CTA.ordem_original = [];
@@ -721,51 +702,52 @@ classdef ECD < model.ECDBase
                             acum1 = 0;
                             acum2 = 0;
                             acum3 = 0;
-                            for ii = 1:height(info_1_2_3) - 1                              
+                            incr1 = 0;
+                            incr2 = 0;
+                            for ii = 1:height(info_1_2_3) - 1
                                 if     info_1_2_3(ii) == Tabletype{1} && info_1_2_3(ii + 1) == Tabletype{1}
                                     acum1 = acum1 + 1;
 
                                 elseif info_1_2_3(ii) == Tabletype{1} && info_1_2_3(ii + 1) == Tabletype{2}
                                     tableOutAll{1}.ID_1_2_3(acum1 + xx) = string(jj);
-                                
+
                                 elseif info_1_2_3(ii) == Tabletype{1} && info_1_2_3(ii + 1) == Tabletype{3}
                                     tableOutAll{1}.ID_1_2_3(acum1 + xx) = string(jj);
-                                
+                                    incr2 = incr2 + 1;
+
                                 elseif info_1_2_3(ii) == Tabletype{2} && info_1_2_3(ii + 1) == Tabletype{2}
                                     tableOutAll{2}.ID_1_2_3(acum2 + yy) = string(jj);
                                     acum2 = acum2 + 1;
-                                
+
                                 elseif info_1_2_3(ii) == Tabletype{2} && info_1_2_3(ii + 1) == Tabletype{3}
                                     tableOutAll{2}.ID_1_2_3(acum2 + yy) = string(jj);
-                                
+
                                 elseif info_1_2_3(ii) == Tabletype{3} && info_1_2_3(ii + 1) == Tabletype{3}
                                     tableOutAll{3}.ID_1_2_3(acum3 + zz) = string(jj);
                                     acum3 = acum3 + 1;
-                                
+
                                 elseif info_1_2_3(ii) == Tabletype{2} && info_1_2_3(ii + 1) == Tabletype{1}
-                                    tableOutAll{2}.ID_1_2_3(acum2 + yy) = string(jj);
+                                    tableOutAll{2}.ID_1_2_3(acum2 + yy - incr2) = string(jj);
                                     xx = xx + 1;
                                     yy = yy + 1;
                                     zz = zz + 1;
                                     jj = jj + 1;
-                                
+                                    incr1 = incr1 + 1;
+
                                 elseif info_1_2_3(ii) == Tabletype{3} && info_1_2_3(ii + 1) == Tabletype{1}
-                                    tableOutAll{3}.ID_1_2_3(acum3 + zz) = string(jj);                             
+                                    tableOutAll{3}.ID_1_2_3(acum3 + zz - incr1) = string(jj);
                                     xx = xx + 1;
                                     yy = yy + 1;
                                     zz = zz + 1;
                                     jj = jj + 1;
                                 end
-
                             end
 
                             T1 = tableOutAll{1};
                             T2 = tableOutAll{2};
                             T3 = tableOutAll{3};
-                            T3(end, :) = [];
 
                             T3 = T3(~cellfun(@isempty, T3{:,2}), :);
-
 
                             T1.ordem_original = (1:height(T1))';
 
@@ -774,6 +756,8 @@ classdef ECD < model.ECDBase
                                 'Keys', 'ID_1_2_3', ...
                                 'Type', 'left', ...
                                 'MergeKeys', true);
+
+                            J1 = sortrows(J1, 'ordem_original');
 
                             J1.COD_CCUS = string(J1.COD_CCUS);
                             T3.COD_CCUS = string(T3.COD_CCUS);
@@ -793,8 +777,6 @@ classdef ECD < model.ECDBase
                             Jfinal = removevars(Jfinal, 'ordem_original');
                             Jfinal     = removevars(Jfinal, 'REG_T2');
                             Jfinal     = removevars(Jfinal, 'REG');
-                            % Jfinal     = removevars(Jfinal, 'COD_CCUS_T3');
-                            % Jfinal.Properties.VariableNames('COD_CCUS_J1') = {'COD_CCUS'};
                             Jfinal.Properties.VariableNames('REG_T1') = {'REG'};
 
                             tableOutOthers = Jfinal;
@@ -802,7 +784,7 @@ classdef ECD < model.ECDBase
 
                     case 2
 
-                        [linesTabletype1, ~, ~, ~, ~, ~] = tableTypesLines (obj, Tabletype);
+                        linesTabletype1 = tableTypesLines (obj, Tabletype);
     
                         switch nTabletype
                             case 2
@@ -888,25 +870,6 @@ classdef ECD < model.ECDBase
                 else
                     tableDinamica(ii,:) = [ cellstr(Cod_CTA_I155_Din(ii)), num2cell([Val_Mes, Valor_Total_Mes]) ];
                 end
-
-                 if ii == height(Cod_CTA_I155_Din)
-                    % tableDinamica.COD_CTA(ii+1) = {''};
-                    tableDinamica.COD_CTA(ii+1) = {'Somatório'};
-                    tableDinamica.MES01(ii+1) = round(sum(tableDinamica.MES01),3);
-                    tableDinamica.MES02(ii+1) = round(sum(tableDinamica.MES02),3);
-                    tableDinamica.MES03(ii+1) = round(sum(tableDinamica.MES03),3);
-                    tableDinamica.MES04(ii+1) = round(sum(tableDinamica.MES04),3);
-                    tableDinamica.MES05(ii+1) = round(sum(tableDinamica.MES05),3);
-                    tableDinamica.MES06(ii+1) = round(sum(tableDinamica.MES06),3);
-                    tableDinamica.MES07(ii+1) = round(sum(tableDinamica.MES07),3);
-                    tableDinamica.MES08(ii+1) = round(sum(tableDinamica.MES08),3);
-                    tableDinamica.MES09(ii+1) = round(sum(tableDinamica.MES09),3);
-                    tableDinamica.MES10(ii+1) = round(sum(tableDinamica.MES10),3);
-                    tableDinamica.MES11(ii+1) = round(sum(tableDinamica.MES11),3);
-                    tableDinamica.MES12(ii+1) = round(sum(tableDinamica.MES12),3);
-                    tableDinamica.MesTotal_Geral(ii+1) = round(sum(tableDinamica.MesTotal_Geral),3);
-                end
-
             end
         end
 
@@ -936,11 +899,14 @@ classdef ECD < model.ECDBase
                 'MergeKeys', true, ...
                 'Type', 'inner');
 
+            tableDinamicaUnica = unique(tableDinamicaParcial, 'rows');
+
             if ~isempty(Table_J005_J150)
-                tableDinamicaTotal = outerjoin(tableDinamicaParcial, Table_J150_parcial, ...
+                tableDinamicaUnica.COD_AGL = string(tableDinamicaUnica.COD_AGL);
+                tableDinamicaTotal = outerjoin(tableDinamicaUnica, Table_J150_parcial, ...
                     'Keys', 'COD_AGL', ...
                     'MergeKeys', true, ...
-                    'Type', 'full');
+                    'Type', 'inner');
                 % Remove linhas duplicadas (todas as colunas iguais)
                 tableDinamicaTotal = unique(tableDinamicaTotal);
 
@@ -957,7 +923,7 @@ classdef ECD < model.ECDBase
                 tableBalancete = tableBalancete(tableBalancete.COD_NAT == "04", :);
             else
                 % Remove linhas duplicadas (todas as colunas iguais)
-                tableDinamicaTotal = tableDinamicaParcial;
+                tableDinamicaTotal = tableDinamicaUnica;
 
                 tableDinamicaTotal = rmmissing(tableDinamicaTotal, 'DataVariables', {'COD_CTA'});
 
@@ -972,11 +938,24 @@ classdef ECD < model.ECDBase
                 tableBalancete = tableBalancete(tableBalancete.COD_NAT == "04", :);
             end
 
+            % Colunas para agrupar (sem CTA_AGRUP)
+            colsAgrupar = {'COD_NAT', 'NIVEL', 'COD_CTA', 'DESC_CONTA', ...
+                'MES01','MES02','MES03','MES04','MES05','MES06', ...
+                'MES07','MES08','MES09','MES10','MES11','MES12', ...
+                'MesTotal_Geral'};
+
+            % Criar grupos a partir da tabela original
+            [G, keysTable] = findgroups(tableBalancete(:, colsAgrupar));
+
+            % Pegar a primeira CTA_AGRUP de cada grupo
+            CTA_AGRUP_first = splitapply(@(x) x(1), tableBalancete.CTA_AGRUP, G);
+
+            % Montar tabela final
+            tableBalancete = [keysTable, table(CTA_AGRUP_first)];
 
         end
     end
     
-
 
     methods (Static = true)
         %-----------------------------------------------------------------%

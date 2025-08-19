@@ -452,6 +452,17 @@ classdef winECD_exported < matlab.apps.AppBase
                                                       'I555', 'I990', 'J001', 'J005', 'J100', 'J150', 'J210', 'J215', 'J900', 'J930', 'J932', 'J935', 'J990', 'K001', ...
                                                       'K030', 'K100', 'K110', 'K115', 'K200', 'K210', 'K300', 'K310', 'K315', 'K990', '9001', '9900', '9990', '9999'});
 
+                idxTableUnique = unique(selectedECD.Table.x9900,'rows');
+                idxTableUnique.QTD_REG_BLC = string(idxTableUnique.QTD_REG_BLC);
+
+                idxTableUnique = idxTableUnique(idxTableUnique.QTD_REG_BLC == "1", :);
+
+                for kk = 1:height(idxTableUnique)
+                   if isfield(selectedECD.Table, char("x" + idxTableUnique.REG_BLC(kk)))
+                       selectedECD.Table.("x" + idxTableUnique.REG_BLC(kk)) = unique(selectedECD.Table.("x" + idxTableUnique.REG_BLC(kk)), 'rows', 'stable'); 
+                   end
+                end
+                
                 selectedECD.Table.xI200_I250           = parseSplitLineOthers(selectedECD, {'I250' 'I200'});
                 selectedECD.Table.xJ005_J100           = parseSplitLineOthers(selectedECD, {'J100' 'J005'});
                 selectedECD.Table.xJ005_J150           = parseSplitLineOthers(selectedECD, {'J150' 'J005'});        
