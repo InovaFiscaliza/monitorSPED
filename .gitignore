@@ -32,5 +32,9 @@ codegen/
 # Cloud based storage dotfile
 .MATLABDriveTag
 
+# List of folder to ignore:
+deploy/desktop/
+deploy/webapp/
+
 /tests/output/
 /tests/resources/

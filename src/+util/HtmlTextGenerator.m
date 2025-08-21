@@ -56,9 +56,10 @@ classdef (Abstract) HtmlTextGenerator
         function htmlContent = File(ecdObj)
             if isscalar(ecdObj)
                 switch ecdObj.FileStatus
-                    case -1; colorStatus = 'red';  textStatus = 'DIVERGE ARQUIVO RECEITA FEDERAL';
+                    case -2; colorStatus = 'red';  textStatus = 'ERRO FICHA |9999| OU REQUISIÇÃO HTTP';
+                    case -1; colorStatus = 'red';  textStatus = 'NÃO CONSTA ARQUIVO RECEITA FEDERAL';
                     case  0; colorStatus = 'gray'; textStatus = 'PENDENTE PESQUISA RECEITA FEDERAL';
-                    case  1; colorStatus = 'blue'; textStatus = 'COINCIDE ARQUIVO RECEITA FEDERAL';
+                    case  1; colorStatus = '#0078d4'; textStatus = 'COINCIDE ARQUIVO RECEITA FEDERAL';
                 end
 
                 sheetsNames     = fieldnames(ecdObj.Table);
@@ -76,9 +77,10 @@ classdef (Abstract) HtmlTextGenerator
 
             else
                 fileStatus = [ecdObj.FileStatus];
-                if     all(fileStatus == -1); colorStatus = 'red';  textStatus = 'DIVERGE ARQUIVO RECEITA FEDERAL';
+                if     all(fileStatus == -2); colorStatus = 'red';  textStatus = 'ERRO FICHA |9999| OU REQUISIÇÃO HTTP';
+                elseif all(fileStatus == -1); colorStatus = 'red';  textStatus = 'NÃO CONSTA ARQUIVO RECEITA FEDERAL';
                 elseif all(fileStatus ==  0); colorStatus = 'gray'; textStatus = 'PENDENTE PESQUISA RECEITA FEDERAL';
-                elseif all(fileStatus ==  1); colorStatus = 'blue'; textStatus = 'COINCIDE ARQUIVO RECEITA FEDERAL';
+                elseif all(fileStatus ==  1); colorStatus = '#0078d4'; textStatus = 'COINCIDE ARQUIVO RECEITA FEDERAL';
                 else;                         colorStatus = 'gray'; textStatus = 'INDEFINIDO';
                 end
 

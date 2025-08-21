@@ -785,9 +785,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 nodeData = unique([app.file_Tree.SelectedNodes.NodeData]);
             end
 
-            nodeData
-
-            % Refatorar código do Elio/Sérgio em função em "+util"
+            if ~isempty(nodeData)
+                checkFileStatus(app.ecdObj(nodeData))
+                
+                app.file_Metadata.UserData = [];
+                file_TreeSelectionChanged(app)
+            end
 
         end
     end
@@ -976,8 +979,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.menu_Button2 = uibutton(app.menu_Grid, 'state');
             app.menu_Button2.ValueChangedFcn = createCallbackFcn(app, @menu_mainButtonPushed, true);
             app.menu_Button2.Tag = 'ECD';
-            app.menu_Button2.Enable = 'off';
             app.menu_Button2.Tooltip = {'Escrituração Contábil Digital'};
+            app.menu_Button2.Enable = 'off';
             app.menu_Button2.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'Playback_32White.png');
             app.menu_Button2.IconAlignment = 'top';
             app.menu_Button2.Text = '';

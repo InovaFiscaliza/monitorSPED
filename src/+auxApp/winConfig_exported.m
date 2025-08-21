@@ -16,14 +16,30 @@ classdef winConfig_exported < matlab.apps.AppBase
         config_FolderMapLabel    matlab.ui.control.Label
         CustomPlotGrid           matlab.ui.container.GridLayout
         general_FilePanel        matlab.ui.container.Panel
+        GridLayout_2             matlab.ui.container.GridLayout
         EncodingLabel            matlab.ui.control.Label
         EncodingDropDown_2       matlab.ui.control.DropDown
+        CommandTest1             matlab.ui.control.Button
+        ButtonGroup              matlab.ui.container.ButtonGroup
+        Button3                  matlab.ui.control.RadioButton
+        Button2                  matlab.ui.control.RadioButton
+        Button                   matlab.ui.control.RadioButton
+        TabGroup                 matlab.ui.container.TabGroup
+        Tab                      matlab.ui.container.Tab
+        Tab2                     matlab.ui.container.Tab
+        Tab3                     matlab.ui.container.Tab
+        isdeployedButton         matlab.ui.control.Button
+        ctfrootButton            matlab.ui.control.Button
+        XButton                  matlab.ui.control.Button
+        CommandTest2             matlab.ui.control.Button
+        CommandTest3             matlab.ui.control.Button
+        Output                   matlab.ui.control.TextArea
+        Run                      matlab.ui.control.Button
+        Input                    matlab.ui.control.TextArea
         general_FileLabel        matlab.ui.control.Label
         General_Grid             matlab.ui.container.GridLayout
         openAuxiliarApp2Debug    matlab.ui.control.CheckBox
         openAuxiliarAppAsDocked  matlab.ui.control.CheckBox
-        gpuType                  matlab.ui.control.DropDown
-        gpuTypeLabel             matlab.ui.control.Label
         versionInfo              matlab.ui.control.Label
         versionInfoRefresh       matlab.ui.control.Image
         versionInfoLabel         matlab.ui.control.Label
@@ -159,7 +175,6 @@ classdef winConfig_exported < matlab.apps.AppBase
                 otherwise
                     app.btnFolder.Enable               = 1;
                     app.versionInfoRefresh.Enable      = 1;
-                    app.gpuType.Enable                 = 1;
                     app.openAuxiliarAppAsDocked.Enable = 1;
             end
 
@@ -176,20 +191,6 @@ classdef winConfig_exported < matlab.apps.AppBase
         function General_updatePanel(app)
             % Versão:
             ui.TextView.update(app.versionInfo, util.HtmlTextGenerator.AppInfo(app.mainApp.General, app.mainApp.rootFolder, app.mainApp.executionMode));
-
-            % Renderizador:
-            graphRender = opengl('data');
-            switch graphRender.HardwareSupportLevel
-                case 'basic'; graphRenderSupport = 'hardwarebasic';
-                case 'full';  graphRenderSupport = 'hardware';
-                case 'none';  graphRenderSupport = 'software';
-                otherwise;    graphRenderSupport = graphRender.HardwareSupportLevel; % "driverissue"
-            end
-
-            if ~ismember(graphRenderSupport, app.gpuType.Items)
-                app.gpuType.Items{end+1} = graphRenderSupport;
-            end
-            app.gpuType.Value = graphRenderSupport;
 
             % Modo de operação:
             app.openAuxiliarAppAsDocked.Value   = app.mainApp.General.operationMode.Dock;
@@ -278,21 +279,11 @@ classdef winConfig_exported < matlab.apps.AppBase
 
         end
 
-        % Value changed function: gpuType, openAuxiliarApp2Debug, 
+        % Value changed function: openAuxiliarApp2Debug, 
         % ...and 1 other component
         function Graphics_ParameterValueChanged(app, event)
             
             switch event.Source
-                case app.gpuType
-                    if ismember(app.gpuType.Value, {'software', 'hardware', 'hardwarebasic'})
-                        eval(sprintf('opengl %s', app.gpuType.Value))
-
-                        graphRender = opengl('data');
-                        
-                        app.mainApp.General.openGL = app.gpuType.Value;
-                        app.mainApp.General.AppVersion.openGL = rmfield(graphRender, {'MaxTextureSize', 'Visual', 'SupportsGraphicsSmoothing', 'SupportsDepthPeelTransparency', 'SupportsAlignVertexCenters', 'Extensions', 'MaxFrameBufferSize'});
-                    end
-
                 case app.openAuxiliarAppAsDocked
                     app.mainApp.General.operationMode.Dock  = app.openAuxiliarAppAsDocked.Value;
 
@@ -369,6 +360,60 @@ classdef winConfig_exported < matlab.apps.AppBase
                         
             app.mainApp.General_I.sped.encoding.value = app.EncodingDropDown_2.Value;
             saveGeneralSettings(app)
+
+        end
+
+        % Button pushed function: Run
+        function RunButtonPushed(app, event)
+            
+            try
+                entry = strtrim(strjoin(app.Input.Value, '\n'));
+                if ~isempty(entry)
+                    switch entry
+                        case 'clc'
+                            app.Output.Value = '';
+                            % app.Label.Text = ' ';
+
+                        otherwise
+                            result = evalc(entry);
+                            if ~isempty(result)
+                                outputValue = sprintf('%s\n%s\n%s', strjoin(app.Output.Value, '\n'), entry, result);
+
+                                app.Output.Value = outputValue;
+                                % app.Label.Text = ['<span style="font-size:Monospaced; font-size:14px;">' replace(outputValue, newline, sprintf('<br>\n')) '</span>'];
+
+                                if ~isempty(app.Output.Value) && iscell(app.Output.Value)
+                                    idxEmptyRows = cellfun(@(x) isempty(x), app.Output.Value);
+                                    app.Output.Value(idxEmptyRows) = [];
+                                end
+                                scroll(app.Output, 'bottom')
+                            end
+                    end
+                end
+
+            catch ME
+                uialert(app.UIFigure, ME.message, '', 'Icon', 'none')
+            end
+
+        end
+
+        % Button pushed function: CommandTest1, CommandTest2, 
+        % ...and 3 other components
+        function isdeployedButtonPushed(app, event)
+            
+            try
+                entry = event.Source.Text;
+                app.Output.Value = sprintf('%s\n%s', entry, evalc(entry));
+            catch ME
+                uialert(app.UIFigure, ME.message, '', 'Icon', 'none')
+            end
+
+        end
+
+        % Button pushed function: XButton
+        function XButtonPushed(app, event)
+            
+            app.Output.Value = '';
 
         end
     end
@@ -495,6 +540,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.btnGeneral = uiradiobutton(app.LeftPanelRadioGroup);
             app.btnGeneral.Text = 'Aspectos gerais';
             app.btnGeneral.FontSize = 11;
+            app.btnGeneral.Interpreter = 'html';
             app.btnGeneral.Position = [14 69 100 22];
             app.btnGeneral.Value = true;
 
@@ -502,6 +548,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.btnAnalysis = uiradiobutton(app.LeftPanelRadioGroup);
             app.btnAnalysis.Text = 'Análise';
             app.btnAnalysis.FontSize = 11;
+            app.btnAnalysis.Interpreter = 'html';
             app.btnAnalysis.Position = [14 47 58 22];
 
             % Create btnFolder
@@ -509,12 +556,13 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.btnFolder.Enable = 'off';
             app.btnFolder.Text = 'Mapeamento de pastas';
             app.btnFolder.FontSize = 11;
+            app.btnFolder.Interpreter = 'html';
             app.btnFolder.Position = [14 25 195 22];
 
             % Create General_Grid
             app.General_Grid = uigridlayout(app.GridLayout);
             app.General_Grid.ColumnWidth = {'1x', 16};
-            app.General_Grid.RowHeight = {26, 150, 22, '1x', 17, 22, 1, 22, 15};
+            app.General_Grid.RowHeight = {26, 150, 22, '1x', 1, 22, 15};
             app.General_Grid.RowSpacing = 5;
             app.General_Grid.Padding = [0 0 0 0];
             app.General_Grid.Layout.Row = [2 6];
@@ -551,33 +599,13 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.versionInfo.Interpreter = 'html';
             app.versionInfo.Text = '';
 
-            % Create gpuTypeLabel
-            app.gpuTypeLabel = uilabel(app.General_Grid);
-            app.gpuTypeLabel.VerticalAlignment = 'bottom';
-            app.gpuTypeLabel.FontSize = 10;
-            app.gpuTypeLabel.FontColor = [0.149 0.149 0.149];
-            app.gpuTypeLabel.Layout.Row = 5;
-            app.gpuTypeLabel.Layout.Column = [1 2];
-            app.gpuTypeLabel.Text = 'Unidade gráfica:';
-
-            % Create gpuType
-            app.gpuType = uidropdown(app.General_Grid);
-            app.gpuType.Items = {'hardwarebasic', 'hardware', 'software'};
-            app.gpuType.ValueChangedFcn = createCallbackFcn(app, @Graphics_ParameterValueChanged, true);
-            app.gpuType.Enable = 'off';
-            app.gpuType.FontSize = 11;
-            app.gpuType.BackgroundColor = [1 1 1];
-            app.gpuType.Layout.Row = 6;
-            app.gpuType.Layout.Column = [1 2];
-            app.gpuType.Value = 'hardware';
-
             % Create openAuxiliarAppAsDocked
             app.openAuxiliarAppAsDocked = uicheckbox(app.General_Grid);
             app.openAuxiliarAppAsDocked.ValueChangedFcn = createCallbackFcn(app, @Graphics_ParameterValueChanged, true);
             app.openAuxiliarAppAsDocked.Enable = 'off';
             app.openAuxiliarAppAsDocked.Text = 'Modo DOCK: módulos auxiliares abertos na janela principal do app';
             app.openAuxiliarAppAsDocked.FontSize = 11;
-            app.openAuxiliarAppAsDocked.Layout.Row = 8;
+            app.openAuxiliarAppAsDocked.Layout.Row = 6;
             app.openAuxiliarAppAsDocked.Layout.Column = [1 2];
 
             % Create openAuxiliarApp2Debug
@@ -586,7 +614,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.openAuxiliarApp2Debug.Enable = 'off';
             app.openAuxiliarApp2Debug.Text = 'Modo DEBUG';
             app.openAuxiliarApp2Debug.FontSize = 11;
-            app.openAuxiliarApp2Debug.Layout.Row = 9;
+            app.openAuxiliarApp2Debug.Layout.Row = 7;
             app.openAuxiliarApp2Debug.Layout.Column = [1 2];
 
             % Create CustomPlotGrid
@@ -612,16 +640,149 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.general_FilePanel.Layout.Row = 2;
             app.general_FilePanel.Layout.Column = [1 2];
 
+            % Create GridLayout_2
+            app.GridLayout_2 = uigridlayout(app.general_FilePanel);
+            app.GridLayout_2.ColumnWidth = {'1x', '1x', '1x', '1x', '1x', 44};
+            app.GridLayout_2.RowHeight = {100, '0.25x', 44, 44, '1x'};
+            app.GridLayout_2.ColumnSpacing = 2;
+            app.GridLayout_2.RowSpacing = 2;
+            app.GridLayout_2.Padding = [5 5 5 5];
+            app.GridLayout_2.BackgroundColor = [1 1 1];
+
+            % Create Input
+            app.Input = uitextarea(app.GridLayout_2);
+            app.Input.FontName = 'Monospaced';
+            app.Input.FontSize = 14;
+            app.Input.FontWeight = 'bold';
+            app.Input.Layout.Row = [2 3];
+            app.Input.Layout.Column = [1 5];
+
+            % Create Run
+            app.Run = uibutton(app.GridLayout_2, 'push');
+            app.Run.ButtonPushedFcn = createCallbackFcn(app, @RunButtonPushed, true);
+            app.Run.BackgroundColor = [1 1 1];
+            app.Run.Layout.Row = 3;
+            app.Run.Layout.Column = 6;
+            app.Run.Text = '>>';
+
+            % Create Output
+            app.Output = uitextarea(app.GridLayout_2);
+            app.Output.FontName = 'Monospaced';
+            app.Output.FontColor = [1 1 1];
+            app.Output.BackgroundColor = [0 0 0];
+            app.Output.Layout.Row = 5;
+            app.Output.Layout.Column = [1 6];
+
+            % Create CommandTest3
+            app.CommandTest3 = uibutton(app.GridLayout_2, 'push');
+            app.CommandTest3.ButtonPushedFcn = createCallbackFcn(app, @isdeployedButtonPushed, true);
+            app.CommandTest3.WordWrap = 'on';
+            app.CommandTest3.FontSize = 10;
+            app.CommandTest3.Layout.Row = 4;
+            app.CommandTest3.Layout.Column = 4;
+            app.CommandTest3.Text = 'struct(struct(struct(app.UIFigure).Controller).PlatformHost)';
+
+            % Create CommandTest2
+            app.CommandTest2 = uibutton(app.GridLayout_2, 'push');
+            app.CommandTest2.ButtonPushedFcn = createCallbackFcn(app, @isdeployedButtonPushed, true);
+            app.CommandTest2.WordWrap = 'on';
+            app.CommandTest2.FontSize = 10;
+            app.CommandTest2.Layout.Row = 4;
+            app.CommandTest2.Layout.Column = 5;
+            app.CommandTest2.Text = 'struct(struct(app.UIFigure).Controller).PeerModelInfo';
+
+            % Create XButton
+            app.XButton = uibutton(app.GridLayout_2, 'push');
+            app.XButton.ButtonPushedFcn = createCallbackFcn(app, @XButtonPushed, true);
+            app.XButton.BackgroundColor = [0.4392 0.1569 0.1569];
+            app.XButton.FontSize = 8;
+            app.XButton.FontColor = [1 1 1];
+            app.XButton.Layout.Row = 4;
+            app.XButton.Layout.Column = 6;
+            app.XButton.Text = 'X';
+
+            % Create ctfrootButton
+            app.ctfrootButton = uibutton(app.GridLayout_2, 'push');
+            app.ctfrootButton.ButtonPushedFcn = createCallbackFcn(app, @isdeployedButtonPushed, true);
+            app.ctfrootButton.WordWrap = 'on';
+            app.ctfrootButton.FontSize = 10;
+            app.ctfrootButton.Layout.Row = 4;
+            app.ctfrootButton.Layout.Column = 2;
+            app.ctfrootButton.Text = 'ctfroot';
+
+            % Create isdeployedButton
+            app.isdeployedButton = uibutton(app.GridLayout_2, 'push');
+            app.isdeployedButton.ButtonPushedFcn = createCallbackFcn(app, @isdeployedButtonPushed, true);
+            app.isdeployedButton.WordWrap = 'on';
+            app.isdeployedButton.FontSize = 10;
+            app.isdeployedButton.Layout.Row = 4;
+            app.isdeployedButton.Layout.Column = 1;
+            app.isdeployedButton.Text = 'isdeployed';
+
+            % Create TabGroup
+            app.TabGroup = uitabgroup(app.GridLayout_2);
+            app.TabGroup.Layout.Row = 1;
+            app.TabGroup.Layout.Column = 1;
+
+            % Create Tab
+            app.Tab = uitab(app.TabGroup);
+            app.Tab.Title = 'Tab';
+            app.Tab.BackgroundColor = [1 1 0];
+
+            % Create Tab2
+            app.Tab2 = uitab(app.TabGroup);
+            app.Tab2.Title = 'Tab2';
+            app.Tab2.BackgroundColor = [0 1 0];
+
+            % Create Tab3
+            app.Tab3 = uitab(app.TabGroup);
+            app.Tab3.Title = 'Tab3';
+            app.Tab3.BackgroundColor = [0 0 0];
+
+            % Create ButtonGroup
+            app.ButtonGroup = uibuttongroup(app.GridLayout_2);
+            app.ButtonGroup.Title = 'Button Group';
+            app.ButtonGroup.BackgroundColor = [1 1 1];
+            app.ButtonGroup.Layout.Row = 1;
+            app.ButtonGroup.Layout.Column = 2;
+
+            % Create Button
+            app.Button = uiradiobutton(app.ButtonGroup);
+            app.Button.Text = 'Button';
+            app.Button.Position = [11 54 58 22];
+            app.Button.Value = true;
+
+            % Create Button2
+            app.Button2 = uiradiobutton(app.ButtonGroup);
+            app.Button2.Text = 'Button2';
+            app.Button2.Position = [11 32 65 22];
+
+            % Create Button3
+            app.Button3 = uiradiobutton(app.ButtonGroup);
+            app.Button3.Text = 'Button3';
+            app.Button3.Position = [11 10 65 22];
+
+            % Create CommandTest1
+            app.CommandTest1 = uibutton(app.GridLayout_2, 'push');
+            app.CommandTest1.ButtonPushedFcn = createCallbackFcn(app, @isdeployedButtonPushed, true);
+            app.CommandTest1.WordWrap = 'on';
+            app.CommandTest1.FontSize = 10;
+            app.CommandTest1.Layout.Row = 4;
+            app.CommandTest1.Layout.Column = 3;
+            app.CommandTest1.Text = 'struct(struct(struct(app.UIFigure).Controller).PlatformHost).CEF.openDevTools()';
+
             % Create EncodingDropDown_2
-            app.EncodingDropDown_2 = uidropdown(app.general_FilePanel);
+            app.EncodingDropDown_2 = uidropdown(app.GridLayout_2);
             app.EncodingDropDown_2.Items = {};
             app.EncodingDropDown_2.ValueChangedFcn = createCallbackFcn(app, @EncodingDropDown_2ValueChanged, true);
-            app.EncodingDropDown_2.Position = [129 201 198 22];
+            app.EncodingDropDown_2.Layout.Row = 1;
+            app.EncodingDropDown_2.Layout.Column = 4;
             app.EncodingDropDown_2.Value = {};
 
             % Create EncodingLabel
-            app.EncodingLabel = uilabel(app.general_FilePanel);
-            app.EncodingLabel.Position = [130 267 58 22];
+            app.EncodingLabel = uilabel(app.GridLayout_2);
+            app.EncodingLabel.Layout.Row = 1;
+            app.EncodingLabel.Layout.Column = 3;
             app.EncodingLabel.Text = 'Encoding:';
 
             % Create Folders_Grid

@@ -10,7 +10,7 @@ classdef ECD < model.ECDBase
         %-----------------------------------------------------------------%
         CompanyName
         CompanyId
-        CompanyInfo = struct('CNPJ', {}, 'IE', {}, 'IM', {}, 'UF', {}, 'City', {})
+        CompanyInfo = struct('CNPJ', {}, 'IE', {}, 'IM', {}, 'NIRE', {}, 'UF', {}, 'City', {})
 
         Period = []
         PeriodMerged = false
@@ -18,7 +18,9 @@ classdef ECD < model.ECDBase
         FileName
         FileFullName
         FileEncoding
-        FileStatus = 0 % Pesquisa à base da Receita Federal: -1 (Diverge) | 0 (Pendente) | 1 (Coincide)
+        
+        FileStatus = 0 % -2 (Erro) | -1 (Diverge) | 0 (Pendente) | 1 (Coincide)
+        ReceitaFederal
 
         Content
         Layout
@@ -36,8 +38,8 @@ classdef ECD < model.ECDBase
             arguments
                 obj
                 fileNameList
-                fileEncoding   (1,:) cell = {}
-                tableIdList    (1,:) cell = {'0000', '9900','I030'}
+                fileEncoding   (1,:) char = 'ISO-8859-1'
+                tableIdList    (1,:) cell = {'0000', '9900', 'I030'}
                 mergedFileFlag (1,1) logical = false
             end
 
@@ -61,14 +63,8 @@ classdef ECD < model.ECDBase
                 try
                     obj(idx).FileName     = fileName;
                     obj(idx).FileFullName = fileFullName;
-
-                    % Leitura do conteúdo do arquivo, identificando a sua
-                    % codificação textual.
-                    if isempty(fileEncoding)
-                        fileEncoding = {'ISO-8859-1', 'UTF-8'};
-                    end
-                    [obj(idx).Content, ...
-                     obj(idx).FileEncoding] = textAnalysis.fileread(fileFullName, '^\|[^|]+\|[^\r\n]*', fileEncoding);
+                    obj(idx).Content      = fileread(fileFullName, 'Encoding', fileEncoding);
+                    obj(idx).FileEncoding = fileEncoding;
 
                     % Leitura da ficha "I010", identificando o layout do
                     % arquivo. Como essa ficha não mudou ao longo do tempo, 
@@ -89,6 +85,7 @@ classdef ECD < model.ECDBase
                         obj(idx).CompanyInfo = struct('CNPJ',  obj(idx).Table.x0000.CNPJ{1}, ...
                                                       'IE',    obj(idx).Table.x0000.IE{1},   ...
                                                       'IM',    obj(idx).Table.x0000.IM{1},   ...
+                                                      'NIRE',  obj(idx).Table.xI030.NIRE{1}, ...
                                                       'UF',    obj(idx).Table.x0000.UF{1},   ...
                                                       'City',  obj(idx).Table.x0000.COD_MUN{1});
 
@@ -175,6 +172,54 @@ classdef ECD < model.ECDBase
                     if ~isfield(obj(ii).Table, ['x' tableID])
                         parseTableAndAddToCache(obj(ii), {tableID})
                     end
+                end
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function checkFileStatus(obj, encoding, terminator)
+            arguments
+                obj
+                encoding   = 'ISO-8859-1'
+                terminator = uint8([13, 10])
+            end
+
+            objRF = ws.ReceitaFederal;
+
+            for ii = 1:numel(obj)
+                if ismember(obj(ii).FileStatus, [-1, 1])
+                    continue
+                end
+
+                try
+                    splitContent   = splitlines(obj(ii).Content);
+                    lastLineIndex  = find(startsWith(splitContent, '|9999|'), 1);
+                    if isempty(lastLineIndex)
+                        error('Não identificada a ficha "9999" do arquivo "%s"', obj(ii).FileName)
+                    end
+            
+                    splitContent   = strjoin(splitContent(1:lastLineIndex), char(terminator));
+                    splitByteArray = unicode2native(splitContent, encoding);
+                    fileHexHash    = util.calculateFileHash([splitByteArray, terminator]);
+
+                    requestAnswer  = objRF.run('ECD', obj(ii).CompanyInfo.NIRE, fileHexHash);
+                    
+                    obj(ii).ReceitaFederal = requestAnswer;
+                    if ~isempty(requestAnswer) && isstruct(requestAnswer) && isfield(requestAnswer, 'retVerif')
+                        if contains(requestAnswer.retVerif, 'mesma', 'IgnoreCase', true)
+                            obj(ii).FileStatus = 1;
+                        elseif contains(requestAnswer.retVerif, 'não', 'IgnoreCase', true)
+                            obj(ii).FileStatus = -1;
+                        else
+                            obj(ii).FileStatus = -2;
+                        end
+                    else
+                        obj(ii).FileStatus = -2;
+                    end
+
+                catch ME
+                    obj(ii).FileStatus = -2;
+                    obj(ii).ReceitaFederal = ME.message;
                 end
             end
         end
