@@ -38,7 +38,7 @@ classdef ECD < model.ECDBase
             arguments
                 obj
                 fileNameList
-                fileEncoding   (1,:) char = 'ISO-8859-1'
+                fileEncoding   (1,:) cell = {'ISO-8859-1'}
                 tableIdList    (1,:) cell = {'0000', '9900', 'I030'}
                 mergedFileFlag (1,1) logical = false
             end
@@ -63,8 +63,16 @@ classdef ECD < model.ECDBase
                 try
                     obj(idx).FileName     = fileName;
                     obj(idx).FileFullName = fileFullName;
-                    obj(idx).Content      = fileread(fileFullName, 'Encoding', fileEncoding);
-                    obj(idx).FileEncoding = fileEncoding;
+                    % obj(idx).Content      = fileread(fileFullName, 'Encoding', fileEncoding);
+                    % obj(idx).FileEncoding = fileEncoding;
+                    
+                    % Leitura do conteúdo do arquivo, identificando a sua
+                    % codificação textual.
+                    if isempty(fileEncoding)
+                        fileEncoding = {'ISO-8859-1', 'UTF-8'};
+                    end
+                    [obj(idx).Content, ...
+                        obj(idx).FileEncoding] = textAnalysis.fileread(fileFullName, '^\|[^|]+\|[^\r\n]*', fileEncoding);
 
                     % Leitura da ficha "I010", identificando o layout do
                     % arquivo. Como essa ficha não mudou ao longo do tempo, 
@@ -206,6 +214,7 @@ classdef ECD < model.ECDBase
                     
                     obj(ii).ReceitaFederal = requestAnswer;
                     if ~isempty(requestAnswer) && isstruct(requestAnswer) && isfield(requestAnswer, 'retVerif')
+                        sprintf('%s - %s', obj(ii).FileName,requestAnswer.retVerif)
                         if contains(requestAnswer.retVerif, 'mesma', 'IgnoreCase', true)
                             obj(ii).FileStatus = 1;
                         elseif contains(requestAnswer.retVerif, 'não', 'IgnoreCase', true)
@@ -391,7 +400,7 @@ classdef ECD < model.ECDBase
                 fileEncoding   = 'ISO-8859-1';
                 writematrix(mergedContent, mergedTempFile, "FileType", "text", "QuoteStrings", "none", "Encoding", fileEncoding);
     
-                [obj, msg] = obj.addFiles(mergedTempFile, {fileEncoding}, {'0000', '9900'}, true);
+                [obj, msg] = obj.addFiles(mergedTempFile, {fileEncoding}, {'0000', '9900', 'I030'}, true);
             catch ME
                 msg = ME.message;
             end
@@ -711,7 +720,7 @@ classdef ECD < model.ECDBase
                                 'VariableTypes', varfun(@class, x2, 'OutputFormat', 'cell'), ...
                                 'VariableNames', x2.Properties.VariableNames);
 
-                            tableOutAll{2}.REG(:,:)         = {char};
+                            tableOutAll{2}.REG(:,:)         = {char}; % [] ''
                             tableOutAll{2}.COD_CCUS(:,:)    = {char};
                             tableOutAll{2}.COD_CTA_REF(:,:) = {char};
 
@@ -724,6 +733,9 @@ classdef ECD < model.ECDBase
                             tableOutAll{3}.COD_CCUS(:,:) = {char};
                             tableOutAll{3}.COD_AGL(:,:)  = {char};
 
+                            % splittedContent = splitlines(obj.Content);
+                            % index = startsWith(splittedContend, 'xxxx');
+
                             regexPattern = ['^\|(' Tabletype{1} '|' Tabletype{2} '|' Tabletype{3} ')\|[^\r\n]*'];
                             regexMatches = regexp(obj.Content, regexPattern, 'match', 'lineanchors')';
                             regexMatchesTabletype1_2_3_First = cellfun(@(x) x(2:end-1), regexMatches, 'UniformOutput', false);
@@ -733,12 +745,18 @@ classdef ECD < model.ECDBase
                             tableOutAll{1} = x1;
                             tableOutAll{1} = addvars(tableOutAll{1}, (1:height(tableOutAll{1}))', 'Before', 1, 'NewVariableNames', 'ID_1_2_3');
                             tableOutAll{1}.ID_1_2_3 = strings(height(tableOutAll{1}), 1);
+
                             tableOutAll{2} = x2;
                             tableOutAll{2} = addvars(tableOutAll{2}, (1:height(tableOutAll{2}))', 'Before', 1, 'NewVariableNames', 'ID_1_2_3');
                             tableOutAll{2}.ID_1_2_3 = strings(height(tableOutAll{2}), 1);
+
                             tableOutAll{3} = x3;
                             tableOutAll{3} = addvars(tableOutAll{3}, (1:height(tableOutAll{3}))', 'Before', 1, 'NewVariableNames', 'ID_1_2_3');
                             tableOutAll{3}.ID_1_2_3 = strings(height(tableOutAll{3}), 1);
+
+                            tableOutAll{1}.ID_1_2_3 = double(tableOutAll{1}.ID_1_2_3);
+                            tableOutAll{2}.ID_1_2_3 = double(tableOutAll{2}.ID_1_2_3);
+                            tableOutAll{3}.ID_1_2_3 = double(tableOutAll{3}.ID_1_2_3);
 
                             jj = 1;
                             xx = 1;
@@ -754,25 +772,25 @@ classdef ECD < model.ECDBase
                                     acum1 = acum1 + 1;
 
                                 elseif info_1_2_3(ii) == Tabletype{1} && info_1_2_3(ii + 1) == Tabletype{2}
-                                    tableOutAll{1}.ID_1_2_3(acum1 + xx) = string(jj);
+                                    tableOutAll{1}.ID_1_2_3(acum1 + xx) = jj;
 
                                 elseif info_1_2_3(ii) == Tabletype{1} && info_1_2_3(ii + 1) == Tabletype{3}
-                                    tableOutAll{1}.ID_1_2_3(acum1 + xx) = string(jj);
+                                    tableOutAll{1}.ID_1_2_3(acum1 + xx) = jj;
                                     incr2 = incr2 + 1;
 
                                 elseif info_1_2_3(ii) == Tabletype{2} && info_1_2_3(ii + 1) == Tabletype{2}
-                                    tableOutAll{2}.ID_1_2_3(acum2 + yy) = string(jj);
+                                    tableOutAll{2}.ID_1_2_3(acum2 + yy) = jj;
                                     acum2 = acum2 + 1;
 
                                 elseif info_1_2_3(ii) == Tabletype{2} && info_1_2_3(ii + 1) == Tabletype{3}
-                                    tableOutAll{2}.ID_1_2_3(acum2 + yy) = string(jj);
+                                    tableOutAll{2}.ID_1_2_3(acum2 + yy) = jj;
 
                                 elseif info_1_2_3(ii) == Tabletype{3} && info_1_2_3(ii + 1) == Tabletype{3}
-                                    tableOutAll{3}.ID_1_2_3(acum3 + zz) = string(jj);
+                                    tableOutAll{3}.ID_1_2_3(acum3 + zz) = jj;
                                     acum3 = acum3 + 1;
 
                                 elseif info_1_2_3(ii) == Tabletype{2} && info_1_2_3(ii + 1) == Tabletype{1}
-                                    tableOutAll{2}.ID_1_2_3(acum2 + yy - incr2) = string(jj);
+                                    tableOutAll{2}.ID_1_2_3(acum2 + yy - incr2) = jj;
                                     xx = xx + 1;
                                     yy = yy + 1;
                                     zz = zz + 1;
@@ -780,7 +798,7 @@ classdef ECD < model.ECDBase
                                     incr1 = incr1 + 1;
 
                                 elseif info_1_2_3(ii) == Tabletype{3} && info_1_2_3(ii + 1) == Tabletype{1}
-                                    tableOutAll{3}.ID_1_2_3(acum3 + zz - incr1) = string(jj);
+                                    tableOutAll{3}.ID_1_2_3(acum3 + zz - incr1) = jj;
                                     xx = xx + 1;
                                     yy = yy + 1;
                                     zz = zz + 1;
@@ -934,6 +952,7 @@ classdef ECD < model.ECDBase
                 Table_J150_parcial = Table_J005_J150(:, {'COD_AGL', 'DESCR_COD_AGL'});
                 Table_J150_parcial.Properties.VariableNames{'DESCR_COD_AGL'} = 'CLASS_DRE';
                 Table_J150_parcial.COD_AGL = string(Table_J150_parcial.COD_AGL);
+                Table_J150_parcial.CLASS_DRE = string(Table_J150_parcial.CLASS_DRE);
             end
 
             Table_I050_I051_I052_parcial = Table_I050_I051_I052(:, {'COD_CTA', 'COD_NAT', 'COD_CTA_SUP', 'CTA', 'NIVEL', 'COD_AGL'});
@@ -946,7 +965,8 @@ classdef ECD < model.ECDBase
 
             tableDinamicaUnica = unique(tableDinamicaParcial, 'rows');
 
-            if ~isempty(Table_J005_J150)
+
+            if ~isempty(Table_J005_J150) && isempty(tableDinamicaUnica.COD_AGL)
                 tableDinamicaUnica.COD_AGL = string(tableDinamicaUnica.COD_AGL);
                 tableDinamicaTotal = outerjoin(tableDinamicaUnica, Table_J150_parcial, ...
                     'Keys', 'COD_AGL', ...
