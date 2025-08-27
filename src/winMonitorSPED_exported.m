@@ -8,17 +8,18 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         SplashScreen                   matlab.ui.control.Image
         menu_Grid                      matlab.ui.container.GridLayout
         GridLayout3                    matlab.ui.container.GridLayout
+        DataHubLamp                    matlab.ui.control.Image
         jsBackDoor                     matlab.ui.control.HTML
         FigurePosition                 matlab.ui.control.Image
         AppInfo                        matlab.ui.control.Image
-        DataHubLamp                    matlab.ui.control.Lamp
         dockModule_Close               matlab.ui.control.Image
         dockModule_Undock              matlab.ui.control.Image
-        NOMEDAEMPRESAMetadadosOutrascoisasLabel_2  matlab.ui.control.Label
         menu_Button4                   matlab.ui.control.StateButton
         menu_Separator2                matlab.ui.control.Image
         menu_Button2                   matlab.ui.control.StateButton
         menu_Button1                   matlab.ui.control.StateButton
+        menu_AppName                   matlab.ui.control.Label
+        menu_AppIcon                   matlab.ui.control.Image
         TabGroup                       matlab.ui.container.TabGroup
         Tab1_File                      matlab.ui.container.Tab
         file_Grid                      matlab.ui.container.GridLayout
@@ -29,7 +30,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         GridLayout2                    matlab.ui.container.GridLayout
         NOMEDAEMPRESAMetadadosOutrascoisasLabel  matlab.ui.control.Label
         file_toolGrid                  matlab.ui.container.GridLayout
-        PLACEHOLDERENCODINGLabel       matlab.ui.control.Label
+        file_Encoding                  matlab.ui.control.Label
         file_CheckRFB                  matlab.ui.control.Image
         file_MergeFiles                matlab.ui.control.Image
         Image                          matlab.ui.control.Image
@@ -97,6 +98,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     % JS
                     case 'renderer'
                         startup_Controller(app)
+
                     case 'unload'
                         closeFcn(app)
 
@@ -138,6 +140,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                     webWin.openDevTools();
                                 end
                         end
+
+                    case 'getNavigatorBasicInformation'
+                        app.General.AppVersion.browser = event.HTMLEventData;
 
                     case 'getCssPropertyValue'
                         componentName = event.HTMLEventData.componentName;
@@ -407,6 +412,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             app.General            = app.General_I;        
             app.General.AppVersion = util.getAppVersion(app.rootFolder, MFilePath, tempDir); % RFDataHub lido aqui
+            sendEventToHTMLSource(app.jsBackDoor, 'getNavigatorBasicInformation')
 
             % Leitura de arquivo "IBGE.mat", salvando-o em memória como 
             % variável global.
@@ -439,8 +445,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             addComponent(app.tabGroupController, "External", "auxApp.winECD",         app.menu_Button2, "AlwaysOn", struct('On', 'Playback_32Yellow.png', 'Off', 'Playback_32White.png'), app.menu_Button1,                    2)
             addComponent(app.tabGroupController, "External", "auxApp.winConfig",      app.menu_Button4, "AlwaysOn", struct('On', 'Settings_36Yellow.png', 'Off', 'Settings_36White.png'), app.menu_Button1,                    3)
 
-            % Alerta, caso não tenha sido feito mapemanto de pasta do sharepoint.
             DataHubWarningLamp(app)
+            EncodingInfo(app)
         end
 
         %-----------------------------------------------------------------%
@@ -453,8 +459,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
+        function EncodingInfo(app)
+            app.file_Encoding.Text = sprintf('%s | %s', app.General.sped.terminator.value, app.General.sped.encoding.value);
+        end
+
+        %-----------------------------------------------------------------%
         function file_TreeBuilding(app)
             if ~isempty(app.file_Tree.Children)
+                app.file_Metadata.UserData = [];
                 delete(app.file_Tree.Children)
             end
 
@@ -466,18 +478,26 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 for id = ids(idsSortedIndexes)
                     idIndexes = find(strcmp(idsList, id));
-                    [~, idSortedIndexes] = sort(arrayfun(@(x) x.Period(1), app.ecdObj(idIndexes)));
+                    [~, idSortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(idIndexes)));
     
                     treeNodeParent = uitreenode(app.file_Tree, ...
                         'Text', sprintf('%s (CNPJ nº %s)', app.ecdObj(idIndexes(1)).CompanyName, app.ecdObj(idIndexes(1)).CompanyId), ...
                         'NodeData', idIndexes, 'ContextMenu', app.file_ContextMenu_Tree);
     
                     for idx = idIndexes(idSortedIndexes)
-                        textNode = sprintf('%s', strjoin(string(app.ecdObj(idx).Period), ' a '));
                         if app.ecdObj(idx).PeriodMerged
-                            textNode = [textNode ' (PERÍODOS MESCLADOS)'];
+                            statusIcon = '    ➕';
+                        else
+                            if app.ecdObj(idx).FileStatus > 0
+                                statusIcon = '    🟢';
+                            elseif app.ecdObj(idx).FileStatus == 0
+                                statusIcon = '    ⚪';
+                            else
+                                statusIcon = '    🔴';
+                            end
                         end
 
+                        textNode = sprintf('%s%s%s', strjoin(string(app.ecdObj(idx).Period), ' a '), statusIcon);
                         uitreenode(treeNodeParent, ...
                             'Text', textNode, ...
                             'NodeData', idx, 'ContextMenu', app.file_ContextMenu_Tree);
@@ -488,8 +508,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 if ~isempty(app.ecdObj)
                     app.file_Tree.SelectedNodes = app.file_Tree.Children(1).Children(1);
                 end
-                file_TreeSelectionChanged(app)
             end
+
+            file_TreeSelectionChanged(app)
         end
 
         %-----------------------------------------------------------------%
@@ -567,7 +588,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 % <GUI>
                 app.popupContainerGrid.Layout.Row = [1,2];
-                app.GridLayout.RowHeight = {44, '1x'};
+                app.GridLayout.RowHeight(end) = [];
                 % </GUI>
 
                 appUtil.winPosition(app.UIFigure)
@@ -749,13 +770,22 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         % Image clicked function: file_MergeFiles
         function file_MergeFilesImageClicked(app, event)
-            
+
             mergedIndexes = [];
             if ~isempty(app.file_Tree.SelectedNodes)
                 mergedIndexes = unique([app.file_Tree.SelectedNodes.NodeData]);
             end
 
             if numel(mergedIndexes) >= 2
+                if strcmp(misc_checkIfAuxiliarAppIsOpen(app, 'MESCLAR FLUXOS'), 'Não')
+                    return
+                end
+
+                if ~isscalar(unique({app.ecdObj(mergedIndexes).CompanyId}))
+                    appUtil.modalWindow(app.UIFigure, 'info', 'A mesclagem é aplicável apenas a registros de uma mesma empresa.');
+                    return
+                end
+
                 app.progressDialog.Visible = 'visible';
 
                 [app.ecdObj, msg] = app.ecdObj.mergeFiles(mergedIndexes, app.General.fileFolder.tempPath);
@@ -768,13 +798,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 app.progressDialog.Visible = 'hidden';
             end
 
-            % !! ToDo !!
-
-            % Retornar erro caso se trate de empresas distintas (com CNPJs 
-            % diferentes).
-
-            % !! ToDo !!
-
         end
 
         % Image clicked function: file_CheckRFB
@@ -786,10 +809,17 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             end
 
             if ~isempty(nodeData)
-                checkFileStatus(app.ecdObj(nodeData))
-                
-                app.file_Metadata.UserData = [];
-                file_TreeSelectionChanged(app)
+                if all([app.ecdObj(nodeData).PeriodMerged])
+                    appUtil.modalWindow(app.UIFigure, 'info', 'Consulta à Receita Federal não é aplicável a registro mesclado.');
+                    return
+                end
+
+                app.progressDialog.Visible = 'visible';
+
+                checkFileStatus(app.ecdObj(nodeData))                
+                file_TreeBuilding(app)
+
+                app.progressDialog.Visible = 'hidden';
             end
 
         end
@@ -817,7 +847,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % Create GridLayout
             app.GridLayout = uigridlayout(app.UIFigure);
             app.GridLayout.ColumnWidth = {'1x'};
-            app.GridLayout.RowHeight = {44, '1x', 44};
+            app.GridLayout.RowHeight = {54, '1x', 44};
             app.GridLayout.ColumnSpacing = 0;
             app.GridLayout.RowSpacing = 0;
             app.GridLayout.Padding = [0 0 0 0];
@@ -839,18 +869,19 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.file_Grid.RowHeight = {94, 10, '1x', 5, 34};
             app.file_Grid.ColumnSpacing = 0;
             app.file_Grid.RowSpacing = 0;
-            app.file_Grid.Padding = [0 0 0 26];
+            app.file_Grid.Padding = [0 0 0 36];
             app.file_Grid.BackgroundColor = [1 1 1];
 
             % Create file_toolGrid
             app.file_toolGrid = uigridlayout(app.file_Grid);
-            app.file_toolGrid.ColumnWidth = {22, 5, 22, 22, '1x'};
+            app.file_toolGrid.ColumnWidth = {22, 5, 22, 22, '1x', 150};
             app.file_toolGrid.RowHeight = {3, 17, 2};
             app.file_toolGrid.ColumnSpacing = 5;
             app.file_toolGrid.RowSpacing = 0;
             app.file_toolGrid.Padding = [5 6 5 6];
             app.file_toolGrid.Layout.Row = 5;
             app.file_toolGrid.Layout.Column = [1 6];
+            app.file_toolGrid.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
 
             % Create file_OpenFileButton
             app.file_OpenFileButton = uiimage(app.file_toolGrid);
@@ -887,12 +918,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.file_CheckRFB.Layout.Column = 3;
             app.file_CheckRFB.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'receita-federal-novo-logo-png_seeklogo-203693.png');
 
-            % Create PLACEHOLDERENCODINGLabel
-            app.PLACEHOLDERENCODINGLabel = uilabel(app.file_toolGrid);
-            app.PLACEHOLDERENCODINGLabel.HorizontalAlignment = 'right';
-            app.PLACEHOLDERENCODINGLabel.Layout.Row = 2;
-            app.PLACEHOLDERENCODINGLabel.Layout.Column = 5;
-            app.PLACEHOLDERENCODINGLabel.Text = 'PLACE HOLDER ENCODING';
+            % Create file_Encoding
+            app.file_Encoding = uilabel(app.file_toolGrid);
+            app.file_Encoding.HorizontalAlignment = 'right';
+            app.file_Encoding.FontSize = 10;
+            app.file_Encoding.FontColor = [0.502 0.502 0.502];
+            app.file_Encoding.Layout.Row = 2;
+            app.file_Encoding.Layout.Column = 6;
+            app.file_Encoding.Text = '';
 
             % Create TabGroup2
             app.TabGroup2 = uitabgroup(app.file_Grid);
@@ -951,8 +984,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create menu_Grid
             app.menu_Grid = uigridlayout(app.GridLayout);
-            app.menu_Grid.ColumnWidth = {'1x', 28, 28, 5, 28, '1x'};
-            app.menu_Grid.RowHeight = {7, 20, 7};
+            app.menu_Grid.ColumnWidth = {22, '1x', 34, 34, 5, 34, '1x', 22};
+            app.menu_Grid.RowHeight = {5, 7, 20, 7, 5};
             app.menu_Grid.ColumnSpacing = 5;
             app.menu_Grid.RowSpacing = 0;
             app.menu_Grid.Padding = [10 5 5 5];
@@ -960,6 +993,22 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.menu_Grid.Layout.Row = 1;
             app.menu_Grid.Layout.Column = 1;
             app.menu_Grid.BackgroundColor = [0.2 0.2 0.2];
+
+            % Create menu_AppIcon
+            app.menu_AppIcon = uiimage(app.menu_Grid);
+            app.menu_AppIcon.Layout.Row = [1 5];
+            app.menu_AppIcon.Layout.Column = 1;
+            app.menu_AppIcon.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Playback_32White.png');
+
+            % Create menu_AppName
+            app.menu_AppName = uilabel(app.menu_Grid);
+            app.menu_AppName.WordWrap = 'on';
+            app.menu_AppName.FontSize = 11;
+            app.menu_AppName.FontColor = [1 1 1];
+            app.menu_AppName.Layout.Row = [1 5];
+            app.menu_AppName.Layout.Column = 2;
+            app.menu_AppName.Interpreter = 'html';
+            app.menu_AppName.Text = {'monitorSPED v. 1.0.0'; '<font style="font-size: 9px;">R2024a</font>'};
 
             % Create menu_Button1
             app.menu_Button1 = uibutton(app.menu_Grid, 'state');
@@ -971,30 +1020,30 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.menu_Button1.Text = '';
             app.menu_Button1.BackgroundColor = [0.2 0.2 0.2];
             app.menu_Button1.FontSize = 11;
-            app.menu_Button1.Layout.Row = [1 3];
-            app.menu_Button1.Layout.Column = 2;
+            app.menu_Button1.Layout.Row = [2 4];
+            app.menu_Button1.Layout.Column = 3;
             app.menu_Button1.Value = true;
 
             % Create menu_Button2
             app.menu_Button2 = uibutton(app.menu_Grid, 'state');
             app.menu_Button2.ValueChangedFcn = createCallbackFcn(app, @menu_mainButtonPushed, true);
             app.menu_Button2.Tag = 'ECD';
-            app.menu_Button2.Tooltip = {'Escrituração Contábil Digital'};
             app.menu_Button2.Enable = 'off';
+            app.menu_Button2.Tooltip = {'Escrituração Contábil Digital'};
             app.menu_Button2.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'Playback_32White.png');
             app.menu_Button2.IconAlignment = 'top';
             app.menu_Button2.Text = '';
             app.menu_Button2.BackgroundColor = [0.2 0.2 0.2];
             app.menu_Button2.FontSize = 11;
-            app.menu_Button2.Layout.Row = [1 3];
-            app.menu_Button2.Layout.Column = 3;
+            app.menu_Button2.Layout.Row = [2 4];
+            app.menu_Button2.Layout.Column = 4;
 
             % Create menu_Separator2
             app.menu_Separator2 = uiimage(app.menu_Grid);
             app.menu_Separator2.ScaleMethod = 'none';
             app.menu_Separator2.Enable = 'off';
-            app.menu_Separator2.Layout.Row = [1 3];
-            app.menu_Separator2.Layout.Column = 4;
+            app.menu_Separator2.Layout.Row = [2 4];
+            app.menu_Separator2.Layout.Column = 5;
             app.menu_Separator2.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV_White.svg');
 
             % Create menu_Button4
@@ -1007,28 +1056,18 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.menu_Button4.Text = '';
             app.menu_Button4.BackgroundColor = [0.2 0.2 0.2];
             app.menu_Button4.FontSize = 11;
-            app.menu_Button4.Layout.Row = [1 3];
-            app.menu_Button4.Layout.Column = 5;
-
-            % Create NOMEDAEMPRESAMetadadosOutrascoisasLabel_2
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2 = uilabel(app.menu_Grid);
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.WordWrap = 'on';
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.FontSize = 9;
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.FontColor = [1 1 1];
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.Layout.Row = [1 3];
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.Layout.Column = 1;
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.Interpreter = 'html';
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel_2.Text = {'<font style="font-size: 11px; font-weight: bold;">monitorSPED</font> v. 1.0.0 '; 'R2024a'};
+            app.menu_Button4.Layout.Row = [2 4];
+            app.menu_Button4.Layout.Column = 6;
 
             % Create GridLayout3
             app.GridLayout3 = uigridlayout(app.menu_Grid);
-            app.GridLayout3.ColumnWidth = {'1x', 20, 20, 20, 20, 0, 0};
+            app.GridLayout3.ColumnWidth = {'1x', 20, 20, 1, 20, 20, 0, 0};
             app.GridLayout3.RowHeight = {'1x'};
             app.GridLayout3.ColumnSpacing = 5;
             app.GridLayout3.Padding = [0 0 0 0];
             app.GridLayout3.Tag = 'MenuSubGrid';
-            app.GridLayout3.Layout.Row = 2;
-            app.GridLayout3.Layout.Column = 6;
+            app.GridLayout3.Layout.Row = 3;
+            app.GridLayout3.Layout.Column = [7 8];
             app.GridLayout3.BackgroundColor = [0.2 0.2 0.2];
 
             % Create dockModule_Undock
@@ -1038,7 +1077,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.dockModule_Undock.Tag = 'DRIVETEST';
             app.dockModule_Undock.Tooltip = {'Reabre módulo em outra janela'};
             app.dockModule_Undock.Layout.Row = 1;
-            app.dockModule_Undock.Layout.Column = 6;
+            app.dockModule_Undock.Layout.Column = 7;
             app.dockModule_Undock.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Undock_18White.png');
 
             % Create dockModule_Close
@@ -1048,24 +1087,15 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.dockModule_Close.Tag = 'DRIVETEST';
             app.dockModule_Close.Tooltip = {'Fecha módulo'};
             app.dockModule_Close.Layout.Row = 1;
-            app.dockModule_Close.Layout.Column = 7;
+            app.dockModule_Close.Layout.Column = 8;
             app.dockModule_Close.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Delete_12SVG_white.svg');
-
-            % Create DataHubLamp
-            app.DataHubLamp = uilamp(app.GridLayout3);
-            app.DataHubLamp.Enable = 'off';
-            app.DataHubLamp.Visible = 'off';
-            app.DataHubLamp.Tooltip = {'Pendente mapear pasta do Sharepoint'};
-            app.DataHubLamp.Layout.Row = 1;
-            app.DataHubLamp.Layout.Column = 3;
-            app.DataHubLamp.Color = [1 0 0];
 
             % Create AppInfo
             app.AppInfo = uiimage(app.GridLayout3);
             app.AppInfo.ImageClickedFcn = createCallbackFcn(app, @menu_ToolbarImageCliced, true);
             app.AppInfo.Tooltip = {'Informações gerais'};
             app.AppInfo.Layout.Row = 1;
-            app.AppInfo.Layout.Column = 5;
+            app.AppInfo.Layout.Column = 6;
             app.AppInfo.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Dots_32White.png');
 
             % Create FigurePosition
@@ -1074,13 +1104,21 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.FigurePosition.Visible = 'off';
             app.FigurePosition.Tooltip = {'Reposiciona janela'};
             app.FigurePosition.Layout.Row = 1;
-            app.FigurePosition.Layout.Column = 4;
+            app.FigurePosition.Layout.Column = 5;
             app.FigurePosition.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'layout1_32White.png');
 
             % Create jsBackDoor
             app.jsBackDoor = uihtml(app.GridLayout3);
             app.jsBackDoor.Layout.Row = 1;
             app.jsBackDoor.Layout.Column = 2;
+
+            % Create DataHubLamp
+            app.DataHubLamp = uiimage(app.GridLayout3);
+            app.DataHubLamp.Visible = 'off';
+            app.DataHubLamp.Tooltip = {'Pendente mapear o Sharepoint'};
+            app.DataHubLamp.Layout.Row = 1;
+            app.DataHubLamp.Layout.Column = 3;
+            app.DataHubLamp.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'red-circle-blink.gif');
 
             % Create popupContainerGrid
             app.popupContainerGrid = uigridlayout(app.GridLayout);

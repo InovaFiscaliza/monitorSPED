@@ -20,14 +20,6 @@ classdef winConfig_exported < matlab.apps.AppBase
         EncodingLabel            matlab.ui.control.Label
         EncodingDropDown_2       matlab.ui.control.DropDown
         CommandTest1             matlab.ui.control.Button
-        ButtonGroup              matlab.ui.container.ButtonGroup
-        Button3                  matlab.ui.control.RadioButton
-        Button2                  matlab.ui.control.RadioButton
-        Button                   matlab.ui.control.RadioButton
-        TabGroup                 matlab.ui.container.TabGroup
-        Tab                      matlab.ui.container.Tab
-        Tab2                     matlab.ui.container.Tab
-        Tab3                     matlab.ui.container.Tab
         isdeployedButton         matlab.ui.control.Button
         ctfrootButton            matlab.ui.control.Button
         XButton                  matlab.ui.control.Button
@@ -85,7 +77,7 @@ classdef winConfig_exported < matlab.apps.AppBase
 
     properties (Access = private)
         %-----------------------------------------------------------------%
-        DefaultValues = struct('Graphics',  struct('openGL', 'hardware', 'Format', 'jpeg', 'Resolution', '120', 'Dock', true),                                                                                                                                                                                                        ...
+        DefaultValues = struct('Graphics',  struct('Format', 'jpeg', 'Resolution', '120', 'Dock', true), ...
                                'Elevation', struct('Points', '256', 'ForceSearch', false, 'Server', 'Open-Elevation'))
     end
 
@@ -237,7 +229,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.rootFolder = mainApp.rootFolder;
 
             if app.isDocked
-                app.GridLayout.Padding(4) = 19;
+                app.GridLayout.Padding(4) = 29;
                 app.jsBackDoor = mainApp.jsBackDoor;
                 startup_Controller(app)
             else
@@ -291,9 +283,7 @@ classdef winConfig_exported < matlab.apps.AppBase
                     app.mainApp.General.operationMode.Debug = app.openAuxiliarApp2Debug.Value;
             end
 
-            app.mainApp.General_I.openGL        = app.mainApp.General.openGL;
             app.mainApp.General_I.operationMode = app.mainApp.General.operationMode;
-
             saveGeneralSettings(app)
 
         end
@@ -516,6 +506,8 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create LeftPanel
             app.LeftPanel = uipanel(app.GridLayout);
+            app.LeftPanel.ForegroundColor = [0.129411764705882 0.129411764705882 0.129411764705882];
+            app.LeftPanel.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
             app.LeftPanel.Layout.Row = [5 6];
             app.LeftPanel.Layout.Column = 2;
 
@@ -637,13 +629,14 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create general_FilePanel
             app.general_FilePanel = uipanel(app.CustomPlotGrid);
+            app.general_FilePanel.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
             app.general_FilePanel.Layout.Row = 2;
             app.general_FilePanel.Layout.Column = [1 2];
 
             % Create GridLayout_2
             app.GridLayout_2 = uigridlayout(app.general_FilePanel);
             app.GridLayout_2.ColumnWidth = {'1x', '1x', '1x', '1x', '1x', 44};
-            app.GridLayout_2.RowHeight = {100, '0.25x', 44, 44, '1x'};
+            app.GridLayout_2.RowHeight = {22, '0.25x', 44, 44, '1x'};
             app.GridLayout_2.ColumnSpacing = 2;
             app.GridLayout_2.RowSpacing = 2;
             app.GridLayout_2.Padding = [5 5 5 5];
@@ -677,6 +670,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.CommandTest3 = uibutton(app.GridLayout_2, 'push');
             app.CommandTest3.ButtonPushedFcn = createCallbackFcn(app, @isdeployedButtonPushed, true);
             app.CommandTest3.WordWrap = 'on';
+            app.CommandTest3.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
             app.CommandTest3.FontSize = 10;
             app.CommandTest3.Layout.Row = 4;
             app.CommandTest3.Layout.Column = 4;
@@ -686,6 +680,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.CommandTest2 = uibutton(app.GridLayout_2, 'push');
             app.CommandTest2.ButtonPushedFcn = createCallbackFcn(app, @isdeployedButtonPushed, true);
             app.CommandTest2.WordWrap = 'on';
+            app.CommandTest2.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
             app.CommandTest2.FontSize = 10;
             app.CommandTest2.Layout.Row = 4;
             app.CommandTest2.Layout.Column = 5;
@@ -705,6 +700,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.ctfrootButton = uibutton(app.GridLayout_2, 'push');
             app.ctfrootButton.ButtonPushedFcn = createCallbackFcn(app, @isdeployedButtonPushed, true);
             app.ctfrootButton.WordWrap = 'on';
+            app.ctfrootButton.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
             app.ctfrootButton.FontSize = 10;
             app.ctfrootButton.Layout.Row = 4;
             app.ctfrootButton.Layout.Column = 2;
@@ -714,58 +710,17 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.isdeployedButton = uibutton(app.GridLayout_2, 'push');
             app.isdeployedButton.ButtonPushedFcn = createCallbackFcn(app, @isdeployedButtonPushed, true);
             app.isdeployedButton.WordWrap = 'on';
+            app.isdeployedButton.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
             app.isdeployedButton.FontSize = 10;
             app.isdeployedButton.Layout.Row = 4;
             app.isdeployedButton.Layout.Column = 1;
             app.isdeployedButton.Text = 'isdeployed';
 
-            % Create TabGroup
-            app.TabGroup = uitabgroup(app.GridLayout_2);
-            app.TabGroup.Layout.Row = 1;
-            app.TabGroup.Layout.Column = 1;
-
-            % Create Tab
-            app.Tab = uitab(app.TabGroup);
-            app.Tab.Title = 'Tab';
-            app.Tab.BackgroundColor = [1 1 0];
-
-            % Create Tab2
-            app.Tab2 = uitab(app.TabGroup);
-            app.Tab2.Title = 'Tab2';
-            app.Tab2.BackgroundColor = [0 1 0];
-
-            % Create Tab3
-            app.Tab3 = uitab(app.TabGroup);
-            app.Tab3.Title = 'Tab3';
-            app.Tab3.BackgroundColor = [0 0 0];
-
-            % Create ButtonGroup
-            app.ButtonGroup = uibuttongroup(app.GridLayout_2);
-            app.ButtonGroup.Title = 'Button Group';
-            app.ButtonGroup.BackgroundColor = [1 1 1];
-            app.ButtonGroup.Layout.Row = 1;
-            app.ButtonGroup.Layout.Column = 2;
-
-            % Create Button
-            app.Button = uiradiobutton(app.ButtonGroup);
-            app.Button.Text = 'Button';
-            app.Button.Position = [11 54 58 22];
-            app.Button.Value = true;
-
-            % Create Button2
-            app.Button2 = uiradiobutton(app.ButtonGroup);
-            app.Button2.Text = 'Button2';
-            app.Button2.Position = [11 32 65 22];
-
-            % Create Button3
-            app.Button3 = uiradiobutton(app.ButtonGroup);
-            app.Button3.Text = 'Button3';
-            app.Button3.Position = [11 10 65 22];
-
             % Create CommandTest1
             app.CommandTest1 = uibutton(app.GridLayout_2, 'push');
             app.CommandTest1.ButtonPushedFcn = createCallbackFcn(app, @isdeployedButtonPushed, true);
             app.CommandTest1.WordWrap = 'on';
+            app.CommandTest1.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
             app.CommandTest1.FontSize = 10;
             app.CommandTest1.Layout.Row = 4;
             app.CommandTest1.Layout.Column = 3;
@@ -775,14 +730,16 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.EncodingDropDown_2 = uidropdown(app.GridLayout_2);
             app.EncodingDropDown_2.Items = {};
             app.EncodingDropDown_2.ValueChangedFcn = createCallbackFcn(app, @EncodingDropDown_2ValueChanged, true);
+            app.EncodingDropDown_2.FontSize = 11;
+            app.EncodingDropDown_2.BackgroundColor = [1 1 1];
             app.EncodingDropDown_2.Layout.Row = 1;
-            app.EncodingDropDown_2.Layout.Column = 4;
+            app.EncodingDropDown_2.Layout.Column = [3 6];
             app.EncodingDropDown_2.Value = {};
 
             % Create EncodingLabel
             app.EncodingLabel = uilabel(app.GridLayout_2);
             app.EncodingLabel.Layout.Row = 1;
-            app.EncodingLabel.Layout.Column = 3;
+            app.EncodingLabel.Layout.Column = [1 2];
             app.EncodingLabel.Text = 'Encoding:';
 
             % Create Folders_Grid
@@ -806,6 +763,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create FolderMapPanel
             app.FolderMapPanel = uipanel(app.Folders_Grid);
             app.FolderMapPanel.AutoResizeChildren = 'off';
+            app.FolderMapPanel.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
             app.FolderMapPanel.Layout.Row = 2;
             app.FolderMapPanel.Layout.Column = 1;
 
