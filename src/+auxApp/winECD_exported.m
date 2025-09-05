@@ -4,9 +4,16 @@ classdef winECD_exported < matlab.apps.AppBase
     properties (Access = public)
         UIFigure                    matlab.ui.Figure
         GridLayout                  matlab.ui.container.GridLayout
+        dockModuleGrid              matlab.ui.container.GridLayout
+        dockModule_Undock           matlab.ui.control.Image
+        dockModule_Close            matlab.ui.control.Image
         toolGrid                    matlab.ui.container.GridLayout
         tool_CompanyInfo            matlab.ui.control.Label
         tool_ExportButton           matlab.ui.control.Image
+        tool_Separator              matlab.ui.control.Image
+        tool_LOGInfo                matlab.ui.control.Image
+        tool_OpenRTFFiles           matlab.ui.control.Image
+        tool_ReadAllTables          matlab.ui.control.Image
         UITable2_FilterText         matlab.ui.control.Label
         UITable2_CountText          matlab.ui.control.Label
         UITable2_CountIcon          matlab.ui.control.Image
@@ -18,8 +25,6 @@ classdef winECD_exported < matlab.apps.AppBase
         TabGroup                    matlab.ui.container.TabGroup
         ASPECTOSGERAISTab           matlab.ui.container.Tab
         GridLayout3                 matlab.ui.container.GridLayout
-        ReadWarnings                matlab.ui.control.Label
-        ReadAllSheets               matlab.ui.control.Hyperlink
         SheetList                   matlab.ui.control.DropDown
         SheetListLabel              matlab.ui.control.Label
         TimePeriodList              matlab.ui.control.DropDown
@@ -73,8 +78,6 @@ classdef winECD_exported < matlab.apps.AppBase
         isDocked = false
 
         mainApp
-        General
-        rootFolder
 
         % A função do timer é executada uma única vez após a renderização
         % da figura, lendo arquivos de configuração, iniciando modo de operação
@@ -172,6 +175,19 @@ classdef winECD_exported < matlab.apps.AppBase
                     customizationStatus(tabIndex) = true;
                     switch tabIndex
                         case 1
+                            % Grid botões "dock":
+                            if app.isDocked
+                                elToModify = {app.dockModuleGrid};
+                                elDataTag  = ui.CustomizationBase.getElementsDataTag(elToModify);
+                                if ~isempty(elDataTag)
+                                    appName = class(app);                    
+                                    sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
+                                        struct('appName', appName, 'dataTag', elDataTag{1}, 'style', struct('transition', 'opacity 2s ease', 'opacity', '0.5')), ...
+                                    });
+                                end
+                            end
+
+                            % Outros elementos:
                             hTableList = {app.UITable1, app.UITable2};
                             ui.CustomizationBase.getElementsDataTag(hTableList);
 
@@ -224,6 +240,10 @@ classdef winECD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function startup_GUIComponents(app)
+            if ~strcmp(app.mainApp.executionMode, 'webApp')
+                app.dockModule_Undock.Enable = 1;
+            end
+
             % Tabelas:
             app.UITable1.RowName  = 'numbered';
             app.UITable2.RowName = 'numbered';
@@ -232,20 +252,29 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Seleção inicial:
             if ~isempty(app.ecdObj)
-                idsList = {app.ecdObj.CompanyId};                
-                [ids, idsFirstIndexes] = unique(idsList, 'stable');
-                idsNames = {app.ecdObj(idsFirstIndexes).CompanyName};
+                idsList = {app.ecdObj.CompanyId};
+                [ids, ~, idsIndexes] = unique(idsList);
 
+                idsNames = {};
                 mappingIds = dictionary();
+                
                 for ii = 1:numel(ids)
-                    idIndexes = find(strcmp(idsList, ids{ii}));
-                    [~, idSortedIndexes] = sort(arrayfun(@(x) x.Period(1), app.ecdObj(idIndexes)));
+                    idIndexes = find(ii == idsIndexes);
+                    [~, idSortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(idIndexes)));
 
-                    mappingIds = mappingIds.insert(string(idsNames{ii}), {idIndexes(idSortedIndexes)});
+                    % Nome empresa que aparecerá no dropdown (idêntico à
+                    % forma da uitree, no winMonitorSPED.mlapp)
+                    nireInfo = '';
+                    if ~isempty(app.ecdObj(idIndexes(1)).CompanyInfo.NIRE)
+                        nireInfo = sprintf('%s - ', app.ecdObj(idIndexes(1)).CompanyInfo.NIRE);
+                    end
+                    idsNames{end+1} = sprintf('%s - %s%s', app.ecdObj(idIndexes(1)).CompanyId, nireInfo, app.ecdObj(idIndexes(1)).CompanyName);
+
+                    mappingIds = mappingIds.insert(string(ids{ii}), {idIndexes(idSortedIndexes)});
                 end
 
                 % Empresas:
-                app.CompanyNameList.Items = sort(idsNames);
+                app.CompanyNameList.Items = idsNames;
                 app.CompanyNameList.UserData = mappingIds;
 
                 % A seleção buscará respeitar aquilo que estiver selecionado 
@@ -255,13 +284,11 @@ classdef winECD_exported < matlab.apps.AppBase
                     fileIndex = unique([app.mainApp.file_Tree.SelectedNodes.NodeData], 'stable');
                     fileIndex = fileIndex(1);
                 end
-
-                app.CompanyNameList.Value = app.ecdObj(fileIndex).CompanyName;
+                selectedCompanyIndex = find(cellfun(@(x) ismember(fileIndex, x), app.CompanyNameList.UserData.values), 1);
+                app.CompanyNameList.Value = app.CompanyNameList.Items{selectedCompanyIndex};
                 
-                periodList = {periodInformation(app, fileIndex)};                
-                set(app.TimePeriodList, 'Items', periodList, 'ItemsData', 1:numel(periodList))
-
-                CompanyNameListValueChanged(app)
+                updateTimePeriodList(app, fileIndex)
+                TimePeriodListValueChanged(app)
             end
 
             % app.Image3.UserData = false;
@@ -273,17 +300,20 @@ classdef winECD_exported < matlab.apps.AppBase
     methods (Access = private)
         %-----------------------------------------------------------------%
         function companyIndexes = selectedFileIndexByCompany(app)
-            companyIndexes = cell2mat(app.CompanyNameList.UserData(app.CompanyNameList.Value));
+            companyId      = extractBefore(app.CompanyNameList.Value, ' -');
+            companyIndexes = cell2mat(app.CompanyNameList.UserData(companyId));
         end
 
         %-----------------------------------------------------------------%
         function fileIndex = selectedFileIndex(app)
-            companyIndexes = selectedFileIndexByCompany(app);
+            companyIndexes  = selectedFileIndexByCompany(app);
+             [~, companySortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(companyIndexes)));
+             companyIndexes = companyIndexes(companySortedIndexes);
 
             if isnumeric(app.TimePeriodList.Value)
-                fileIndex  = companyIndexes(app.TimePeriodList.Value);
+                fileIndex = companyIndexes(app.TimePeriodList.Value);
             else
-                fileIndex  = companyIndexes(strcmp(app.TimePeriodList.Items, app.TimePeriodList.Value));
+                fileIndex = companyIndexes(strcmp(app.TimePeriodList.Items, app.TimePeriodList.Value));
             end
 
             if ~isscalar(fileIndex)
@@ -292,16 +322,48 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function updateSheetList(app)
-            fileIndex      = selectedFileIndex(app);
-            selectedECD    = app.ecdObj(fileIndex);
-
-            sheetsNames    = fieldnames(selectedECD.Table);
-            nonemptySheets = sheetsNames(cellfun(@(x) ~isempty(selectedECD.Table.(x)), sheetsNames));
+        function updateTimePeriodList(app, fileIndex)
+            companyIndexes = selectedFileIndexByCompany(app);
+            [~, companySortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(companyIndexes)));
             
-            sheetsList     = sort(extractAfter(nonemptySheets, 'x'));
-            sheetsCustom   = startsWith(sheetsList, '_');
-            sheetsSorted   = [sheetsList(~sheetsCustom); sheetsList(sheetsCustom)];
+            companyIndexes = companyIndexes(companySortedIndexes);
+            if isempty(fileIndex)
+                selectedPeriodIndex = 1;
+            else
+                [~, selectedPeriodIndex] = ismember(fileIndex, companyIndexes);
+            end
+
+            periodList = {};
+            for ii = 1:numel(companyIndexes)
+                idx = companyIndexes(ii);
+                periodList{end+1} = periodInformation(app, idx);
+
+                if app.ecdObj(idx).PeriodMerged
+                    statusIcon = '    ➕';
+                else
+                    if app.ecdObj(idx).FileStatus > 0
+                        statusIcon = '    🟢';
+                    elseif app.ecdObj(idx).FileStatus == 0
+                        statusIcon = '    ⚪';
+                    else
+                        statusIcon = '    🔴';
+                    end
+                end
+
+                periodList{end} = [periodList{end}, statusIcon];
+            end
+
+            set(app.TimePeriodList, 'Items', periodList, 'ItemsData', 1:numel(periodList))
+            app.TimePeriodList.Value = selectedPeriodIndex;
+        end
+
+        %-----------------------------------------------------------------%
+        function updateSheetList(app)
+            fileIndex    = selectedFileIndex(app);
+            selectedECD  = app.ecdObj(fileIndex);
+
+            [ordinaryIds, customIds] = getTableIds(selectedECD);
+            sheetsSorted = [ordinaryIds; customIds];
 
             app.SheetList.Items        = sheetsSorted;
             app.SheetView_First.Items  = sheetsSorted;
@@ -314,18 +376,20 @@ classdef winECD_exported < matlab.apps.AppBase
             selectedECD  = app.ecdObj(fileIndex);
 
             tableIdField = ['x' tableId];
+            isTableRead(selectedECD, {tableId})
+            tableIdData  = selectedECD.Table.(tableIdField);
             
             set(hTable, 'ColumnWidth', 'auto', ...
-                        'ColumnName', selectedECD.Table.(tableIdField).Properties.VariableNames, ...
-                        'Data', selectedECD.Table.(tableIdField))            
+                        'ColumnName', tableIdData.Properties.VariableNames, ...
+                        'Data', tableIdData)
             hTable.UserData.tableId = tableId;
             
             restartTableSelectionControl(app, hTable, hTableCountText)
 
             if height(hTable.Data) > 1
-                numberOfRowsText = sprintf('%d DE %d REGISTROS ', height(hTable.Data), height(hTable.Data)); % PENDENTE FILTRAGEM
+                numberOfRowsText = sprintf('%d DE %d LINHAS ', height(hTable.Data), height(hTable.Data)); % PENDENTE FILTRAGEM
             else
-                numberOfRowsText = sprintf('%d DE %d REGISTRO ',  height(hTable.Data), height(hTable.Data)); % PENDENTE FILTRAGEM
+                numberOfRowsText = sprintf('%d DE %d LINHA ',  height(hTable.Data), height(hTable.Data)); % PENDENTE FILTRAGEM
             end
             hTableFilterText.Text = numberOfRowsText;
         end
@@ -378,16 +442,12 @@ classdef winECD_exported < matlab.apps.AppBase
         % Code that executes after component creation
         function startupFcn(app, mainApp, filterTable, rfDataHubAnnotation)
             
-            app.mainApp       = mainApp;
-            app.General       = mainApp.General;
-            app.rootFolder    = mainApp.rootFolder;
-            app.ecdObj        = mainApp.ecdObj;
-    
-            % Em sendo executado como módulo do appAnalise, o app pode
-            % estar em modo DOCK ou UNDOCK, o que é definido em configuração
-            % no próprio appAnalise.
+            app.mainApp = mainApp;
+            app.ecdObj  = mainApp.ecdObj;
+
             if app.isDocked
-                app.GridLayout.Padding(4) = 29;
+                app.GridLayout.Padding(4)  = 30;
+                app.dockModuleGrid.Visible = 1;
                 app.jsBackDoor = mainApp.jsBackDoor;
                 startup_Controller(app)
             else
@@ -408,14 +468,7 @@ classdef winECD_exported < matlab.apps.AppBase
         % Value changed function: CompanyNameList
         function CompanyNameListValueChanged(app, event)
 
-            companyIndexes = selectedFileIndexByCompany(app);
-
-            periodList = {};
-            for fileIndex = companyIndexes
-                periodList{end+1} = periodInformation(app, fileIndex);
-            end
-
-            set(app.TimePeriodList, 'Items', periodList, 'ItemsData', 1:numel(periodList))
+            updateTimePeriodList(app, [])
             TimePeriodListValueChanged(app)
 
         end
@@ -426,10 +479,7 @@ classdef winECD_exported < matlab.apps.AppBase
             fileIndex   = selectedFileIndex(app);
             selectedECD = app.ecdObj(fileIndex);
 
-            readWarnings = strjoin(selectedECD.GUI.warnings, '\n');
-            set(app.ReadWarnings, 'Visible', ~isempty(readWarnings), 'Tooltip', readWarnings)
-
-            app.ReadAllSheets.Visible = ~selectedECD.GUI.isRead;
+            app.tool_ReadAllTables.Enable = ~selectedECD.GUI.isRead;
             app.tool_CompanyInfo.Text = sprintf('<font style="font-size: 11px; font-weight: bold;">%s</font> CNPJ %s \n%s ', ...
                 selectedECD.CompanyName, selectedECD.CompanyId, strjoin(string(selectedECD.Period), ' a '));
 
@@ -462,7 +512,7 @@ classdef winECD_exported < matlab.apps.AppBase
             
         end
 
-        % Callback function: ReadAllSheets
+        % Image clicked function: tool_ReadAllTables
         function ReadAllSheetsButtonPushed(app, event)
             
             app.progressDialog.Visible = 'visible';
@@ -475,30 +525,33 @@ classdef winECD_exported < matlab.apps.AppBase
                 customMergedTablesRowOriented(selectedECD, 'C050', {'C051', 'C052'})
                 customMergedTablesRowOriented(selectedECD, 'I050', {'I051', 'I052'})
 
-                % idxTableUnique = unique(selectedECD.Table.x9900, 'rows');
-                % idxTableUnique.QTD_REG_BLC = string(idxTableUnique.QTD_REG_BLC);
-                % 
-                % idxTableUnique = idxTableUnique(idxTableUnique.QTD_REG_BLC == "1", :);
-                % 
-                % for kk = 1:height(idxTableUnique)
-                %    if isfield(selectedECD.Table, char("x" + idxTableUnique.REG_BLC(kk)))
-                %        selectedECD.Table.("x" + idxTableUnique.REG_BLC(kk)) = unique(selectedECD.Table.("x" + idxTableUnique.REG_BLC(kk)), 'rows', 'stable'); 
-                %    end
-                % end
-                % 
-                % selectedECD.Table.xI200_I250           = parseSplitLineOthers(selectedECD, {'I250' 'I200'});
-                % selectedECD.Table.xJ005_J100           = parseSplitLineOthers(selectedECD, {'J100' 'J005'});
-                % selectedECD.Table.xJ005_J150           = parseSplitLineOthers(selectedECD, {'J150' 'J005'});        
-                % selectedECD.Table.xI150_I155_I350_I355 = parseSplitLine(selectedECD, {'I150' 'I155' 'I350' 'I355'});
-                % 
-                % if ~isempty(selectedECD.Table.xI150_I155_I350_I355)
-                %     selectedECD.Table.xTabelaDinamica  = tableDinamica_I150_I155_I350_I355(selectedECD, selectedECD.Table.xI150_I155_I350_I355, selectedECD.Table.xI200_I250);
-                %     selectedECD.Table.xBalancete       = Balancete(selectedECD, selectedECD.Table.xTabelaDinamica, selectedECD.Table.xI050_I051_I052, selectedECD.Table.xJ005_J150);
-                % end
+                idxTableUnique = unique(selectedECD.Table.x9900, 'rows');
+                idxTableUnique.QTD_REG_BLC = string(idxTableUnique.QTD_REG_BLC);
+
+                idxTableUnique = idxTableUnique(idxTableUnique.QTD_REG_BLC == "1", :);
+
+                for kk = 1:height(idxTableUnique)
+                   if isfield(selectedECD.Table, char("x" + idxTableUnique.REG_BLC(kk)))
+                       selectedECD.Table.("x" + idxTableUnique.REG_BLC(kk)) = unique(selectedECD.Table.("x" + idxTableUnique.REG_BLC(kk)), 'rows', 'stable'); 
+                   end
+                end
+
+                selectedECD.Table.xI200_I250           = parseSplitLineOthers(selectedECD, {'I250' 'I200'});
+                selectedECD.Table.xJ005_J100           = parseSplitLineOthers(selectedECD, {'J100' 'J005'});
+                selectedECD.Table.xJ005_J150           = parseSplitLineOthers(selectedECD, {'J150' 'J005'});
+                selectedECD.Table.xI050_I051_I052_original  = parseSplitLineOthers(selectedECD, {'I050' 'I051' 'I052'});
+                selectedECD.Table.x_C050_C051_C052_original = parseSplitLineOthers(selectedECD, {'C050' 'C051' 'C052'});
+                selectedECD.Table.xI150_I155_I350_I355 = parseSplitLine(selectedECD, {'I150' 'I155' 'I350' 'I355'});
+
+                if ~isempty(selectedECD.Table.xI150_I155_I350_I355)
+                    selectedECD.Table.xTabelaDinamica  = tableDinamica_I150_I155_I350_I355(selectedECD, selectedECD.Table.xI150_I155_I350_I355, selectedECD.Table.xI200_I250);
+                    selectedECD.Table.xBalancete       = Balancete(selectedECD, selectedECD.Table.xTabelaDinamica, selectedECD.Table.xI050_I051_I052_original, selectedECD.Table.xJ005_J150);
+                end
 
                 TimePeriodListValueChanged(app)
 
             catch ME
+                struct2table(ME.stack)
                 appUtil.modalWindow(app.UIFigure, 'error', ME.message);
             end
 
@@ -684,14 +737,14 @@ classdef winECD_exported < matlab.apps.AppBase
             end
 
             SpinnerValueChanged(app, struct('Source', app.SheetHeight_First))
-            app.GridLayout.RowHeight([7,9,10]) = rowHeight;
+            app.GridLayout.RowHeight([9,11,12]) = rowHeight;
             
         end
 
         % Value changed function: SheetHeight_First, SheetHeight_Second
         function SpinnerValueChanged(app, event)
             
-            app.GridLayout.RowHeight([4,8]) = {sprintf('%dx', app.SheetHeight_First.Value), sprintf('%dx', app.SheetHeight_Second.Value)};
+            app.GridLayout.RowHeight([6,10]) = {sprintf('%dx', app.SheetHeight_First.Value), sprintf('%dx', app.SheetHeight_Second.Value)};
 
         end
 
@@ -751,6 +804,102 @@ classdef winECD_exported < matlab.apps.AppBase
             pause(1)
 
         end
+
+        % Image clicked function: tool_LOGInfo
+        function tool_LOGInfoImageClicked(app, event)
+            
+            fileIndex   = selectedFileIndex(app);
+            selectedECD = app.ecdObj(fileIndex);
+
+            htmlContent = util.HtmlTextGenerator.Warnings(selectedECD);
+            appUtil.modalWindow(app.UIFigure, 'info', htmlContent);
+
+        end
+
+        % Image clicked function: tool_OpenRTFFiles
+        function tool_OpenRTFFilesImageClicked(app, event)
+            
+            fileIndex   = selectedFileIndex(app);
+            selectedECD = app.ecdObj(fileIndex);
+
+            rtfFiles    = {};
+            msgError    = {};
+        
+            rtfTableIds = {'J800', 'J801'};
+            parseTableAndAddToCache(selectedECD, rtfTableIds)
+            
+            for ii = 1:numel(rtfTableIds)
+                rtfTableField = ['x' rtfTableIds{ii}];
+        
+                if isfield(selectedECD.Table, rtfTableField) && ~isempty(selectedECD.Table.(rtfTableField))
+                    rtfFiles{end+1} = selectedECD.FileName;
+
+                    nameFormatMap   = {'*.rtf', 'RTF (*.rtf)'};
+                    defaultName     = appUtil.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'monitorSPED');
+                    fileFullPath    = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', nameFormatMap, defaultName);
+                    if isempty(fileFullPath)
+                        return
+                    end
+
+                    app.progressDialog.Visible = 'visible';
+
+                    try
+                        rtfContentFile  = selectedECD.Table.(rtfTableField).('ARQ_RTF');
+                        writematrix(rtfContentFile, fileFullPath, "FileType", "text", "QuoteStrings", "none", "Encoding", 'ISO-8859-1');
+
+                        if ~strcmp(app.mainApp.executionMode, 'webApp')
+                            ccTools.fcn.OperationSystem('openFile', fileFullPath)
+                        end
+                    catch ME
+                        msgError{end+1} = ME.message;
+                    end
+
+                    app.progressDialog.Visible = 'hidden';
+                end
+            end
+
+            if isempty(rtfFiles)
+                appUtil.modalWindow(app.UIFigure, 'info', sprintf('Escrituração não possui arquivo auxiliar no formato RTF.'));
+            end
+        
+            if ~isempty(msgError)
+                msgError = strjoin(msgError, '\n');
+                appUtil.modalWindow(app.UIFigure, 'error', msgError);
+            end
+
+        end
+
+        % Image clicked function: dockModule_Close, dockModule_Undock
+        function menu_DockButtonPushed(app, event)
+            
+            [idx, auxAppTag, relatedButton] = getAppInfoFromHandle(app.mainApp.tabGroupController, app);
+
+            switch event.Source
+                case app.dockModule_Undock
+                    appGeneral = app.mainApp.General;
+                    appGeneral.operationMode.Dock = false;
+                    
+                    app.mainApp.tabGroupController.Components.appHandle{idx} = [];
+
+                    inputArguments = ipcMainMatlabCallsHandler(app.mainApp, app, 'dockButtonPushed', auxAppTag);
+                    openModule(app.mainApp.tabGroupController, relatedButton, false, appGeneral, inputArguments{:})
+                    closeModule(app.mainApp.tabGroupController, auxAppTag, app.mainApp.General, 'undock')
+                    
+                    delete(app)
+
+                case app.dockModule_Close
+                    closeModule(app.mainApp.tabGroupController, auxAppTag, app.mainApp.General)
+            end
+
+        end
+
+        % Selection change function: TabGroup
+        function TabGroupSelectionChanged(app, event)
+            
+            [~, tabIndex] = ismember(app.TabGroup.SelectedTab, app.TabGroup.Children);
+            jsBackDoor_Customizations(app, tabIndex)
+
+        end
     end
 
     % Component initialization
@@ -789,8 +938,8 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create GridLayout
             app.GridLayout = uigridlayout(app.Container);
-            app.GridLayout.ColumnWidth = {5, 18, 320, 5, 90, 5, 5, 5, '1x', 5, 5, 5, 330, 5};
-            app.GridLayout.RowHeight = {7, 94, 10, '1x', 2, 18, 0, 0, 0, 0, 5, 34};
+            app.GridLayout.ColumnWidth = {10, 18, 320, 5, 90, 5, 5, 5, '1x', 5, 5, 5, 270, 48, 8, 2};
+            app.GridLayout.RowHeight = {2, 8, 24, 94, 10, '1x', 2, 18, 0, 0, 0, 0, 10, 34};
             app.GridLayout.ColumnSpacing = 0;
             app.GridLayout.RowSpacing = 0;
             app.GridLayout.Padding = [0 0 0 0];
@@ -799,8 +948,9 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create TabGroup
             app.TabGroup = uitabgroup(app.GridLayout);
             app.TabGroup.AutoResizeChildren = 'off';
-            app.TabGroup.Layout.Row = 2;
-            app.TabGroup.Layout.Column = [2 13];
+            app.TabGroup.SelectionChangedFcn = createCallbackFcn(app, @TabGroupSelectionChanged, true);
+            app.TabGroup.Layout.Row = [3 4];
+            app.TabGroup.Layout.Column = [2 14];
 
             % Create ASPECTOSGERAISTab
             app.ASPECTOSGERAISTab = uitab(app.TabGroup);
@@ -810,10 +960,10 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create GridLayout3
             app.GridLayout3 = uigridlayout(app.ASPECTOSGERAISTab);
-            app.GridLayout3.ColumnWidth = {90, 230, 60, 229, '1x', 130, 22};
+            app.GridLayout3.ColumnWidth = {90, 230, 60, 229};
             app.GridLayout3.RowHeight = {22, 22};
             app.GridLayout3.RowSpacing = 5;
-            app.GridLayout3.BackgroundColor = [0.9608 0.9608 0.9608];
+            app.GridLayout3.BackgroundColor = [0.9804 0.9804 0.9804];
 
             % Create CompanyNameListLabel
             app.CompanyNameListLabel = uilabel(app.GridLayout3);
@@ -870,28 +1020,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetList.Layout.Column = 4;
             app.SheetList.Value = {};
 
-            % Create ReadAllSheets
-            app.ReadAllSheets = uihyperlink(app.GridLayout3);
-            app.ReadAllSheets.HyperlinkClickedFcn = createCallbackFcn(app, @ReadAllSheetsButtonPushed, true);
-            app.ReadAllSheets.VisitedColor = [1 0 0];
-            app.ReadAllSheets.HorizontalAlignment = 'right';
-            app.ReadAllSheets.VerticalAlignment = 'bottom';
-            app.ReadAllSheets.FontSize = 10;
-            app.ReadAllSheets.FontColor = [1 0 0];
-            app.ReadAllSheets.Visible = 'off';
-            app.ReadAllSheets.Layout.Row = 2;
-            app.ReadAllSheets.Layout.Column = [6 7];
-            app.ReadAllSheets.Text = ' LER TODAS AS FICHAS ';
-
-            % Create ReadWarnings
-            app.ReadWarnings = uilabel(app.GridLayout3);
-            app.ReadWarnings.HorizontalAlignment = 'center';
-            app.ReadWarnings.FontSize = 16;
-            app.ReadWarnings.Visible = 'off';
-            app.ReadWarnings.Layout.Row = 1;
-            app.ReadWarnings.Layout.Column = 7;
-            app.ReadWarnings.Text = '⚠️';
-
             % Create LAYOUTTab
             app.LAYOUTTab = uitab(app.TabGroup);
             app.LAYOUTTab.AutoResizeChildren = 'off';
@@ -903,7 +1031,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.GridLayout_2.ColumnWidth = {44, 226, 40, 10, 3, 90, 3, 22, 22, 22, 22, 22, 44, 44};
             app.GridLayout_2.RowHeight = {22, 22};
             app.GridLayout_2.RowSpacing = 5;
-            app.GridLayout_2.BackgroundColor = [0.9608 0.9608 0.9608];
+            app.GridLayout_2.BackgroundColor = [0.9804 0.9804 0.9804];
 
             % Create SheetViewStatus
             app.SheetViewStatus = uibutton(app.GridLayout_2, 'state');
@@ -1088,7 +1216,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.GridLayout4.ColumnWidth = {14, 40, 206, 40, 285, 3, '1x'};
             app.GridLayout4.RowHeight = {22, 22};
             app.GridLayout4.RowSpacing = 5;
-            app.GridLayout4.BackgroundColor = [0.9608 0.9608 0.9608];
+            app.GridLayout4.BackgroundColor = [0.9804 0.9804 0.9804];
 
             % Create Image4_3
             app.Image4_3 = uiimage(app.GridLayout4);
@@ -1192,7 +1320,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create GridLayout5
             app.GridLayout5 = uigridlayout(app.TABELACUSTOMIZADATab);
             app.GridLayout5.ColumnWidth = {'1x', '1x', '1x', '1x', '1x', '1x'};
-            app.GridLayout5.BackgroundColor = [0.9608 0.9608 0.9608];
+            app.GridLayout5.BackgroundColor = [0.9804 0.9804 0.9804];
 
             % Create UITable1
             app.UITable1 = uitable(app.GridLayout);
@@ -1201,14 +1329,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable1.ColumnSortable = true;
             app.UITable1.ClickedFcn = createCallbackFcn(app, @TableClicked, true);
             app.UITable1.ForegroundColor = [0.149 0.149 0.149];
-            app.UITable1.Layout.Row = 4;
-            app.UITable1.Layout.Column = [2 13];
+            app.UITable1.Layout.Row = 6;
+            app.UITable1.Layout.Column = [2 14];
             app.UITable1.FontSize = 10.5;
 
             % Create UITable1_CountIcon
             app.UITable1_CountIcon = uiimage(app.GridLayout);
             app.UITable1_CountIcon.ScaleMethod = 'none';
-            app.UITable1_CountIcon.Layout.Row = 6;
+            app.UITable1_CountIcon.Layout.Row = 8;
             app.UITable1_CountIcon.Layout.Column = 2;
             app.UITable1_CountIcon.ImageSource = 'selectColumn.png';
 
@@ -1216,7 +1344,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable1_CountText = uilabel(app.GridLayout);
             app.UITable1_CountText.FontSize = 10;
             app.UITable1_CountText.FontColor = [0.502 0.502 0.502];
-            app.UITable1_CountText.Layout.Row = 6;
+            app.UITable1_CountText.Layout.Row = 8;
             app.UITable1_CountText.Layout.Column = [3 9];
             app.UITable1_CountText.Text = ' CONTAGEM : 0';
 
@@ -1225,8 +1353,8 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable1_FilterText.HorizontalAlignment = 'right';
             app.UITable1_FilterText.FontSize = 10;
             app.UITable1_FilterText.FontColor = [0.502 0.502 0.502];
-            app.UITable1_FilterText.Layout.Row = 6;
-            app.UITable1_FilterText.Layout.Column = 13;
+            app.UITable1_FilterText.Layout.Row = 8;
+            app.UITable1_FilterText.Layout.Column = [13 14];
             app.UITable1_FilterText.Text = '0 DE 0 ';
 
             % Create UITable2
@@ -1238,14 +1366,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable2.ClickedFcn = createCallbackFcn(app, @TableClicked, true);
             app.UITable2.ForegroundColor = [0.149 0.149 0.149];
             app.UITable2.Visible = 'off';
-            app.UITable2.Layout.Row = 8;
-            app.UITable2.Layout.Column = [2 13];
+            app.UITable2.Layout.Row = 10;
+            app.UITable2.Layout.Column = [2 14];
             app.UITable2.FontSize = 10.5;
 
             % Create UITable2_CountIcon
             app.UITable2_CountIcon = uiimage(app.GridLayout);
             app.UITable2_CountIcon.ScaleMethod = 'none';
-            app.UITable2_CountIcon.Layout.Row = 10;
+            app.UITable2_CountIcon.Layout.Row = 12;
             app.UITable2_CountIcon.Layout.Column = 2;
             app.UITable2_CountIcon.ImageSource = 'selectColumn.png';
 
@@ -1253,7 +1381,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable2_CountText = uilabel(app.GridLayout);
             app.UITable2_CountText.FontSize = 10;
             app.UITable2_CountText.FontColor = [0.502 0.502 0.502];
-            app.UITable2_CountText.Layout.Row = 10;
+            app.UITable2_CountText.Layout.Row = 12;
             app.UITable2_CountText.Layout.Column = [3 9];
             app.UITable2_CountText.Text = ' CONTAGEM: 0';
 
@@ -1262,27 +1390,60 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable2_FilterText.HorizontalAlignment = 'right';
             app.UITable2_FilterText.FontSize = 10;
             app.UITable2_FilterText.FontColor = [0.502 0.502 0.502];
-            app.UITable2_FilterText.Layout.Row = 10;
-            app.UITable2_FilterText.Layout.Column = [10 13];
+            app.UITable2_FilterText.Layout.Row = 12;
+            app.UITable2_FilterText.Layout.Column = [10 14];
             app.UITable2_FilterText.Text = '0 DE 0';
 
             % Create toolGrid
             app.toolGrid = uigridlayout(app.GridLayout);
-            app.toolGrid.ColumnWidth = {22, '1x'};
+            app.toolGrid.ColumnWidth = {22, 22, 22, 5, 22, '1x'};
             app.toolGrid.RowHeight = {4, 17, 2};
             app.toolGrid.ColumnSpacing = 5;
             app.toolGrid.RowSpacing = 0;
             app.toolGrid.Padding = [5 5 5 5];
-            app.toolGrid.Layout.Row = 12;
-            app.toolGrid.Layout.Column = [1 14];
+            app.toolGrid.Layout.Row = 14;
+            app.toolGrid.Layout.Column = [1 16];
             app.toolGrid.BackgroundColor = [0.9412 0.9412 0.9412];
+
+            % Create tool_ReadAllTables
+            app.tool_ReadAllTables = uiimage(app.toolGrid);
+            app.tool_ReadAllTables.ImageClickedFcn = createCallbackFcn(app, @ReadAllSheetsButtonPushed, true);
+            app.tool_ReadAllTables.Enable = 'off';
+            app.tool_ReadAllTables.Tooltip = {'Leitura registros ordinários'};
+            app.tool_ReadAllTables.Layout.Row = 2;
+            app.tool_ReadAllTables.Layout.Column = 1;
+            app.tool_ReadAllTables.ImageSource = 'run-section-24.png';
+
+            % Create tool_OpenRTFFiles
+            app.tool_OpenRTFFiles = uiimage(app.toolGrid);
+            app.tool_OpenRTFFiles.ImageClickedFcn = createCallbackFcn(app, @tool_OpenRTFFilesImageClicked, true);
+            app.tool_OpenRTFFiles.Tooltip = {'Abre/Salva arquivos .rtf'; '(Registros J800 e J801)'};
+            app.tool_OpenRTFFiles.Layout.Row = 2;
+            app.tool_OpenRTFFiles.Layout.Column = 2;
+            app.tool_OpenRTFFiles.ImageSource = 'Publish_PDF_16.png';
+
+            % Create tool_LOGInfo
+            app.tool_LOGInfo = uiimage(app.toolGrid);
+            app.tool_LOGInfo.ImageClickedFcn = createCallbackFcn(app, @tool_LOGInfoImageClicked, true);
+            app.tool_LOGInfo.Tooltip = {'LOG'};
+            app.tool_LOGInfo.Layout.Row = 2;
+            app.tool_LOGInfo.Layout.Column = 3;
+            app.tool_LOGInfo.ImageSource = 'LOG_32.png';
+
+            % Create tool_Separator
+            app.tool_Separator = uiimage(app.toolGrid);
+            app.tool_Separator.Enable = 'off';
+            app.tool_Separator.Layout.Row = [1 3];
+            app.tool_Separator.Layout.Column = 4;
+            app.tool_Separator.ImageSource = 'LineV.svg';
 
             % Create tool_ExportButton
             app.tool_ExportButton = uiimage(app.toolGrid);
             app.tool_ExportButton.ScaleMethod = 'none';
             app.tool_ExportButton.ImageClickedFcn = createCallbackFcn(app, @tool_ExportButtonImageClicked, true);
+            app.tool_ExportButton.Tooltip = {'Exporta Excel (.xlsx)'};
             app.tool_ExportButton.Layout.Row = 2;
-            app.tool_ExportButton.Layout.Column = 1;
+            app.tool_ExportButton.Layout.Column = 5;
             app.tool_ExportButton.ImageSource = 'Export_16.png';
 
             % Create tool_CompanyInfo
@@ -1293,9 +1454,40 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_CompanyInfo.FontSize = 9;
             app.tool_CompanyInfo.FontColor = [0.149 0.149 0.149];
             app.tool_CompanyInfo.Layout.Row = [1 3];
-            app.tool_CompanyInfo.Layout.Column = 2;
+            app.tool_CompanyInfo.Layout.Column = 6;
             app.tool_CompanyInfo.Interpreter = 'html';
             app.tool_CompanyInfo.Text = {'<font style="font-size: 11px; font-weight: bold;">NOME DA EMPRESA</font> CNPJ 10.101.101/0001-02 '; '01/01/2023 - 31/12/2023 '};
+
+            % Create dockModuleGrid
+            app.dockModuleGrid = uigridlayout(app.GridLayout);
+            app.dockModuleGrid.RowHeight = {'1x'};
+            app.dockModuleGrid.ColumnSpacing = 2;
+            app.dockModuleGrid.Padding = [5 2 5 2];
+            app.dockModuleGrid.Visible = 'off';
+            app.dockModuleGrid.Layout.Row = [2 3];
+            app.dockModuleGrid.Layout.Column = [14 15];
+            app.dockModuleGrid.BackgroundColor = [0.2 0.2 0.2];
+
+            % Create dockModule_Close
+            app.dockModule_Close = uiimage(app.dockModuleGrid);
+            app.dockModule_Close.ScaleMethod = 'none';
+            app.dockModule_Close.ImageClickedFcn = createCallbackFcn(app, @menu_DockButtonPushed, true);
+            app.dockModule_Close.Tag = 'DRIVETEST';
+            app.dockModule_Close.Tooltip = {'Fecha módulo'};
+            app.dockModule_Close.Layout.Row = 1;
+            app.dockModule_Close.Layout.Column = 2;
+            app.dockModule_Close.ImageSource = 'Delete_12SVG_white.svg';
+
+            % Create dockModule_Undock
+            app.dockModule_Undock = uiimage(app.dockModuleGrid);
+            app.dockModule_Undock.ScaleMethod = 'none';
+            app.dockModule_Undock.ImageClickedFcn = createCallbackFcn(app, @menu_DockButtonPushed, true);
+            app.dockModule_Undock.Tag = 'DRIVETEST';
+            app.dockModule_Undock.Enable = 'off';
+            app.dockModule_Undock.Tooltip = {'Reabre módulo em outra janela'};
+            app.dockModule_Undock.Layout.Row = 1;
+            app.dockModule_Undock.Layout.Column = 1;
+            app.dockModule_Undock.ImageSource = 'Undock_18White.png';
 
             % Create filter_ContextMenu
             app.filter_ContextMenu = uicontextmenu(app.UIFigure);

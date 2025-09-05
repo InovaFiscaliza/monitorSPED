@@ -1,5 +1,5 @@
 {
-    "version": 0.09,
+    "version": 0.10,
     "operationMode": {
         "Debug": false,
         "Dock": false,
@@ -23,6 +23,7 @@
         "lastVisited": ""
     },
     "sped": {
+        "input": "file",
         "encoding": {
             "options": [
                 "ISO-8859-1",

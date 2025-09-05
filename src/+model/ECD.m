@@ -19,14 +19,18 @@ classdef ECD < model.ECDBase
         FileFullName
         FileEncoding
         
+        FileHash   = ''
         FileStatus = 0 % -2 (Erro) | -1 (Diverge) | 0 (Pendente) | 1 (Coincide)
         ReceitaFederal
 
         Content
         Layout
         Table
-        
-        GUI  = struct('isRead', false, 'warnings', {{}}, 'tableView', struct('id', {}, 'widths', {}, 'filters', {}, 'style', {}));
+                
+        GUI  = struct('isRead', false,  ...
+                      'warnings', {{}}, ...
+                      'rtfFiles', {{}}, ...
+                      'tableView', struct('id', {}, 'widths', {}, 'filters', {}, 'style', {}));
         UUID = char(matlab.lang.internal.uuid())
     end
 
@@ -35,13 +39,14 @@ classdef ECD < model.ECDBase
         % MÉTODOS RELACIONADOS AO OBJETO VISTO COMO UM ARRAY
         % (ESCALAR, OU NÃO)
         %-----------------------------------------------------------------%
-        function [obj, msg] = addFiles(obj, fileNameList, fileEncoding, mergeFlag, tableIdList)
+        function [obj, msg] = addFiles(obj, fileNameList, fileEncoding, receitaFederalObj, mergeFlag, tableIdList)
             arguments
                 obj
                 fileNameList
                 fileEncoding (1,:) char    = 'ISO-8859-1'
+                receitaFederalObj          = []
                 mergeFlag    (1,1) logical = false
-                tableIdList  (1,:) cell    = {'0000', 'I030', '9900'}                
+                tableIdList  (1,:) cell    = {'0000', 'I030', '9900'}
             end
 
             if ~iscellstr(fileNameList)
@@ -99,6 +104,10 @@ classdef ECD < model.ECDBase
                          obj(idx).CompanyInfo(1).NIRE = obj(idx).Table.xI030.NIRE{1};
                     end
 
+                    obj(idx).FileHash     = util.calculateFileHash(obj(idx).Content, fileEncoding);
+                    if ~isempty(receitaFederalObj)
+                        checkFileStatus(obj(idx), receitaFederalObj);
+                    end
                     obj(idx).PeriodMerged = mergeFlag;
 
                 catch ME
@@ -131,7 +140,7 @@ classdef ECD < model.ECDBase
                         continue
                     end
 
-                    obj(ii).Table.(['x' tableId]) = parseTable(obj(ii), tableId, obj(ii).Layout);
+                    obj(ii).Table.(['x' tableId]) = parseTable(obj(ii), tableId);
 
                     % Valida se foi lido o número de linhas esperado...
                     if isfield(obj(ii).Table, 'x9900')
@@ -203,8 +212,10 @@ classdef ECD < model.ECDBase
                 secundaryIdsKey (1,:) char              = 'COD_CCUS'
             end
 
-            tableIdList   = [mainId, secundaryIds];
-            mergedTableId = ['x_' strjoin(tableIdList, '_') '_RowOriented'];
+            tableIdList     = [mainId, secundaryIds];
+            tableIdFileList = strcat('|', tableIdList, '|');
+
+            mergedTableId   = ['x_' strjoin(tableIdList, '_') '_RowOriented'];
 
             for ii = 1:numel(obj)
                 if isfield(obj(ii).Table, mergedTableId)
@@ -214,9 +225,13 @@ classdef ECD < model.ECDBase
                 isTableRead(obj(ii), {mainId})
 
                 splitContent = splitlines(obj(ii).Content);
-                
-                mainIdFile   = ['|', mainId, '|'];
-                mainFileIdx  = find(startsWith(splitContent, mainIdFile));
+
+                % Em relação à tabela principal:                
+                % mainIdFile   = ['|', mainId, '|'];
+                % mainFileIdx  = find(startsWith(splitContent, mainIdFile));
+
+                fileIndexes  = cellfun(@(x) find(startsWith(splitContent, x)), tableIdFileList, 'UniformOutput', false);
+                mainFileIdx  = fileIndexes{1};
 
                 mainIdTable  = ['x', mainId];                
                 mainTable    = obj(ii).Table.(mainIdTable);
@@ -225,10 +240,11 @@ classdef ECD < model.ECDBase
                 end
 
                 mainTableHeight = height(mainTable);
-                mainTable.("_TEMP_KEY") = (1:mainTableHeight)';                
+                mainTable.("_TEMP_KEY") = (1:mainTableHeight)';
                 
+                % Em relação às tabelas auxiliares:
                 secundaryTable = [];
-                secundarySpec  = addTableSpecification(obj(ii), secundaryIds);
+                secundarySpec  = getColumnSpecifications(obj(ii), secundaryIds, 'index');
 
                 for jj = 1:mainTableHeight
                     currentIdx  = mainFileIdx(jj);
@@ -244,11 +260,11 @@ classdef ECD < model.ECDBase
                             end
                         end
                     end
-
+    
                     if nextIdx == currentIdx+1
                         continue
                     end
-
+    
                     % Para cada bloco entre duas linhas |mainId|, parseiam-se
                     % as tabelas auxiliares, guardando-as em "tempTable".
                     % E, posteriormente, mesclam-se essas tabelas auxiliares,
@@ -257,7 +273,7 @@ classdef ECD < model.ECDBase
                     refTable = [];
 
                     for kk = 1:numel(secundarySpec)
-                        tempTable = parseFileBlock(obj(ii), blockLines, secundarySpec(kk));
+                        tempTable = parseFileBlock(obj(ii), blockLines, secundarySpec(kk), true);
                         if isempty(tempTable)
                             continue
                         end
@@ -320,9 +336,10 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function checkFileStatus(obj, fileEncoding, terminator)
+        function checkFileFlag = checkFileStatus(obj, receitaFederalObj, fileEncoding, terminator)
             arguments
                 obj
+                receitaFederalObj ws.ReceitaFederal
                 fileEncoding (1,:) char  = 'ISO-8859-1'
                 terminator   (1,2) uint8 = [13, 10]
             end
@@ -330,8 +347,7 @@ classdef ECD < model.ECDBase
             % Se o registro for resultado da mesclagem de fluxos, ou se o 
             % registro já tiver sido validado na base da Receita Federal,
             % então não é feita uma nova requisição à API.
-
-            objRF = ws.ReceitaFederal;
+            checkFileFlag = false;
 
             for ii = 1:numel(obj)
                 if obj(ii).PeriodMerged || ismember(obj(ii).FileStatus, [-1, 1])
@@ -339,19 +355,9 @@ classdef ECD < model.ECDBase
                 end
 
                 try
-                    splitContent   = splitlines(obj(ii).Content);
-                    lastLineIndex  = find(startsWith(splitContent, '|9999|'), 1);
-                    if isempty(lastLineIndex)
-                        error('Não identificada a ficha "9999" do arquivo "%s"', obj(ii).FileName)
-                    end
-            
-                    splitContent   = strjoin(splitContent(1:lastLineIndex), char(terminator));
-                    splitByteArray = unicode2native(splitContent, fileEncoding);
-                    fileHexHash    = util.calculateFileHash([splitByteArray, terminator]);
-
-                    requestAnswer  = objRF.run('ECD', obj(ii).CompanyInfo.NIRE, fileHexHash);
-                    
+                    requestAnswer = Get(receitaFederalObj, 'Cache+RealTime', 'ECD', obj(ii).FileHash);
                     obj(ii).ReceitaFederal = requestAnswer;
+
                     if ~isempty(requestAnswer) && isstruct(requestAnswer) && isfield(requestAnswer, 'retVerif')
                         if contains(requestAnswer.retVerif, 'mesma', 'IgnoreCase', true)
                             obj(ii).FileStatus = 1;
@@ -368,6 +374,8 @@ classdef ECD < model.ECDBase
                     obj(ii).FileStatus = -2;
                     obj(ii).ReceitaFederal = ME.message;
                 end
+
+                checkFileFlag = true;
             end
         end
 
@@ -389,51 +397,91 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function tableOut = parseFileBlock(obj, fileBlock, tableIdSpec)
+        function [ordinaryIds, customIds, readOrdinaryIds] = getTableIds(obj, nonemptyFlag)
             arguments
-                obj
-                fileBlock   (:,1) cell {mustBeText}
-                tableIdSpec (1,1) struct
+                obj 
+                nonemptyFlag = true
             end
 
             checkIfScalar(obj)
 
-            specificFileBlock = fileBlock(startsWith(fileBlock, ['|' tableIdSpec.id '|']));
-            if isempty(specificFileBlock)
-                tableOut = [];
-                return
+            tableNames = fieldnames(obj.Table);
+            if nonemptyFlag
+                tableNames(cellfun(@(x) isempty(obj.Table.(x)), tableNames)) = [];
             end
 
-            spllitedFileBlock = cellfun(@(x) regexp(x(2:end-1), '\|', 'split'), specificFileBlock, 'UniformOutput', false);
-            mergedFileBlock   = vertcat(spllitedFileBlock{:});
+            customIds = tableNames(startsWith(tableNames, 'x_'));
+            readOrdinaryIds = setdiff(tableNames, customIds);
 
-            requiredColumns   = tableIdSpec.requiredCol;
-            optionalColumns   = tableIdSpec.optionalCol;
-            completeColumns   = tableIdSpec.completeCol;
-            preffixColumns    = tableIdSpec.preffix;
+            customIds = extractAfter(sort(customIds), 'x');
+            readOrdinaryIds = extractAfter(sort(readOrdinaryIds), 'x');
+
+            if isfield(obj.Table, 'x9900') && ~isempty(obj.Table.x9900)
+                ordinaryIds = unique(obj.Table.x9900.("REG_BLC"));
+            else
+                ordinaryIds = {'-1'};
+            end            
+        end
+
+        %-----------------------------------------------------------------%
+        function tableOut = parseFileBlock(obj, fileBlock, columnsSpec, regexpFlag)
+            arguments
+                obj
+                fileBlock
+                columnsSpec % struct('id', {}, 'preffix', {}, 'requiredCol', {}, 'optionalCol', {}, 'completeCol', {})
+                regexpFlag = false
+            end           
+
+            checkIfScalar(obj)
+
+            if regexpFlag
+                fileBlock = fileBlock(startsWith(fileBlock, ['|' columnsSpec.id '|']));
+                if isempty(fileBlock)
+                    tableOut = [];
+                    return
+                end
+            end
+
+            mergedFileBlock = split(cellfun(@(x) x(2:end-1), fileBlock, 'UniformOutput', false), '|', 2);
 
             switch width(mergedFileBlock)
-                case numel(requiredColumns)
-                    tableOut = cell2table(mergedFileBlock, 'VariableNames', strcat(preffixColumns, requiredColumns));
+                case numel(columnsSpec.required)
+                    tableOut = cell2table(mergedFileBlock, 'VariableNames', strcat(columnsSpec.preffix, columnsSpec.required));
 
-                    for ii = 1:numel(optionalColumns)
-                        columnName = optionalColumns{ii};
-                        tableOut.([preffixColumns columnName]) = repmat(model.ECDBase.defaultValue(obj.(columnName).DataType), height(tableOut), 1);
+                    for ii = 1:numel(columnsSpec.optional)
+                        columnName = columnsSpec.optional{ii};
+                        tableOut.([columnsSpec.preffix columnName]) = repmat(model.ECDBase.defaultValue(obj.(columnName).DataType), height(tableOut), 1);
                     end
     
-                case numel(completeColumns)
-                    tableOut = cell2table(mergedFileBlock, 'VariableNames', strcat(preffixColumns, completeColumns));
+                case numel(columnsSpec.complete)
+                    tableOut = cell2table(mergedFileBlock, 'VariableNames', strcat(columnsSpec.preffixs, columnsSpec.complete));
     
                 otherwise
                     error('UnexpectedTableWidth')
             end
+
+            for ii = 1:numel(columnsSpec.complete)
+                columnName = columnsSpec.complete{ii};
+
+                switch obj.(columnName).DataType
+                    case 'double'
+                        if ~isa(tableOut.(columnName), 'double')
+                            tableOut.(columnName) = str2double(replace(tableOut.(columnName), ',', '.'));
+                        end
+                    case 'datetime'
+                        if ~isa(tableOut.(columnName), 'datetime')
+                            tableOut.(columnName) = datetime(tableOut.(columnName), 'InputFormat', 'ddMMyyyy');
+                        end
+                end
+            end
         end
 
         %-----------------------------------------------------------------%
-        function tableIdSpec = addTableSpecification(obj, tableIdList)
+        function columnsSpec = getColumnSpecifications(obj, tableIdList, preffixType)
             arguments
                 obj
                 tableIdList (1,:) cell {mustBeText}
+                preffixType = 'none'
             end
 
             checkIfScalar(obj)
@@ -442,96 +490,50 @@ classdef ECD < model.ECDBase
                 tableId     = tableIdList{ii};
                 tableIdObj  = ['x' tableId];
 
-                layoutIndex = find(cellfun(@(x) ismember(obj.Layout, x), obj.(tableIdObj)(:,1)), 1);
-                requiredCol = obj.(tableIdObj){layoutIndex, 2};
-                optionalCol = obj.(tableIdObj){layoutIndex, 3};
-                completeCol = [requiredCol, optionalCol];
+                layoutIdx   = find(cellfun(@(x) ismember(obj.Layout, x), obj.(tableIdObj)(:,1)), 1);
+                required    = obj.(tableIdObj){layoutIdx, 2};
+                optional    = obj.(tableIdObj){layoutIdx, 3};
+                complete    = [required, optional];
 
-                tableIdSpec(ii) = struct('id',          tableId,       ...
-                                         'requiredCol', {requiredCol}, ...
-                                         'optionalCol', {optionalCol}, ...
-                                         'completeCol', {completeCol}, ... 
-                                         'preffix',     repmat('_', 1, ii));
+                switch preffixType
+                    case 'none'
+                        preffix = '';
+                    otherwise
+                        preffix = repmat('_', 1, ii);
+                end
+
+                columnsSpec(ii) = struct('id',       tableId,    ...
+                                         'required', {required}, ...
+                                         'optional', {optional}, ...
+                                         'complete', {complete}, ... 
+                                         'preffix',  preffix);
             end
         end
 
         %-----------------------------------------------------------------%
-        function tableOut = parseTable(obj, tableId, fileLayout)
+        function tableOut = parseTable(obj, tableId)
             arguments
                 obj
                 tableId (1,4) char
-                fileLayout  = 1
             end
 
             checkIfScalar(obj)
 
-            if ~ismember(tableId, model.ECDBase.checkImplementedTables())
-                error('Ficha ainda não implementada')
-            end
-
-            % Identifica a tabela sob análise e a sua estrutura, registrando
-            % as colunas opcionais até quando não preenchidas e, assim,
-            % mantendo a estrutura de dados homogênea.
-            idxLayout       = find(cellfun(@(x) ismember(fileLayout, x), obj.(['x' tableId])(:,1)), 1);
-
-            requiredColumns = obj.(['x' tableId]){idxLayout, 2};
-            optionalColumns = obj.(['x' tableId]){idxLayout, 3};
-            completeColumns = [requiredColumns, optionalColumns];
-
-            % Busca no conteúdo do arquivo o ID da tabela sob análise.
             switch tableId
-                case 'J800'
-                    regexMatches = extractBetween(obj.Content, '|J800|', '|J800FIM|', 'Boundaries', 'inclusive');
+                case {'J800', 'J801'}
+                    regexMatches = extractBetween(obj.Content, ['|' tableId '|'], ['|' tableId 'FIM|'], 'Boundaries', 'inclusive');
                 otherwise
                     regexPattern = ['^\|' tableId '\|[^\r\n]*'];
                     regexMatches = regexp(obj.Content, regexPattern, 'match', 'lineanchors')';
-            end            
+            end
+
+            columnsSpec = getColumnSpecifications(obj, {tableId});
 
             if isempty(regexMatches)
-                columnTypes = cellfun(@(x) obj.(x).DataType, completeColumns, 'UniformOutput', false);
-                tableOut    = table('Size', [0, numel(completeColumns)], 'VariableNames', completeColumns, 'VariableTypes', columnTypes);
-
+                columnTypes = cellfun(@(x) obj.(x).DataType, columnsSpec.complete, 'UniformOutput', false);
+                tableOut    = table('Size', [0, numel(columnsSpec.complete)], 'VariableNames', columnsSpec.complete, 'VariableTypes', columnTypes);
             else
-                % Elimina primeiro e último caractere "|", separa e
-                % concatena.
-                regexMatchesTransformation1 = cellfun(@(x) x(2:end-1), regexMatches, 'UniformOutput', false);
-                regexMatchesTransformation2 = regexp(regexMatchesTransformation1, '\|', 'split');
-                regexMatchesTransformation3 = vertcat(regexMatchesTransformation2{:});                
-
-                % Converte para tabela...
-                switch width(regexMatchesTransformation3)
-                    case numel(requiredColumns)
-                        tableOut = cell2table(regexMatchesTransformation3, 'VariableNames', requiredColumns);
-
-                        % Cria colunas opcionais p/ manter estrutura de dados 
-                        % homogênea.
-                        for ii = 1:numel(optionalColumns)
-                            columnName = optionalColumns{ii};
-                            tableOut.(columnName) = repmat(model.ECDBase.defaultValue(obj.(columnName).DataType), height(tableOut), 1);
-                        end
-
-                    case numel(completeColumns)
-                        tableOut = cell2table(regexMatchesTransformation3, 'VariableNames', completeColumns);
-
-                    otherwise
-                        error('UnexpectedTableWidth')
-                end
-
-                % Aplica mudança do tipo de dado p/ colunas que não são textuais.
-                for ii = 1:numel(completeColumns)
-                    columnName = completeColumns{ii};
-
-                    switch obj.(columnName).DataType
-                        case 'double'
-                            if ~isa(tableOut.(columnName), 'double')
-                                tableOut.(columnName) = str2double(replace(tableOut.(columnName), ',', '.'));
-                            end
-                        case 'datetime'
-                            if ~isa(tableOut.(columnName), 'datetime')
-                                tableOut.(columnName) = datetime(tableOut.(columnName), 'InputFormat', 'ddMMyyyy');
-                            end
-                    end
-                end
+                tableOut    = parseFileBlock(obj, regexMatches, columnsSpec, false);
             end
         end
 
@@ -544,7 +546,7 @@ classdef ECD < model.ECDBase
                 fileEncoding   = 'ISO-8859-1';
                 writematrix(mergedContent, mergedTempFile, "FileType", "text", "QuoteStrings", "none", "Encoding", fileEncoding);
     
-                [obj, msg] = obj.addFiles(mergedTempFile, fileEncoding, true);
+                [obj, msg] = obj.addFiles(mergedTempFile, fileEncoding, [], true);
             catch ME
                 msg = ME.message;
             end
@@ -793,6 +795,7 @@ classdef ECD < model.ECDBase
             end
 
             checkIfScalar(obj)
+            isTableRead(obj, tableIdList)
 
             switch tableIdList{1}
                 case "I050"
@@ -831,6 +834,7 @@ classdef ECD < model.ECDBase
                         tableOutOthers = [];
                         return;
                     end
+
                 case "J150"
                     if ~isempty(obj.Table.xJ150)
                         for mm = 1: numel(tableIdList)
@@ -842,100 +846,88 @@ classdef ECD < model.ECDBase
                     end
             end
 
-            function tableOutAll = linesTableId(obj, idtype, Tabletype, x1, x2, x3)
+            % <EscopoLocal>
+            function tableOutAll = linesTableId(obj, idtype, tableIdList, x1, x2, x3)
                 tableOutAll = {};
-                nTabletype  = numel(Tabletype);
+                nTabletype  = numel(tableIdList);
 
                 switch idtype
                     case 1
                         if nTabletype ==2
                             tableOutAll = x1;
+
                         else
-                             % Cria tabela de nulos de x2 com mesmo número de linhas de x1
-                            tableOutAll{2} = table('Size', [height(x2), width(x2)], ...
-                                'VariableTypes', varfun(@class, x2, 'OutputFormat', 'cell'), ...
-                                'VariableNames', x2.Properties.VariableNames);
+                            % Identifica indexes das tabelas sob análise, além da 
+                            % ordem dos ids.
+                            splitContent   = splitlines(obj.Content);
+                            idsIndexes     = cellfun(@(x) find(startsWith(splitContent, x)), {'|I050|', '|I051|', '|I052|'}, 'UniformOutput', false);
+                            orderedIndexes = sort(vertcat(idsIndexes{:}));
+                            orderedIdList  = cellfun(@(x) x(2:5), splitContent(orderedIndexes), 'UniformOutput', false);
 
-                            tableOutAll{2}.REG(:,:)         = {char};
-                            tableOutAll{2}.COD_CCUS(:,:)    = {char};
-                            tableOutAll{2}.COD_CTA_REF(:,:) = {char};
-
-                            % Cria tabela de nulos de x3 com mesmo número de linhas de x1
-                            tableOutAll{3} = table('Size', [height(x3), width(x3)], ...
-                                'VariableTypes', varfun(@class, x3, 'OutputFormat', 'cell'), ...
-                                'VariableNames', x3.Properties.VariableNames);
-
-                            tableOutAll{3}.REG(:,:)      = {char};
-                            tableOutAll{3}.COD_CCUS(:,:) = {char};
-                            tableOutAll{3}.COD_AGL(:,:)  = {char};
-
-                            regexPattern = ['^\|(' Tabletype{1} '|' Tabletype{2} '|' Tabletype{3} ')\|[^\r\n]*'];
-                            regexMatches = regexp(obj.Content, regexPattern, 'match', 'lineanchors')';
-                            regexMatchesTabletype1_2_3_First = cellfun(@(x) x(2:end-1), regexMatches, 'UniformOutput', false);
-
-                            info_1_2_3 = string(extractBefore(regexMatchesTabletype1_2_3_First, '|'));
-
-                            tableOutAll{1} = x1;
-                            tableOutAll{1} = addvars(tableOutAll{1}, (1:height(tableOutAll{1}))', 'Before', 1, 'NewVariableNames', 'ID_1_2_3');
-                            tableOutAll{1}.ID_1_2_3 = strings(height(tableOutAll{1}), 1);
-
-                            tableOutAll{2} = x2;
-                            tableOutAll{2} = addvars(tableOutAll{2}, (1:height(tableOutAll{2}))', 'Before', 1, 'NewVariableNames', 'ID_1_2_3');
-                            tableOutAll{2}.ID_1_2_3 = strings(height(tableOutAll{2}), 1);
-
-                            tableOutAll{3} = x3;
-                            tableOutAll{3} = addvars(tableOutAll{3}, (1:height(tableOutAll{3}))', 'Before', 1, 'NewVariableNames', 'ID_1_2_3');
-                            tableOutAll{3}.ID_1_2_3 = strings(height(tableOutAll{3}), 1);
-
-                            tableOutAll{1}.ID_1_2_3 = double(tableOutAll{1}.ID_1_2_3);
-                            tableOutAll{2}.ID_1_2_3 = double(tableOutAll{2}.ID_1_2_3);
-                            tableOutAll{3}.ID_1_2_3 = double(tableOutAll{3}.ID_1_2_3);
+                            % Inicializa coluna numérica "_TEMP_KEY" com valores 
+                            % iguais a -1.
+                            x1.("_TEMP_KEY")(:) = -1;
+                            x2.("_TEMP_KEY")(:) = -1;
+                            x3.("_TEMP_KEY")(:) = -1;
+                            tableOutAll = {x1, x2, x3};
 
                             jj = 1;
                             xx = 1;
                             yy = 1;
                             zz = 1;
+
                             acum1 = 0;
                             acum2 = 0;
                             acum3 = 0;
+
                             incr1 = 0;
                             incr2 = 0;
-                            for ii = 1:height(info_1_2_3) - 1
-                                if     info_1_2_3(ii) == Tabletype{1} && info_1_2_3(ii + 1) == Tabletype{1}
-                                    acum1 = acum1 + 1;
 
-                                elseif info_1_2_3(ii) == Tabletype{1} && info_1_2_3(ii + 1) == Tabletype{2}
-                                    tableOutAll{1}.ID_1_2_3(acum1 + xx) = jj;
+                            for ii = 1:numel(orderedIdList)-1
+                                currentId = orderedIdList{ii};
+                                nextId    = orderedIdList{ii+1};
 
-                                elseif info_1_2_3(ii) == Tabletype{1} && info_1_2_3(ii + 1) == Tabletype{3}
-                                    tableOutAll{1}.ID_1_2_3(acum1 + xx) = jj;
-                                    incr2 = incr2 + 1;
+                                switch currentId
+                                    case tableIdList{1}
+                                        switch nextId
+                                            case tableIdList{1}
+                                                acum1 = acum1 + 1;
+                                            case tableIdList{2}
+                                                tableOutAll{1}.("_TEMP_KEY")(acum1 + xx) = jj;
+                                            case tableIdList{3}
+                                                tableOutAll{1}.("_TEMP_KEY")(acum1 + xx) = jj;
+                                                incr2 = incr2 + 1;
+                                        end
 
-                                elseif info_1_2_3(ii) == Tabletype{2} && info_1_2_3(ii + 1) == Tabletype{2}
-                                    tableOutAll{2}.ID_1_2_3(acum2 + yy) = jj;
-                                    acum2 = acum2 + 1;
+                                    case tableIdList{2}
+                                        switch nextId
+                                            case tableIdList{1}
+                                                tableOutAll{2}.("_TEMP_KEY")(acum2 + yy - incr2) = jj;
+                                                xx = xx + 1;
+                                                yy = yy + 1;
+                                                zz = zz + 1;
+                                                jj = jj + 1;
+                                                incr1 = incr1 + 1;
+                                            case tableIdList{2}
+                                                tableOutAll{2}.("_TEMP_KEY")(acum2 + yy) = jj;
+                                                acum2 = acum2 + 1;
+                                            case tableIdList{3}
+                                                tableOutAll{2}.("_TEMP_KEY")(acum2 + yy) = jj;
+                                        end
 
-                                elseif info_1_2_3(ii) == Tabletype{2} && info_1_2_3(ii + 1) == Tabletype{3}
-                                    tableOutAll{2}.ID_1_2_3(acum2 + yy) = jj;
+                                    case tableIdList{3}
+                                        switch nextId
+                                            case tableIdList{1}
+                                                tableOutAll{3}.("_TEMP_KEY")(acum3 + zz - incr1) = jj;
+                                                xx = xx + 1;
+                                                yy = yy + 1;
+                                                zz = zz + 1;
+                                                jj = jj + 1;
 
-                                elseif info_1_2_3(ii) == Tabletype{3} && info_1_2_3(ii + 1) == Tabletype{3}
-                                    tableOutAll{3}.ID_1_2_3(acum3 + zz) = jj;
-                                    acum3 = acum3 + 1;
-
-                                elseif info_1_2_3(ii) == Tabletype{2} && info_1_2_3(ii + 1) == Tabletype{1}
-                                    tableOutAll{2}.ID_1_2_3(acum2 + yy - incr2) = jj;
-                                    xx = xx + 1;
-                                    yy = yy + 1;
-                                    zz = zz + 1;
-                                    jj = jj + 1;
-                                    incr1 = incr1 + 1;
-
-                                elseif info_1_2_3(ii) == Tabletype{3} && info_1_2_3(ii + 1) == Tabletype{1}
-                                    tableOutAll{3}.ID_1_2_3(acum3 + zz - incr1) = jj;
-                                    xx = xx + 1;
-                                    yy = yy + 1;
-                                    zz = zz + 1;
-                                    jj = jj + 1;
+                                            case tableIdList{3}
+                                                tableOutAll{3}.("_TEMP_KEY")(acum3 + zz) = jj;
+                                                acum3 = acum3 + 1;
+                                        end
                                 end
                             end
 
@@ -949,7 +941,7 @@ classdef ECD < model.ECDBase
 
                             % Primeiro join entre T1 e T2
                             J1 = outerjoin(T1, T2, ...
-                                'Keys', 'ID_1_2_3', ...
+                                'Keys', '_TEMP_KEY', ...
                                 'Type', 'left', ...
                                 'MergeKeys', true);
 
@@ -960,19 +952,15 @@ classdef ECD < model.ECDBase
                            
                             % Depois join entre o resultado e T3
                             Jfinal = outerjoin(J1, T3, ...
-                                'Keys', {'ID_1_2_3', 'COD_CCUS'}, ...
+                                'Keys', {'_TEMP_KEY', 'COD_CCUS'}, ...
                                 'Type', 'left', ...
                                 'MergeKeys', true);
 
-                            Jfinal = unique(Jfinal, 'rows');
-                            
+                            Jfinal = unique(Jfinal, 'rows');                            
                             Jfinal = sortrows(Jfinal, 'ordem_original');
 
-                            Jfinal.REG_T1 = repmat({[Tabletype{1}, '-', Tabletype{2}, '-', Tabletype{3}]}, height(Jfinal), 1);
-                            Jfinal = removevars(Jfinal, 'ID_1_2_3');
-                            Jfinal = removevars(Jfinal, 'ordem_original');
-                            Jfinal     = removevars(Jfinal, 'REG_T2');
-                            Jfinal     = removevars(Jfinal, 'REG');
+                            Jfinal.REG_T1 = repmat({[tableIdList{1}, '-', tableIdList{2}, '-', tableIdList{3}]}, height(Jfinal), 1);
+                            Jfinal = removevars(Jfinal, {'_TEMP_KEY', 'ordem_original', 'REG_T2', 'REG'});
                             Jfinal.Properties.VariableNames('REG_T1') = {'REG'};
 
                             tableOutOthers = Jfinal;
@@ -980,7 +968,7 @@ classdef ECD < model.ECDBase
 
                     case 2
 
-                        linesTabletype1 = tableTypesLines (obj, Tabletype);
+                        linesTabletype1 = tableTypesLines (obj, tableIdList);
     
                         switch nTabletype
                             case 2
@@ -996,15 +984,12 @@ classdef ECD < model.ECDBase
                         error('Unexpected value')
                 end
             end
+            % </EscopoLocal>
 
-            switch numel(tableIdList)
-                case 2
-                    tableOutAll{2}.REG = strcat(tableOutAll{2}.REG, '-', tableOutAll{1}.REG);
-                    tableOutAll{1}     = removevars(tableOutAll{1}, 'REG');
-                    tableOutOthers    = [tableOutAll{2}, tableOutAll{1}];
-
-                % otherwise
-                %     error('Unexpected value')
+            if numel(tableIdList) == 2
+                tableOutAll{2}.REG = strcat(tableOutAll{2}.REG, '-', tableOutAll{1}.REG);
+                tableOutAll{1}     = removevars(tableOutAll{1}, 'REG');
+                tableOutOthers    = [tableOutAll{2}, tableOutAll{1}];
             end
         end
 
