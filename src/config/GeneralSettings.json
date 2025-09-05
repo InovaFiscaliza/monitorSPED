@@ -1,5 +1,5 @@
 {
-    "version": 0.04,
+    "version": 0.10,
     "operationMode": {
         "Debug": false,
         "Dock": false,
@@ -22,7 +22,25 @@
         "DataHub_POST": "",
         "lastVisited": ""
     },
-    "openGL": "hardware",
+    "sped": {
+        "input": "file",
+        "encoding": {
+            "options": [
+                "ISO-8859-1",
+                "UTF-8",
+                "windows-1251",
+                "windows-1252"
+                ],
+            "value": "ISO-8859-1"
+        },
+        "terminator": {
+            "options": [
+                "CRLF",
+                "LF"
+                ],
+            "value": "CRLF"
+        }
+    },
     "eFiscaliza": {
         "internal": {
             "originId": "G",

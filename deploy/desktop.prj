@@ -1,6 +1,6 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="1278032751" file="D:\InovaFiscaliza\appAnalise\deploy\desktop.prj" location="D:\InovaFiscaliza\appAnalise\deploy" name="desktop" preferred-package-location="D:\appAnalise\deploy\desktop\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
-    <param.appname>appAnalise</param.appname>
+  <configuration build-checksum="1278032751" file="D:\InovaFiscaliza\monitorSPED\deploy\desktop.prj" location="D:\InovaFiscaliza\monitorSPED\deploy" name="desktop" preferred-package-location="D:\appAnalise\deploy\desktop\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
+    <param.appname>monitorSPED</param.appname>
     <param.icon>${PROJECT_ROOT}\desktop_resources\icon.ico</param.icon>
     <param.icons>
       <file>${PROJECT_ROOT}\desktop_resources\icon_48.png</file>
@@ -8,15 +8,15 @@
       <file>${PROJECT_ROOT}\desktop_resources\icon_24.png</file>
       <file>${PROJECT_ROOT}\desktop_resources\icon_16.png</file>
     </param.icons>
-    <param.version>1.87.0</param.version>
+    <param.version>0.0.1</param.version>
     <param.authnamewatermark>Escritório de inovação da SFI</param.authnamewatermark>
     <param.email />
     <param.company>ANATEL</param.company>
     <param.summary />
-    <param.description>Pós-processamento de dados gerados em monitorações do espectro de radiofrequências.</param.description>
+    <param.description>Pós-processamento de arquivos contábeis de prestadoras de serviços de telecomunicações.</param.description>
     <param.screenshot />
     <param.guid />
-    <param.installpath.string>\ANATEL\appAnalise\</param.installpath.string>
+    <param.installpath.string>\ANATEL\monitorSPED\</param.installpath.string>
     <param.installpath.combo>option.installpath.programfiles</param.installpath.combo>
     <param.logo />
     <param.install.notes />
@@ -32,7 +32,7 @@
     <param.web.mcr>true</param.web.mcr>
     <param.package.mcr>false</param.package.mcr>
     <param.no.mcr>false</param.no.mcr>
-    <param.web.mcr.name>appAnalise</param.web.mcr.name>
+    <param.web.mcr.name>monitorSPED</param.web.mcr.name>
     <param.package.mcr.name>appAnalise</param.package.mcr.name>
     <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
     <param.windows.command.prompt>true</param.windows.command.prompt>
@@ -76,29 +76,25 @@
       <param.example />
     </unset>
     <fileset.main>
-      <file>D:\InovaFiscaliza\appAnalise\src\winAppAnalise.mlapp</file>
+      <file>D:\InovaFiscaliza\monitorSPED\src\winMonitorSPED.mlapp</file>
     </fileset.main>
     <fileset.resources>
-      <file>D:\InovaFiscaliza\appAnalise\src\+auxApp</file>
-      <file>D:\InovaFiscaliza\appAnalise\src\+class</file>
-      <file>D:\InovaFiscaliza\appAnalise\src\+model</file>
-      <file>D:\InovaFiscaliza\appAnalise\src\+plot</file>
-      <file>D:\InovaFiscaliza\appAnalise\src\+report</file>
-      <file>D:\InovaFiscaliza\appAnalise\src\+reportLibConnection</file>
-      <file>D:\InovaFiscaliza\appAnalise\src\+util</file>
-      <file>D:\InovaFiscaliza\appAnalise\src\resources</file>
+      <file>D:\InovaFiscaliza\monitorSPED\src\+auxApp</file>
+      <file>D:\InovaFiscaliza\monitorSPED\src\+class</file>
+      <file>D:\InovaFiscaliza\monitorSPED\src\+model</file>
+      <file>D:\InovaFiscaliza\monitorSPED\src\+util</file>
+      <file>D:\InovaFiscaliza\monitorSPED\src\resources</file>
       <file>D:\SupportPackages\src\Anatel</file>
       <file>D:\SupportPackages\src\General</file>
-      <file>D:\SupportPackages\src\Spectrum</file>
     </fileset.resources>
     <fileset.package>
-      <file>D:\InovaFiscaliza\appAnalise\src\config</file>
+      <file>D:\InovaFiscaliza\monitorSPED\src\config</file>
     </fileset.package>
     <fileset.depfun />
     <build-deliverables>
-      <file location="${PROJECT_ROOT}\desktop\for_testing" name="readme.txt" optional="true">D:\InovaFiscaliza\appAnalise\deploy\desktop\for_testing\readme.txt</file>
-      <file location="${PROJECT_ROOT}\desktop\for_testing" name="splash.png" optional="false">D:\InovaFiscaliza\appAnalise\deploy\desktop\for_testing\splash.png</file>
-      <file location="${PROJECT_ROOT}\desktop\for_testing" name="appAnalise.exe" optional="false">D:\InovaFiscaliza\appAnalise\deploy\desktop\for_testing\appAnalise.exe</file>
+      <file location="${PROJECT_ROOT}\desktop\for_testing" name="readme.txt" optional="true">D:\InovaFiscaliza\monitorSPED\deploy\desktop\for_testing\readme.txt</file>
+      <file location="${PROJECT_ROOT}\desktop\for_testing" name="monitorSPED.exe" optional="false">D:\InovaFiscaliza\monitorSPED\deploy\desktop\for_testing\monitorSPED.exe</file>
+      <file location="${PROJECT_ROOT}\desktop\for_testing" name="splash.png" optional="false">D:\InovaFiscaliza\monitorSPED\deploy\desktop\for_testing\splash.png</file>
     </build-deliverables>
     <workflow />
     <matlab>

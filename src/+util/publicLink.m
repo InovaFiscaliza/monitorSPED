@@ -2,7 +2,7 @@ function varargout = publicLink(appName, rootFolder, requiredLinks, fileName)
     arguments
         appName
         rootFolder
-        requiredLinks
+        requiredLinks = 'VersionFile'
         fileName = 'PublicLinks.json'
     end
 
