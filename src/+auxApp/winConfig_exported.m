@@ -455,6 +455,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.versionInfo.VerticalAlignment = 'top';
             app.versionInfo.WordWrap = 'on';
             app.versionInfo.FontSize = 11;
+            app.versionInfo.FontColor = [0 0 0];
             app.versionInfo.Layout.Row = [2 4];
             app.versionInfo.Layout.Column = 1;
             app.versionInfo.Interpreter = 'html';
@@ -466,6 +467,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.openAuxiliarAppAsDocked.Enable = 'off';
             app.openAuxiliarAppAsDocked.Text = 'Modo DOCK: módulos auxiliares abertos na janela principal do app';
             app.openAuxiliarAppAsDocked.FontSize = 11;
+            app.openAuxiliarAppAsDocked.FontColor = [0 0 0];
             app.openAuxiliarAppAsDocked.Layout.Row = 6;
             app.openAuxiliarAppAsDocked.Layout.Column = 1;
 
@@ -475,6 +477,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.openAuxiliarApp2Debug.Enable = 'off';
             app.openAuxiliarApp2Debug.Text = 'Modo DEBUG';
             app.openAuxiliarApp2Debug.FontSize = 11;
+            app.openAuxiliarApp2Debug.FontColor = [0 0 0];
             app.openAuxiliarApp2Debug.Layout.Row = 7;
             app.openAuxiliarApp2Debug.Layout.Column = 1;
 
@@ -539,6 +542,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create CODIFICAOTEXTUALLabel
             app.CODIFICAOTEXTUALLabel = uilabel(app.GridLayout3);
             app.CODIFICAOTEXTUALLabel.FontSize = 10;
+            app.CODIFICAOTEXTUALLabel.FontColor = [0 0 0];
             app.CODIFICAOTEXTUALLabel.Layout.Row = 2;
             app.CODIFICAOTEXTUALLabel.Layout.Column = 1;
             app.CODIFICAOTEXTUALLabel.Text = 'CODIFICAÇÃO TEXTUAL:';
@@ -548,6 +552,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.Encoding.Items = {};
             app.Encoding.ValueChangedFcn = createCallbackFcn(app, @ParameterValueChanged, true);
             app.Encoding.FontSize = 11;
+            app.Encoding.FontColor = [0 0 0];
             app.Encoding.BackgroundColor = [1 1 1];
             app.Encoding.Layout.Row = 2;
             app.Encoding.Layout.Column = 2;
@@ -593,7 +598,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create FolderMapGrid
             app.FolderMapGrid = uigridlayout(app.MAPEAMENTODEPASTASTab);
             app.FolderMapGrid.ColumnWidth = {'1x', 20};
-            app.FolderMapGrid.RowHeight = {17, 22, 17, 22, '1x'};
+            app.FolderMapGrid.RowHeight = {17, 22, 22, 22, '1x'};
             app.FolderMapGrid.ColumnSpacing = 5;
             app.FolderMapGrid.RowSpacing = 5;
             app.FolderMapGrid.BackgroundColor = [1 1 1];
@@ -610,6 +615,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.DataHubPOST = uieditfield(app.FolderMapGrid, 'text');
             app.DataHubPOST.Editable = 'off';
             app.DataHubPOST.FontSize = 11;
+            app.DataHubPOST.FontColor = [0 0 0];
             app.DataHubPOST.Layout.Row = 2;
             app.DataHubPOST.Layout.Column = 1;
 
@@ -634,6 +640,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.userPath = uieditfield(app.FolderMapGrid, 'text');
             app.userPath.Editable = 'off';
             app.userPath.FontSize = 11;
+            app.userPath.FontColor = [0 0 0];
             app.userPath.Layout.Row = 4;
             app.userPath.Layout.Column = 1;
 

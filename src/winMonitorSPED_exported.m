@@ -28,9 +28,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         NOMEDAEMPRESAMetadadosOutrascoisasLabel  matlab.ui.control.Label
         file_toolGrid                  matlab.ui.container.GridLayout
         file_Encoding                  matlab.ui.control.Label
+        file_ReportRFB                 matlab.ui.control.Image
         file_CheckRFB                  matlab.ui.control.Image
+        file_Separator2                matlab.ui.control.Image
         file_MergeFiles                matlab.ui.control.Image
-        Image                          matlab.ui.control.Image
+        file_Separator1                matlab.ui.control.Image
         file_OpenFileButton            matlab.ui.control.Image
         Tab2_Playback                  matlab.ui.container.Tab
         Tab3_Config                    matlab.ui.container.Tab
@@ -768,13 +770,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         % Image clicked function: file_MergeFiles
         function file_MergeFilesImageClicked(app, event)
 
-            mergedIndexes = [];
+            indexes = [];
             if ~isempty(app.file_Tree.SelectedNodes)
-                mergedIndexes = unique([app.file_Tree.SelectedNodes.NodeData]);
+                indexes = unique([app.file_Tree.SelectedNodes.NodeData]);
             end
 
-            if numel(mergedIndexes) >= 2
-                if ~isscalar(unique({app.ecdObj(mergedIndexes).CompanyId}))
+            if numel(indexes) >= 2
+                if ~isscalar(unique({app.ecdObj(indexes).CompanyId}))
                     appUtil.modalWindow(app.UIFigure, 'info', 'A mesclagem é aplicável apenas a registros de uma mesma empresa.');
                     return
                 end
@@ -785,7 +787,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 app.progressDialog.Visible = 'visible';
 
-                [app.ecdObj, msg] = app.ecdObj.mergeFiles(mergedIndexes, app.General.fileFolder.tempPath);
+                [app.ecdObj, msg] = app.ecdObj.mergeFiles(indexes, app.General.fileFolder.tempPath);
                 if isempty(msg)
                     file_TreeBuilding(app)
                 else
@@ -800,22 +802,50 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         % Image clicked function: file_CheckRFB
         function file_CheckRFBClicked(app, event)
             
-            nodeData = [];
+            indexes = [];
             if ~isempty(app.file_Tree.SelectedNodes)
-                nodeData = unique([app.file_Tree.SelectedNodes.NodeData]);
+                indexes = unique([app.file_Tree.SelectedNodes.NodeData]);
             end
 
-            if ~isempty(nodeData)
-                if all([app.ecdObj(nodeData).PeriodMerged])
+            if ~isempty(indexes)
+                if all([app.ecdObj(indexes).PeriodMerged])
                     appUtil.modalWindow(app.UIFigure, 'info', 'Consulta à Receita Federal não é aplicável a registro mesclado.');
                     return
                 end
 
                 app.progressDialog.Visible = 'visible';
 
-                checkFileFlag = checkFileStatus(app.ecdObj(nodeData), app.receitaFederalObj);
+                checkFileFlag = checkFileStatus(app.ecdObj(indexes), app.receitaFederalObj);
                 if checkFileFlag
                     file_TreeBuilding(app)
+                end
+
+                app.progressDialog.Visible = 'hidden';
+            end
+
+        end
+
+        % Image clicked function: file_ReportRFB
+        function file_ReportRFBImageClicked(app, event)
+            
+            indexes = [];
+            if ~isempty(app.file_Tree.SelectedNodes)
+                indexes = unique([app.file_Tree.SelectedNodes.NodeData]);
+            end
+
+            if ~isempty(indexes)
+                % <VALIDATION>
+                if all([app.ecdObj(indexes).PeriodMerged])
+                    appUtil.modalWindow(app.UIFigure, 'info', 'Consulta à Receita Federal não é aplicável a registro mesclado.');
+                    return
+                end
+
+                app.progressDialog.Visible = 'visible';
+
+                try
+                    reportLibConnection.Controller.Run(app)
+                catch ME
+                    appUtil.modalWindow(app.UIFigure, 'warning', getReport(ME));
                 end
 
                 app.progressDialog.Visible = 'hidden';
@@ -874,7 +904,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create file_toolGrid
             app.file_toolGrid = uigridlayout(app.file_Grid);
-            app.file_toolGrid.ColumnWidth = {22, 5, 22, 22, '1x', 150};
+            app.file_toolGrid.ColumnWidth = {22, 5, 22, 5, 22, 22, '1x', 150};
             app.file_toolGrid.RowHeight = {3, 17, 2};
             app.file_toolGrid.ColumnSpacing = 5;
             app.file_toolGrid.RowSpacing = 0;
@@ -892,13 +922,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.file_OpenFileButton.Layout.Column = 1;
             app.file_OpenFileButton.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Import_16.png');
 
-            % Create Image
-            app.Image = uiimage(app.file_toolGrid);
-            app.Image.ScaleMethod = 'none';
-            app.Image.Enable = 'off';
-            app.Image.Layout.Row = [1 3];
-            app.Image.Layout.Column = 2;
-            app.Image.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV.svg');
+            % Create file_Separator1
+            app.file_Separator1 = uiimage(app.file_toolGrid);
+            app.file_Separator1.ScaleMethod = 'none';
+            app.file_Separator1.Enable = 'off';
+            app.file_Separator1.Layout.Row = [1 3];
+            app.file_Separator1.Layout.Column = 2;
+            app.file_Separator1.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV.svg');
 
             % Create file_MergeFiles
             app.file_MergeFiles = uiimage(app.file_toolGrid);
@@ -906,8 +936,16 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.file_MergeFiles.Enable = 'off';
             app.file_MergeFiles.Tooltip = {'Mescla informação contábil'};
             app.file_MergeFiles.Layout.Row = [1 3];
-            app.file_MergeFiles.Layout.Column = 4;
+            app.file_MergeFiles.Layout.Column = 3;
             app.file_MergeFiles.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Merge_32.png');
+
+            % Create file_Separator2
+            app.file_Separator2 = uiimage(app.file_toolGrid);
+            app.file_Separator2.ScaleMethod = 'none';
+            app.file_Separator2.Enable = 'off';
+            app.file_Separator2.Layout.Row = [1 3];
+            app.file_Separator2.Layout.Column = 4;
+            app.file_Separator2.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV.svg');
 
             % Create file_CheckRFB
             app.file_CheckRFB = uiimage(app.file_toolGrid);
@@ -915,8 +953,17 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.file_CheckRFB.Enable = 'off';
             app.file_CheckRFB.Tooltip = {'Consulta à Receita Federal'};
             app.file_CheckRFB.Layout.Row = [1 3];
-            app.file_CheckRFB.Layout.Column = 3;
+            app.file_CheckRFB.Layout.Column = 5;
             app.file_CheckRFB.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'receita-federal-novo-logo-png_seeklogo-203693.png');
+
+            % Create file_ReportRFB
+            app.file_ReportRFB = uiimage(app.file_toolGrid);
+            app.file_ReportRFB.ScaleMethod = 'none';
+            app.file_ReportRFB.ImageClickedFcn = createCallbackFcn(app, @file_ReportRFBImageClicked, true);
+            app.file_ReportRFB.Tooltip = {'Gera relatório'; '(estado escrituração na Receita Federal)'};
+            app.file_ReportRFB.Layout.Row = [1 3];
+            app.file_ReportRFB.Layout.Column = 6;
+            app.file_ReportRFB.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Publish_HTML_16.png');
 
             % Create file_Encoding
             app.file_Encoding = uilabel(app.file_toolGrid);
@@ -924,7 +971,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.file_Encoding.FontSize = 10;
             app.file_Encoding.FontColor = [0.502 0.502 0.502];
             app.file_Encoding.Layout.Row = 2;
-            app.file_Encoding.Layout.Column = 6;
+            app.file_Encoding.Layout.Column = 8;
             app.file_Encoding.Text = '';
 
             % Create TabGroup2

@@ -8,12 +8,8 @@ classdef winECD_exported < matlab.apps.AppBase
         dockModule_Undock           matlab.ui.control.Image
         dockModule_Close            matlab.ui.control.Image
         toolGrid                    matlab.ui.container.GridLayout
+        Image4                      matlab.ui.control.Image
         tool_CompanyInfo            matlab.ui.control.Label
-        tool_ExportButton           matlab.ui.control.Image
-        tool_Separator              matlab.ui.control.Image
-        tool_LOGInfo                matlab.ui.control.Image
-        tool_OpenRTFFiles           matlab.ui.control.Image
-        tool_ReadAllTables          matlab.ui.control.Image
         UITable2_FilterText         matlab.ui.control.Label
         UITable2_CountText          matlab.ui.control.Label
         UITable2_CountIcon          matlab.ui.control.Image
@@ -25,6 +21,13 @@ classdef winECD_exported < matlab.apps.AppBase
         TabGroup                    matlab.ui.container.TabGroup
         ASPECTOSGERAISTab           matlab.ui.container.Tab
         GridLayout3                 matlab.ui.container.GridLayout
+        Separator1_3                matlab.ui.control.Image
+        SheetViewStatus_3           matlab.ui.control.StateButton
+        tool_OpenRTFFiles           matlab.ui.control.Image
+        RowHeightOffsetLabel_3      matlab.ui.control.Label
+        tool_ReadAllTables          matlab.ui.control.Image
+        RowHeightOffsetLabel_2      matlab.ui.control.Label
+        Separator1_2                matlab.ui.control.Image
         SheetList                   matlab.ui.control.DropDown
         SheetListLabel              matlab.ui.control.Label
         TimePeriodList              matlab.ui.control.DropDown
@@ -480,7 +483,7 @@ classdef winECD_exported < matlab.apps.AppBase
             selectedECD = app.ecdObj(fileIndex);
 
             app.tool_ReadAllTables.Enable = ~selectedECD.GUI.isRead;
-            app.tool_CompanyInfo.Text = sprintf('<font style="font-size: 11px; font-weight: bold;">%s</font> CNPJ %s \n%s ', ...
+            app.tool_CompanyInfo.Text = sprintf('<font style="font-size: 11px; font-weight: bold;">%s</font> CNPJ %s\n%s', ...
                 selectedECD.CompanyName, selectedECD.CompanyId, strjoin(string(selectedECD.Period), ' a '));
 
             updateSheetList(app)
@@ -798,14 +801,14 @@ classdef winECD_exported < matlab.apps.AppBase
 
         end
 
-        % Image clicked function: tool_ExportButton
+        % Value changed function: SheetViewStatus_3
         function tool_ExportButtonImageClicked(app, event)
             
             pause(1)
 
         end
 
-        % Image clicked function: tool_LOGInfo
+        % Image clicked function: Image4
         function tool_LOGInfoImageClicked(app, event)
             
             fileIndex   = selectedFileIndex(app);
@@ -824,41 +827,67 @@ classdef winECD_exported < matlab.apps.AppBase
 
             rtfFiles    = {};
             msgError    = {};
-        
+
             rtfTableIds = {'J800', 'J801'};
             parseTableAndAddToCache(selectedECD, rtfTableIds)
+
+            defaultName = appUtil.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'monitorSPED');
+            tempName    = appUtil.DefaultFileName(app.mainApp.General.fileFolder.tempPath, 'monitorSPED');
+            fileCount   = 0;
+
+            app.progressDialog.Visible = 'visible';
             
             for ii = 1:numel(rtfTableIds)
                 rtfTableField = ['x' rtfTableIds{ii}];
         
                 if isfield(selectedECD.Table, rtfTableField) && ~isempty(selectedECD.Table.(rtfTableField))
-                    rtfFiles{end+1} = selectedECD.FileName;
-
-                    nameFormatMap   = {'*.rtf', 'RTF (*.rtf)'};
-                    defaultName     = appUtil.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'monitorSPED');
-                    fileFullPath    = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', nameFormatMap, defaultName);
-                    if isempty(fileFullPath)
-                        return
-                    end
-
-                    app.progressDialog.Visible = 'visible';
-
-                    try
-                        rtfContentFile  = selectedECD.Table.(rtfTableField).('ARQ_RTF');
-                        writematrix(rtfContentFile, fileFullPath, "FileType", "text", "QuoteStrings", "none", "Encoding", 'ISO-8859-1');
-
-                        if ~strcmp(app.mainApp.executionMode, 'webApp')
-                            ccTools.fcn.OperationSystem('openFile', fileFullPath)
+                    for jj = 1:height(selectedECD.Table.(rtfTableField))
+                        fileCount = fileCount+1;
+                        fileName  = sprintf('%s_%d.rtf', tempName, fileCount);
+                        
+                        try
+                            rtfContentFile  = selectedECD.Table.(rtfTableField).('ARQ_RTF'){jj};
+                            writematrix(rtfContentFile, fileName, "FileType", "text", "QuoteStrings", "none", "Encoding", 'ISO-8859-1');
+                            rtfFiles{end+1} = fileName;
+                        catch ME
+                            msgError{end+1} = ME.message;
                         end
-                    catch ME
-                        msgError{end+1} = ME.message;
                     end
-
-                    app.progressDialog.Visible = 'hidden';
                 end
             end
 
-            if isempty(rtfFiles)
+            app.progressDialog.Visible = 'hidden';
+
+            if ~isempty(rtfFiles)
+                appName = class.Constants.appName;
+
+                if isscalar(rtfFiles) && ~strcmp(app.mainApp.executionMode, 'webApp')
+                    nameFormat = {'*.rtf', [appName, ' (*.rtf)']};
+                else
+                    nameFormat = {'*.zip', [appName, ' (*.zip)']};
+                end
+
+                outputFile = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', nameFormat, defaultName);
+                if isempty(outputFile)
+                    return
+                end
+
+                app.progressDialog.Visible = 'visible';
+
+                if isscalar(rtfFiles) && ~strcmp(app.mainApp.executionMode, 'webApp')
+                    copyfile(rtfFiles{1}, outputFile, 'f')
+                else
+                    zip(outputFile, rtfFiles)
+                end
+
+                if ~strcmp(app.mainApp.executionMode, 'webApp')
+                    for kk = 1:numel(rtfFiles)
+                        ccTools.fcn.OperationSystem('openFile', rtfFiles{kk})
+                    end
+                end
+
+                app.progressDialog.Visible = 'hidden';
+            else
                 appUtil.modalWindow(app.UIFigure, 'info', sprintf('Escrituração não possui arquivo auxiliar no formato RTF.'));
             end
         
@@ -939,7 +968,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create GridLayout
             app.GridLayout = uigridlayout(app.Container);
             app.GridLayout.ColumnWidth = {10, 18, 320, 5, 90, 5, 5, 5, '1x', 5, 5, 5, 270, 48, 8, 2};
-            app.GridLayout.RowHeight = {2, 8, 24, 94, 10, '1x', 2, 18, 0, 0, 0, 0, 10, 34};
+            app.GridLayout.RowHeight = {2, 8, 24, 70, 10, '1x', 2, 18, 0, 0, 0, 0, 10, 34};
             app.GridLayout.ColumnSpacing = 0;
             app.GridLayout.RowSpacing = 0;
             app.GridLayout.Padding = [0 0 0 0];
@@ -960,7 +989,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create GridLayout3
             app.GridLayout3 = uigridlayout(app.ASPECTOSGERAISTab);
-            app.GridLayout3.ColumnWidth = {90, 230, 60, 229};
+            app.GridLayout3.ColumnWidth = {90, 230, 60, 229, 3, 20, 170, 3, 44};
             app.GridLayout3.RowHeight = {22, 22};
             app.GridLayout3.RowSpacing = 5;
             app.GridLayout3.BackgroundColor = [0.9804 0.9804 0.9804];
@@ -978,6 +1007,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.CompanyNameList.Items = {};
             app.CompanyNameList.ValueChangedFcn = createCallbackFcn(app, @CompanyNameListValueChanged, true);
             app.CompanyNameList.FontSize = 11;
+            app.CompanyNameList.FontColor = [0.129411764705882 0.129411764705882 0.129411764705882];
             app.CompanyNameList.BackgroundColor = [1 1 1];
             app.CompanyNameList.Layout.Row = 1;
             app.CompanyNameList.Layout.Column = [2 4];
@@ -996,6 +1026,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.TimePeriodList.Items = {};
             app.TimePeriodList.ValueChangedFcn = createCallbackFcn(app, @TimePeriodListValueChanged, true);
             app.TimePeriodList.FontSize = 11;
+            app.TimePeriodList.FontColor = [0.129411764705882 0.129411764705882 0.129411764705882];
             app.TimePeriodList.BackgroundColor = [1 1 1];
             app.TimePeriodList.Layout.Row = 2;
             app.TimePeriodList.Layout.Column = 2;
@@ -1015,10 +1046,74 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetList.Items = {};
             app.SheetList.ValueChangedFcn = createCallbackFcn(app, @SheetListValueChanged, true);
             app.SheetList.FontSize = 11;
+            app.SheetList.FontColor = [0.129411764705882 0.129411764705882 0.129411764705882];
             app.SheetList.BackgroundColor = [1 1 1];
             app.SheetList.Layout.Row = 2;
             app.SheetList.Layout.Column = 4;
             app.SheetList.Value = {};
+
+            % Create Separator1_2
+            app.Separator1_2 = uiimage(app.GridLayout3);
+            app.Separator1_2.Enable = 'off';
+            app.Separator1_2.Layout.Row = [1 2];
+            app.Separator1_2.Layout.Column = 5;
+            app.Separator1_2.ImageSource = 'LineV.svg';
+
+            % Create RowHeightOffsetLabel_2
+            app.RowHeightOffsetLabel_2 = uilabel(app.GridLayout3);
+            app.RowHeightOffsetLabel_2.WordWrap = 'on';
+            app.RowHeightOffsetLabel_2.FontSize = 10;
+            app.RowHeightOffsetLabel_2.FontColor = [0.129411764705882 0.129411764705882 0.129411764705882];
+            app.RowHeightOffsetLabel_2.Layout.Row = 1;
+            app.RowHeightOffsetLabel_2.Layout.Column = 7;
+            app.RowHeightOffsetLabel_2.Text = 'LEITURA REGISTROS ORDINÁRIOS';
+
+            % Create tool_ReadAllTables
+            app.tool_ReadAllTables = uiimage(app.GridLayout3);
+            app.tool_ReadAllTables.ScaleMethod = 'none';
+            app.tool_ReadAllTables.ImageClickedFcn = createCallbackFcn(app, @ReadAllSheetsButtonPushed, true);
+            app.tool_ReadAllTables.Enable = 'off';
+            app.tool_ReadAllTables.Tooltip = {'Leitura registros ordinários'};
+            app.tool_ReadAllTables.Layout.Row = 1;
+            app.tool_ReadAllTables.Layout.Column = 6;
+            app.tool_ReadAllTables.ImageSource = 'run_all_tests_16.png';
+
+            % Create RowHeightOffsetLabel_3
+            app.RowHeightOffsetLabel_3 = uilabel(app.GridLayout3);
+            app.RowHeightOffsetLabel_3.WordWrap = 'on';
+            app.RowHeightOffsetLabel_3.FontSize = 10;
+            app.RowHeightOffsetLabel_3.FontColor = [0.129411764705882 0.129411764705882 0.129411764705882];
+            app.RowHeightOffsetLabel_3.Layout.Row = 2;
+            app.RowHeightOffsetLabel_3.Layout.Column = 7;
+            app.RowHeightOffsetLabel_3.Text = 'ARQUIVOS RTF';
+
+            % Create tool_OpenRTFFiles
+            app.tool_OpenRTFFiles = uiimage(app.GridLayout3);
+            app.tool_OpenRTFFiles.ScaleMethod = 'none';
+            app.tool_OpenRTFFiles.ImageClickedFcn = createCallbackFcn(app, @tool_OpenRTFFilesImageClicked, true);
+            app.tool_OpenRTFFiles.Tooltip = {'Abre/Salva arquivos .rtf'; '(Registros J800 e J801)'};
+            app.tool_OpenRTFFiles.Layout.Row = 2;
+            app.tool_OpenRTFFiles.Layout.Column = 6;
+            app.tool_OpenRTFFiles.ImageSource = 'Publish_PDF_16.png';
+
+            % Create SheetViewStatus_3
+            app.SheetViewStatus_3 = uibutton(app.GridLayout3, 'state');
+            app.SheetViewStatus_3.ValueChangedFcn = createCallbackFcn(app, @tool_ExportButtonImageClicked, true);
+            app.SheetViewStatus_3.Icon = 'Export_24.png';
+            app.SheetViewStatus_3.IconAlignment = 'top';
+            app.SheetViewStatus_3.Text = 'EXCEL';
+            app.SheetViewStatus_3.BackgroundColor = [0.9608 0.9608 0.9608];
+            app.SheetViewStatus_3.FontSize = 10;
+            app.SheetViewStatus_3.FontColor = [0.129411764705882 0.129411764705882 0.129411764705882];
+            app.SheetViewStatus_3.Layout.Row = [1 2];
+            app.SheetViewStatus_3.Layout.Column = 9;
+
+            % Create Separator1_3
+            app.Separator1_3 = uiimage(app.GridLayout3);
+            app.Separator1_3.Enable = 'off';
+            app.Separator1_3.Layout.Row = [1 2];
+            app.Separator1_3.Layout.Column = 8;
+            app.Separator1_3.ImageSource = 'LineV.svg';
 
             % Create LAYOUTTab
             app.LAYOUTTab = uitab(app.TabGroup);
@@ -1396,7 +1491,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create toolGrid
             app.toolGrid = uigridlayout(app.GridLayout);
-            app.toolGrid.ColumnWidth = {22, 22, 22, 5, 22, '1x'};
+            app.toolGrid.ColumnWidth = {'1x', 22};
             app.toolGrid.RowHeight = {4, 17, 2};
             app.toolGrid.ColumnSpacing = 5;
             app.toolGrid.RowSpacing = 0;
@@ -1405,58 +1500,23 @@ classdef winECD_exported < matlab.apps.AppBase
             app.toolGrid.Layout.Column = [1 16];
             app.toolGrid.BackgroundColor = [0.9412 0.9412 0.9412];
 
-            % Create tool_ReadAllTables
-            app.tool_ReadAllTables = uiimage(app.toolGrid);
-            app.tool_ReadAllTables.ImageClickedFcn = createCallbackFcn(app, @ReadAllSheetsButtonPushed, true);
-            app.tool_ReadAllTables.Enable = 'off';
-            app.tool_ReadAllTables.Tooltip = {'Leitura registros ordinários'};
-            app.tool_ReadAllTables.Layout.Row = 2;
-            app.tool_ReadAllTables.Layout.Column = 1;
-            app.tool_ReadAllTables.ImageSource = 'run-section-24.png';
-
-            % Create tool_OpenRTFFiles
-            app.tool_OpenRTFFiles = uiimage(app.toolGrid);
-            app.tool_OpenRTFFiles.ImageClickedFcn = createCallbackFcn(app, @tool_OpenRTFFilesImageClicked, true);
-            app.tool_OpenRTFFiles.Tooltip = {'Abre/Salva arquivos .rtf'; '(Registros J800 e J801)'};
-            app.tool_OpenRTFFiles.Layout.Row = 2;
-            app.tool_OpenRTFFiles.Layout.Column = 2;
-            app.tool_OpenRTFFiles.ImageSource = 'Publish_PDF_16.png';
-
-            % Create tool_LOGInfo
-            app.tool_LOGInfo = uiimage(app.toolGrid);
-            app.tool_LOGInfo.ImageClickedFcn = createCallbackFcn(app, @tool_LOGInfoImageClicked, true);
-            app.tool_LOGInfo.Tooltip = {'LOG'};
-            app.tool_LOGInfo.Layout.Row = 2;
-            app.tool_LOGInfo.Layout.Column = 3;
-            app.tool_LOGInfo.ImageSource = 'LOG_32.png';
-
-            % Create tool_Separator
-            app.tool_Separator = uiimage(app.toolGrid);
-            app.tool_Separator.Enable = 'off';
-            app.tool_Separator.Layout.Row = [1 3];
-            app.tool_Separator.Layout.Column = 4;
-            app.tool_Separator.ImageSource = 'LineV.svg';
-
-            % Create tool_ExportButton
-            app.tool_ExportButton = uiimage(app.toolGrid);
-            app.tool_ExportButton.ScaleMethod = 'none';
-            app.tool_ExportButton.ImageClickedFcn = createCallbackFcn(app, @tool_ExportButtonImageClicked, true);
-            app.tool_ExportButton.Tooltip = {'Exporta Excel (.xlsx)'};
-            app.tool_ExportButton.Layout.Row = 2;
-            app.tool_ExportButton.Layout.Column = 5;
-            app.tool_ExportButton.ImageSource = 'Export_16.png';
-
             % Create tool_CompanyInfo
             app.tool_CompanyInfo = uilabel(app.toolGrid);
-            app.tool_CompanyInfo.HorizontalAlignment = 'right';
             app.tool_CompanyInfo.VerticalAlignment = 'top';
             app.tool_CompanyInfo.WordWrap = 'on';
             app.tool_CompanyInfo.FontSize = 9;
             app.tool_CompanyInfo.FontColor = [0.149 0.149 0.149];
             app.tool_CompanyInfo.Layout.Row = [1 3];
-            app.tool_CompanyInfo.Layout.Column = 6;
+            app.tool_CompanyInfo.Layout.Column = 1;
             app.tool_CompanyInfo.Interpreter = 'html';
             app.tool_CompanyInfo.Text = {'<font style="font-size: 11px; font-weight: bold;">NOME DA EMPRESA</font> CNPJ 10.101.101/0001-02 '; '01/01/2023 - 31/12/2023 '};
+
+            % Create Image4
+            app.Image4 = uiimage(app.toolGrid);
+            app.Image4.ImageClickedFcn = createCallbackFcn(app, @tool_LOGInfoImageClicked, true);
+            app.Image4.Layout.Row = 2;
+            app.Image4.Layout.Column = 2;
+            app.Image4.ImageSource = 'LOG_32.png';
 
             % Create dockModuleGrid
             app.dockModuleGrid = uigridlayout(app.GridLayout);
