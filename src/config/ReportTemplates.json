@@ -1,22 +1,12 @@
 [
     {
-        "Name": "Aduana",
-        "File": "Aduana.json",
+        "Name": "_ReportLibTest",
+        "File": "_ReportLibTest.json",
         "DocumentType": "Relatório de Atividades",
-        "Description": "Trata-se de documento que pode ser gerado em fiscalização realizada na aduana, em apoio à Receita Federal do Brasil.",
-        "Author": "Eric Magalhães Delgado",
-        "Version": "1.01",
-        "Release": "21/05/2025",
-        "UserData": ""
-    },
-    {
-        "Name": "Fornecedor/Usuário",
-        "File": "Fornecedor-Usuário.json",
-        "DocumentType": "Relatório de Atividades",
-        "Description": "Trata-se de documento que pode ser gerado em fiscalização realizada em distribuidor ou usuário de produtos para telecomunicações.",
+        "Description": "Exemplo de relatório, apresentando todos os elementos HTML hoje contemplados na lib \"reportLib\".",
         "Author": "Eric Magalhães Delgado",
         "Version": "1.00",
-        "Release": "21/05/2025",
+        "Release": "11/09/2025",
         "UserData": ""
     }
 ]

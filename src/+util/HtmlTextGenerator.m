@@ -41,12 +41,12 @@ classdef (Abstract) HtmlTextGenerator
                     end
             end
         
-            dataStruct    = struct('group', 'COMPUTADOR',    'value', struct('Machine', appVersion.machine, 'Mode', sprintf('%s - %s', executionMode, appMode)));
-            dataStruct(2) = struct('group', 'MATLAB',        'value', appVersion.matlab);
+            dataStruct    = struct('group', 'COMPUTADOR',     'value', struct('Machine', rmfield(appVersion.machine, 'name'), 'Mode', sprintf('%s - %s', executionMode, appMode)));
+            dataStruct(2) = struct('group', 'MATLAB',         'value', rmfield(appVersion.matlab, 'name'));
             if ~isempty(appVersion.browser)
-                dataStruct(3) = struct('group', 'NAVEGADOR', 'value', appVersion.browser);
+                dataStruct(3) = struct('group', 'NAVEGADOR',  'value', rmfield(appVersion.browser, 'name'));
             end
-            dataStruct(end+1) = struct('group', appName,     'value', appVersion.(appName));
+            dataStruct(end+1) = struct('group', 'APLICATIVO', 'value', appVersion.application);
             
         
             freeInitialText = sprintf('<font style="font-size: 12px;">O repositório das ferramentas desenvolvidas no Laboratório de inovação da SFI pode ser acessado <a href="%s" target="_blank">aqui</a>.</font>\n\n', appURL.Sharepoint);
@@ -65,18 +65,19 @@ classdef (Abstract) HtmlTextGenerator
                     groupName = 'TempFileName';
                 end
                 dataStruct(1) = struct('group', groupName, 'value', sprintf('"%s"', ecdObj.FileName));
+                
+                if ecdObj.PeriodMerged
+                    dataStruct(end+1) = struct('group', 'Origin', 'value', textFormatGUI.cellstr2Bullets(cellfun(@(x) sprintf('"%s"', x), {ecdObj.Sources.file}, 'UniformOutput', false)));
+                end
 
-                dataStruct(2) = struct('group', 'Period',  'value', strjoin(string(ecdObj.Period), ' a '));
-                dataStruct(3) = struct('group', 'Content', 'value', [strjoin(strtrim(splitlines(ecdObj.Content(1:500))), '\n') '<br><font style="color: red;">... [texto truncado]</font>']);
-                dataStruct(4) = struct('group', 'Table',   'value', strjoin(getTableIds(ecdObj), ', '));
-                dataStruct(5) = struct('group', 'Layout',  'value', string(ecdObj.Layout));
+                dataStruct(end+1) = struct('group', 'Period',  'value', strjoin(string(ecdObj.Period), ' a '));
+                dataStruct(end+1) = struct('group', 'Content', 'value', [strjoin(strtrim(splitlines(ecdObj.Content(1:min(500, numel(ecdObj.Content))))), '\n') '<br><font style="color: red;">... [texto truncado]</font>']);
+                dataStruct(end+1) = struct('group', 'Table',   'value', strjoin(getTableIds(ecdObj), ', '));
+                dataStruct(end+1) = struct('group', 'Layout',  'value', string(ecdObj.Layout));
                 
                 if ~ecdObj.PeriodMerged
-                    dataStruct(end+1) = struct('group', 'Hash',           'value', upper(ecdObj.FileHash));
-                end
-                
-                if ~isempty(ecdObj.ReceitaFederal)
-                    dataStruct(end+1) = struct('group', 'ReceitaFederal', 'value', ecdObj.ReceitaFederal);
+                    dataStruct(end+1) = struct('group', 'Hash', 'value', jsonencode(rmfield(ecdObj.Sources, {'file', 'period', 'validationMessage', 'validationStatus'})));
+                    dataStruct(end+1) = struct('group', 'ReceitaFederal', 'value', ecdObj.Sources(end).validationMessage);
                 end                
 
                 nireInfo = '';
@@ -84,9 +85,9 @@ classdef (Abstract) HtmlTextGenerator
                     nireInfo = sprintf('<font style="font-size: 11px;">NIRE nº %s</font><br>', ecdObj.CompanyInfo.NIRE);
                 end
                 
-                freeInitialText   = [sprintf('<font style="font-size: 16px; "><b>%s</b></font><br>', ecdObj.CompanyName) ...
-                                     sprintf('<font style="font-size: 11px;">CNPJ nº %s</font><br>', ecdObj.CompanyId)   ...
-                                     sprintf('%s<br>', nireInfo)];
+                freeInitialText = [sprintf('<font style="font-size: 16px; "><b>%s</b></font><br>', ecdObj.CompanyName) ...
+                                   sprintf('<font style="font-size: 11px;">CNPJ nº %s</font><br>', ecdObj.CompanyId)   ...
+                                   sprintf('%s<br>', nireInfo)];
                 
             else
                 idsList = {ecdObj.CompanyId};
@@ -146,11 +147,11 @@ classdef (Abstract) HtmlTextGenerator
             try
                 % Versão instalada no computador:
                 appName          = class.Constants.appName;
-                presentVersion   = struct(appName, appGeneral.AppVersion.(appName).version); 
+                presentVersion   = struct(appName, appGeneral.AppVersion.application.version); 
                 
                 % Versão estável, indicada nos arquivos de referência (na nuvem):
                 generalURL       = util.publicLink(appName, rootFolder);
-                generalVersions  = webread(generalURL,           weboptions("ContentType", "json"));        
+                generalVersions  = webread(generalURL, weboptions("ContentType", "json"));        
                 stableVersion    = struct(appName, generalVersions.(appName).Version);
                 
                 % Validação:

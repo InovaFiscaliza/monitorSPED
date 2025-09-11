@@ -25,9 +25,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         TabGroup2                      matlab.ui.container.TabGroup
         ARQUIVOSTab                    matlab.ui.container.Tab
         GridLayout2                    matlab.ui.container.GridLayout
-        NOMEDAEMPRESAMetadadosOutrascoisasLabel  matlab.ui.control.Label
+        file_FileSortMethodIcon        matlab.ui.control.Image
+        file_FileSortMethod            matlab.ui.control.DropDown
+        file_ModuleIntro               matlab.ui.control.Label
         file_toolGrid                  matlab.ui.container.GridLayout
-        file_Encoding                  matlab.ui.control.Label
+        Image                          matlab.ui.control.Image
         file_ReportRFB                 matlab.ui.control.Image
         file_CheckRFB                  matlab.ui.control.Image
         file_Separator2                matlab.ui.control.Image
@@ -95,19 +97,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         function ipcMainJSEventsHandler(app, event)
             try
                 switch event.HTMLEventName
-                    % JS
+                    % JSBACKDOOR (compCustomization.js)
+                    % "BackgroundColorTurnedInvisible" | "customForm" | "getURL" | "getNavigatorBasicInformation"
                     case 'renderer'
                         startup_Controller(app)
 
                     case 'unload'
                         closeFcn(app)
 
-                    % MAINAPP
-                    case 'mainApp.file_Tree'
-                        file_ContextMenu_delTree1NodeSelected(app)
-
-                    % JSBACKDOOR (compCustomization.js)
-                    % "BackgroundColorTurnedInvisible" | "customForm" | "getURL" | "getNavigatorBasicInformation"
                     case 'BackgroundColorTurnedInvisible'
                         switch event.HTMLEventData
                             case 'SplashScreen'
@@ -157,6 +154,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             objHandle.StyleObservations.(cssProp) = cssValue;
                         end
 
+                    % MAINAPP
+                    case 'mainApp.file_Tree'
+                        contextMenu_delTreeNodeSelected(app)
+
                     otherwise
                         error('UnexpectedEvent')
                 end
@@ -187,6 +188,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 dialogBox    = struct('id', 'login',    'label', 'Usuário: ', 'type', 'text');
                                 dialogBox(2) = struct('id', 'password', 'label', 'Senha: ',   'type', 'password');
                                 sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'openDevTools', 'Fields', dialogBox))
+                            case 'fileSortMethodChanged'
+                                app.file_FileSortMethod.Value = app.General.sped.fileSortMethod;
                             otherwise
                                 error('UnexpectedCall')
                         end
@@ -258,8 +261,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     customizationStatus(tabIndex) = true;
                     switch tabIndex
                         case 1 % FILE
-                            elToModify = {app.popupContainerGrid, ...
-                                          app.file_Tree,          ...
+                            elToModify = {app.popupContainerGrid,  ...
+                                          app.file_Tree,           ...                                          
                                           app.file_Metadata};                % ui.TextView
                             elDataTag  = ui.CustomizationBase.getElementsDataTag(elToModify);
 
@@ -361,6 +364,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 app.General_I.sped.input = 'file';
             end
 
+            if ~ismember(app.General_I.sped.fileSortMethod, {'CNPJ', 'PERÍODO FISCAL', 'RECEITA FEDERAL'})
+                app.General_I.sped.fileSortMethod = 'CNPJ';
+            end
+
             switch app.executionMode
                 case 'webApp'
                     % Força a exclusão do SplashScreen do MATLAB Web Server.
@@ -432,7 +439,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             addComponent(app.tabGroupController, "External", "auxApp.winConfig",      app.menu_Button4, "AlwaysOn", struct('On', 'Settings_36Yellow.png', 'Off', 'Settings_36White.png'), app.menu_Button1,                    3)
 
             DataHubWarningLamp(app)
-            EncodingInfo(app)
+            app.file_FileSortMethod.Value = app.General.sped.fileSortMethod;
             addStyle(app.file_Tree, uistyle('Interpreter', 'html'))
         end
 
@@ -446,58 +453,52 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function EncodingInfo(app)
-            app.file_Encoding.Text = sprintf('%s | %s', app.General.sped.terminator.value, app.General.sped.encoding.value);
-        end
+        function file_TreeBuilding(app, selectedNodeData)
+            arguments
+                app
+                selectedNodeData = []
+            end
 
-        %-----------------------------------------------------------------%
-        function file_TreeBuilding(app)
             if ~isempty(app.file_Tree.Children)
                 app.file_Metadata.UserData = [];
                 delete(app.file_Tree.Children)
             end
 
             idsList = {app.ecdObj.CompanyId};
-
+            selectedNode = [];
+            
             if ~isempty(idsList)
                 ids = unique(idsList);
 
-                for id = ids
-                    idIndexes = find(strcmp(idsList, id));
-                    [~, idSortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(idIndexes)));
-    
-                    nireInfo = '';
-                    if ~isempty(app.ecdObj(idIndexes(1)).CompanyInfo.NIRE)
-                        nireInfo = sprintf('%s - ', app.ecdObj(idIndexes(1)).CompanyInfo.NIRE);
-                    end
-                    textNodeParent = sprintf('%s - %s%s', app.ecdObj(idIndexes(1)).CompanyId, nireInfo, app.ecdObj(idIndexes(1)).CompanyName);
-                    treeNodeParent = uitreenode(app.file_Tree, ...
-                        'Text', textNodeParent, ...
-                        'NodeData', idIndexes, 'ContextMenu', app.file_ContextMenu_Tree);
-    
-                    for idx = idIndexes(idSortedIndexes)
-                        if app.ecdObj(idx).PeriodMerged
-                            statusIcon = '    ➕';
-                        else
-                            if app.ecdObj(idx).FileStatus > 0
-                                statusIcon = '    🟢';
-                            elseif app.ecdObj(idx).FileStatus == 0
-                                statusIcon = '    ⚪';
-                            else
-                                statusIcon = '    🔴';
-                            end
+                switch app.file_FileSortMethod.Value
+                    case 'CNPJ'
+                        selectedNode = file_createTreeElements(app, idsList, ids, selectedNode, selectedNodeData);
+                    otherwise
+                        switch app.file_FileSortMethod.Value
+                            case 'PERÍODO FISCAL'
+                                validTreeNodeText = '<font style="color: blue; font-weight: bold; text-decoration: underline;">VÁLIDOS</font> EM RELAÇÃO AO CRITÉRIO "PERÍODO FISCAL ANUAL"';
+                            case 'RECEITA FEDERAL'
+                                validTreeNodeText = '<font style="color: blue; font-weight: bold; text-decoration: underline;">VÁLIDOS</font> EM RELAÇÃO AO CRITÉRIO "ARQUIVO CONSTA NA BASE DA RECEITA FEDERAL"';
                         end
-
-                        textNode = sprintf('%s%s%s', strjoin(string(app.ecdObj(idx).Period), ' a '), statusIcon);
-                        uitreenode(treeNodeParent, ...
-                            'Text', textNode, ...
-                            'NodeData', idx, 'ContextMenu', app.file_ContextMenu_Tree);
-                    end
+                        validTreeNode   = uitreenode(app.file_Tree, 'Text', validTreeNodeText);
+                        selectedNode    = file_createTreeElements(app, idsList, ids, selectedNode, selectedNodeData, validTreeNode,   'only-valid');
+                        
+                        invalidTreeNode = uitreenode(app.file_Tree, 'Text', '<font style="color: red; font-weight: bold; text-decoration: underline;">INVÁLIDOS</font>');
+                        selectedNode    = file_createTreeElements(app, idsList, ids, selectedNode, selectedNodeData, invalidTreeNode, 'only-invalid');
                 end
-                expand(app.file_Tree, 'all')
-    
-                if ~isempty(app.ecdObj)
-                    app.file_Tree.SelectedNodes = app.file_Tree.Children(1).Children(1);
+            end
+
+            expand(app.file_Tree, 'all')
+
+            if ~isempty(app.file_Tree.Children)
+                if ~isempty(selectedNode)
+                    app.file_Tree.SelectedNodes = selectedNode;
+                else
+                    if isempty(app.file_Tree.Children(1).Children)
+                        app.file_Tree.SelectedNodes = app.file_Tree.Children(1);
+                    else
+                        app.file_Tree.SelectedNodes = app.file_Tree.Children(1).Children(1);
+                    end
                 end
             end
 
@@ -505,7 +506,87 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function misc_updateLastVisitedFolder(app, filePath)
+        function selectedNode = file_createTreeElements(app, idsList, ids, selectedNode, selectedNodeData, varargin)
+            arguments
+                app 
+                idsList 
+                ids 
+                selectedNode
+                selectedNodeData
+            end
+
+            arguments (Repeating)
+                varargin
+            end
+
+            switch app.file_FileSortMethod.Value
+                case 'CNPJ'
+                    parentNode = app.file_Tree;
+                otherwise
+                    parentNode = varargin{1};
+                    requiredStatus = varargin{2};
+            end
+
+            for id = ids
+                % Identifica fluxos relacionados a cada CNPJ, ordenando os 
+                % fluxos de acordo com a data de fim do seu período fiscal.
+                idIndexes   = find(strcmp(idsList, id));
+                [~, idSort] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(idIndexes)));
+                idIndexes   = idIndexes(idSort);
+
+                % Aplica filtro, caso construção da árvore seja orientada
+                % ao "PERÍODO FISCAL" ou à "RECEITA FEDERAL".
+                if ismember(app.file_FileSortMethod.Value, {'PERÍODO FISCAL', 'RECEITA FEDERAL'})
+                    for ii = numel(idIndexes):-1:1
+                        index = idIndexes(ii);
+    
+                        switch app.file_FileSortMethod.Value
+                            case 'PERÍODO FISCAL'
+                                validFile = checkIfValidPeriod(app.ecdObj(index));
+                            case 'RECEITA FEDERAL'
+                                validFile = checkIfValidStatus(app.ecdObj(index));
+                        end
+    
+                        if strcmp(requiredStatus, 'only-valid') && ~validFile
+                            idIndexes(ii) = [];
+                        elseif strcmp(requiredStatus, 'only-invalid') && validFile
+                            idIndexes(ii) = [];
+                        end
+                    end
+    
+                    if isempty(idIndexes)
+                        continue
+                    end
+                end
+
+                textCompanyNode = generateTextId(app.ecdObj(idIndexes(1)), 'company-oriented');
+                treeCompanyNode = uitreenode(parentNode, ...
+                    'Text', textCompanyNode, ...
+                    'NodeData', idIndexes, 'ContextMenu', app.file_ContextMenu_Tree);
+    
+                for idx = idIndexes
+                    textPeriodNode = generateTextId(app.ecdObj(idx), 'period-oriented', true);
+                    treePeriodNode = uitreenode(treeCompanyNode, ...
+                        'Text', textPeriodNode, ...
+                        'NodeData', idx, 'ContextMenu', app.file_ContextMenu_Tree);
+    
+                    if ismember(idx, selectedNodeData)
+                        selectedNode = [selectedNode, treePeriodNode];
+                    end
+                end
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function indexes = file_findSelectedNodeData(app)
+            indexes = [];
+            if ~isempty(app.file_Tree.SelectedNodes)
+                indexes = unique([app.file_Tree.SelectedNodes.NodeData]);
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function updateLastVisitedFolder(app, filePath)
             app.General_I.fileFolder.lastVisited = filePath;
             app.General.fileFolder.lastVisited   = filePath;
 
@@ -548,7 +629,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function userSelection = misc_checkIfAuxiliarAppIsOpen(app, operationType)
+        function userSelection = checkIfAuxiliarAppIsOpen(app, operationType)
             userSelection    = 'Sim';
 
             hECD  = auxAppHandle(app, "ECD");
@@ -643,11 +724,55 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         end
 
+        % Selection changed function: file_Tree
+        function file_TreeSelectionChanged(app, event)
+            
+            indexes = file_findSelectedNodeData(app);
+
+            app.file_MergeFiles.Enable = 0;
+            
+            if isempty(indexes)
+                app.file_Metadata.Text     = '';
+                app.file_Metadata.UserData = [];                
+                app.file_CheckRFB.Enable   = 0;
+                app.file_ReportRFB.Enable  = 0;
+
+            else
+                if isequal(app.file_Metadata.UserData, indexes)
+                    return
+                end
+
+                app.file_Metadata.Text     = util.HtmlTextGenerator.File(app.ecdObj(indexes));
+                app.file_Metadata.UserData = indexes;
+                app.file_CheckRFB.Enable   = 1;
+                app.file_ReportRFB.Enable  = 1;
+
+                if ~isscalar(indexes)
+                    app.file_MergeFiles.Enable = 1;
+                end
+            end
+
+            if isempty(app.ecdObj)
+                app.menu_Button2.Enable = 0;
+            else
+                app.menu_Button2.Enable = 1;
+            end
+            
+        end
+
+        % Value changed function: file_FileSortMethod
+        function file_FileSortMethodValueChanged(app, event)
+            
+            indexes = file_findSelectedNodeData(app);
+            file_TreeBuilding(app, indexes)
+
+        end
+
         % Image clicked function: file_OpenFileButton
-        function file_ButtonPushed_OpenFile(app, event)
+        function toolbar_OpenFileButtonPushed(app, event)
 
             % VALIDAÇÃO
-            if strcmp(misc_checkIfAuxiliarAppIsOpen(app, 'INCLUIR ARQUIVO'), 'Não')
+            if strcmp(checkIfAuxiliarAppIsOpen(app, 'INCLUIR ARQUIVO'), 'Não')
                 return
             end
 
@@ -678,13 +803,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     d = appUtil.modalWindow(app.UIFigure, "progressdlg", "Em andamento...");
                     [fileFullName, fileName] = util.getFilesFromFolder(filePath);
             end
-            misc_updateLastVisitedFolder(app, filePath)            
+            updateLastVisitedFolder(app, filePath)            
 
             if isempty(d)
                 d = appUtil.modalWindow(app.UIFigure, "progressdlg", "Em andamento...");
             end
             
-            filesError   = struct('File', {}, 'Error', {});
+            filesError = struct('File', {}, 'Error', {});
 
             for ii = 1:numel(fileFullName)
                 d.Message = sprintf('<font style="font-size: 12px;">Em andamento a leitura do arquivo %d de %d:<br>• <b>%s</b></font>', ii, numel(fileFullName), fileName{ii});
@@ -692,7 +817,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 % Verifica se arquivo já foi lido, comparando o seu nome com 
                 % a variável app.ecdObj.
                 if ~ismember(fileName{ii}, {app.ecdObj.FileName})
-                    [app.ecdObj, msg] = app.ecdObj.addFiles(fileFullName{ii}, app.General.sped.encoding.value, app.receitaFederalObj);
+                    [app.ecdObj, msg] = app.ecdObj.addFiles(fileFullName{ii}, [], app.receitaFederalObj);
 
                     if ~isempty(msg)
                         filesError(end+1) = struct('File', sprintf('"%s"', fileName{ii}), 'Error', strjoin(msg));
@@ -708,72 +833,17 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             end
             
             % Atualiza app.file_Tree.
-            file_TreeBuilding(app)
+            indexes = file_findSelectedNodeData(app);
+            file_TreeBuilding(app, indexes)
 
             delete(d)
 
         end
 
-        % Selection changed function: file_Tree
-        function file_TreeSelectionChanged(app, event)
-            
-            nodeData = [];
-            if ~isempty(app.file_Tree.SelectedNodes)
-                nodeData = unique([app.file_Tree.SelectedNodes.NodeData]);
-            end
-
-            app.file_MergeFiles.Enable = 0;
-            if isempty(nodeData)
-                app.file_Metadata.Text = '';
-                app.file_Metadata.UserData = [];
-                app.file_CheckRFB.Enable = 0;
-
-            else
-                if isequal(app.file_Metadata.UserData, nodeData)
-                    return
-                end
-
-                app.file_Metadata.Text = util.HtmlTextGenerator.File(app.ecdObj(nodeData));
-                app.file_Metadata.UserData = nodeData;
-                app.file_CheckRFB.Enable = 1;
-
-                if ~isscalar(nodeData)
-                    app.file_MergeFiles.Enable = 1;
-                end
-            end
-
-            if isempty(app.ecdObj)
-                app.menu_Button2.Enable = 0;
-            else
-                app.menu_Button2.Enable = 1;
-            end
-            
-        end
-
-        % Menu selected function: file_ContextMenu_delTree1Node
-        function file_ContextMenu_delTree1NodeSelected(app, event)
-            
-            if ~isempty(app.file_Tree.SelectedNodes)
-                % VALIDAÇÃO
-                if strcmp(misc_checkIfAuxiliarAppIsOpen(app, 'EXCLUIR ARQUIVO'), 'Não')
-                    return
-                end
-
-                % EXCLUIR ARQUIVO(S)
-                idx = [app.file_Tree.SelectedNodes.NodeData];
-                app.ecdObj(idx) = [];
-                file_TreeBuilding(app)
-            end
-
-        end
-
         % Image clicked function: file_MergeFiles
-        function file_MergeFilesImageClicked(app, event)
+        function toolbar_MergeFilesImageClicked(app, event)
 
-            indexes = [];
-            if ~isempty(app.file_Tree.SelectedNodes)
-                indexes = unique([app.file_Tree.SelectedNodes.NodeData]);
-            end
+            indexes = file_findSelectedNodeData(app);
 
             if numel(indexes) >= 2
                 if ~isscalar(unique({app.ecdObj(indexes).CompanyId}))
@@ -781,7 +851,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     return
                 end
 
-                if strcmp(misc_checkIfAuxiliarAppIsOpen(app, 'MESCLAR FLUXOS'), 'Não')
+                if strcmp(checkIfAuxiliarAppIsOpen(app, 'MESCLAR FLUXOS'), 'Não')
                     return
                 end
 
@@ -789,7 +859,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 [app.ecdObj, msg] = app.ecdObj.mergeFiles(indexes, app.General.fileFolder.tempPath);
                 if isempty(msg)
-                    file_TreeBuilding(app)
+                    file_TreeBuilding(app, indexes)
                 else
                     appUtil.modalWindow(app.UIFigure, "error", msg); 
                 end
@@ -800,12 +870,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         % Image clicked function: file_CheckRFB
-        function file_CheckRFBClicked(app, event)
+        function toolbar_CheckStatusImageClicked(app, event)
             
-            indexes = [];
-            if ~isempty(app.file_Tree.SelectedNodes)
-                indexes = unique([app.file_Tree.SelectedNodes.NodeData]);
-            end
+            indexes = file_findSelectedNodeData(app);
 
             if ~isempty(indexes)
                 if all([app.ecdObj(indexes).PeriodMerged])
@@ -817,7 +884,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 checkFileFlag = checkFileStatus(app.ecdObj(indexes), app.receitaFederalObj);
                 if checkFileFlag
-                    file_TreeBuilding(app)
+                    file_TreeBuilding(app, indexes)
                 end
 
                 app.progressDialog.Visible = 'hidden';
@@ -826,12 +893,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         % Image clicked function: file_ReportRFB
-        function file_ReportRFBImageClicked(app, event)
+        function toolbar_GenerateReportImageClicked(app, event)
             
-            indexes = [];
-            if ~isempty(app.file_Tree.SelectedNodes)
-                indexes = unique([app.file_Tree.SelectedNodes.NodeData]);
-            end
+            indexes = file_findSelectedNodeData(app);
 
             if ~isempty(indexes)
                 % <VALIDATION>
@@ -840,15 +904,58 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     return
                 end
 
-                app.progressDialog.Visible = 'visible';
+                if numel(indexes) < numel(app.ecdObj)
+                    msgQuestion   = 'Deseja gerar inventário de TODOS os arquivos lidos, ou apenas dos SELECIONADOS?';
+                    userSelection = appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'Todos', 'Selecionados', 'Cancelar'}, 1, 3);
 
-                try
-                    reportLibConnection.Controller.Run(app)
-                catch ME
-                    appUtil.modalWindow(app.UIFigure, 'warning', getReport(ME));
+                    switch userSelection
+                        case 'Cancelar'
+                            return
+                        case 'Todos'
+                            indexes = 1:numel(app.ecdObj);
+                    end
                 end
 
+                % app.progressDialog.Visible = 'visible';
+
+                % try
+                    reportLibConnection.Controller.Run(app, app.ecdObj(indexes))
+                % catch ME
+                %     appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));
+                % end
+
                 app.progressDialog.Visible = 'hidden';
+            end
+
+        end
+
+        % Image clicked function: Image
+        function toolbar_ShowLegendImageClicked(app, event)
+            
+            msg = sprintf(['🟢 Registro encontrado na base da Receita Federal\n' ...
+                           '🔴 Registro não encontrado na base da Receita Federal\n' ...
+                           '⚪ Situação indeterminada\n' ...
+                           '➕ Registro mesclado\n' ...
+                           '⌛ Período fiscal não anual']);
+
+            appUtil.modalWindow(app.UIFigure, 'info', msg);
+
+        end
+
+        % Menu selected function: file_ContextMenu_delTree1Node
+        function contextMenu_delTreeNodeSelected(app, event)
+            
+            indexes = file_findSelectedNodeData(app);
+
+            if ~isempty(indexes)
+                % VALIDAÇÃO
+                if strcmp(checkIfAuxiliarAppIsOpen(app, 'EXCLUIR ARQUIVO'), 'Não')
+                    return
+                end
+
+                % EXCLUIR ARQUIVO(S)                
+                app.ecdObj(indexes) = [];
+                file_TreeBuilding(app)
             end
 
         end
@@ -895,7 +1002,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create file_Grid
             app.file_Grid = uigridlayout(app.Tab1_File);
-            app.file_Grid.ColumnWidth = {10, 360, '1x', 10, 360, 10};
+            app.file_Grid.ColumnWidth = {10, 360, '1x', 10, '0.25x', 360, 10};
             app.file_Grid.RowHeight = {94, 10, '1x', 10, 34};
             app.file_Grid.ColumnSpacing = 0;
             app.file_Grid.RowSpacing = 0;
@@ -904,19 +1011,19 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create file_toolGrid
             app.file_toolGrid = uigridlayout(app.file_Grid);
-            app.file_toolGrid.ColumnWidth = {22, 5, 22, 5, 22, 22, '1x', 150};
+            app.file_toolGrid.ColumnWidth = {22, 5, 22, 5, 22, 22, '1x', 22};
             app.file_toolGrid.RowHeight = {3, 17, 2};
             app.file_toolGrid.ColumnSpacing = 5;
             app.file_toolGrid.RowSpacing = 0;
-            app.file_toolGrid.Padding = [5 6 5 6];
+            app.file_toolGrid.Padding = [5 6 10 6];
             app.file_toolGrid.Layout.Row = 5;
-            app.file_toolGrid.Layout.Column = [1 6];
+            app.file_toolGrid.Layout.Column = [1 7];
             app.file_toolGrid.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
 
             % Create file_OpenFileButton
             app.file_OpenFileButton = uiimage(app.file_toolGrid);
             app.file_OpenFileButton.ScaleMethod = 'none';
-            app.file_OpenFileButton.ImageClickedFcn = createCallbackFcn(app, @file_ButtonPushed_OpenFile, true);
+            app.file_OpenFileButton.ImageClickedFcn = createCallbackFcn(app, @toolbar_OpenFileButtonPushed, true);
             app.file_OpenFileButton.Tooltip = {'Seleciona arquivos'};
             app.file_OpenFileButton.Layout.Row = [1 3];
             app.file_OpenFileButton.Layout.Column = 1;
@@ -932,7 +1039,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create file_MergeFiles
             app.file_MergeFiles = uiimage(app.file_toolGrid);
-            app.file_MergeFiles.ImageClickedFcn = createCallbackFcn(app, @file_MergeFilesImageClicked, true);
+            app.file_MergeFiles.ImageClickedFcn = createCallbackFcn(app, @toolbar_MergeFilesImageClicked, true);
             app.file_MergeFiles.Enable = 'off';
             app.file_MergeFiles.Tooltip = {'Mescla informação contábil'};
             app.file_MergeFiles.Layout.Row = [1 3];
@@ -949,7 +1056,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create file_CheckRFB
             app.file_CheckRFB = uiimage(app.file_toolGrid);
-            app.file_CheckRFB.ImageClickedFcn = createCallbackFcn(app, @file_CheckRFBClicked, true);
+            app.file_CheckRFB.ImageClickedFcn = createCallbackFcn(app, @toolbar_CheckStatusImageClicked, true);
             app.file_CheckRFB.Enable = 'off';
             app.file_CheckRFB.Tooltip = {'Consulta à Receita Federal'};
             app.file_CheckRFB.Layout.Row = [1 3];
@@ -959,49 +1066,67 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % Create file_ReportRFB
             app.file_ReportRFB = uiimage(app.file_toolGrid);
             app.file_ReportRFB.ScaleMethod = 'none';
-            app.file_ReportRFB.ImageClickedFcn = createCallbackFcn(app, @file_ReportRFBImageClicked, true);
+            app.file_ReportRFB.ImageClickedFcn = createCallbackFcn(app, @toolbar_GenerateReportImageClicked, true);
+            app.file_ReportRFB.Enable = 'off';
             app.file_ReportRFB.Tooltip = {'Gera relatório'; '(estado escrituração na Receita Federal)'};
             app.file_ReportRFB.Layout.Row = [1 3];
             app.file_ReportRFB.Layout.Column = 6;
             app.file_ReportRFB.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Publish_HTML_16.png');
 
-            % Create file_Encoding
-            app.file_Encoding = uilabel(app.file_toolGrid);
-            app.file_Encoding.HorizontalAlignment = 'right';
-            app.file_Encoding.FontSize = 10;
-            app.file_Encoding.FontColor = [0.502 0.502 0.502];
-            app.file_Encoding.Layout.Row = 2;
-            app.file_Encoding.Layout.Column = 8;
-            app.file_Encoding.Text = '';
+            % Create Image
+            app.Image = uiimage(app.file_toolGrid);
+            app.Image.ImageClickedFcn = createCallbackFcn(app, @toolbar_ShowLegendImageClicked, true);
+            app.Image.Layout.Row = 2;
+            app.Image.Layout.Column = 8;
+            app.Image.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Info_32.png');
 
             % Create TabGroup2
             app.TabGroup2 = uitabgroup(app.file_Grid);
             app.TabGroup2.AutoResizeChildren = 'off';
             app.TabGroup2.Layout.Row = 1;
-            app.TabGroup2.Layout.Column = [2 5];
+            app.TabGroup2.Layout.Column = [2 6];
 
             % Create ARQUIVOSTab
             app.ARQUIVOSTab = uitab(app.TabGroup2);
             app.ARQUIVOSTab.AutoResizeChildren = 'off';
-            app.ARQUIVOSTab.Title = '📄 ARQUIVOS';
+            app.ARQUIVOSTab.Title = 'ARQUIVOS';
             app.ARQUIVOSTab.BackgroundColor = 'none';
             app.ARQUIVOSTab.ForegroundColor = [0.129411764705882 0.129411764705882 0.129411764705882];
 
             % Create GridLayout2
             app.GridLayout2 = uigridlayout(app.ARQUIVOSTab);
-            app.GridLayout2.ColumnWidth = {'1x'};
-            app.GridLayout2.RowHeight = {'1x'};
+            app.GridLayout2.ColumnWidth = {22, 150, '1x'};
+            app.GridLayout2.RowHeight = {22, 22};
+            app.GridLayout2.ColumnSpacing = 5;
+            app.GridLayout2.RowSpacing = 5;
             app.GridLayout2.BackgroundColor = [0.9804 0.9804 0.9804];
 
-            % Create NOMEDAEMPRESAMetadadosOutrascoisasLabel
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel = uilabel(app.GridLayout2);
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel.VerticalAlignment = 'top';
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel.WordWrap = 'on';
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel.FontSize = 11;
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel.FontColor = [0.149 0.149 0.149];
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel.Layout.Row = 1;
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel.Layout.Column = 1;
-            app.NOMEDAEMPRESAMetadadosOutrascoisasLabel.Text = 'Este aplicativo permite a leitura de arquivos textuais da Escrituração Contábil Digital (ECD), organizando as informações por CNPJ e períodos fiscais. Também realiza a validação dos arquivos, verificando se os arquivos lidos são os que constam na base de dados da Receita Federal. E, por fim, possibilita anotação dos dados e geração de relatório de fiscalização.';
+            % Create file_ModuleIntro
+            app.file_ModuleIntro = uilabel(app.GridLayout2);
+            app.file_ModuleIntro.VerticalAlignment = 'top';
+            app.file_ModuleIntro.WordWrap = 'on';
+            app.file_ModuleIntro.FontSize = 11;
+            app.file_ModuleIntro.FontColor = [0.149 0.149 0.149];
+            app.file_ModuleIntro.Layout.Row = 1;
+            app.file_ModuleIntro.Layout.Column = [1 3];
+            app.file_ModuleIntro.Text = 'Este aplicativo permite a leitura de arquivos textuais da Escrituração Contábil Digital (ECD) e a sua análise.';
+
+            % Create file_FileSortMethod
+            app.file_FileSortMethod = uidropdown(app.GridLayout2);
+            app.file_FileSortMethod.Items = {'CNPJ', 'PERÍODO FISCAL', 'RECEITA FEDERAL'};
+            app.file_FileSortMethod.ValueChangedFcn = createCallbackFcn(app, @file_FileSortMethodValueChanged, true);
+            app.file_FileSortMethod.FontSize = 10;
+            app.file_FileSortMethod.BackgroundColor = [0.9804 0.9804 0.9804];
+            app.file_FileSortMethod.Layout.Row = 2;
+            app.file_FileSortMethod.Layout.Column = 2;
+            app.file_FileSortMethod.Value = 'CNPJ';
+
+            % Create file_FileSortMethodIcon
+            app.file_FileSortMethodIcon = uiimage(app.GridLayout2);
+            app.file_FileSortMethodIcon.ScaleMethod = 'none';
+            app.file_FileSortMethodIcon.Layout.Row = 2;
+            app.file_FileSortMethodIcon.Layout.Column = 1;
+            app.file_FileSortMethodIcon.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'sort_az_ascending.png');
 
             % Create file_Metadata
             app.file_Metadata = uilabel(app.file_Grid);
@@ -1009,7 +1134,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.file_Metadata.WordWrap = 'on';
             app.file_Metadata.FontSize = 11;
             app.file_Metadata.Layout.Row = 3;
-            app.file_Metadata.Layout.Column = 5;
+            app.file_Metadata.Layout.Column = [5 6];
             app.file_Metadata.Interpreter = 'html';
             app.file_Metadata.Text = '';
 
@@ -1159,7 +1284,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create file_ContextMenu_delTree1Node
             app.file_ContextMenu_delTree1Node = uimenu(app.file_ContextMenu_Tree);
-            app.file_ContextMenu_delTree1Node.MenuSelectedFcn = createCallbackFcn(app, @file_ContextMenu_delTree1NodeSelected, true);
+            app.file_ContextMenu_delTree1Node.MenuSelectedFcn = createCallbackFcn(app, @contextMenu_delTreeNodeSelected, true);
             app.file_ContextMenu_delTree1Node.ForegroundColor = [1 0 0];
             app.file_ContextMenu_delTree1Node.Text = 'Excluir';
 

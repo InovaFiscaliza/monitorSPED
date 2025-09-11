@@ -25,11 +25,13 @@ classdef winConfig_exported < matlab.apps.AppBase
         PROCESSODEANLISEDOSDADOSLabel  matlab.ui.control.Label
         Panel                          matlab.ui.container.Panel
         GridLayout3                    matlab.ui.container.GridLayout
+        FileSortMethodLabel            matlab.ui.control.Label
+        FileSortMethod                 matlab.ui.control.DropDown
         Encoding                       matlab.ui.control.DropDown
-        CODIFICAOTEXTUALLabel          matlab.ui.control.Label
+        CODIFICAOCARACTERELabel        matlab.ui.control.Label
         InputType                      matlab.ui.control.DropDown
         InputTypeLabel                 matlab.ui.control.Label
-        PROCESSODELEITURADOSARQUIVOSLabel  matlab.ui.control.Label
+        PROCESSODELEITURADOSARQUIVOSEVISUALIZAODOSSEUSMETADADOSLabel  matlab.ui.control.Label
         MAPEAMENTODEPASTASTab          matlab.ui.container.Tab
         FolderMapGrid                  matlab.ui.container.GridLayout
         userPathButton                 matlab.ui.control.Image
@@ -72,6 +74,7 @@ classdef winConfig_exported < matlab.apps.AppBase
                 switch event.HTMLEventName
                     case 'renderer'
                         startup_Controller(app)
+                        
                     otherwise
                         error('UnexpectedEvent')
                 end
@@ -210,8 +213,9 @@ classdef winConfig_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function Analysis_updatePanel(app)
-            app.Encoding.Items = app.mainApp.General.sped.encoding.options;
             app.InputType.Value = app.mainApp.General.sped.input;
+            app.FileSortMethod.Value = app.mainApp.General.sped.fileSortMethod;
+            app.Encoding.Items = app.mainApp.General.sped.encoding.options;            
         end
 
         %-----------------------------------------------------------------%
@@ -272,7 +276,7 @@ classdef winConfig_exported < matlab.apps.AppBase
 
         end
 
-        % Value changed function: Encoding, InputType, 
+        % Value changed function: Encoding, FileSortMethod, InputType, 
         % ...and 2 other components
         function ParameterValueChanged(app, event)
             
@@ -285,6 +289,10 @@ classdef winConfig_exported < matlab.apps.AppBase
 
                 case app.InputType
                     app.mainApp.General.sped.input          = app.InputType.Value;
+
+                case app.FileSortMethod
+                    app.mainApp.General.sped.fileSortMethod = app.FileSortMethod.Value;
+                    ipcMainMatlabCallsHandler(app.mainApp, app, 'fileSortMethodChanged')
 
                 case app.Encoding
                     app.mainApp.General.sped.encoding.value = app.Encoding.Value;
@@ -439,7 +447,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create ASPECTOSGERAISTab
             app.ASPECTOSGERAISTab = uitab(app.TabGroup);
             app.ASPECTOSGERAISTab.AutoResizeChildren = 'off';
-            app.ASPECTOSGERAISTab.Title = 'ℹ  ASPECTOS GERAIS';
+            app.ASPECTOSGERAISTab.Title = 'ASPECTOS GERAIS';
             app.ASPECTOSGERAISTab.BackgroundColor = 'none';
 
             % Create General_Grid
@@ -455,7 +463,6 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.versionInfo.VerticalAlignment = 'top';
             app.versionInfo.WordWrap = 'on';
             app.versionInfo.FontSize = 11;
-            app.versionInfo.FontColor = [0 0 0];
             app.versionInfo.Layout.Row = [2 4];
             app.versionInfo.Layout.Column = 1;
             app.versionInfo.Interpreter = 'html';
@@ -467,7 +474,6 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.openAuxiliarAppAsDocked.Enable = 'off';
             app.openAuxiliarAppAsDocked.Text = 'Modo DOCK: módulos auxiliares abertos na janela principal do app';
             app.openAuxiliarAppAsDocked.FontSize = 11;
-            app.openAuxiliarAppAsDocked.FontColor = [0 0 0];
             app.openAuxiliarAppAsDocked.Layout.Row = 6;
             app.openAuxiliarAppAsDocked.Layout.Column = 1;
 
@@ -477,7 +483,6 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.openAuxiliarApp2Debug.Enable = 'off';
             app.openAuxiliarApp2Debug.Text = 'Modo DEBUG';
             app.openAuxiliarApp2Debug.FontSize = 11;
-            app.openAuxiliarApp2Debug.FontColor = [0 0 0];
             app.openAuxiliarApp2Debug.Layout.Row = 7;
             app.openAuxiliarApp2Debug.Layout.Column = 1;
 
@@ -492,33 +497,34 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create ANLISETab
             app.ANLISETab = uitab(app.TabGroup);
             app.ANLISETab.AutoResizeChildren = 'off';
-            app.ANLISETab.Title = '📊  ANÁLISE';
+            app.ANLISETab.Title = 'ANÁLISE';
             app.ANLISETab.BackgroundColor = 'none';
 
             % Create GridLayout_3
             app.GridLayout_3 = uigridlayout(app.ANLISETab);
             app.GridLayout_3.ColumnWidth = {'1x'};
-            app.GridLayout_3.RowHeight = {17, 69, 22, '1x'};
+            app.GridLayout_3.RowHeight = {17, 98, 22, '1x'};
             app.GridLayout_3.RowSpacing = 5;
             app.GridLayout_3.BackgroundColor = [1 1 1];
 
-            % Create PROCESSODELEITURADOSARQUIVOSLabel
-            app.PROCESSODELEITURADOSARQUIVOSLabel = uilabel(app.GridLayout_3);
-            app.PROCESSODELEITURADOSARQUIVOSLabel.VerticalAlignment = 'bottom';
-            app.PROCESSODELEITURADOSARQUIVOSLabel.FontSize = 10;
-            app.PROCESSODELEITURADOSARQUIVOSLabel.Layout.Row = 1;
-            app.PROCESSODELEITURADOSARQUIVOSLabel.Layout.Column = 1;
-            app.PROCESSODELEITURADOSARQUIVOSLabel.Text = 'PROCESSO DE LEITURA DOS ARQUIVOS';
+            % Create PROCESSODELEITURADOSARQUIVOSEVISUALIZAODOSSEUSMETADADOSLabel
+            app.PROCESSODELEITURADOSARQUIVOSEVISUALIZAODOSSEUSMETADADOSLabel = uilabel(app.GridLayout_3);
+            app.PROCESSODELEITURADOSARQUIVOSEVISUALIZAODOSSEUSMETADADOSLabel.VerticalAlignment = 'bottom';
+            app.PROCESSODELEITURADOSARQUIVOSEVISUALIZAODOSSEUSMETADADOSLabel.FontSize = 10;
+            app.PROCESSODELEITURADOSARQUIVOSEVISUALIZAODOSSEUSMETADADOSLabel.Layout.Row = 1;
+            app.PROCESSODELEITURADOSARQUIVOSEVISUALIZAODOSSEUSMETADADOSLabel.Layout.Column = 1;
+            app.PROCESSODELEITURADOSARQUIVOSEVISUALIZAODOSSEUSMETADADOSLabel.Text = 'PROCESSO DE LEITURA DOS ARQUIVOS E VISUALIZAÇÃO DOS SEUS METADADOS';
 
             % Create Panel
             app.Panel = uipanel(app.GridLayout_3);
+            app.Panel.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
             app.Panel.Layout.Row = 2;
             app.Panel.Layout.Column = 1;
 
             % Create GridLayout3
             app.GridLayout3 = uigridlayout(app.Panel);
-            app.GridLayout3.ColumnWidth = {130, 220};
-            app.GridLayout3.RowHeight = {22, 22};
+            app.GridLayout3.ColumnWidth = {150, 220, '1x'};
+            app.GridLayout3.RowHeight = {22, 22, 22};
             app.GridLayout3.RowSpacing = 5;
             app.GridLayout3.BackgroundColor = [1 1 1];
 
@@ -539,24 +545,39 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.InputType.Layout.Column = 2;
             app.InputType.Value = 'file';
 
-            % Create CODIFICAOTEXTUALLabel
-            app.CODIFICAOTEXTUALLabel = uilabel(app.GridLayout3);
-            app.CODIFICAOTEXTUALLabel.FontSize = 10;
-            app.CODIFICAOTEXTUALLabel.FontColor = [0 0 0];
-            app.CODIFICAOTEXTUALLabel.Layout.Row = 2;
-            app.CODIFICAOTEXTUALLabel.Layout.Column = 1;
-            app.CODIFICAOTEXTUALLabel.Text = 'CODIFICAÇÃO TEXTUAL:';
+            % Create CODIFICAOCARACTERELabel
+            app.CODIFICAOCARACTERELabel = uilabel(app.GridLayout3);
+            app.CODIFICAOCARACTERELabel.FontSize = 10;
+            app.CODIFICAOCARACTERELabel.Layout.Row = 3;
+            app.CODIFICAOCARACTERELabel.Layout.Column = 1;
+            app.CODIFICAOCARACTERELabel.Text = 'CODIFICAÇÃO CARACTERE:';
 
             % Create Encoding
             app.Encoding = uidropdown(app.GridLayout3);
             app.Encoding.Items = {};
             app.Encoding.ValueChangedFcn = createCallbackFcn(app, @ParameterValueChanged, true);
             app.Encoding.FontSize = 11;
-            app.Encoding.FontColor = [0 0 0];
             app.Encoding.BackgroundColor = [1 1 1];
-            app.Encoding.Layout.Row = 2;
+            app.Encoding.Layout.Row = 3;
             app.Encoding.Layout.Column = 2;
             app.Encoding.Value = {};
+
+            % Create FileSortMethod
+            app.FileSortMethod = uidropdown(app.GridLayout3);
+            app.FileSortMethod.Items = {'CNPJ', 'PERÍODO FISCAL', 'RECEITA FEDERAL'};
+            app.FileSortMethod.ValueChangedFcn = createCallbackFcn(app, @ParameterValueChanged, true);
+            app.FileSortMethod.FontSize = 11;
+            app.FileSortMethod.BackgroundColor = [1 1 1];
+            app.FileSortMethod.Layout.Row = 2;
+            app.FileSortMethod.Layout.Column = 2;
+            app.FileSortMethod.Value = 'CNPJ';
+
+            % Create FileSortMethodLabel
+            app.FileSortMethodLabel = uilabel(app.GridLayout3);
+            app.FileSortMethodLabel.FontSize = 10;
+            app.FileSortMethodLabel.Layout.Row = 2;
+            app.FileSortMethodLabel.Layout.Column = 1;
+            app.FileSortMethodLabel.Text = 'VISUALIZAÇÃO ÁRVORE:';
 
             % Create PROCESSODEANLISEDOSDADOSLabel
             app.PROCESSODEANLISEDOSDADOSLabel = uilabel(app.GridLayout_3);
@@ -568,6 +589,7 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create Panel_2
             app.Panel_2 = uipanel(app.GridLayout_3);
+            app.Panel_2.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
             app.Panel_2.Layout.Row = 4;
             app.Panel_2.Layout.Column = 1;
 
@@ -592,7 +614,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create MAPEAMENTODEPASTASTab
             app.MAPEAMENTODEPASTASTab = uitab(app.TabGroup);
             app.MAPEAMENTODEPASTASTab.AutoResizeChildren = 'off';
-            app.MAPEAMENTODEPASTASTab.Title = '📁  MAPEAMENTO DE PASTAS';
+            app.MAPEAMENTODEPASTASTab.Title = 'MAPEAMENTO DE PASTAS';
             app.MAPEAMENTODEPASTASTab.BackgroundColor = 'none';
 
             % Create FolderMapGrid
@@ -615,7 +637,6 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.DataHubPOST = uieditfield(app.FolderMapGrid, 'text');
             app.DataHubPOST.Editable = 'off';
             app.DataHubPOST.FontSize = 11;
-            app.DataHubPOST.FontColor = [0 0 0];
             app.DataHubPOST.Layout.Row = 2;
             app.DataHubPOST.Layout.Column = 1;
 
@@ -640,7 +661,6 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.userPath = uieditfield(app.FolderMapGrid, 'text');
             app.userPath.Editable = 'off';
             app.userPath.FontSize = 11;
-            app.userPath.FontColor = [0 0 0];
             app.userPath.Layout.Row = 4;
             app.userPath.Layout.Column = 1;
 
@@ -662,6 +682,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.GridLayout2.Padding = [5 5 5 5];
             app.GridLayout2.Layout.Row = 6;
             app.GridLayout2.Layout.Column = [1 5];
+            app.GridLayout2.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
 
             % Create openDevTools
             app.openDevTools = uiimage(app.GridLayout2);

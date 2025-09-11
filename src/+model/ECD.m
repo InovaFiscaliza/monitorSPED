@@ -1,52 +1,113 @@
 classdef ECD < model.ECDBase
+    
+    % ## methods(ECD) ##
+    % - OBJETO VISTO COMO UM ARRAY (ESCALAR OU NÃO)
+    %   ├── addFiles
+    %   │    ├─ parseTableAndAddToCache
+    %   │    └─ checkFileStatus
+    %   ├── parseTableAndAddToCache
+    %   │    └─ parseTable
+    %   ├── mergeFiles
+    %   │    └─ addFiles
+    %   ├── customMergedTablesKeyOriented
+    %   │    └─ isTableRead
+    %   ├── customMergedTablesRowOriented
+    %   │    ├─ isTableRead
+    %   │    ├─ getColumnSpecifications
+    %   │    └─ parseFileBlock
+    %   ├── isTableRead
+    %   ├── checkFileStatus
+    %   └── findSpecificObject
+    
+    % - OBJETO VISTO COMO UM ESCALAR
+    %   ├── checkIfScalar
+    %   ├── getTableIds
+    %   │    └─ checkIfScalar
+    %   ├── parseFileBlock
+    %   │    └─ checkIfScalar
+    %   ├── getColumnSpecifications
+    %   │    └─ checkIfScalar
+    %   ├── parseTable
+    %   │    ├─ checkIfScalar
+    %   │    ├─ getColumnSpecifications
+    %   │    └─ parseFileBlock
+    %   ├── checkIfValidPeriod
+    %   │    └─ checkIfScalar
+    %   ├── checkIfValidStatus
+    %   │    └─ checkIfScalar
+    %   ├── generateTextId
+    %   │    ├─ checkIfScalar
+    %   │    ├─ checkIfValidStatus
+    %   │    └─ checkIfValidPeriod
+    %   ├── tableTypes1And3                   *
+    %   ├── tableTypesLines                   *
+    %   ├── inseriCodCTA                      *
+    %   ├── parseSplitLine                    *
+    %   ├── parseSplitLineOthers              *
+    %   ├── tableDinamica_I150_I155_I350_I355 *
+    %   └── Balancete                         *
 
-    % Inicialização:
+    % Sintaxe:
     % >> ecdObj = model.ECD.empty;
+    % >> ecdObj = addFiles(ecdObj, {'Filename1.txt', 'Filename2.txt'});   
 
-    % Leitura de arquivos:
-    % >> ecdObj = addFiles(ecdObj, {'Filename1', 'Filename2'});
+    % ToDo:
+    % (1) Revisar trecho de código escrito por Leandro, destacado com a tag
+    %     "<CódigoEscritoPorLeandro>" e indicado por "*" no inventário.
+    % (2) ...
 
     properties
         %-----------------------------------------------------------------%
-        CompanyName
-        CompanyId
-        CompanyInfo = struct('CNPJ', {}, 'IE', {}, 'IM', {}, 'NIRE', {}, 'UF', {}, 'City', {})
-
-        Period = []
-        PeriodMerged = false
-
         FileName
         FileFullName
-        FileEncoding
-        
-        FileHash   = ''
-        FileStatus = 0 % -2 (Erro) | -1 (Diverge) | 0 (Pendente) | 1 (Coincide)
-        ReceitaFederal
 
         Content
         Layout
         Table
+
+        CompanyName
+        CompanyId % CNPJ
+        CompanyInfo = struct('CNPJ', {}, 'IE', {}, 'IM', {}, 'NIRE', {}, 'UF', {}, 'City', {})
+        
+        Period
+        PeriodMerged = false
+
+        Sources = struct('file', {}, ...
+                         'period', {}, ...
+                         'encoding', {}, ...
+                         'terminator', {}, ...
+                         'hash', {}, ...
+                         'validationMessage', {}, ...
+                         'validationStatus', {}) % -2 (Erro) | -1 (Diverge) | 0 (Pendente) | 1 (Coincide)
                 
-        GUI  = struct('isRead', false,  ...
-                      'warnings', {{}}, ...
-                      'rtfFiles', {{}}, ...
-                      'tableView', struct('id', {}, 'widths', {}, 'filters', {}, 'style', {}));
+        GUI     = struct('isRead', false,  ...
+                         'warnings', {{}}, ...
+                         'rtfFiles', {{}}, ...
+                         'externalFiles', {{}}, ...
+                         'tableView', struct('id', {}, 'widths', {}, 'filters', {}, 'style', {}));
+
         UUID = char(matlab.lang.internal.uuid())
     end
+
+
+    properties (Constant)
+        %-----------------------------------------------------------------%
+        ENCODING   (1,:) char  = 'ISO-8859-1'
+        TERMINATOR (1,2) uint8 = [13, 10]
+    end
+
 
     methods (Access = public)
         %-----------------------------------------------------------------%
         % MÉTODOS RELACIONADOS AO OBJETO VISTO COMO UM ARRAY
         % (ESCALAR, OU NÃO)
         %-----------------------------------------------------------------%
-        function [obj, msg] = addFiles(obj, fileNameList, fileEncoding, receitaFederalObj, mergeFlag, tableIdList)
+        function [obj, msg] = addFiles(obj, fileNameList, mergedIndexes, receitaFederalObj)
             arguments
                 obj
                 fileNameList
-                fileEncoding (1,:) char    = 'ISO-8859-1'
-                receitaFederalObj          = []
-                mergeFlag    (1,1) logical = false
-                tableIdList  (1,:) cell    = {'0000', 'I030', '9900'}
+                mergedIndexes     = []
+                receitaFederalObj = []
             end
 
             if ~iscellstr(fileNameList)
@@ -67,48 +128,62 @@ classdef ECD < model.ECDBase
                 idx = numel(obj)+1;                
 
                 try
-                    obj(idx).FileName     = fileName;
+                    obj(idx).FileName = fileName;
                     obj(idx).FileFullName = fileFullName;
-                    obj(idx).Content      = fileread(fileFullName, 'Encoding', fileEncoding);
-                    obj(idx).FileEncoding = fileEncoding;
+                    obj(idx).Content = fileread(fileFullName, 'Encoding', obj(idx).ENCODING);
 
-                    % Leitura da ficha "I010", identificando o layout do
+                    % Leitura do registro "I010", identificando o layout do
                     % arquivo. Como essa ficha não mudou ao longo do tempo, 
-                    % considera-se que o layout é igual a 1, mas depois de 
-                    % lida a ficha, o valor é atualizado.
-
-                    % A outra ficha lida no início do processo é a "I010",
-                    % que registra os campos opcionais, caso aplicável.
-
-                    obj(idx).Layout = 1;
+                    % considera-se que o layout é igual a 9 (mais recente), 
+                    % mas depois de lida a ficha, o valor é atualizado.
+                    obj(idx).Layout = 9;
                     parseTableAndAddToCache(obj(idx), {'I010'})
 
-                    obj(idx).Layout = obj(idx).Table.xI010.COD_VER_LC(1);                    
-                    parseTableAndAddToCache(obj(idx), tableIdList)
+                    if isfield(obj(idx).Table, 'xI010') && ~isempty(obj(idx).Table.xI010)
+                        obj(idx).Layout = obj(idx).Table.xI010.COD_VER_LC(1);
+                    end
+
+                    % Leitura de outros registros essenciais - "9900", "0000"
+                    % e "I030" -, iniciando no "9900" por registrar o número
+                    % de linhas de cada registro, o que possibilita validação 
+                    % do processo de leitura.
+                    parseTableAndAddToCache(obj(idx), {'9900', '0000', 'I030'})
 
                     if isfield(obj(idx).Table, 'x0000') && ~isempty(obj(idx).Table.x0000)
                         obj(idx).CompanyName    = obj(idx).Table.x0000.NOME{1};
                         obj(idx).CompanyId      = checkCNPJOrCPF(obj(idx).Table.x0000.CNPJ{1}, 'NumberValidation');
-                        obj(idx).CompanyInfo(1) = struct('CNPJ',  obj(idx).Table.x0000.CNPJ{1}, ...
-                                                         'IE',    obj(idx).Table.x0000.IE{1},   ...
-                                                         'IM',    obj(idx).Table.x0000.IM{1},   ...
-                                                         'NIRE',  '',                           ...
-                                                         'UF',    obj(idx).Table.x0000.UF{1},   ...
-                                                         'City',  obj(idx).Table.x0000.COD_MUN{1});
+                        obj(idx).CompanyInfo(1) = struct('CNPJ', obj(idx).Table.x0000.CNPJ{1}, ...
+                                                         'IE',   obj(idx).Table.x0000.IE{1},   ...
+                                                         'IM',   obj(idx).Table.x0000.IM{1},   ...
+                                                         'NIRE', '',                           ...
+                                                         'UF',   obj(idx).Table.x0000.UF{1},   ...
+                                                         'City', obj(idx).Table.x0000.COD_MUN{1});
 
-                        obj(idx).Period = [min(obj(idx).Table.x0000.DT_INI), max(obj(idx).Table.x0000.DT_FIN)];
-                        obj(idx).Period.Format = 'dd/MM/yyyy';
+                        obj(idx).Period         = [min(obj(idx).Table.x0000.DT_INI), max(obj(idx).Table.x0000.DT_FIN)];
+                        obj(idx).Period.Format  = 'dd/MM/yyyy';
                     end
 
                     if isfield(obj(idx).Table, 'xI030') && ~isempty(obj(idx).Table.xI030)
                          obj(idx).CompanyInfo(1).NIRE = obj(idx).Table.xI030.NIRE{1};
                     end
 
-                    obj(idx).FileHash     = util.calculateFileHash(obj(idx).Content, fileEncoding);
-                    if ~isempty(receitaFederalObj)
-                        checkFileStatus(obj(idx), receitaFederalObj);
+                    % A mesclagem da informação contábil ocorre nos casos em 
+                    % que a declaração não é anual, mas mensal, trimestral etc.
+                    % Nesse caso, cria-se um arquivo temporário, formado pela
+                    % concatenação de todos os arquivos brutos, e depois é
+                    % feita a leitura desse arquivo temporário. O mapeamento
+                    % com os arquivos brutos se mantém na propriedade "Sources".
+                    if isempty(mergedIndexes)
+                        if ~isempty(receitaFederalObj)
+                            checkFileStatus(obj(idx), receitaFederalObj);
+                        end
+                    else
+                        obj(idx).PeriodMerged = true;
+                        for index = mergedIndexes
+                            nSources = numel(obj(index).Sources);
+                            obj(idx).Sources(end+1:end+nSources) = obj(index).Sources;
+                        end
                     end
-                    obj(idx).PeriodMerged = mergeFlag;
 
                 catch ME
                     delete(obj(idx))
@@ -145,6 +220,7 @@ classdef ECD < model.ECDBase
                     % Valida se foi lido o número de linhas esperado...
                     if isfield(obj(ii).Table, 'x9900')
                         tableIdIndex = find(strcmp(obj(ii).Table.x9900.("REG_BLC"), tableId));
+
                         if ~isempty(tableIdIndex)
                             expectedRows = sum(obj(ii).Table.x9900.("QTD_REG_BLC")(tableIdIndex));
                             readRows     = height(obj(ii).Table.(['x' tableId]));                            
@@ -158,6 +234,19 @@ classdef ECD < model.ECDBase
                 if exist('isRead', 'var')
                     obj(ii).GUI.isRead = isRead;
                 end
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function [obj, msg] = mergeFiles(obj, indexes, tempPath)
+            try
+                content  = strjoin({obj(indexes).Content}, char(obj(indexes(1)).TERMINATOR));
+                tempFile = [appUtil.DefaultFileName(tempPath, 'monitorSPED') '.txt'];
+                writematrix(content, tempFile, "FileType", "text", "QuoteStrings", "none", "Encoding", obj(indexes(1)).ENCODING);
+    
+                [obj, msg] = obj.addFiles(tempFile, indexes);
+            catch ME
+                msg = ME.message;
             end
         end
 
@@ -336,13 +425,16 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function checkFileFlag = checkFileStatus(obj, receitaFederalObj, fileEncoding, terminator)
+        function checkFileFlag = checkFileStatus(obj, receitaFederalObj, encodingList)
             arguments
                 obj
                 receitaFederalObj ws.ReceitaFederal
-                fileEncoding (1,:) char  = 'ISO-8859-1'
-                terminator   (1,2) uint8 = [13, 10]
+                encodingList cell = {'ISO-8859-1', 'UTF-8', 'windows-1251', 'windows-1252'}
             end
+
+            % O argumento de saída "checkFileFlag" possibilita que a GUI
+            % renderize novamente a informação em tela, caso ocorra alguma
+            % consulta válida à API.
 
             % Se o registro for resultado da mesclagem de fluxos, ou se o 
             % registro já tiver sido validado na base da Receita Federal,
@@ -350,31 +442,43 @@ classdef ECD < model.ECDBase
             checkFileFlag = false;
 
             for ii = 1:numel(obj)
-                if obj(ii).PeriodMerged || ismember(obj(ii).FileStatus, [-1, 1])
+                if obj(ii).PeriodMerged || any(ismember([obj(ii).Sources.validationStatus], [-1, 1]))
                     continue
                 end
 
-                try
-                    requestAnswer = Get(receitaFederalObj, 'Cache+RealTime', 'ECD', obj(ii).FileHash);
-                    obj(ii).ReceitaFederal = requestAnswer;
+                for jj = 1:numel(encodingList) 
+                    encoding = encodingList{jj};
+                    index = find(strcmp({obj(ii).Sources.encoding}, encoding), 1);
 
-                    if ~isempty(requestAnswer) && isstruct(requestAnswer) && isfield(requestAnswer, 'retVerif')
-                        if contains(requestAnswer.retVerif, 'mesma', 'IgnoreCase', true)
-                            obj(ii).FileStatus = 1;
-                        elseif contains(requestAnswer.retVerif, 'não', 'IgnoreCase', true)
-                            obj(ii).FileStatus = -1;
-                        else
-                            obj(ii).FileStatus = -2;
-                        end
+                    if ~isempty(index)
+                        fileHash = obj(ii).Sources(index).hash;
                     else
-                        obj(ii).FileStatus = -2;
+                        switch encoding
+                            case obj(ii).ENCODING % 'ISO-8859-1'
+                                fileContent = obj(ii).Content;
+                            otherwise
+                                fileContent = fileread(obj(ii).FileFullName, 'Encoding', encoding);
+                        end
+
+                        index = numel(obj(ii).Sources)+1;
+                        obj(ii).Sources(index).file       = obj(ii).FileName;
+                        obj(ii).Sources(index).period     = obj(ii).Period;
+                        obj(ii).Sources(index).encoding   = encoding;
+                        obj(ii).Sources(index).terminator = obj(ii).TERMINATOR;
+                        
+                        fileHash = util.calculateFileHash(fileContent, encoding, obj(ii).TERMINATOR);
+                        obj(ii).Sources(index).hash = fileHash;
                     end
 
-                catch ME
-                    obj(ii).FileStatus = -2;
-                    obj(ii).ReceitaFederal = ME.message;
-                end
+                    [validationMessage, validationStatus]    = Get(receitaFederalObj, 'Cache+RealTime', 'ECD', fileHash);
+                    obj(ii).Sources(index).validationMessage = validationMessage;
+                    obj(ii).Sources(index).validationStatus  = validationStatus;
 
+                    if validationStatus == 1
+                        break;
+                    end
+                end
+                
                 checkFileFlag = true;
             end
         end
@@ -487,13 +591,13 @@ classdef ECD < model.ECDBase
             checkIfScalar(obj)
 
             for ii = 1:numel(tableIdList)
-                tableId     = tableIdList{ii};
-                tableIdObj  = ['x' tableId];
+                tableId    = tableIdList{ii};
+                tableIdObj = ['x' tableId];
 
-                layoutIdx   = find(cellfun(@(x) ismember(obj.Layout, x), obj.(tableIdObj)(:,1)), 1);
-                required    = obj.(tableIdObj){layoutIdx, 2};
-                optional    = obj.(tableIdObj){layoutIdx, 3};
-                complete    = [required, optional];
+                layoutIdx  = find(cellfun(@(x) ismember(obj.Layout, x), obj.(tableIdObj)(:,1)), 1);
+                required   = obj.(tableIdObj){layoutIdx, 2};
+                optional   = obj.(tableIdObj){layoutIdx, 3};
+                complete   = [required, optional];
 
                 switch preffixType
                     case 'none'
@@ -538,20 +642,98 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function [obj, msg] = mergeFiles(obj, mergedIndexes, tempPath)
-            try
-                mergedContent  = strjoin({obj(mergedIndexes).Content}, '\n');    
-                mergedTempFile = [appUtil.DefaultFileName(tempPath, 'monitorSPED', -1) '.txt'];
+        function validFile = checkIfValidPeriod(obj)
+            checkIfScalar(obj)
 
-                fileEncoding   = 'ISO-8859-1';
-                writematrix(mergedContent, mergedTempFile, "FileType", "text", "QuoteStrings", "none", "Encoding", fileEncoding);
-    
-                [obj, msg] = obj.addFiles(mergedTempFile, fileEncoding, [], true);
-            catch ME
-                msg = ME.message;
+            yearsConvered = unique(year(obj.Period));
+            if isscalar(yearsConvered)
+                monthsCovered = [];
+                for ii = 1:numel(obj.Sources)
+                    [beginPeriod, endPeriod] = bounds(obj.Sources(ii).period);
+                    monthsCovered = [monthsCovered, month(beginPeriod):month(endPeriod)];
+                end
+                monthsCovered = unique(monthsCovered);
+                validFile = isequal(monthsCovered, 1:12);
+            else
+                validFile = false;
             end
         end
 
+        %-----------------------------------------------------------------%
+        function [validFile, filesStatus] = checkIfValidStatus(obj)
+            checkIfScalar(obj)
+
+            fileList = {obj.Sources.file};
+            filesStatus = [];
+            filesValidation = [];
+
+            for file = unique(fileList)
+                fileIndex   = strcmp(fileList, file);
+                statusList  = [obj.Sources(fileIndex).validationStatus];
+                
+                filesStatus = [filesStatus, max(statusList)];
+                filesValidation = [filesValidation, any(statusList > 0)];
+            end
+    
+            validFile = all(filesValidation);
+        end
+
+        %-----------------------------------------------------------------%
+        function textId = generateTextId(obj, elementType, varargin)
+            arguments
+                obj
+                elementType char {mustBeMember(elementType, {'company-oriented', 'period-oriented'})}
+            end
+
+            arguments (Repeating)
+                varargin
+            end
+
+            checkIfScalar(obj)
+
+            switch elementType
+                case 'company-oriented'
+                    nireInfo = '';
+                    if ~isempty(obj.CompanyInfo.NIRE)
+                        nireInfo = sprintf('%s - ', obj.CompanyInfo.NIRE);
+                    end
+                    textId = sprintf('%s - %s%s', obj.CompanyId, nireInfo, obj.CompanyName);
+
+                case 'period-oriented'
+                    preffixFlag = varargin{1};
+                    preffixText = '';
+                    if preffixFlag
+                        preffixText = sprintf('%s     ', strjoin(string(obj.Period), ' a '));
+                    end
+
+                    [receitaFederalStatus, receitaFederalSourceFileStatus] = checkIfValidStatus(obj);
+                    if receitaFederalStatus
+                        receitaFederalStatusIcon = '🟢';
+                    else
+                        if all(receitaFederalSourceFileStatus < 0)
+                            receitaFederalStatusIcon = '🔴';
+                        else
+                            receitaFederalStatusIcon = '⚪';
+                        end
+                    end
+
+                    periodStatusIcon = '';
+                    if ~checkIfValidPeriod(obj)
+                        periodStatusIcon = '⌛';
+                    end
+
+                    mergeStatusIcon = '';
+                    if obj.PeriodMerged
+                        mergeStatusIcon = '➕';
+                    end
+
+                    textId = sprintf('%s%s%s%s', preffixText, receitaFederalStatusIcon, periodStatusIcon, mergeStatusIcon);
+
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        % <CódigoEscritoPorLeandro>
         %-----------------------------------------------------------------%
         function tableOutIdtypes = tableTypes1And3(obj, idtype, tabletype)
 
@@ -1136,5 +1318,8 @@ classdef ECD < model.ECDBase
             % Montar tabela final
             tableBalancete = [keysTable, table(CTA_AGRUP_first)];
         end
+        %-----------------------------------------------------------------%
+        % </CódigoEscritoPorLeandro>
+        %-----------------------------------------------------------------%
     end
 end

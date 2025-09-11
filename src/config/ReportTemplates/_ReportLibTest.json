@@ -1,0 +1,313 @@
+[
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "OBJETIVO",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Atendimento à demanda de fiscalização cadastrada no eFiscaliza sob a <b>Atividade de Inspeção nº %.0f</b>.",
+                        "Variable": "var_Issue"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "INTRODUÇÃO",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "A fiscalização tributária tem início com a coleta, junto à empresa fiscalizada, dos arquivos contábeis necessários à apuração dos valores devidos ao FUST e ao FUNTTEL. Para cada arquivo, procede-se ao cálculo do respectivo <i>hash</i> e à validação por meio de <i>webservice</i> disponibilizado pela Receita Federal, de modo a verificar se o arquivo coincide com o registrado em sua base de dados.",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "List",
+                    "Data": [
+                        {
+                            "Editable": "false",
+                            "Text": "O primeiro elemento da lista...",
+                            "Variable": []
+                        },
+                        {
+                            "Editable": "false",
+                            "Text": "O segundo elemento da lista...",
+                            "Variable": []
+                        },
+                        {
+                            "Editable": "false",
+                            "Text": "A validação aqui apresentada corresponde a uma fotografia no tempo. A empresa fiscalizada pode, a qualquer momento, retificar suas declarações contábeis. Uma nova validação pode ser realizada por meio da inserção do <i>hash</i> do arquivo <a href=\"http://www.sped.fazenda.gov.br/appConsultaSituacaoContabil/\" target=\"_blank\" rel=\"noopener noreferrer\">aqui</a>.",
+                            "Variable": []
+                        }
+                    ]
+                },
+                {
+                    "Type": "Table",
+                    "Data": {
+                        "Origin": "FunctionEvaluation",
+                        "Source": "table_File",
+                        "Columns": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6
+                        ],
+                        "Caption": "Tabela ordinária criada em função...",
+                        "Settings": [
+                            {
+                                "Editable": "false",
+                                "ColumnName": "#",
+                                "Precision": "%.0f",
+                                "Width": "40px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Arquivo",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Codificação",
+                                "Precision": "%s",
+                                "Width": "90px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Hash",
+                                "Precision": "%s",
+                                "Width": "250px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Resposta webservice",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Situação",
+                                "Precision": "%s",
+                                "Width": "70px"
+                            }
+                        ],
+                        "Intro": "{\"Type\":\"ItemN2\",\"Text\":\"Na tabela apresentada a seguir constam informações acerca do processo de validação de arquivos contábeis.\"}",
+                        "Error": [],
+                        "LineBreak": 0
+                    }
+                },
+                {
+                    "Type": "Footnote",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<span style=\"display: block; margin: 10px; margin-bottom: 20px;\">&#x1F7E2; Registro encontrado na base da Receita Federal<br>&#x1F534; Registro não encontrado na base da Receita Federal<br>⚪ Situação indeterminada<br>➕ Registro mesclado<br>⌛ Período fiscal não anual</span>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Table",
+                    "Data": {
+                        "Origin": "FunctionEvaluation",
+                        "Source": "table_Company",
+                        "Columns": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5
+                        ],
+                        "Caption": "Tabela ordinária criada em função...",
+                        "Settings": [
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Empresa",
+                                "Precision": "s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "CNPJ",
+                                "Precision": "%s",
+                                "Width": "220px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Arquivo",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Período fiscal",
+                                "Precision": "%s",
+                                "Width": "220px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Registros",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            }
+                        ],
+                        "Intro": [],
+                        "Error": [],
+                        "LineBreak": 1
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 1,
+        "Data": {
+            "Editable": "false",
+            "Text": "RESULTADOS",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<b>Arquivo %.0f: %s</b>",
+                        "Variable": [
+                            "var_Index",
+                            "var_CompanyName"
+                        ]
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "A empresa %s, inscrita no CNPJ sob o nº %s, apresentou... bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla... a seguir é transcrita amostra do arquivo.",
+                        "Variable": [
+                            "var_CompanyName",
+                            "var_CompanyId"
+                        ]
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<span style=\"font-size:11px;\">%s</span>",
+                        "Variable": [
+                            "var_ContentSample"
+                        ]
+                    }
+                },
+                {
+                    "Type": "Table",
+                    "Data": {
+                        "Origin": "FunctionEvaluation",
+                        "Source": "table_Raw+0000",
+                        "Columns": [
+                            "REG", 
+                            "DT_INI", 
+                            "DT_FIN", 
+                            "NOME", 
+                            "CNPJ", 
+                            "UF", 
+                            "IE", 
+                            "COD_MUN", 
+                            "IM"
+                        ],
+                        "Caption": "Tabela ordinária criada em função...",
+                        "Settings": [
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Registro",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Data inicial",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Data final",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Razão social",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "CNPJ",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "UF",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Inscrição<br>estadual",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Código<br>município",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Inscrição<br>municipal",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            }
+                        ],
+                        "Intro": [],
+                        "Error": [],
+                        "LineBreak": 0
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "CONCLUSÃO",
+            "Variable": [],
+            "Component": {
+                "Type": "ItemN2",
+                "Data": {
+                    "Editable": "true",
+                    "Text": "Ante o exposto, conclui-se este relatório de atividades.",
+                    "Variable": []
+                }
+            }
+        }
+    }
+]

@@ -1,8 +1,8 @@
 {
-    "version": 0.11,
+    "version": 0.26,
     "operationMode": {
         "Debug": false,
-        "Dock": false,
+        "Dock": true,
         "Simulation": false,
         "DevTools": {
             "login": "admin",
@@ -24,6 +24,7 @@
     },
     "sped": {
         "input": "file",
+        "fileSortMethod": "CNPJ",
         "encoding": {
             "options": [
                 "ISO-8859-1",

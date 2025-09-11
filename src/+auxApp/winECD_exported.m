@@ -69,6 +69,23 @@ classdef winECD_exported < matlab.apps.AppBase
         Image4_3                    matlab.ui.control.Image
         TABELACUSTOMIZADATab        matlab.ui.container.Tab
         GridLayout5                 matlab.ui.container.GridLayout
+        PROJETOTab                  matlab.ui.container.Tab
+        report_Tab2Grid             matlab.ui.container.GridLayout
+        report_VersionLabel         matlab.ui.control.Label
+        report_Version              matlab.ui.control.DropDown
+        report_ModelNameLabel       matlab.ui.control.Label
+        report_ModelName            matlab.ui.control.DropDown
+        report_UnitLabel            matlab.ui.control.Label
+        report_Unit                 matlab.ui.control.DropDown
+        report_Issue                matlab.ui.control.NumericEditField
+        report_IssueLabel           matlab.ui.control.Label
+        report_system               matlab.ui.control.DropDown
+        report_systemLabel          matlab.ui.control.Label
+        report_ProjectName          matlab.ui.control.TextArea
+        report_ProjectSave          matlab.ui.control.Image
+        report_ProjectOpen          matlab.ui.control.Image
+        report_ProjectNew           matlab.ui.control.Image
+        report_ProjectLabel         matlab.ui.control.Label
         filter_ContextMenu          matlab.ui.container.ContextMenu
         filter_delButton            matlab.ui.container.Menu
         filter_delAllButton         matlab.ui.container.Menu
@@ -157,7 +174,7 @@ classdef winECD_exported < matlab.apps.AppBase
         function jsBackDoor_Customizations(app, tabIndex)
             persistent customizationStatus
             if isempty(customizationStatus)
-                customizationStatus = [false, false, false, false];
+                customizationStatus = [false, false, false, false, false];
             end
 
             switch tabIndex
@@ -168,7 +185,7 @@ classdef winECD_exported < matlab.apps.AppBase
                         sendEventToHTMLSource(app.jsBackDoor, 'startup', app.mainApp.executionMode);
                         app.progressDialog = ccTools.ProgressDialog(app.jsBackDoor);                        
                     end
-                    customizationStatus = [false, false, false, false];
+                    customizationStatus = [false, false, false, false, false];
 
                 otherwise
                     if customizationStatus(tabIndex)
@@ -193,6 +210,10 @@ classdef winECD_exported < matlab.apps.AppBase
                             % Outros elementos:
                             hTableList = {app.UITable1, app.UITable2};
                             ui.CustomizationBase.getElementsDataTag(hTableList);
+
+                        case 5
+                            app.report_Unit.Items      = app.mainApp.General.ui.unit.options;
+                            app.report_ModelName.Items = [{''}, {reportLibConnection.Controller.Read(app.mainApp.rootFolder).Name}];
 
                         otherwise
                             % Customização de componentes constantes nas outras abas, 
@@ -267,12 +288,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
                     % Nome empresa que aparecerá no dropdown (idêntico à
                     % forma da uitree, no winMonitorSPED.mlapp)
-                    nireInfo = '';
-                    if ~isempty(app.ecdObj(idIndexes(1)).CompanyInfo.NIRE)
-                        nireInfo = sprintf('%s - ', app.ecdObj(idIndexes(1)).CompanyInfo.NIRE);
-                    end
-                    idsNames{end+1} = sprintf('%s - %s%s', app.ecdObj(idIndexes(1)).CompanyId, nireInfo, app.ecdObj(idIndexes(1)).CompanyName);
-
+                    idsNames{end+1} = generateTextId(app.ecdObj(idIndexes(1)), 'company-oriented');
                     mappingIds = mappingIds.insert(string(ids{ii}), {idIndexes(idSortedIndexes)});
                 end
 
@@ -339,21 +355,7 @@ classdef winECD_exported < matlab.apps.AppBase
             periodList = {};
             for ii = 1:numel(companyIndexes)
                 idx = companyIndexes(ii);
-                periodList{end+1} = periodInformation(app, idx);
-
-                if app.ecdObj(idx).PeriodMerged
-                    statusIcon = '    ➕';
-                else
-                    if app.ecdObj(idx).FileStatus > 0
-                        statusIcon = '    🟢';
-                    elseif app.ecdObj(idx).FileStatus == 0
-                        statusIcon = '    ⚪';
-                    else
-                        statusIcon = '    🔴';
-                    end
-                end
-
-                periodList{end} = [periodList{end}, statusIcon];
+                periodList{end+1} = generateTextId(app.ecdObj(idx), 'period-oriented', true);
             end
 
             set(app.TimePeriodList, 'Items', periodList, 'ItemsData', 1:numel(periodList))
@@ -407,11 +409,6 @@ classdef winECD_exported < matlab.apps.AppBase
             hTable.UserData.SelectionType = 'none';
 
             hTableCountText.Text = '  CONTAGEM: 0';
-        end
-
-        %-----------------------------------------------------------------%
-        function info = periodInformation(app, fileIndex)
-            info = char(strjoin(string(app.ecdObj(fileIndex).Period), ' a '));
         end
 
         %-----------------------------------------------------------------%
@@ -984,7 +981,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create ASPECTOSGERAISTab
             app.ASPECTOSGERAISTab = uitab(app.TabGroup);
             app.ASPECTOSGERAISTab.AutoResizeChildren = 'off';
-            app.ASPECTOSGERAISTab.Title = 'ℹ ASPECTOS GERAIS';
+            app.ASPECTOSGERAISTab.Title = 'ASPECTOS GERAIS';
             app.ASPECTOSGERAISTab.BackgroundColor = 'none';
 
             % Create GridLayout3
@@ -1118,7 +1115,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create LAYOUTTab
             app.LAYOUTTab = uitab(app.TabGroup);
             app.LAYOUTTab.AutoResizeChildren = 'off';
-            app.LAYOUTTab.Title = '✎ LAYOUT';
+            app.LAYOUTTab.Title = 'LAYOUT';
             app.LAYOUTTab.BackgroundColor = 'none';
 
             % Create GridLayout_2
@@ -1303,7 +1300,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create FILTRAGEMTab
             app.FILTRAGEMTab = uitab(app.TabGroup);
             app.FILTRAGEMTab.AutoResizeChildren = 'off';
-            app.FILTRAGEMTab.Title = '⤯ FILTRAGEM';
+            app.FILTRAGEMTab.Title = 'FILTRAGEM';
             app.FILTRAGEMTab.BackgroundColor = 'none';
 
             % Create GridLayout4
@@ -1409,13 +1406,152 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create TABELACUSTOMIZADATab
             app.TABELACUSTOMIZADATab = uitab(app.TabGroup);
-            app.TABELACUSTOMIZADATab.Title = '⌗ TABELA CUSTOMIZADA';
+            app.TABELACUSTOMIZADATab.Title = 'TABELA CUSTOMIZADA';
             app.TABELACUSTOMIZADATab.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
 
             % Create GridLayout5
             app.GridLayout5 = uigridlayout(app.TABELACUSTOMIZADATab);
             app.GridLayout5.ColumnWidth = {'1x', '1x', '1x', '1x', '1x', '1x'};
             app.GridLayout5.BackgroundColor = [0.9804 0.9804 0.9804];
+
+            % Create PROJETOTab
+            app.PROJETOTab = uitab(app.TabGroup);
+            app.PROJETOTab.Title = 'PROJETO';
+
+            % Create report_Tab2Grid
+            app.report_Tab2Grid = uigridlayout(app.PROJETOTab);
+            app.report_Tab2Grid.ColumnWidth = {50, '1x', 50, '1x', 70, '1x', 130, '2x', 70, '1x', 16, 16, 16};
+            app.report_Tab2Grid.RowHeight = {22, 22};
+            app.report_Tab2Grid.RowSpacing = 5;
+            app.report_Tab2Grid.BackgroundColor = [1 1 1];
+
+            % Create report_ProjectLabel
+            app.report_ProjectLabel = uilabel(app.report_Tab2Grid);
+            app.report_ProjectLabel.FontSize = 10;
+            app.report_ProjectLabel.Layout.Row = 1;
+            app.report_ProjectLabel.Layout.Column = [1 3];
+            app.report_ProjectLabel.Text = 'ARQUIVO:';
+
+            % Create report_ProjectNew
+            app.report_ProjectNew = uiimage(app.report_Tab2Grid);
+            app.report_ProjectNew.ScaleMethod = 'none';
+            app.report_ProjectNew.Tooltip = {'Cria novo projeto'};
+            app.report_ProjectNew.Layout.Row = 1;
+            app.report_ProjectNew.Layout.Column = 11;
+            app.report_ProjectNew.ImageSource = 'addFiles_18.png';
+
+            % Create report_ProjectOpen
+            app.report_ProjectOpen = uiimage(app.report_Tab2Grid);
+            app.report_ProjectOpen.Tooltip = {'Abre projeto'};
+            app.report_ProjectOpen.Layout.Row = 1;
+            app.report_ProjectOpen.Layout.Column = 12;
+            app.report_ProjectOpen.ImageSource = 'OpenFile_36x36.png';
+
+            % Create report_ProjectSave
+            app.report_ProjectSave = uiimage(app.report_Tab2Grid);
+            app.report_ProjectSave.Tooltip = {'Salva projeto'};
+            app.report_ProjectSave.Layout.Row = 1;
+            app.report_ProjectSave.Layout.Column = 13;
+            app.report_ProjectSave.ImageSource = 'saveFile_32.png';
+
+            % Create report_ProjectName
+            app.report_ProjectName = uitextarea(app.report_Tab2Grid);
+            app.report_ProjectName.Editable = 'off';
+            app.report_ProjectName.FontSize = 11;
+            app.report_ProjectName.Layout.Row = 1;
+            app.report_ProjectName.Layout.Column = [2 10];
+
+            % Create report_systemLabel
+            app.report_systemLabel = uilabel(app.report_Tab2Grid);
+            app.report_systemLabel.WordWrap = 'on';
+            app.report_systemLabel.FontSize = 10;
+            app.report_systemLabel.FontColor = [0.149 0.149 0.149];
+            app.report_systemLabel.Layout.Row = 2;
+            app.report_systemLabel.Layout.Column = [1 2];
+            app.report_systemLabel.Text = 'SISTEMA:';
+
+            % Create report_system
+            app.report_system = uidropdown(app.report_Tab2Grid);
+            app.report_system.Items = {'eFiscaliza', 'eFiscaliza DS', 'eFiscaliza HM'};
+            app.report_system.FontSize = 11;
+            app.report_system.BackgroundColor = [1 1 1];
+            app.report_system.Layout.Row = 2;
+            app.report_system.Layout.Column = 2;
+            app.report_system.Value = 'eFiscaliza';
+
+            % Create report_IssueLabel
+            app.report_IssueLabel = uilabel(app.report_Tab2Grid);
+            app.report_IssueLabel.HorizontalAlignment = 'right';
+            app.report_IssueLabel.WordWrap = 'on';
+            app.report_IssueLabel.FontSize = 10;
+            app.report_IssueLabel.FontColor = [0.149 0.149 0.149];
+            app.report_IssueLabel.Layout.Row = 2;
+            app.report_IssueLabel.Layout.Column = 3;
+            app.report_IssueLabel.Text = '# ID:';
+
+            % Create report_Issue
+            app.report_Issue = uieditfield(app.report_Tab2Grid, 'numeric');
+            app.report_Issue.Limits = [-1 Inf];
+            app.report_Issue.RoundFractionalValues = 'on';
+            app.report_Issue.ValueDisplayFormat = '%d';
+            app.report_Issue.FontSize = 11;
+            app.report_Issue.FontColor = [0.149 0.149 0.149];
+            app.report_Issue.Layout.Row = 2;
+            app.report_Issue.Layout.Column = 4;
+            app.report_Issue.Value = -1;
+
+            % Create report_Unit
+            app.report_Unit = uidropdown(app.report_Tab2Grid);
+            app.report_Unit.Items = {};
+            app.report_Unit.FontSize = 11;
+            app.report_Unit.BackgroundColor = [1 1 1];
+            app.report_Unit.Layout.Row = 2;
+            app.report_Unit.Layout.Column = 6;
+            app.report_Unit.Value = {};
+
+            % Create report_UnitLabel
+            app.report_UnitLabel = uilabel(app.report_Tab2Grid);
+            app.report_UnitLabel.HorizontalAlignment = 'right';
+            app.report_UnitLabel.WordWrap = 'on';
+            app.report_UnitLabel.FontSize = 10;
+            app.report_UnitLabel.Layout.Row = 2;
+            app.report_UnitLabel.Layout.Column = 5;
+            app.report_UnitLabel.Text = 'UNIDADE:';
+
+            % Create report_ModelName
+            app.report_ModelName = uidropdown(app.report_Tab2Grid);
+            app.report_ModelName.Items = {''};
+            app.report_ModelName.FontSize = 11;
+            app.report_ModelName.BackgroundColor = [1 1 1];
+            app.report_ModelName.Layout.Row = 2;
+            app.report_ModelName.Layout.Column = 8;
+            app.report_ModelName.Value = '';
+
+            % Create report_ModelNameLabel
+            app.report_ModelNameLabel = uilabel(app.report_Tab2Grid);
+            app.report_ModelNameLabel.HorizontalAlignment = 'right';
+            app.report_ModelNameLabel.FontSize = 10;
+            app.report_ModelNameLabel.Layout.Row = 2;
+            app.report_ModelNameLabel.Layout.Column = 7;
+            app.report_ModelNameLabel.Text = 'MODELO RELATÓRIO:';
+
+            % Create report_Version
+            app.report_Version = uidropdown(app.report_Tab2Grid);
+            app.report_Version.Items = {'Preliminar', 'Definitiva'};
+            app.report_Version.FontSize = 11;
+            app.report_Version.BackgroundColor = [1 1 1];
+            app.report_Version.Layout.Row = 2;
+            app.report_Version.Layout.Column = 10;
+            app.report_Version.Value = 'Preliminar';
+
+            % Create report_VersionLabel
+            app.report_VersionLabel = uilabel(app.report_Tab2Grid);
+            app.report_VersionLabel.HorizontalAlignment = 'right';
+            app.report_VersionLabel.WordWrap = 'on';
+            app.report_VersionLabel.FontSize = 10;
+            app.report_VersionLabel.Layout.Row = 2;
+            app.report_VersionLabel.Layout.Column = 9;
+            app.report_VersionLabel.Text = 'VERSÃO:';
 
             % Create UITable1
             app.UITable1 = uitable(app.GridLayout);
