@@ -20,14 +20,15 @@ classdef tableInventory
 
     methods (Static)
         %-----------------------------------------------------------------%
-        function Table = File(dataOverview)
+        function Table = FileStatus(dataOverview)
             ecdObj = [dataOverview.InfoSet];
             Table  = table('Size',          [0, 6],                                             ...
                            'VariableTypes', {'double', 'cell', 'cell', 'cell', 'cell', 'cell'}, ...
                            'VariableNames', {'#', 'Arquivo', 'Codificação', 'Hash', 'Resposta webservice', 'Situação'});
         
             for ii = 1:numel(ecdObj)
-                id = generateTextId(ecdObj(ii), 'period-oriented', false);        
+                id = generateTextId(ecdObj(ii), 'period-oriented', false);
+
                 Table(end+1,:) = {ii, ...
                     strjoin(unique({ecdObj(ii).Sources.file}, 'stable'), '<br>'), ...
                     strjoin({ecdObj(ii).Sources.encoding}, '<br>'), ...
@@ -38,7 +39,7 @@ classdef tableInventory
         end
 
         %-----------------------------------------------------------------%
-        function Table = Company(dataOverview)
+        function Table = FileByCompany(dataOverview)
             ecdObj = [dataOverview.InfoSet];
             Table  = table('Size',          [0, 5],                                   ...
                            'VariableTypes', {'cell', 'cell', 'cell', 'cell', 'cell'}, ...
@@ -49,8 +50,36 @@ classdef tableInventory
                     ecdObj(ii).CompanyName, ...
                     ecdObj(ii).CompanyId, ...
                     strjoin(unique({ecdObj(ii).Sources.file}, 'stable'), '<br>'), ...
-                    ecdObj(ii).Period, ...
-                    jsonencode(ecdObj(ii).Table.x9900)};
+                    char(strjoin(string(ecdObj(ii).Period), ' a ')), ...
+                    strjoin(strcat(ecdObj(ii).Table.x9900.REG_BLC, ' (', cellstr(string(ecdObj(ii).Table.x9900.QTD_REG_BLC)), ')'), ', ')};
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function Table = PeriodByCompany(dataOverview)
+            ecdObj = [dataOverview.InfoSet];
+            Table  = table('Size',          [0, 4],                           ...
+                           'VariableTypes', {'cell', 'cell', 'cell', 'cell'}, ...
+                           'VariableNames', {'Empresa', 'CNPJ', 'Período Fiscal', 'Situação'});
+
+            idsList = {ecdObj.CompanyId};
+            ids = unique(idsList);
+
+            for id = ids
+                % Identifica fluxos relacionados a cada CNPJ, ordenando os 
+                % fluxos de acordo com a data de fim do seu período fiscal.
+                idIndexes   = find(strcmp(idsList, id));
+                [~, idSort] = sort(arrayfun(@(x) x.Period(2), ecdObj(idIndexes)));
+                idIndexes   = idIndexes(idSort);
+
+                idPeriod    = strjoin(arrayfun(@(x) char(strjoin(string(x.Period), ' a ')), ecdObj(idIndexes), 'UniformOutput', false), '<br>');
+                idStatus    = strjoin(arrayfun(@(x) generateTextId(x, 'period-oriented', false), ecdObj(idIndexes), 'UniformOutput', false), '<br>');
+
+                Table(end+1,:) = {...
+                    ecdObj(idIndexes(1)).CompanyName, ...
+                    ecdObj(idIndexes(1)).CompanyId, ...
+                    idPeriod, ...
+                    idStatus};                    
             end
         end
     end

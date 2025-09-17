@@ -58,7 +58,7 @@
                     "Type": "Table",
                     "Data": {
                         "Origin": "FunctionEvaluation",
-                        "Source": "table_File",
+                        "Source": "table_FileStatus",
                         "Columns": [
                             1,
                             2,
@@ -123,7 +123,7 @@
                     "Type": "Table",
                     "Data": {
                         "Origin": "FunctionEvaluation",
-                        "Source": "table_Company",
+                        "Source": "table_FileByCompany",
                         "Columns": [
                             1,
                             2,
@@ -136,14 +136,14 @@
                             {
                                 "Editable": "false",
                                 "ColumnName": "Empresa",
-                                "Precision": "s",
+                                "Precision": "%s",
                                 "Width": "auto"
                             },
                             {
                                 "Editable": "false",
                                 "ColumnName": "CNPJ",
                                 "Precision": "%s",
-                                "Width": "220px"
+                                "Width": "120px"
                             },
                             {
                                 "Editable": "false",
@@ -155,7 +155,7 @@
                                 "Editable": "false",
                                 "ColumnName": "Período fiscal",
                                 "Precision": "%s",
-                                "Width": "220px"
+                                "Width": "140px"
                             },
                             {
                                 "Editable": "false",
@@ -167,6 +167,49 @@
                         "Intro": [],
                         "Error": [],
                         "LineBreak": 1
+                    }
+                },
+                {
+                    "Type": "Table",
+                    "Data": {
+                        "Origin": "FunctionEvaluation",
+                        "Source": "table_PeriodByCompany",
+                        "Columns": [
+                            1,
+                            2,
+                            3,
+                            4
+                        ],
+                        "Caption": "Tabela ordinária criada em função...",
+                        "Settings": [
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Empresa",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "CNPJ",
+                                "Precision": "%s",
+                                "Width": "120px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Período fiscal",
+                                "Precision": "%s",
+                                "Width": "140px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Registros",
+                                "Precision": "%s",
+                                "Width": "70px"
+                            }
+                        ],
+                        "Intro": [],
+                        "Error": [],
+                        "LineBreak": 0
                     }
                 }
             ]
@@ -195,7 +238,7 @@
                     "Type": "Paragraph",
                     "Data": {
                         "Editable": "false",
-                        "Text": "A empresa %s, inscrita no CNPJ sob o nº %s, apresentou... bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla... a seguir é transcrita amostra do arquivo.",
+                        "Text": "A empresa <b>%s</b>, inscrita no CNPJ sob o nº <b>%s</b>, apresentou... <i>placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder</i>, conforme pode ser observado a seguir, com uma amostra do arquivo.",
                         "Variable": [
                             "var_CompanyName",
                             "var_CompanyId"
@@ -206,7 +249,7 @@
                     "Type": "Paragraph",
                     "Data": {
                         "Editable": "false",
-                        "Text": "<span style=\"font-size:11px;\">%s</span>",
+                        "Text": "<span style=\"display: block; padding-left: 92px; font-size:11px;\">%s</span>",
                         "Variable": [
                             "var_ContentSample"
                         ]
@@ -285,7 +328,7 @@
                                 "Width": "auto"
                             }
                         ],
-                        "Intro": [],
+                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"Na tabela apresentada a seguir constam informações acerca do processo de validação de arquivos contábeis.\"}",
                         "Error": [],
                         "LineBreak": 0
                     }

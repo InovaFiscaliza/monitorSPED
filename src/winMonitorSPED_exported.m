@@ -98,7 +98,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             try
                 switch event.HTMLEventName
                     % JSBACKDOOR (compCustomization.js)
-                    % "BackgroundColorTurnedInvisible" | "customForm" | "getURL" | "getNavigatorBasicInformation"
                     case 'renderer'
                         startup_Controller(app)
 
@@ -188,8 +187,19 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 dialogBox    = struct('id', 'login',    'label', 'Usuário: ', 'type', 'text');
                                 dialogBox(2) = struct('id', 'password', 'label', 'Senha: ',   'type', 'password');
                                 sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'openDevTools', 'Fields', dialogBox))
+                            case 'simulationModeChanged'
+                                if app.General.operationMode.Simulation
+                                    toolbar_OpenFileButtonPushed(app)
+
+                                    % Muda programaticamente o modo p/ ARQUIVOS.
+                                    set(app.menu_Button1, 'Enable', 1, 'Value', 1)                    
+                                    menu_mainButtonPushed(app, struct('Source', app.menu_Button1, 'PreviousValue', false))
+                                end
                             case 'fileSortMethodChanged'
-                                app.file_FileSortMethod.Value = app.General.sped.fileSortMethod;
+                                if ~strcmp(app.file_FileSortMethod.Value, app.General.sped.sortMethod)
+                                    app.file_FileSortMethod.Value = app.General.sped.sortMethod;
+                                    file_FileSortMethodValueChanged(app)
+                                end
                             otherwise
                                 error('UnexpectedCall')
                         end
@@ -364,8 +374,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 app.General_I.sped.input = 'file';
             end
 
-            if ~ismember(app.General_I.sped.fileSortMethod, {'CNPJ', 'PERÍODO FISCAL', 'RECEITA FEDERAL'})
-                app.General_I.sped.fileSortMethod = 'CNPJ';
+            if ~ismember(app.General_I.sped.sortMethod, {'CNPJ', 'PERÍODO FISCAL', 'RECEITA FEDERAL'})
+                app.General_I.sped.sortMethod = 'CNPJ';
+            end
+
+            if ~ismember(app.General_I.sped.checkStatus, {'OnlyCache', 'Cache+RealTime', 'RealTime'})
+                app.General_I.sped.checkStatus = 'Cache+RealTime';
             end
 
             switch app.executionMode
@@ -404,25 +418,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             end
 
             app.General            = app.General_I;        
-            app.General.AppVersion = util.getAppVersion(app.rootFolder, MFilePath, tempDir); % RFDataHub lido aqui
+            app.General.AppVersion = util.getAppVersion(app.rootFolder, MFilePath, tempDir);
             sendEventToHTMLSource(app.jsBackDoor, 'getNavigatorBasicInformation')
-
-            % Leitura de arquivo "IBGE.mat", salvando-o em memória como 
-            % variável global.
-            [~, msgError] = gpsLib.checkIfIBGEIsGlobal();
-            if ~isempty(msgError)
-                switch app.executionMode
-                    case 'MATLABEnvironment'
-                        msgQuestion = sprintf(['Erro na leitura da base de dados "IBGE"\n%s\n\nEsse problema pode ' ...
-                                               'ser resolvido mapeando "SupportPackages" no path do MATLAB'], msgError);
-                    otherwise
-                        msgQuestion = sprintf(['Erro na leitura da base de dados "IBGE"\n%s\n\nEsse problema pode ' ...
-                                               'ser resolvido apagando manualmente a pasta %s'], msgError, ctfroot);
-                end
-
-                appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'OK'}, 1, 1);
-                closeFcn(app)
-            end
         end
 
         %-----------------------------------------------------------------%
@@ -439,7 +436,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             addComponent(app.tabGroupController, "External", "auxApp.winConfig",      app.menu_Button4, "AlwaysOn", struct('On', 'Settings_36Yellow.png', 'Off', 'Settings_36White.png'), app.menu_Button1,                    3)
 
             DataHubWarningLamp(app)
-            app.file_FileSortMethod.Value = app.General.sped.fileSortMethod;
+            app.file_FileSortMethod.Value = app.General.sped.sortMethod;
             addStyle(app.file_Tree, uistyle('Interpreter', 'html'))
         end
 
@@ -678,6 +675,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         % Close request function: UIFigure
         function closeFcn(app, event)
 
+            if strcmp(app.progressDialog.Visible, 'visible')
+                app.progressDialog.Visible = 'hidden';
+                return
+            end
+
             if ~strcmp(app.executionMode, 'webApp') && ~isempty(app.ecdObj)
                 msgQuestion   = 'Deseja fechar o aplicativo?';
                 userSelection = appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
@@ -777,33 +779,60 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             end
 
             d = [];
+            fileFullName = {};
 
-            % SELEÇÃO DE ARQUIVO(S)
-            switch app.General.sped.input
-                case 'file'
-                    [fileName, filePath] = uigetfile({'*.txt';'*.csv';'*.mat';'*.*'}, ...
-                                                      '', app.General.fileFolder.lastVisited, 'MultiSelect', 'on');
-                    figure(app.UIFigure)
-        
-                    if isequal(fileName, 0)
-                        return
-                    elseif ~iscell(fileName)
-                        fileName = {fileName};
+            if app.General.operationMode.Simulation
+                app.General.operationMode.Simulation = false;
+                
+                [projectFolder, ...
+                 programDataFolder] = appUtil.Path(class.Constants.appName, app.rootFolder);
+                simulationFolders   = {programDataFolder, projectFolder};
+
+                for ii = 1:numel(simulationFolders)
+                    filePath    = fullfile(simulationFolders{ii}, 'Simulation');    
+                    listOfFiles = dir(filePath);
+                    fileName    = {listOfFiles.name};
+                    fileName    = fileName(endsWith(lower(fileName), '.txt'));
+                    
+                    if ~isempty(fileName)
+                        fileFullName = fullfile(filePath, fileName);
+                        break
                     end
-                    fileFullName = fullfile(filePath, fileName);
+                end
 
-                case 'folder'
-                    filePath = uigetdir(app.General.fileFolder.lastVisited);
-                    figure(app.UIFigure)
+                if isempty(fileFullName)
+                    msgWarning = 'Nenhum arquivo de simulação foi identificado.';
+                    appUtil.modalWindow(app.UIFigure, "warning", msgWarning);
+                    return
+                end
 
-                    if isequal(filePath, 0)
-                        return
-                    end
-
-                    d = appUtil.modalWindow(app.UIFigure, "progressdlg", "Em andamento...");
-                    [fileFullName, fileName] = util.getFilesFromFolder(filePath);
+            else
+                switch app.General.sped.input
+                    case 'file'
+                        [fileName, filePath] = uigetfile({'*.txt';'*.csv';'*.mat';'*.*'}, ...
+                                                          '', app.General.fileFolder.lastVisited, 'MultiSelect', 'on');
+                        figure(app.UIFigure)
+            
+                        if isequal(fileName, 0)
+                            return
+                        elseif ~iscellstr(fileName)
+                            fileName = cellstr(fileName);
+                        end
+                        fileFullName = fullfile(filePath, fileName);
+    
+                    case 'folder'
+                        filePath = uigetdir(app.General.fileFolder.lastVisited);
+                        figure(app.UIFigure)
+    
+                        if isequal(filePath, 0)
+                            return
+                        end
+    
+                        d = appUtil.modalWindow(app.UIFigure, "progressdlg", "Em andamento...");
+                        [fileFullName, fileName] = util.getFilesFromFolder(filePath);
+                end
+                updateLastVisitedFolder(app, filePath)
             end
-            updateLastVisitedFolder(app, filePath)            
 
             if isempty(d)
                 d = appUtil.modalWindow(app.UIFigure, "progressdlg", "Em andamento...");
@@ -829,7 +858,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % LOG
             if ~isempty(filesError)
                 msgWarning = sprintf('<font style="font-size: 12px;">Arquivos que apresentaram erro na leitura:\n%s\n\n</font>', strjoin(strcat({'•&thinsp;<b>'}, {filesError.File}, {'</b>: <i>'}, {filesError.Error}), '</i>\n\n'));
-                appUtil.modalWindow(app.UIFigure, "error", msgWarning);                
+                appUtil.modalWindow(app.UIFigure, "error", msgWarning);
             end
             
             % Atualiza app.file_Tree.
@@ -882,7 +911,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 app.progressDialog.Visible = 'visible';
 
-                checkFileFlag = checkFileStatus(app.ecdObj(indexes), app.receitaFederalObj);
+                checkFileFlag = checkFileStatus(app.ecdObj(indexes), app.receitaFederalObj, app.General.sped.checkStatus);
                 if checkFileFlag
                     file_TreeBuilding(app, indexes)
                 end
@@ -932,13 +961,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         % Image clicked function: Image
         function toolbar_ShowLegendImageClicked(app, event)
             
-            msg = sprintf(['🟢 Registro encontrado na base da Receita Federal\n' ...
-                           '🔴 Registro não encontrado na base da Receita Federal\n' ...
-                           '⚪ Situação indeterminada\n' ...
-                           '➕ Registro mesclado\n' ...
-                           '⌛ Período fiscal não anual']);
+            msg = ['&#x1F7E2; Registro encontrado na base da Receita Federal<br>' ...
+                   '&#x1F534; Registro não encontrado na base da Receita Federal<br>' ...
+                   '⚪ Situação indeterminada<br>' ...
+                   '➕ Registro mesclado<br>' ...
+                   '⌛ Período fiscal não anual'];
 
-            appUtil.modalWindow(app.UIFigure, 'info', msg);
+            appUtil.modalWindow(app.UIFigure, 'none', msg);
 
         end
 
@@ -1075,10 +1104,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create Image
             app.Image = uiimage(app.file_toolGrid);
+            app.Image.ScaleMethod = 'none';
             app.Image.ImageClickedFcn = createCallbackFcn(app, @toolbar_ShowLegendImageClicked, true);
+            app.Image.Tooltip = {'Legenda de símbolos'};
             app.Image.Layout.Row = 2;
             app.Image.Layout.Column = 8;
-            app.Image.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Info_32.png');
+            app.Image.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Legend_16.png');
 
             % Create TabGroup2
             app.TabGroup2 = uitabgroup(app.file_Grid);

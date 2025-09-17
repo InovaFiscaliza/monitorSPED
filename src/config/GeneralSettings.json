@@ -1,5 +1,5 @@
 {
-    "version": 0.26,
+    "version": 0.28,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -24,7 +24,8 @@
     },
     "sped": {
         "input": "file",
-        "fileSortMethod": "CNPJ",
+        "sortMethod": "CNPJ",
+        "checkStatus": "Cache+RealTime",
         "encoding": {
             "options": [
                 "ISO-8859-1",

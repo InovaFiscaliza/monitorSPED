@@ -8,11 +8,12 @@ classdef winConfig_exported < matlab.apps.AppBase
         dockModule_Undock              matlab.ui.control.Image
         dockModule_Close               matlab.ui.control.Image
         GridLayout2                    matlab.ui.container.GridLayout
-        versionInfoRefresh             matlab.ui.control.Image
+        tool_simulationMode            matlab.ui.control.Image
         openDevTools                   matlab.ui.control.Image
         TabGroup                       matlab.ui.container.TabGroup
         ASPECTOSGERAISTab              matlab.ui.container.Tab
         General_Grid                   matlab.ui.container.GridLayout
+        versionInfoRefresh             matlab.ui.control.Image
         AMBIENTELabel                  matlab.ui.control.Label
         openAuxiliarApp2Debug          matlab.ui.control.CheckBox
         openAuxiliarAppAsDocked        matlab.ui.control.CheckBox
@@ -25,10 +26,12 @@ classdef winConfig_exported < matlab.apps.AppBase
         PROCESSODEANLISEDOSDADOSLabel  matlab.ui.control.Label
         Panel                          matlab.ui.container.Panel
         GridLayout3                    matlab.ui.container.GridLayout
-        FileSortMethodLabel            matlab.ui.control.Label
-        FileSortMethod                 matlab.ui.control.DropDown
         Encoding                       matlab.ui.control.DropDown
-        CODIFICAOCARACTERELabel        matlab.ui.control.Label
+        EncodingLabel                  matlab.ui.control.Label
+        CheckStatus                    matlab.ui.control.DropDown
+        CheckStatusLabel               matlab.ui.control.Label
+        SortMethod                     matlab.ui.control.DropDown
+        SortMethodLabel                matlab.ui.control.Label
         InputType                      matlab.ui.control.DropDown
         InputTypeLabel                 matlab.ui.control.Label
         PROCESSODELEITURADOSARQUIVOSEVISUALIZAODOSSEUSMETADADOSLabel  matlab.ui.control.Label
@@ -111,7 +114,7 @@ classdef winConfig_exported < matlab.apps.AppBase
                         sendEventToHTMLSource(app.jsBackDoor, 'startup', app.mainApp.executionMode);
                         app.progressDialog = ccTools.ProgressDialog(app.jsBackDoor);
                     end
-                    customizationStatus = [false, false, false, false];
+                    customizationStatus = [false, false, false];
 
                 otherwise
                     if customizationStatus(tabIndex)
@@ -141,11 +144,11 @@ classdef winConfig_exported < matlab.apps.AppBase
                                 ui.TextView.startup(app.jsBackDoor, app.versionInfo, appName);
                             end
 
-                        otherwise
-                            % Customização de componentes constantes nas outras abas, 
-                            % os quais são renderizados completamente apenas após a 
-                            % abertura da aba.
-                            % ...
+                        case 2
+                            Analysis_updatePanel(app)
+
+                        case 3
+                            Folder_updatePanel(app)
                     end
             end
         end
@@ -197,8 +200,6 @@ classdef winConfig_exported < matlab.apps.AppBase
             end
 
             General_updatePanel(app)
-            Analysis_updatePanel(app)
-            Folder_updatePanel(app)
         end
 
         %-----------------------------------------------------------------%
@@ -214,7 +215,7 @@ classdef winConfig_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function Analysis_updatePanel(app)
             app.InputType.Value = app.mainApp.General.sped.input;
-            app.FileSortMethod.Value = app.mainApp.General.sped.fileSortMethod;
+            app.SortMethod.Value = app.mainApp.General.sped.sortMethod;
             app.Encoding.Items = app.mainApp.General.sped.encoding.options;            
         end
 
@@ -225,8 +226,7 @@ classdef winConfig_exported < matlab.apps.AppBase
                 app.DataHubPOST.Value = DataHub_POST;
             end
 
-            app.userPath.Value = app.mainApp.General.fileFolder.userPath;
-                
+            app.userPath.Value = app.mainApp.General.fileFolder.userPath;                
         end
 
         %-----------------------------------------------------------------%
@@ -245,7 +245,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.mainApp = mainApp;
 
             if app.isDocked
-                app.GridLayout.Padding(4)  = 30;
+                app.GridLayout.Padding(4) = 30;
                 app.dockModuleGrid.Visible = 1;
                 app.jsBackDoor = mainApp.jsBackDoor;
                 startup_Controller(app)
@@ -264,8 +264,40 @@ classdef winConfig_exported < matlab.apps.AppBase
             
         end
 
+        % Image clicked function: dockModule_Close, dockModule_Undock
+        function DockModuleGroup_ButtonPushed(app, event)
+            
+            [idx, auxAppTag, relatedButton] = getAppInfoFromHandle(app.mainApp.tabGroupController, app);
+
+            switch event.Source
+                case app.dockModule_Undock
+                    appGeneral = app.mainApp.General;
+                    appGeneral.operationMode.Dock = false;
+                    
+                    app.mainApp.tabGroupController.Components.appHandle{idx} = [];
+
+                    inputArguments = ipcMainMatlabCallsHandler(app.mainApp, app, 'dockButtonPushed', auxAppTag);
+                    openModule(app.mainApp.tabGroupController, relatedButton, false, appGeneral, inputArguments{:})
+                    closeModule(app.mainApp.tabGroupController, auxAppTag, app.mainApp.General, 'undock')
+                    
+                    delete(app)
+
+                case app.dockModule_Close
+                    closeModule(app.mainApp.tabGroupController, auxAppTag, app.mainApp.General)
+            end
+
+        end
+
+        % Selection change function: TabGroup
+        function TabGroup_TabSelectionChanged(app, event)
+            
+            [~, tabIndex] = ismember(app.TabGroup.SelectedTab, app.TabGroup.Children);
+            jsBackDoor_Customizations(app, tabIndex)
+            
+        end
+
         % Image clicked function: versionInfoRefresh
-        function AppEnvRefreshButtonPushed(app, event)
+        function Toolbar_AppEnvRefreshButtonPushed(app, event)
             
             app.progressDialog.Visible = 'visible';
 
@@ -276,9 +308,31 @@ classdef winConfig_exported < matlab.apps.AppBase
 
         end
 
-        % Value changed function: Encoding, FileSortMethod, InputType, 
-        % ...and 2 other components
-        function ParameterValueChanged(app, event)
+        % Image clicked function: tool_simulationMode
+        function Toolbar_SimulationModeButtonPushed(app, event)
+            
+            msgQuestion   = 'Deseja abrir os arquivos de <b>simulação</b>?';
+            userSelection = appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 2, 2);
+            
+            if strcmp(userSelection, 'Não')
+                return
+            end
+
+            app.mainApp.General.operationMode.Simulation = true;
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'simulationModeChanged')
+
+        end
+
+        % Image clicked function: openDevTools
+        function Toolbar_OpenDevToolsClicked(app, event)
+            
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'openDevTools')
+
+        end
+
+        % Value changed function: CheckStatus, Encoding, InputType, 
+        % ...and 3 other components
+        function Config_ParameterValueChanged(app, event)
             
             switch event.Source
                 case app.openAuxiliarAppAsDocked
@@ -290,9 +344,12 @@ classdef winConfig_exported < matlab.apps.AppBase
                 case app.InputType
                     app.mainApp.General.sped.input          = app.InputType.Value;
 
-                case app.FileSortMethod
-                    app.mainApp.General.sped.fileSortMethod = app.FileSortMethod.Value;
+                case app.SortMethod
+                    app.mainApp.General.sped.sortMethod     = app.SortMethod.Value;
                     ipcMainMatlabCallsHandler(app.mainApp, app, 'fileSortMethodChanged')
+
+                case app.CheckStatus
+                    app.mainApp.General.sped.checkStatus    = app.CheckStatus.Value;
 
                 case app.Encoding
                     app.mainApp.General.sped.encoding.value = app.Encoding.Value;
@@ -305,7 +362,7 @@ classdef winConfig_exported < matlab.apps.AppBase
         end
 
         % Image clicked function: DataHubPOSTButton, userPathButton
-        function FolderButtonPushed(app, event)
+        function Config_FolderButtonPushed(app, event)
             
             try
                 relatedFolder = eval(sprintf('app.config_Folder_%s.Value', event.Source.Tag));                    
@@ -352,45 +409,6 @@ classdef winConfig_exported < matlab.apps.AppBase
                 Folder_updatePanel(app)
             end
 
-        end
-
-        % Image clicked function: openDevTools
-        function openDevToolsClicked(app, event)
-            
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'openDevTools')
-
-        end
-
-        % Image clicked function: dockModule_Close, dockModule_Undock
-        function menu_DockButtonPushed(app, event)
-            
-            [idx, auxAppTag, relatedButton] = getAppInfoFromHandle(app.mainApp.tabGroupController, app);
-
-            switch event.Source
-                case app.dockModule_Undock
-                    appGeneral = app.mainApp.General;
-                    appGeneral.operationMode.Dock = false;
-                    
-                    app.mainApp.tabGroupController.Components.appHandle{idx} = [];
-
-                    inputArguments = ipcMainMatlabCallsHandler(app.mainApp, app, 'dockButtonPushed', auxAppTag);
-                    openModule(app.mainApp.tabGroupController, relatedButton, false, appGeneral, inputArguments{:})
-                    closeModule(app.mainApp.tabGroupController, auxAppTag, app.mainApp.General, 'undock')
-                    
-                    delete(app)
-
-                case app.dockModule_Close
-                    closeModule(app.mainApp.tabGroupController, auxAppTag, app.mainApp.General)
-            end
-
-        end
-
-        % Selection change function: TabGroup
-        function TabGroupSelectionChanged(app, event)
-            
-            [~, tabIndex] = ismember(app.TabGroup.SelectedTab, app.TabGroup.Children);
-            jsBackDoor_Customizations(app, tabIndex)
-            
         end
     end
 
@@ -440,7 +458,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create TabGroup
             app.TabGroup = uitabgroup(app.GridLayout);
             app.TabGroup.AutoResizeChildren = 'off';
-            app.TabGroup.SelectionChangedFcn = createCallbackFcn(app, @TabGroupSelectionChanged, true);
+            app.TabGroup.SelectionChangedFcn = createCallbackFcn(app, @TabGroup_TabSelectionChanged, true);
             app.TabGroup.Layout.Row = [3 4];
             app.TabGroup.Layout.Column = [2 3];
 
@@ -452,7 +470,7 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create General_Grid
             app.General_Grid = uigridlayout(app.ASPECTOSGERAISTab);
-            app.General_Grid.ColumnWidth = {'1x'};
+            app.General_Grid.ColumnWidth = {'1x', 22};
             app.General_Grid.RowHeight = {17, 150, 22, '1x', 1, 22, 15};
             app.General_Grid.RowSpacing = 5;
             app.General_Grid.BackgroundColor = [1 1 1];
@@ -464,27 +482,27 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.versionInfo.WordWrap = 'on';
             app.versionInfo.FontSize = 11;
             app.versionInfo.Layout.Row = [2 4];
-            app.versionInfo.Layout.Column = 1;
+            app.versionInfo.Layout.Column = [1 2];
             app.versionInfo.Interpreter = 'html';
             app.versionInfo.Text = '';
 
             % Create openAuxiliarAppAsDocked
             app.openAuxiliarAppAsDocked = uicheckbox(app.General_Grid);
-            app.openAuxiliarAppAsDocked.ValueChangedFcn = createCallbackFcn(app, @ParameterValueChanged, true);
+            app.openAuxiliarAppAsDocked.ValueChangedFcn = createCallbackFcn(app, @Config_ParameterValueChanged, true);
             app.openAuxiliarAppAsDocked.Enable = 'off';
             app.openAuxiliarAppAsDocked.Text = 'Modo DOCK: módulos auxiliares abertos na janela principal do app';
             app.openAuxiliarAppAsDocked.FontSize = 11;
             app.openAuxiliarAppAsDocked.Layout.Row = 6;
-            app.openAuxiliarAppAsDocked.Layout.Column = 1;
+            app.openAuxiliarAppAsDocked.Layout.Column = [1 2];
 
             % Create openAuxiliarApp2Debug
             app.openAuxiliarApp2Debug = uicheckbox(app.General_Grid);
-            app.openAuxiliarApp2Debug.ValueChangedFcn = createCallbackFcn(app, @ParameterValueChanged, true);
+            app.openAuxiliarApp2Debug.ValueChangedFcn = createCallbackFcn(app, @Config_ParameterValueChanged, true);
             app.openAuxiliarApp2Debug.Enable = 'off';
             app.openAuxiliarApp2Debug.Text = 'Modo DEBUG';
             app.openAuxiliarApp2Debug.FontSize = 11;
             app.openAuxiliarApp2Debug.Layout.Row = 7;
-            app.openAuxiliarApp2Debug.Layout.Column = 1;
+            app.openAuxiliarApp2Debug.Layout.Column = [1 2];
 
             % Create AMBIENTELabel
             app.AMBIENTELabel = uilabel(app.General_Grid);
@@ -493,6 +511,17 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.AMBIENTELabel.Layout.Row = 1;
             app.AMBIENTELabel.Layout.Column = 1;
             app.AMBIENTELabel.Text = 'AMBIENTE:';
+
+            % Create versionInfoRefresh
+            app.versionInfoRefresh = uiimage(app.General_Grid);
+            app.versionInfoRefresh.ScaleMethod = 'none';
+            app.versionInfoRefresh.ImageClickedFcn = createCallbackFcn(app, @Toolbar_AppEnvRefreshButtonPushed, true);
+            app.versionInfoRefresh.Enable = 'off';
+            app.versionInfoRefresh.Tooltip = {'Verifica atualizações'};
+            app.versionInfoRefresh.Layout.Row = 1;
+            app.versionInfoRefresh.Layout.Column = 2;
+            app.versionInfoRefresh.VerticalAlignment = 'bottom';
+            app.versionInfoRefresh.ImageSource = 'Refresh_18.png';
 
             % Create ANLISETab
             app.ANLISETab = uitab(app.TabGroup);
@@ -503,7 +532,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create GridLayout_3
             app.GridLayout_3 = uigridlayout(app.ANLISETab);
             app.GridLayout_3.ColumnWidth = {'1x'};
-            app.GridLayout_3.RowHeight = {17, 98, 22, '1x'};
+            app.GridLayout_3.RowHeight = {17, 126, 22, '1x'};
             app.GridLayout_3.RowSpacing = 5;
             app.GridLayout_3.BackgroundColor = [1 1 1];
 
@@ -524,7 +553,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create GridLayout3
             app.GridLayout3 = uigridlayout(app.Panel);
             app.GridLayout3.ColumnWidth = {150, 220, '1x'};
-            app.GridLayout3.RowHeight = {22, 22, 22};
+            app.GridLayout3.RowHeight = {22, 22, 22, 22};
             app.GridLayout3.RowSpacing = 5;
             app.GridLayout3.BackgroundColor = [1 1 1];
 
@@ -538,46 +567,64 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create InputType
             app.InputType = uidropdown(app.GridLayout3);
             app.InputType.Items = {'file', 'folder'};
-            app.InputType.ValueChangedFcn = createCallbackFcn(app, @ParameterValueChanged, true);
+            app.InputType.ValueChangedFcn = createCallbackFcn(app, @Config_ParameterValueChanged, true);
             app.InputType.FontSize = 11;
             app.InputType.BackgroundColor = [1 1 1];
             app.InputType.Layout.Row = 1;
             app.InputType.Layout.Column = 2;
             app.InputType.Value = 'file';
 
-            % Create CODIFICAOCARACTERELabel
-            app.CODIFICAOCARACTERELabel = uilabel(app.GridLayout3);
-            app.CODIFICAOCARACTERELabel.FontSize = 10;
-            app.CODIFICAOCARACTERELabel.Layout.Row = 3;
-            app.CODIFICAOCARACTERELabel.Layout.Column = 1;
-            app.CODIFICAOCARACTERELabel.Text = 'CODIFICAÇÃO CARACTERE:';
+            % Create SortMethodLabel
+            app.SortMethodLabel = uilabel(app.GridLayout3);
+            app.SortMethodLabel.FontSize = 10;
+            app.SortMethodLabel.Layout.Row = 2;
+            app.SortMethodLabel.Layout.Column = 1;
+            app.SortMethodLabel.Text = 'VISUALIZAÇÃO ÁRVORE:';
+
+            % Create SortMethod
+            app.SortMethod = uidropdown(app.GridLayout3);
+            app.SortMethod.Items = {'CNPJ', 'PERÍODO FISCAL', 'RECEITA FEDERAL'};
+            app.SortMethod.ValueChangedFcn = createCallbackFcn(app, @Config_ParameterValueChanged, true);
+            app.SortMethod.FontSize = 11;
+            app.SortMethod.BackgroundColor = [1 1 1];
+            app.SortMethod.Layout.Row = 2;
+            app.SortMethod.Layout.Column = 2;
+            app.SortMethod.Value = 'CNPJ';
+
+            % Create CheckStatusLabel
+            app.CheckStatusLabel = uilabel(app.GridLayout3);
+            app.CheckStatusLabel.FontSize = 10;
+            app.CheckStatusLabel.Layout.Row = 3;
+            app.CheckStatusLabel.Layout.Column = [1 2];
+            app.CheckStatusLabel.Text = 'CONSULTA RECEITA FEDERAL:';
+
+            % Create CheckStatus
+            app.CheckStatus = uidropdown(app.GridLayout3);
+            app.CheckStatus.Items = {'OnlyCache', 'Cache+RealTime', 'RealTime'};
+            app.CheckStatus.ValueChangedFcn = createCallbackFcn(app, @Config_ParameterValueChanged, true);
+            app.CheckStatus.FontSize = 11;
+            app.CheckStatus.BackgroundColor = [1 1 1];
+            app.CheckStatus.Layout.Row = 3;
+            app.CheckStatus.Layout.Column = 2;
+            app.CheckStatus.Value = 'Cache+RealTime';
+
+            % Create EncodingLabel
+            app.EncodingLabel = uilabel(app.GridLayout3);
+            app.EncodingLabel.FontSize = 10;
+            app.EncodingLabel.Layout.Row = 4;
+            app.EncodingLabel.Layout.Column = 1;
+            app.EncodingLabel.Text = 'CODIFICAÇÃO CARACTERE:';
 
             % Create Encoding
             app.Encoding = uidropdown(app.GridLayout3);
             app.Encoding.Items = {};
-            app.Encoding.ValueChangedFcn = createCallbackFcn(app, @ParameterValueChanged, true);
+            app.Encoding.ValueChangedFcn = createCallbackFcn(app, @Config_ParameterValueChanged, true);
+            app.Encoding.Enable = 'off';
             app.Encoding.FontSize = 11;
             app.Encoding.BackgroundColor = [1 1 1];
-            app.Encoding.Layout.Row = 3;
+            app.Encoding.Layout.Row = 4;
             app.Encoding.Layout.Column = 2;
             app.Encoding.Value = {};
-
-            % Create FileSortMethod
-            app.FileSortMethod = uidropdown(app.GridLayout3);
-            app.FileSortMethod.Items = {'CNPJ', 'PERÍODO FISCAL', 'RECEITA FEDERAL'};
-            app.FileSortMethod.ValueChangedFcn = createCallbackFcn(app, @ParameterValueChanged, true);
-            app.FileSortMethod.FontSize = 11;
-            app.FileSortMethod.BackgroundColor = [1 1 1];
-            app.FileSortMethod.Layout.Row = 2;
-            app.FileSortMethod.Layout.Column = 2;
-            app.FileSortMethod.Value = 'CNPJ';
-
-            % Create FileSortMethodLabel
-            app.FileSortMethodLabel = uilabel(app.GridLayout3);
-            app.FileSortMethodLabel.FontSize = 10;
-            app.FileSortMethodLabel.Layout.Row = 2;
-            app.FileSortMethodLabel.Layout.Column = 1;
-            app.FileSortMethodLabel.Text = 'VISUALIZAÇÃO ÁRVORE:';
 
             % Create PROCESSODEANLISEDOSDADOSLabel
             app.PROCESSODEANLISEDOSDADOSLabel = uilabel(app.GridLayout_3);
@@ -642,7 +689,7 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create DataHubPOSTButton
             app.DataHubPOSTButton = uiimage(app.FolderMapGrid);
-            app.DataHubPOSTButton.ImageClickedFcn = createCallbackFcn(app, @FolderButtonPushed, true);
+            app.DataHubPOSTButton.ImageClickedFcn = createCallbackFcn(app, @Config_FolderButtonPushed, true);
             app.DataHubPOSTButton.Tag = 'DataHub_POST';
             app.DataHubPOSTButton.Enable = 'off';
             app.DataHubPOSTButton.Layout.Row = 2;
@@ -666,7 +713,7 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create userPathButton
             app.userPathButton = uiimage(app.FolderMapGrid);
-            app.userPathButton.ImageClickedFcn = createCallbackFcn(app, @FolderButtonPushed, true);
+            app.userPathButton.ImageClickedFcn = createCallbackFcn(app, @Config_FolderButtonPushed, true);
             app.userPathButton.Tag = 'userPath';
             app.userPathButton.Enable = 'off';
             app.userPathButton.Layout.Row = 4;
@@ -679,7 +726,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.GridLayout2.RowHeight = {4, 17, 2};
             app.GridLayout2.ColumnSpacing = 5;
             app.GridLayout2.RowSpacing = 0;
-            app.GridLayout2.Padding = [5 5 5 5];
+            app.GridLayout2.Padding = [10 5 10 5];
             app.GridLayout2.Layout.Row = 6;
             app.GridLayout2.Layout.Column = [1 5];
             app.GridLayout2.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
@@ -687,23 +734,20 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create openDevTools
             app.openDevTools = uiimage(app.GridLayout2);
             app.openDevTools.ScaleMethod = 'none';
-            app.openDevTools.ImageClickedFcn = createCallbackFcn(app, @openDevToolsClicked, true);
+            app.openDevTools.ImageClickedFcn = createCallbackFcn(app, @Toolbar_OpenDevToolsClicked, true);
             app.openDevTools.Enable = 'off';
             app.openDevTools.Tooltip = {'DevTools'};
             app.openDevTools.Layout.Row = 2;
             app.openDevTools.Layout.Column = 3;
             app.openDevTools.ImageSource = 'Debug_18.png';
 
-            % Create versionInfoRefresh
-            app.versionInfoRefresh = uiimage(app.GridLayout2);
-            app.versionInfoRefresh.ScaleMethod = 'none';
-            app.versionInfoRefresh.ImageClickedFcn = createCallbackFcn(app, @AppEnvRefreshButtonPushed, true);
-            app.versionInfoRefresh.Enable = 'off';
-            app.versionInfoRefresh.Tooltip = {'Verifica atualizações'};
-            app.versionInfoRefresh.Layout.Row = 2;
-            app.versionInfoRefresh.Layout.Column = 1;
-            app.versionInfoRefresh.VerticalAlignment = 'bottom';
-            app.versionInfoRefresh.ImageSource = 'Refresh_18.png';
+            % Create tool_simulationMode
+            app.tool_simulationMode = uiimage(app.GridLayout2);
+            app.tool_simulationMode.ScaleMethod = 'none';
+            app.tool_simulationMode.ImageClickedFcn = createCallbackFcn(app, @Toolbar_SimulationModeButtonPushed, true);
+            app.tool_simulationMode.Layout.Row = 2;
+            app.tool_simulationMode.Layout.Column = 1;
+            app.tool_simulationMode.ImageSource = 'Import_16.png';
 
             % Create dockModuleGrid
             app.dockModuleGrid = uigridlayout(app.GridLayout);
@@ -718,7 +762,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create dockModule_Close
             app.dockModule_Close = uiimage(app.dockModuleGrid);
             app.dockModule_Close.ScaleMethod = 'none';
-            app.dockModule_Close.ImageClickedFcn = createCallbackFcn(app, @menu_DockButtonPushed, true);
+            app.dockModule_Close.ImageClickedFcn = createCallbackFcn(app, @DockModuleGroup_ButtonPushed, true);
             app.dockModule_Close.Tag = 'DRIVETEST';
             app.dockModule_Close.Tooltip = {'Fecha módulo'};
             app.dockModule_Close.Layout.Row = 1;
@@ -728,7 +772,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create dockModule_Undock
             app.dockModule_Undock = uiimage(app.dockModuleGrid);
             app.dockModule_Undock.ScaleMethod = 'none';
-            app.dockModule_Undock.ImageClickedFcn = createCallbackFcn(app, @menu_DockButtonPushed, true);
+            app.dockModule_Undock.ImageClickedFcn = createCallbackFcn(app, @DockModuleGroup_ButtonPushed, true);
             app.dockModule_Undock.Tag = 'DRIVETEST';
             app.dockModule_Undock.Enable = 'off';
             app.dockModule_Undock.Tooltip = {'Reabre módulo em outra janela'};

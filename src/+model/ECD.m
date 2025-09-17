@@ -146,9 +146,18 @@ classdef ECD < model.ECDBase
                     % Leitura de outros registros essenciais - "9900", "0000"
                     % e "I030" -, iniciando no "9900" por registrar o número
                     % de linhas de cada registro, o que possibilita validação 
-                    % do processo de leitura.
-                    parseTableAndAddToCache(obj(idx), {'9900', '0000', 'I030'})
+                    % do processo de leitura. No caso de um registro mesclado,
+                    % o registro "9900" deve ser sumarizado.
+                    parseTableAndAddToCache(obj(idx), {'9900'})
+                    if ~isempty(mergedIndexes)
+                        if isfield(obj(idx).Table, 'x9900') && ~isempty(obj(idx).Table.x9900)
+                            tempSummaryTable = groupsummary(obj(idx).Table.x9900, "REG_BLC", "sum", "QTD_REG_BLC");
+                            tempSummaryTable = renamevars(tempSummaryTable, "sum_QTD_REG_BLC", "QTD_REG_BLC");
+                            obj(idx).Table.x9900 = [obj(idx).Table.x9900(1:height(tempSummaryTable), 'REG'), tempSummaryTable(:, {'REG_BLC', 'QTD_REG_BLC'})];
+                        end
+                    end
 
+                    parseTableAndAddToCache(obj(idx), {'0000', 'I030'})
                     if isfield(obj(idx).Table, 'x0000') && ~isempty(obj(idx).Table.x0000)
                         obj(idx).CompanyName    = obj(idx).Table.x0000.NOME{1};
                         obj(idx).CompanyId      = checkCNPJOrCPF(obj(idx).Table.x0000.CNPJ{1}, 'NumberValidation');
@@ -425,10 +434,11 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function checkFileFlag = checkFileStatus(obj, receitaFederalObj, encodingList)
+        function checkFileFlag = checkFileStatus(obj, receitaFederalObj, checkType, encodingList)
             arguments
                 obj
                 receitaFederalObj ws.ReceitaFederal
+                checkType char {mustBeMember(checkType, {'OnlyCache', 'Cache+RealTime', 'RealTime'})} = 'Cache+RealTime'
                 encodingList cell = {'ISO-8859-1', 'UTF-8', 'windows-1251', 'windows-1252'}
             end
 
@@ -438,11 +448,13 @@ classdef ECD < model.ECDBase
 
             % Se o registro for resultado da mesclagem de fluxos, ou se o 
             % registro já tiver sido validado na base da Receita Federal,
-            % então não é feita uma nova requisição à API.
+            % então não é feita uma nova requisição à API. Exceto se for
+            % passado como "checkType" o valor "RealTime", quando então é
+            % forçada uma nova consulta.
             checkFileFlag = false;
 
             for ii = 1:numel(obj)
-                if obj(ii).PeriodMerged || any(ismember([obj(ii).Sources.validationStatus], [-1, 1]))
+                if obj(ii).PeriodMerged || (any(ismember([obj(ii).Sources.validationStatus], [-1, 1])) && ~strcmp(checkType, 'RealTime'))
                     continue
                 end
 
@@ -470,7 +482,7 @@ classdef ECD < model.ECDBase
                         obj(ii).Sources(index).hash = fileHash;
                     end
 
-                    [validationMessage, validationStatus]    = Get(receitaFederalObj, 'Cache+RealTime', 'ECD', fileHash);
+                    [validationMessage, validationStatus]    = Get(receitaFederalObj, checkType, 'ECD', fileHash);
                     obj(ii).Sources(index).validationMessage = validationMessage;
                     obj(ii).Sources(index).validationStatus  = validationStatus;
 

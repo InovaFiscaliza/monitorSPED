@@ -1,0 +1,543 @@
+|0000|LECD|01012019|31122019|MAVNET TECNOLOGIA DE INFORMACAO EIRELI EPP|26894989000118|SP|796539988110|3518800|290116||0|1|0||0|0||N|N|0|0|2|
+|0001|0|
+|0007|00||
+|0990|4|
+|I001|0|
+|I010|G|8.00|
+|I030|TERMO DE ABERTURA|3|DI¡RIO|468|MAVNET TECNOLOGIA DE INFORMACAO EIRELI EPP|35601722204|26894989000118|18012017||GUARULHOS|31122019|
+|I050|02012019|01|S|1|1.0.0.00.0000||A T I V O|
+|I050|02012019|01|S|2|1.1.0.00.0000|1.0.0.00.0000|ATIVO CIRCULANTE|
+|I050|02012019|01|S|3|1.1.1.00.0000|1.1.0.00.0000|DISPONIBILIDADES|
+|I050|02012019|01|S|4|1.1.1.01.0000|1.1.1.00.0000|BENS NUMERARIOS|
+|I050|02012019|01|A|5|1.1.1.01.1001|1.1.1.01.0000|CAIXA|
+|I051||1.01.01.01.01|
+|I052||1.1.1.01.1001|
+|I050|02012019|02|S|1|2.0.0.00.0000||P A S S I V O|
+|I050|02012019|02|S|2|2.1.0.00.0000|2.0.0.00.0000|PASSIVO CIRCULANTE|
+|I050|02012019|02|S|3|2.1.1.00.0000|2.1.0.00.0000|OBRIGA«’ES A PAGAR|
+|I050|02012019|02|S|4|2.1.1.09.0000|2.1.1.00.0000|OBRIGA«’ES FISCAIS A RECOLHER|
+|I050|02012019|02|A|5|2.1.1.09.2410|2.1.1.09.0000|SIMPLES A PAGAR|
+|I051||2.01.01.09.28|
+|I052||2.1.1.09.2410|
+|I050|02012019|02|A|5|2.1.1.09.2413|2.1.1.09.0000|PIS A RECOLHER|
+|I051||2.01.01.09.04|
+|I052||2.1.1.09.2413|
+|I050|02012019|02|A|5|2.1.1.09.2414|2.1.1.09.0000|COFINS A RECOLHER|
+|I051||2.01.01.09.05|
+|I052||2.1.1.09.2414|
+|I050|02012019|02|A|5|2.1.1.09.2415|2.1.1.09.0000|IRPJ A RECOLHER|
+|I051||2.01.01.09.28|
+|I052||2.1.1.09.2415|
+|I050|02012019|02|A|5|2.1.1.09.2416|2.1.1.09.0000|CSSL A RECOLHER|
+|I051||2.01.01.09.28|
+|I052||2.1.1.09.2416|
+|I050|02012019|02|S|2|2.2.0.00.0000|2.0.0.00.0000|PASSIVO N√O CIRCULANTE|
+|I050|02012019|02|S|3|2.2.1.00.0000|2.2.0.00.0000|OBRIGA«’ES A LONGO PRAZO|
+|I050|02012019|02|S|4|2.2.1.10.0000|2.2.1.00.0000|OBRIGA«OES FISCAIS LONGO PRAZO|
+|I050|02012019|02|A|5|2.2.1.10.2600|2.2.1.10.0000|SIMPLES A RECOLHER|
+|I051||2.02.01.10.28|
+|I052||2.2.1.10.2600|
+|I050|02012019|02|S|2|2.3.0.00.0000|2.0.0.00.0000|PATRIMONIO LIQUIDO|
+|I050|02012019|02|S|3|2.3.1.00.0000|2.3.0.00.0000|CAPITAL SOCIAL|
+|I050|02012019|02|S|4|2.3.1.01.0000|2.3.1.00.0000|CAPITAL REALIZADO|
+|I050|02012019|02|A|5|2.3.1.01.2791|2.3.1.01.0000|CAPITAL SUBSCRITO|
+|I051||2.03.01.01.01|
+|I052||2.3.1.01.2791|
+|I050|02012019|02|S|3|2.3.4.00.0000|2.3.0.00.0000|OUTRAS CONTA DO PATRIMONIO|
+|I050|02012019|02|S|4|2.3.4.01.0000|2.3.4.00.0000|LUCROS / PREJUIZOS ACUMULADOS|
+|I050|02012019|02|A|5|2.3.4.01.2833|2.3.4.01.0000|LUCRO / PREJUIZO DO EXERCICIO|
+|I051||2.03.04.01.01|
+|I052||2.3.4.01.2833|
+|I050|02012019|04|S|1|3.0.0.00.0000||RESULTADO LIQUIDO DO EXERCICIO|
+|I050|02012019|04|S|2|3.1.0.00.0000|3.0.0.00.0000|RESULTADO LIQUIDO DO PERIODO|
+|I050|02012019|04|S|3|3.1.1.00.0000|3.1.0.00.0000|RESULTADO OPERACIONAL|
+|I050|02012019|04|S|4|3.1.1.01.0000|3.1.1.00.0000|RECEITA BRUTA|
+|I050|02012019|04|A|5|3.1.1.01.3006|3.1.1.01.0000|REC. DE PRESTA«√O DE SERVI«OS|
+|I051||3.01.01.01.01.06|
+|I052||3.1.1.01.3006|
+|I050|02012019|04|S|4|3.1.1.02.0000|3.1.1.00.0000|DEDU«OES DA RECEITA BRUTA|
+|I050|02012019|04|A|5|3.1.1.02.3053|3.1.1.02.0000|(-) COFINS|
+|I051||3.01.01.01.02.04|
+|I052||3.1.1.02.3053|
+|I050|02012019|04|A|5|3.1.1.02.3054|3.1.1.02.0000|(-) PIS|
+|I051||3.01.01.01.02.05|
+|I052||3.1.1.02.3054|
+|I050|02012019|04|A|5|3.1.1.02.3056|3.1.1.02.0000|(-) I.R.P.JURIDICA|
+|I051||3.01.01.01.02.09|
+|I052||3.1.1.02.3056|
+|I050|02012019|04|A|5|3.1.1.02.3057|3.1.1.02.0000|(-) CONSTR.SOCIAL S/LUCRO|
+|I051||3.01.01.01.02.09|
+|I052||3.1.1.02.3057|
+|I050|02012019|04|A|5|3.1.1.02.3058|3.1.1.02.0000|(-) SIMPLES NACIONAL|
+|I051||3.01.01.01.02.09|
+|I052||3.1.1.02.3058|
+|I050|02012019|04|S|4|3.1.1.09.0000|3.1.1.00.0000|OUTRAS DESPESAS OPERACIONAIS|
+|I050|02012019|04|A|5|3.1.1.09.3302|3.1.1.09.0000|(-) DESPESAS FINANCEIRAS|
+|I051||3.01.01.09.01.08|
+|I052||3.1.1.09.3302|
+|I050|02012019|04|A|5|3.1.1.09.3304|3.1.1.09.0000|(-) DESPESAS INDEDUTIVEIS|
+|I051||3.01.01.09.01.99|
+|I052||3.1.1.09.3304|
+|I050|02012019|09|S|1|5.0.0.00.0000||RESULTADO DO EXERCICIO|
+|I050|02012019|09|S|2|5.1.0.00.0000|5.0.0.00.0000|RESULTADO DO EXERCICIO|
+|I050|02012019|09|S|3|5.1.1.00.0000|5.1.0.00.0000|RESULTADO DO EXERCICIO|
+|I050|02012019|09|S|4|5.1.1.01.0000|5.1.1.00.0000|RESULTADO DO EXERCICIO|
+|I050|02012019|09|A|5|5.1.1.01.5001|5.1.1.01.0000|RESULTADO DO EXERCICIO|
+|I051||3.01.01.09.01.99|
+|I052||5.1.1.01.5001|
+|I075|0002|VLR. SIMPLE DO MES A RECOLHER|
+|I075|0003|VLR. COFINS DO MES A RECOLHER|
+|I075|0006|VLR.PIS DO MES A RECOLHER|
+|I075|0009|VLR.ICMS DO MES A RECOLHER|
+|I075|0012|VLR. IPI DO MES A RECOLHER|
+|I075|0013|VLR. ISS DO MES A RECOLHER|
+|I075|0014|VLR.ISS RETIDO DE TERCEIRO S/NF|
+|I075|0015|VLR. I.RENDA RETIDO S/NF|
+|I075|0016|VLR. PIS/COFINS/CSSL RETIDO S/ NF|
+|I075|0017|VLR. INSS RETIDO S/NF|
+|I075|0018|VLR. IRPJ A RECOLHER DO MES|
+|I075|0019|VLR. CSSL A RECOLHER DO MES|
+|I075|0020|VLR. PIS RETIDO S/ NF|
+|I075|0021|VLR. COFINS RETIDO S/NF|
+|I075|0022|VLR.IRRF RETIDO S/ NF|
+|I075|0023|VLR. CSSL RETIDO S/NF|
+|I075|0024|COMPRA MERCADORIA CONF.NF. N∫|
+|I075|0025|COMPRAS MERCADORIA ST CF.NF. N∫|
+|I075|0028|ICMS S/COMPRAS MERC. CF NF.N∫|
+|I075|0029|IPI S/COMPRAS MERC. CF NF.N∫|
+|I075|0030|PIS S/COMPRAS MERC. CN NF. N∫|
+|I075|0031|COFINS S/ COMPRAS MERC. CF NF. N∫|
+|I075|0032|COMPRAS DE MAT.PRIMA CF NF N∫|
+|I075|0033|COMPRAS MAT.PRIMA ST CF NF N∫|
+|I075|0034|ICMS S/COMPRA MAT.PRIMA CF NF N∫|
+|I075|0035|IPI S/COMPRAS MAT.PRIMA CF NF N∫|
+|I075|0036|COFINS S/COMPRA DE MAT.PRIMA CF NF N∫|
+|I075|0037|PIS S/COMPRAS DE MAT.PRIMA CF NF N∫|
+|I075|0038|ICMS S/COMPRA MAT.PRIMA NO MES|
+|I075|0039|IPI S/COMPRAS MAT.PRIMA NO MES|
+|I075|0040|PIS S/COMPRAS MAT.PRIMA NO MES|
+|I075|0041|COFINS S/CONPRAS MAT. PRIMA MO MES|
+|I075|0042|VLR ICMS S/ COMPRAS MERC, DO MES|
+|I075|0043|VLR. IPI S/COMPIRAS MERC. DO MES|
+|I075|0044|VLR. PIS S/COMPRAS MERC. DO MES|
+|I075|0045|VLR.COFINS S/ COMRAS MERC. DO MES|
+|I075|0046|SERVI«OS PRESTADO CF. NF. N∫|
+|I075|0047|ISS RETIDO S/SERV. PRESTADOS CF NF. N∫|
+|I075|0048|VLR. ISS RETIDO S/NF.|
+|I075|0049|DEVOLU«√O DE COMPRAS MERC. NF.|
+|I075|0051|ICMS S/DEV. COMPRAS MERC. NF.|
+|I075|0052|IPI S/DEV. COMPRAS MERC. NF.|
+|I075|0053|DEVOLU«√O DE COMPRAS MAT.PRIMA NF.|
+|I075|0054|ICMS S/DEV.COMPRAS MAT.PRIMA NF.|
+|I075|0055|IPI S/DEV.COMPRAS MAT.PRIMA NF.|
+|I075|0056|DEVOLU«√O DE VENDAS NF.|
+|I075|0057|ICMS S/DEV.VENDAS NF.|
+|I075|0058|IPI S/DEV. DE VENDAS NF.|
+|I075|0059|SERVI«OS TOMADOS CF.NF.N.|
+|I075|0060|COMPRAS CF.NF.N.|
+|I075|0061|VENDA DE MERCADORIAS CF.NF.N.|
+|I075|0062|SIMPLES S/FATURAMENTO NO MES|
+|I075|0063|CUSTO DAS MERCADORIAS VENDIDAS|
+|I075|0064|VENDA DE PRODUTOS CF.NF.N.|
+|I075|0065|ICMS S/VENDAS MERCADORIAS|
+|I075|0066|BENEFICIAMENTO CF.NF.N.|
+|I075|0067|BONIFICA«√O/DOA«√O OU BRINDES CF.NF.N.|
+|I075|0099|XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX|
+|I075|0101|VLR.SALARIOS E ORDENADOS FOLHA MES|
+|I075|0102|VLR. 13∫ FOLHA MES|
+|I075|0103|VLR. FERIAS + 1/3 FOLHA MES|
+|I075|0104|VLR. INDENIZA«’ES FOLHA MES|
+|I075|0105|VLR. PRO LABORE FOLHA MES|
+|I075|0106|VLR. HORAS EXTRAS FOLHA MES|
+|I075|0107|VLR. ADICIONAIS FOLHA MES|
+|I075|0108|VLR.PROVIS√O DE FERIAS MES|
+|I075|0109|VLR.PROVIS√O INSS S/PROV.FERIAS|
+|I075|0110|VLR. PROV. FGTS S/PROV. FERIAS|
+|I075|0111|VLR. INSS RETIDO PRO LABORE MES|
+|I075|0112|VLR. PROVIS√O 13∫ SAL. MES|
+|I075|0113|VLR. PROVIS√O INSS S/PROV.13∫ SAL DO MES|
+|I075|0114|VLR.PROVIS√O FGTS S/PROV.13∫ SAL. DO MES|
+|I075|0115|VLR.INSS DESC.FUNCIONARIOS CONF.FOHA|
+|I075|0116|CONTRIB. INSS S/FOLHA MES|
+|I075|0117|CONTRIB. FGTS S/FOLHA MES|
+|I075|0118|VLR. INSS S/DESONERA«√O|
+|I075|0119|VLR. DESC.SINDICAIS FOLHA MES|
+|I075|0120|VLR. IRRF S/FOLHA MES|
+|I075|0121|VLR.DESCONTO ASSIST.MEDICA FOLHA MES|
+|I075|0122|VLR.DESCONTO VALE TRANSPORTE FOLHA MES|
+|I075|0123|VLR.DESCONTO VALE REFEI«√O/CESTA BASICA CF.FL|
+|I075|0124|VLR. AUXILIO CRECHE FOLHA MES FOLHA MES|
+|I075|0125|VALE TRANSPORTE CF.FL.MES|
+|I075|0126|CESTA BASICA CF.FL.MES|
+|I075|0127|VLR.INSS RECUPERADO NO MES|
+|I075|0128|SALARIO MATERNIDADE CF.FL.MES|
+|I075|0129|VLR.INSS ¿ RECUPERAR CF.FL.|
+|I075|0130|VLR.IRRF S/PRO-LABORE|
+|I075|0131|SALARIO FAMILIA CF.FL.|
+|I075|0132|VALE REFEI«√O CF.FL.MES|
+|I075|0133|VLR DESCONTO FALTAS MES|
+|I075|0134|VLR DESCONTO ADIANTAMENTO MES|
+|I075|0135|INSUFICIENCIA DE SALDO CF.FL.|
+|I075|0136|IRRF S/FERIAS|
+|I075|0137|AUXILIO SAUDE CF.FL.MES|
+|I075|0199|XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX|
+|I075|0200|PGTO PIS/COFINS/CSSL REF.|
+|I075|0201|PAGTO COFINS REF.|
+|I075|0202|PAGTO. PIS REF.|
+|I075|0203|PAGTO. DAS SIMPLES REF.|
+|I075|0204|PAGTO. ICMS REF.|
+|I075|0205|PAGTO. IPI REF.|
+|I075|0206|PAGTO. IRPJ REF.|
+|I075|0207|PAGTO. CSSL REF.|
+|I075|0208|PAGTO. ISS REF.|
+|I075|0209|PAGTO. IRRF REF.|
+|I075|0210|PAGTO. IRRF S/TERCEIROS REF.|
+|I075|0211|PAGTO. SALARIO REF.|
+|I075|0212|PAGTO. FGTS REF.|
+|I075|0213|PAGTO. INSS REF.|
+|I075|0214|PAGTO. PENS√O ALIMENTICIA REF|
+|I075|0215|PAGTO. CONTR.SINDICAIS REF.|
+|I075|0216|PAGTO.  NF N∫|
+|I075|0217|N/PAGTO.DESPESAS DIVERSAS|
+|I075|0218|PAGTO PRO-LABORE REF.|
+|I075|0219|PAGTO|
+|I075|0220|PAGTO CONTA DE AGUA REF.|
+|I075|0221|PAGTO CONTA DE TELEFONE REF.|
+|I075|0222|PAGTO CONTA DE LUZ REF.|
+|I075|0223|PAGTO MULTA E JUROS S/|
+|I075|0224|PGTO RESCISAO REF.|
+|I075|0299|XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX|
+|I075|0300|RECEBIMENTO DE CLIENTES|
+|I075|0301|VLR. JUROS S/DUPL|
+|I075|0302|VLR. DESPESAS BANCARIA CONF.EXTRATO|
+|I075|0303|VLR. REF. JUROS S/DESCONTO DUPLS|
+|I075|0304|VLR. APLICA«’ES FINANCEIRAS|
+|I075|0305|VLR. RESGATE APLICA«’ES FINANCEIRAS|
+|I075|0306|VLR. RENDIMENTO APLICA«’E FINANCEIRAS|
+|I075|0307|VLR. IRRF S/APLICA«’ES FINANCEIRAS|
+|I075|0308|DEBITO EM CONTA|
+|I075|0309|DESPESAS BANCARIAS|
+|I075|0310|RECEBIMENTO NF.N.|
+|I075|0311|SUPRIMENTO DE CAIXA|
+|I075|0312|TRANSFERENCIA ENTRE CONTAS|
+|I075|0313|DESCONTO DE DUPLICATAS|
+|I075|0314|JUROS S/|
+|I075|0315|BAIXA DUPL.DESCONTADA|
+|I075|0316|CREDITO EM CONTA|
+|I075|0400|XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX|
+|I075|0401|DEPRECIA«√O DO MES - VEICULOS|
+|I075|0402|DEPRECIA«√O DO MES - MOVEIS E UTENSILIOS|
+|I075|0403|DEPRECIA«√O DO MES - INSTALA«’ES|
+|I075|0404|DEPRECIA«√O DO MES - COMPUT.E PERIF.|
+|I075|0405|DEPRECIA«√O DO MES - MAQS.E EQUIP.|
+|I075|0406|DEPRECIA«√O DO MES - OUTRAS IMOBILIZA«’ES|
+|I150|01012019|31012019|
+|I155|1.1.1.01.1001||203876,01|D|0|0|203876,01|D|
+|I155|2.1.1.09.2410||2577,55|C|3876,01|3876,01|2577,55|C|
+|I155|2.2.1.10.2600||0|C|4738,81|4738,81|0|C|
+|I155|2.3.1.01.2791||200000|C|0|0|200000|C|
+|I155|2.3.4.01.2833||1298,46|C|0|0|1298,46|C|
+|I155|3.1.1.09.3302||0|D|862,8|862,8|0|D|
+|I150|01022019|28022019|
+|I155|1.1.1.01.1001||203876,01|D|0|0|203876,01|D|
+|I155|2.1.1.09.2410||2577,55|C|0|0|2577,55|C|
+|I155|2.3.1.01.2791||200000|C|0|0|200000|C|
+|I155|2.3.4.01.2833||1298,46|C|0|0|1298,46|C|
+|I150|01032019|31032019|
+|I155|1.1.1.01.1001||203876,01|D|0|0|203876,01|D|
+|I155|2.1.1.09.2410||2577,55|C|0|0|2577,55|C|
+|I155|2.3.1.01.2791||200000|C|0|0|200000|C|
+|I155|2.3.4.01.2833||1298,46|C|0|0|1298,46|C|
+|I150|01042019|30042019|
+|I155|1.1.1.01.1001||203876,01|D|0|0|203876,01|D|
+|I155|2.1.1.09.2410||2577,55|C|0|0|2577,55|C|
+|I155|2.3.1.01.2791||200000|C|0|0|200000|C|
+|I155|2.3.4.01.2833||1298,46|C|0|0|1298,46|C|
+|I150|01052019|31052019|
+|I155|1.1.1.01.1001||203876,01|D|0|0|203876,01|D|
+|I155|2.1.1.09.2410||2577,55|C|0|0|2577,55|C|
+|I155|2.3.1.01.2791||200000|C|0|0|200000|C|
+|I155|2.3.4.01.2833||1298,46|C|0|0|1298,46|C|
+|I150|01062019|30062019|
+|I155|1.1.1.01.1001||203876,01|D|0|0|203876,01|D|
+|I155|2.1.1.09.2410||2577,55|C|0|0|2577,55|C|
+|I155|2.3.1.01.2791||200000|C|0|0|200000|C|
+|I155|2.3.4.01.2833||1298,46|C|0|0|1298,46|C|
+|I150|01072019|31072019|
+|I155|1.1.1.01.1001||203876,01|D|0|0|203876,01|D|
+|I155|2.1.1.09.2410||2577,55|C|0|0|2577,55|C|
+|I155|2.3.1.01.2791||200000|C|0|0|200000|C|
+|I155|2.3.4.01.2833||1298,46|C|0|0|1298,46|C|
+|I150|01082019|31082019|
+|I155|1.1.1.01.1001||203876,01|D|0|0|203876,01|D|
+|I155|2.1.1.09.2410||2577,55|C|0|0|2577,55|C|
+|I155|2.3.1.01.2791||200000|C|0|0|200000|C|
+|I155|2.3.4.01.2833||1298,46|C|0|0|1298,46|C|
+|I150|01092019|30092019|
+|I155|1.1.1.01.1001||203876,01|D|0|0|203876,01|D|
+|I155|2.1.1.09.2410||2577,55|C|0|0|2577,55|C|
+|I155|2.3.1.01.2791||200000|C|0|0|200000|C|
+|I155|2.3.4.01.2833||1298,46|C|0|0|1298,46|C|
+|I150|01102019|31102019|
+|I155|1.1.1.01.1001||203876,01|D|0|0|203876,01|D|
+|I155|2.1.1.09.2410||2577,55|C|0|0|2577,55|C|
+|I155|2.3.1.01.2791||200000|C|0|0|200000|C|
+|I155|2.3.4.01.2833||1298,46|C|0|0|1298,46|C|
+|I150|01112019|30112019|
+|I155|1.1.1.01.1001||203876,01|D|38178|0|242054,01|D|
+|I155|2.1.1.09.2410||2577,55|C|2577,55|0|0|C|
+|I155|2.1.1.09.2413||0|C|0|248,15|248,15|C|
+|I155|2.1.1.09.2414||0|C|0|1145,33|1145,33|C|
+|I155|2.1.1.09.2415||0|C|0|1832,54|1832,54|C|
+|I155|2.1.1.09.2416||0|C|0|1099,52|1099,52|C|
+|I155|2.2.1.10.2600||0|C|0|2577,55|2577,55|C|
+|I155|2.3.1.01.2791||200000|C|0|0|200000|C|
+|I155|2.3.4.01.2833||1298,46|C|0|0|1298,46|C|
+|I155|3.1.1.01.3006||0|C|0|38178|38178|C|
+|I155|3.1.1.02.3053||0|D|1145,33|0|1145,33|D|
+|I155|3.1.1.02.3054||0|D|248,15|0|248,15|D|
+|I155|3.1.1.02.3056||0|D|1832,54|0|1832,54|D|
+|I155|3.1.1.02.3057||0|D|1099,52|0|1099,52|D|
+|I150|01122019|31122019|
+|I155|1.1.1.01.1001||242054,01|D|29464,39|0|271518,4|D|
+|I155|2.1.1.09.2413||248,15|C|0|191,51|439,66|C|
+|I155|2.1.1.09.2414||1145,33|C|0|883,93|2029,26|C|
+|I155|2.1.1.09.2415||1832,54|C|0|1414,29|3246,83|C|
+|I155|2.1.1.09.2416||1099,52|C|0|848,57|1948,09|C|
+|I155|2.2.1.10.2600||2577,55|C|0|0|2577,55|C|
+|I155|2.3.1.01.2791||200000|C|0|0|200000|C|
+|I155|2.3.4.01.2833||1298,46|C|0|59978,55|61277,01|C|
+|I155|3.1.1.01.3006||38178|C|67642,39|29464,39|0|C|
+|I155|3.1.1.02.3053||1145,33|D|883,93|2029,26|0|D|
+|I155|3.1.1.02.3054||248,15|D|191,51|439,66|0|D|
+|I155|3.1.1.02.3056||1832,54|D|1414,29|3246,83|0|D|
+|I155|3.1.1.02.3057||1099,52|D|848,57|1948,09|0|D|
+|I155|5.1.1.01.5001||0|D|67642,39|67642,39|0|D|
+|I200|0000000001|02012019|2031,03|N||
+|I250|2.1.1.09.2410||2031,03|D|0000000001-01||VLR. REF. SIMPLES DE 08/2018 - PARCELADO||
+|I250|2.2.1.10.2600||2031,03|C|0000000001-02||VLR. REF. SIMPLES DE 08/2018 - PARCELADO||
+|I200|0000000002|02012019|1844,98|N||
+|I250|2.1.1.09.2410||1844,98|D|0000000002-01||VLR. REF. SIMPLES DE 09/2018 - PARCELADO||
+|I250|2.2.1.10.2600||1844,98|C|0000000002-02||VLR. REF. SIMPLES DE 09/2018 - PARCELADO||
+|I200|0000000003|02012019|862,8|N||
+|I250|3.1.1.09.3302||862,8|D|0000000003-01||VLR. REF.JUROS E MULTA S/PARCELAMENTO DO SIMPLES||
+|I250|2.2.1.10.2600||862,8|C|0000000003-02||VLR. REF.JUROS E MULTA S/PARCELAMENTO DO SIMPLES||
+|I200|0000000004|31012019|1844,98|N||
+|I250|2.2.1.10.2600||1844,98|D|0000000004-01||ESTORNO PARCELAMENTO SIMPLES - PRIMEIRA PARCELA NAO PAGA||
+|I250|2.1.1.09.2410||1844,98|C|0000000004-02||ESTORNO PARCELAMENTO SIMPLES - PRIMEIRA PARCELA NAO PAGA||
+|I200|0000000005|31012019|862,8|N||
+|I250|2.2.1.10.2600||862,8|D|0000000005-01||ESTORNO PARCELAMENTO SIMPLES - PRIMEIRA PARCELA NAO PAGA||
+|I250|3.1.1.09.3302||862,8|C|0000000005-02||ESTORNO PARCELAMENTO SIMPLES - PRIMEIRA PARCELA NAO PAGA||
+|I200|0000000006|31012019|2031,03|N||
+|I250|2.2.1.10.2600||2031,03|D|0000000006-01||ESTORNO PARCELAMENTO SIMPLES - PRIMEIRA PARCELA NAO PAGA||
+|I250|2.1.1.09.2410||2031,03|C|0000000006-02||ESTORNO PARCELAMENTO SIMPLES - PRIMEIRA PARCELA NAO PAGA||
+|I200|0000000007|01112019|2577,55|N||
+|I250|2.1.1.09.2410||2577,55|D|0000000007-01||TRANSF.P/DIVIDA ATIVA - SIMPLES REF. 08 E 09/2018||
+|I250|2.2.1.10.2600||2577,55|C|0000000007-02||TRANSF.P/DIVIDA ATIVA - SIMPLES REF. 08 E 09/2018||
+|I200|0000000008|08112019|38178|N||
+|I250|1.1.1.01.1001||38178|D|0000000008-01|0046|NFS: 3 TELE PERFORMANCE TELECOMUNICA«’ES LTDA||
+|I250|3.1.1.01.3006||38178|C|0000000008-02|0046|NFS: 3 TELE PERFORMANCE TELECOMUNICA«’ES LTDA||
+|I200|0000000009|30112019|248,15|N||
+|I250|3.1.1.02.3054||248,15|D|0000000009-01|0006|PIS||
+|I250|2.1.1.09.2413||248,15|C|0000000009-02|0006|PIS||
+|I200|0000000010|30112019|1145,33|N||
+|I250|3.1.1.02.3053||1145,33|D|0000000010-01|0003|COFINS||
+|I250|2.1.1.09.2414||1145,33|C|0000000010-02|0003|COFINS||
+|I200|0000000011|30112019|1832,54|N||
+|I250|3.1.1.02.3056||1832,54|D|0000000011-01|0018|||
+|I250|2.1.1.09.2415||1832,54|C|0000000011-02|0018|||
+|I200|0000000012|30112019|1099,52|N||
+|I250|3.1.1.02.3057||1099,52|D|0000000012-01|0019|||
+|I250|2.1.1.09.2416||1099,52|C|0000000012-02|0019|||
+|I200|0000000013|01122019|1414,29|N||
+|I250|3.1.1.02.3056||1414,29|D|0000000013-01|0018|12/2019||
+|I250|2.1.1.09.2415||1414,29|C|0000000013-02|0018|12/2019||
+|I200|0000000014|02122019|29464,39|N||
+|I250|1.1.1.01.1001||29464,39|D|0000000014-01|0046|NFS: 4 TELE PERFORMANCE TELECOMUNICA«’ES LTDA||
+|I250|3.1.1.01.3006||29464,39|C|0000000014-02|0046|NFS: 4 TELE PERFORMANCE TELECOMUNICA«’ES LTDA||
+|I200|0000000015|31122019|191,51|N||
+|I250|3.1.1.02.3054||191,51|D|0000000015-01|0006|PIS||
+|I250|2.1.1.09.2413||191,51|C|0000000015-02|0006|PIS||
+|I200|0000000016|31122019|883,93|N||
+|I250|3.1.1.02.3053||883,93|D|0000000016-01|0003|COFINS||
+|I250|2.1.1.09.2414||883,93|C|0000000016-02|0003|COFINS||
+|I200|0000000017|31122019|848,57|N||
+|I250|3.1.1.02.3057||848,57|D|0000000017-01|0019|12/2019||
+|I250|2.1.1.09.2416||848,57|C|0000000017-02|0019|12/2019||
+|I200|0000000018|31122019|67642,39|E||
+|I250|3.1.1.01.3006||67642,39|D|0000000018-01||TRANSFER NCIA PARA APURA«√O DE RESULTADOS||
+|I250|5.1.1.01.5001||67642,39|C|0000000018-02||TRANSFER NCIA PARA APURA«√O DE RESULTADOS||
+|I200|0000000019|31122019|2029,26|E||
+|I250|5.1.1.01.5001||2029,26|D|0000000019-01||TRANSFER NCIA PARA APURA«√O DE RESULTADOS||
+|I250|3.1.1.02.3053||2029,26|C|0000000019-02||TRANSFER NCIA PARA APURA«√O DE RESULTADOS||
+|I200|0000000020|31122019|439,66|E||
+|I250|5.1.1.01.5001||439,66|D|0000000020-01||TRANSFER NCIA PARA APURA«√O DE RESULTADOS||
+|I250|3.1.1.02.3054||439,66|C|0000000020-02||TRANSFER NCIA PARA APURA«√O DE RESULTADOS||
+|I200|0000000021|31122019|3246,83|E||
+|I250|5.1.1.01.5001||3246,83|D|0000000021-01||TRANSFER NCIA PARA APURA«√O DE RESULTADOS||
+|I250|3.1.1.02.3056||3246,83|C|0000000021-02||TRANSFER NCIA PARA APURA«√O DE RESULTADOS||
+|I200|0000000022|31122019|1948,09|E||
+|I250|5.1.1.01.5001||1948,09|D|0000000022-01||TRANSFER NCIA PARA APURA«√O DE RESULTADOS||
+|I250|3.1.1.02.3057||1948,09|C|0000000022-02||TRANSFER NCIA PARA APURA«√O DE RESULTADOS||
+|I200|0000000023|31122019|59978,55|E||
+|I250|5.1.1.01.5001||59978,55|D|0000000023-01||TRANSFER NCIA PARA APURA«√O DE RESULTADOS||
+|I250|2.3.4.01.2833||59978,55|C|0000000023-02||TRANSFER NCIA PARA APURA«√O DE RESULTADOS||
+|I350|31122019|
+|I355|3.1.1.01.3006||67642,39|C|
+|I355|3.1.1.02.3053||2029,26|D|
+|I355|3.1.1.02.3054||439,66|D|
+|I355|3.1.1.02.3056||3246,83|D|
+|I355|3.1.1.02.3057||1948,09|D|
+|I990|387|
+|J001|0|
+|J005|01012019|31122019|1|DEMONSTRA«’ES CONT¡BEIS|
+|J100|1.0.0.00.0000|T|1||A|A T I V O|203876,01|D|271518,4|D||
+|J100|1.1.0.00.0000|T|2|1.0.0.00.0000|A|ATIVO CIRCULANTE|203876,01|D|271518,4|D||
+|J100|1.1.1.00.0000|T|3|1.1.0.00.0000|A|DISPONIBILIDADES|203876,01|D|271518,4|D||
+|J100|1.1.1.01.0000|T|4|1.1.1.00.0000|A|BENS NUMERARIOS|203876,01|D|271518,4|D||
+|J100|1.1.1.01.1001|D|5|1.1.1.01.0000|A|CAIXA|203876,01|D|271518,4|D||
+|J100|2.0.0.00.0000|T|1||P|P A S S I V O|203876,01|C|271518,4|C||
+|J100|2.1.0.00.0000|T|2|2.0.0.00.0000|P|PASSIVO CIRCULANTE|2577,55|C|7663,84|C||
+|J100|2.1.1.00.0000|T|3|2.1.0.00.0000|P|OBRIGA«’ES A PAGAR|2577,55|C|7663,84|C||
+|J100|2.1.1.09.0000|T|4|2.1.1.00.0000|P|OBRIGA«’ES FISCAIS A RECOLHER|2577,55|C|7663,84|C||
+|J100|2.1.1.09.2410|D|5|2.1.1.09.0000|P|SIMPLES A PAGAR|2577,55|C|0|C||
+|J100|2.1.1.09.2413|D|5|2.1.1.09.0000|P|PIS A RECOLHER|0|C|439,66|C||
+|J100|2.1.1.09.2414|D|5|2.1.1.09.0000|P|COFINS A RECOLHER|0|C|2029,26|C||
+|J100|2.1.1.09.2415|D|5|2.1.1.09.0000|P|IRPJ A RECOLHER|0|C|3246,83|C||
+|J100|2.1.1.09.2416|D|5|2.1.1.09.0000|P|CSSL A RECOLHER|0|C|1948,09|C||
+|J100|2.2.0.00.0000|T|2|2.0.0.00.0000|P|PASSIVO N√O CIRCULANTE|0|C|2577,55|C||
+|J100|2.2.1.00.0000|T|3|2.2.0.00.0000|P|OBRIGA«’ES A LONGO PRAZO|0|C|2577,55|C||
+|J100|2.2.1.10.0000|T|4|2.2.1.00.0000|P|OBRIGA«OES FISCAIS LONGO PRAZO|0|C|2577,55|C||
+|J100|2.2.1.10.2600|D|5|2.2.1.10.0000|P|SIMPLES A RECOLHER|0|C|2577,55|C||
+|J100|2.3.0.00.0000|T|2|2.0.0.00.0000|P|PATRIMONIO LIQUIDO|201298,46|C|261277,01|C||
+|J100|2.3.1.00.0000|T|3|2.3.0.00.0000|P|CAPITAL SOCIAL|200000|C|200000|C||
+|J100|2.3.1.01.0000|T|4|2.3.1.00.0000|P|CAPITAL REALIZADO|200000|C|200000|C||
+|J100|2.3.1.01.2791|D|5|2.3.1.01.0000|P|CAPITAL SUBSCRITO|200000|C|200000|C||
+|J100|2.3.4.00.0000|T|3|2.3.0.00.0000|P|OUTRAS CONTA DO PATRIMONIO|1298,46|C|61277,01|C||
+|J100|2.3.4.01.0000|T|4|2.3.4.00.0000|P|LUCROS / PREJUIZOS ACUMULADOS|1298,46|C|61277,01|C||
+|J100|2.3.4.01.2833|D|5|2.3.4.01.0000|P|LUCRO / PREJUIZO DO EXERCICIO|1298,46|C|61277,01|C||
+|J150|1|3.0.0.00.0000|T|2|Z.0.0.00.0000|RESULTADO LIQUIDO DO EXERCICIO|1298,46|C|59978,55|C|R||
+|J150|2|3.1.0.00.0000|T|3|3.0.0.00.0000|RESULTADO LIQUIDO DO PERIODO|1298,46|C|59978,55|C|R||
+|J150|3|3.1.1.00.0000|T|4|3.1.0.00.0000|RESULTADO OPERACIONAL|1298,46|C|59978,55|C|R||
+|J150|4|3.1.1.01.0000|T|5|3.1.1.00.0000|RECEITA BRUTA|64600,16|C|67642,39|C|R||
+|J150|5|3.1.1.01.3006|D|6|3.1.1.01.0000|REC. DE PRESTA«√O DE SERVI«OS|64600,16|C|67642,39|C|R||
+|J150|6|3.1.1.02.0000|T|5|3.1.1.00.0000|DEDU«OES DA RECEITA BRUTA|2577,55|D|7663,84|D|D||
+|J150|7|3.1.1.02.3053|D|6|3.1.1.02.0000|(-) COFINS|0|D|2029,26|D|R||
+|J150|8|3.1.1.02.3054|D|6|3.1.1.02.0000|(-) PIS|0|D|439,66|D|R||
+|J150|9|3.1.1.02.3056|D|6|3.1.1.02.0000|(-) I.R.P.JURIDICA|0|D|3246,83|D|R||
+|J150|10|3.1.1.02.3057|D|6|3.1.1.02.0000|(-) CONSTR.SOCIAL S/LUCRO|0|D|1948,09|D|R||
+|J150|11|3.1.1.02.3058|D|6|3.1.1.02.0000|(-) SIMPLES NACIONAL|2577,55|D|0|D|D||
+|J150|12|3.1.1.09.0000|T|5|3.1.1.00.0000|OUTRAS DESPESAS OPERACIONAIS|60724,15|D|0|D|D||
+|J150|13|3.1.1.09.3304|D|6|3.1.1.09.0000|(-) DESPESAS INDEDUTIVEIS|60724,15|D|0|D|D||
+|J150|14|Z.0.0.00.0000|T|1||(=) TOTAL DO LUCRO DO PERÕODO|1298,46|C|59978,55|C|R||
+|J900|TERMO DE ENCERRAMENTO|3|DI¡RIO|MAVNET TECNOLOGIA DE INFORMACAO EIRELI EPP|468|01012019|31122019|
+|J930|TIAGO ANGELO ROSSI|30577431889|Contabilista|900|1SP247670/O-3|fiscal@toketeclas.com.br|01120926557|SP|SP/2010/247670|17072019|N|
+|J930|APARECIDO ANGELO ROSSI|83951334800|Procurador|309|||||||S|
+|J990|45|
+|9001|0|
+|9900|0000|1|
+|9900|0001|1|
+|9900|0007|1|
+|9900|0990|1|
+|9900|I001|1|
+|9900|I010|1|
+|9900|I030|1|
+|9900|I050|44|
+|9900|I051|18|
+|9900|I052|18|
+|9900|I075|146|
+|9900|I150|12|
+|9900|I155|70|
+|9900|I200|23|
+|9900|I250|46|
+|9900|I350|1|
+|9900|I355|5|
+|9900|I990|1|
+|9900|J001|1|
+|9900|J005|1|
+|9900|J100|25|
+|9900|J150|14|
+|9900|J900|1|
+|9900|J930|2|
+|9900|J990|1|
+|9900|9001|1|
+|9900|9990|1|
+|9900|9999|1|
+|9900|9900|29|
+|9990|32|
+|9999|468|
+SBRCAAEPDR019000Ä	*ÜHÜ˜†Ä0Ä10	+ 0Ä	*ÜHÜ˜†Ä$Äù<jZR˛»ÈeæŒì‰¸-πö+      †Ä0Ç`0ÇH†0	*ÜHÜ˜ 0Åó10	UBR10U
+
+ICP-Brasil1=0;U4Instituto Nacional de Tecnologia da Informacao - ITI1402U+Autoridade Certificadora Raiz Brasileira v50160720133204Z290302120004Z0Åê10	UBR10U
+
+ICP-Brasil1402U+Autoridade Certificadora Raiz Brasileira v51604U-AC Secretaria da Receita Federal do Brasil v40Ç"0	*ÜHÜ˜ Ç 0Ç
+Ç ù`w™ /`-ÂıµqT˝À€#D9RcØÙûπ+˘lM !œ‰R:T”.QÔÇL?ÇJã{™æ√≤ücü¡S.pÆ~£÷∆€íÄ¯ ‘»›a‘∫'üœ˙ ¶ˇáÁ3Ï¬=…©LóhÆ€Ãﬁ@ëÕœ4U3EΩ˛QªXg◊äp@{k•òù} ˙*˚Íè´NÄ=8®ı%íÑf	ã8Èë—·5@?”	]ˆN$äS≠ﬁÁ∞D˛ƒ(Ãå<ç=ÍÉµ`ñHüÓˆb-'+)&7óng	opTﬂ*CAºòúLXgµó∆ÔO|ët|Ö@≤‹ì‡´2TÉñÇ?+⁄ñ}◊|â~ÜÃDÏ•Û’˘ï‰v˜»3¿8MŸBâ\yüÌqs®‰‡–yxtÆKÕ(4Ì∂™(o∆0Wïg@VD›fée3ëPæn41r/`–¿;f§ –Ì
+’ã]¸∞≈åz]¥≤%¸∑fŒÖ«sQ‚P<DN ê√éx⁄ú¥S„ÛÂj≤•òrìÀË•–èÍÊ÷#Ø#÷S¨’„A8HîïàÛsñçÀÊ"æ>ﬂˆ<ÁI‹Í=u›îMK◊ÒØ†°7‡é‹ªXYÄ˝rP™ˆ3¿tÿ™°Óı¿9•1Û˜’&xl¬°¡Ä#¯®¡√*	[Reàøu@‰˜<ˆzò˚í>Ì £Åª0Å∏0UòÊC ›íûôcEZ*Èá Õ50Uˇ0ˇ0Uˇ0U 00	`L0 0?U80604†2†0Ü.http://acraiz.icpbrasil.gov.br/LCRacraizv5.crl0U#0Äi®æuŸƒÔlÁE‰anÂh¯∂@^0	*ÜHÜ˜ Ç kB‡È5õvs©∏Ã}>G>æænMﬁÊóå_<˚?#‡Md˝C£ì«˝∫õ™Ω¨ÍÂÎˇ@&ó¨ã ei?4ﬂºÎóxq±ûƒLv1⁄ò‰≥ª•óÆãe$‰süüπâä5Ö<∏ÈF €√◊tæy©9cäX¯.ÁçT¬ò≠¶ıZ5°JŒ˝}n¡PZv
+
+˛/ytSç6T£ˇˇ±ØOnJ∑$"u–DÙ‘iÅI:Ìä∑ù˚<‹ènêOHcAOP∞WoõÖL~XﬂÎ^"Èáœø.‡É»küâïÛË´∫Å±~˚rÃ2pCJ^πj˙¿ÿ∏¸ÜJ€}x•î3OÓß,‰é £€Z•ÔÕ^≤rKtG“›=f‹≈˛'ËD˜ceîí–QπÔÙ›
+’b‹∆àå_È˜pfo˛6≈˘˝1ø[°"p.k6IN)‹>41LCVƒ“P†“vª<gÃ™væ[öô∂Ü˛#Àîå•"ÄáZÛ÷ê1NÔ›˙ÍY-Ì Aétå7}I@≠Á∆7êyq‚πŸº∑≥6ù0lïbR$_5ñÍ|ç{∆SaD≥∏B	∆aﬁñ[{ÉÕY-ñ(ü€óE◊¿/z¨Ê–:∞?≥·/f∫i¨·ﬁîbê±˛∏ØHèù~°xáãDèqÁL¥0Ç°0Çâ†0	*ÜHÜ˜ 0Åó10	UBR10U
+
+ICP-Brasil1=0;U4Instituto Nacional de Tecnologia da Informacao - ITI1402U+Autoridade Certificadora Raiz Brasileira v50160302130138Z290302235938Z0Åó10	UBR10U
+
+ICP-Brasil1=0;U4Instituto Nacional de Tecnologia da Informacao - ITI1402U+Autoridade Certificadora Raiz Brasileira v50Ç"0	*ÜHÜ˜ Ç 0Ç
+Ç ˜-xmE¨Ë_˙`‡ﬁe‰®Lüìu^Ö€«Ìˇå$ø¢ÏXGA)ãh]†≈$3_›tåó' ®Nwá`	v1√æä≠,¢ï‰%&(¨—ÙÌa2Z…ÁΩ"∞®ØR‹“˙3\*C∂ÆgOc"áf◊.«kí_ßmˆ1óôªæ4‰Lƒ∫è«ﬂéasl”√îõï›\ª6©=Rk2^îı¬∆Œ]
+≈¯Ì.W	ãbF-Ò≥BﬂÉNÚ¯koÇÔí6¡bàÉX√Ôo≥ßjÙa:)ò£É6i4≠(≤;"nU”ﬁ#ûÀÈ•ôÙ”I<ûDîﬂµLa§Ü˝zshnëº}à'€öN‚õhF*4 Ò·˙·Sÿ°-™t¶œm›Ò1ÕŸ Ë`™rŸM®A5AIˇaz:|™7Œù›”b√∂`X§ΩS˜’ ¬ u¢∂`.·~,äiå1q1øãÕYÆ,L˚§2%ˆ/Í{∏Åƒ≈6I%N†6úBÊ}≥»œ}∫‘w∏`Yêﬂõ√wäé/(ï}ÎˇüIØ}<>(ƒwÁ~>Qö¢3K»ÿ]í'¶‚a#W •„˘ËFπÿπH'∆j∞ùÒÃuÆ›i W>!2™◊ËÃmàƒÎÑQàh `÷R:@∏è0{Ë€Ú{ÇÓ~§\®∂Ìm«À6¶ £Åı0ÅÚ0NU G0E0C`L 0:08+,http://acraiz.icpbrasil.gov.br/DPCacraiz.pdf0?U80604†2†0Ü.http://acraiz.icpbrasil.gov.br/LCRacraizv5.crl0U#0Äi®æuŸƒÔlÁE‰anÂh¯∂@^0Ui®æuŸƒÔlÁE‰anÂh¯∂@^0Uˇ0ˇ0Uˇ0	*ÜHÜ˜ Ç m€ÚbY™^∫?¶XQ‡¸röSßÚ^gëtùWi˘ò¶^`ÍîhêZ»D¡W/!!ñ
+9‘ç9"|Çs‘›ÈE„ñ√ÄI7?-Ø 0◊éTX±≥ù?Nfƒˇ”ÓõaMÇ…‘nΩt•˚
+˝LÚRÙnÈÜKû·	ö¿dÏùÙÃÓí!k0ËóËfMßA.t£òÚ‘rNì&3y~ÁœH-ÔÓ‘âR§Í£ú˚ÆÉg$G1Äc,˘^È[9ŒR¿˛Ÿ>(ˇ‹ï∂Íw¯az˘¶tó%.øjYñ\:ÓMò≤Î¢’n—ÒM\j˙(Ø_ªé)8v£òÀ\≠◊Óøœ¬}êTh√ëwEd.ë{F}x~ ô‘H,¿˙‚¯$˚G lØëµ¢∫Y.≤⁄N)Dï¿Ûº¨ACØ©÷¿G∞ºç¡ÿì.+aŸ8ªßY¶ˇ4´pùÏñ‡„ö≥•±mÑﬂUÓﬁØ2wK.¸«Ñm{!Ôc,≥–F˝-L¨Ggµkﬂ=NØûÉ‡bÛÜ;P≥ã!Ñ≤î.@á‚çïÇ]`B‚ñ;ÖzÚ±VÒØ„æ≠º±∂>À(–éhÜô¡qÄkÖo>≤&”õj6ª;Cˇ(cÆzÎâ\a∏†	<è˚X;`}_|Ëâê5L∂ Õ“¸n~MuE¸P√W÷¡·SqıRö0ÇÕ0Çµ†*Eäe i'G¨ W0	*ÜHÜ˜ 0x10	UBR10U
+
+ICP-Brasil1604U-Secretaria da Receita Federal do Brasil - RFB10UAC Certisign RFB G50180615135350Z210614135350Z0ÅŸ10	UBR10U
+
+ICP-Brasil1604U-Secretaria da Receita Federal do Brasil - RFB10URFB e-CPF A310U(EM BRANCO)1'0%UAutenticado por AR Master Plus1'0%UTIAGO ANGELO ROSSI:305774318890Ç"0	*ÜHÜ˜ Ç 0Ç
+Ç œ‹d4üm§¢@wπIw¸`á›,≥*à˙≤‡D‚∞µ›RÎ’°î‡‘◊AY·ˆmı∫ÇphhIn’«ª›·z—è”UµÇ§∫Èå¶Dè(á2±µz≥ÈV˚ÇC÷'”3·0ÑîßùÒ
+7‘Ã¿Í*˝}¥1-†D“4˜XÔ•Ã&‚©Ú>¯*ñ≠]›«w8Á∑Jÿ ∞ ÏpW»RNÛå∑Õ;ÕïíÒÎ‚gL+z%êÚlÅ˚Å∆~®	îïIgÆhÛr∫HK7)ÆZè¬Ã–,˚k√CÏß#'Ì¨d	ôpXR˛3‘m'Ω+—„hsú»d0hò3 £ÇÔ0ÇÎ0ÅûUÅñ0Åì†=`L†42190319843057743188900000000000000000042604659SSPSP†`L†000000000000†`L†0000000000000000000Åtiago_arossi@yahoo.com.br0	U0 0U#0ÄS}ùæ—a– ∫⁄ü„âßsXÕB0U x0v0t`L0j0h+\http://icp-brasil.certisign.com.br/repositorio/dpc/AC_Certisign_RFB/DPC_AC_Certisign_RFB.pdf0ÅºUÅ¥0Å±0W†U†SÜQhttp://icp-brasil.certisign.com.br/repositorio/lcr/ACCertisignRFBG5/LatestCRL.crl0V†T†RÜPhttp://icp-brasil.outralcr.com.br/repositorio/lcr/ACCertisignRFBG5/LatestCRL.crl0Uˇ‡0U%0++0Å¨+Åü0Åú0_+0ÜShttp://icp-brasil.certisign.com.br/repositorio/certificados/AC_Certisign_RFB_G5.p7c09+0Ü-http://ocsp-ac-certisign-rfb.certisign.com.br0	*ÜHÜ˜ Ç X#Q„ÙØ‘ZkRv≤z
+~ÅF™ˇjÒËÎ|{üH¢8úÜÂ~+üÙKﬁ8A\'‚≥:ãûÕ%#‹âôñ '$FÑZpÙ_±@zñp[ÿ
+ˇ$›1OV7 mjS=å¬ä^≈‘Çı]hí˝¥ã7«ª±∫Œnπty"]Œhj'‡æy“!úøT¿„˙ü>Øå[§SØΩ¡hTi2uÚ8@m√JÿÕ€¨ÿs6‰øé‹)Ê0hªìù≤%åUGXâ∆∑áéuÉÕŒG^õ2ígµ@"Éº{Œpu∆àÈVQÑHuñ:rÃÒ£≠ıf„‘mÆ‹∆©ÏÂf~—vµÀSÄeó˙/1.ß“ßâìÔbYÑu¯‡&\8W%;s{§√X%A=® ÙZ¯µCwîùı ˛Ô‘÷?—Tq%≤è≥i_≤•Õ…ì`.¬°.x]—v˚ÏΩ»Õ˙ÛòAµ©5(u»5ä¶•†çãäô3˚`ò˙>#TK^	rr+Åtì˚Z˛[(ÃøNv¥Ìå√ômü˘[ÔTwî£ÚVΩ="XØ≥áuÑÜå˝Ôê†Uõ5∏XZ∫ 2‘p—0C è}·òÉkvÍΩy‡@Ü√IÏZ*˜}≥ˆØ∆7‡wQﬁÔˆñ˚]~õk≤Z^’KG\„eo‰"79B”Uîg•T0Ç)0Ç†0	*ÜHÜ˜ 0Åê10	UBR10U
+
+ICP-Brasil1402U+Autoridade Certificadora Raiz Brasileira v51604U-AC Secretaria da Receita Federal do Brasil v40161208174403Z290220174403Z0x10	UBR10U
+
+ICP-Brasil1604U-Secretaria da Receita Federal do Brasil - RFB10UAC Certisign RFB G50Ç"0	*ÜHÜ˜ Ç 0Ç
+Ç ¿N≥’'‹£}Œ1-d	äm¿vã&Å]ä6L¶Î4ÒïƒFÿ˝≈jh°`d„8Õ0Ê∏°„É∫”˘z¥.7R≥ïÕ§Bs[√ÁZ÷kÆFUÚe”ÏÄ;†≈◊l”éß˜¶GŒ±xã≈MË¶M2√îqeßﬁ6ì{ŸdÃ√ç>r=G˛OË¯õCßùõa*s"ñÛ••oïÖùóßÁ¥YIº,	¬GLÍNV◊F£z∑Ω”(#+Ω=)P„˝∑c¸›iüCQÇÿJËwâπ,§¯Òv≠·°ƒñŒF®K-¡#æ∏TÜ¥-Ì¸’9X≤˝‡"bë‚øçÙ÷#¶˚*÷:‹È%÷„9á¥+hõ`I}7&πAB–·Oón∆"g1ã†f»òæØ∏®‡k)ctû{-Ë›='8ym#‹îvè¥^√x◊∆=9Cä-ztw€õO∑;lû;=∂6˜3^ûQ–™Rı¸y'=ﬂv%¯∏œE’Æ®ı# Åk¡Í—ôdk¡¨Ê“°q:)·œZ+åäƒµ¶	ù#G«7À‘./ÊD£@∞)0[› %§) ©XS»©JÊ`Zø_P{¿øÉsS#é«êèbﬂ7(” d¥Hå€ÁÄªπêÓêÒU≠õªM{aO}…Z‚mf˛KºlÕ‡Æìb ÒΩ3fyîá`∏‚∆	Üw £Ç£0Çü0ÅıU ÅÌ0ÅÍ0L`L0B0@+4http://www.receita.fazenda.gov.br/acrfb/dpcacrfb.pdf0L`L0B0@+4http://www.receita.fazenda.gov.br/acrfb/dpcacrfb.pdf0L`L0B0@+4http://www.receita.fazenda.gov.br/acrfb/dpcacrfb.pdf0DU=0;09†7†5Ü3http://www.receita.fazenda.gov.br/acrfb/acrfbv4.crl0U#0ÄòÊC ›íûôcEZ*Èá Õ50US}ùæ—a– ∫⁄ü„âßsXÕB0Uˇ0ˇ0Uˇ0	*ÜHÜ˜ Ç n*MLHO◊3ãmP1p>6Ì7Ã?Œï¶≤hS‚Yª®Ñ‚∂§MxBIW‘¢'Ó ®é?§\ÄD¿/r£œ§|„7¿ÓÇº<óZè‰ê≥SD.ÏŸ)Pë–E⁄%é ÷Ñ„˘:•ö±Ü≈«“ÌK‘r4™n©›å52Ó°2¸*hZÛ¯TÓ©nSêPä£¬u@GÓ*˝™lÃ\Ÿ‰’±∑pÒªäóA∫π§Â—nÒƒ‘‘Zø\ µ(
+Ã% :”7Ó°˝∏éc…:Úˇƒ⁄Ó ÂÃˇ[ZYåÒF‹∂‚f†
+.dø{OäùN#≤w ı2∂˜*≤ËÊÕí}¬Ñ÷;Ã!ùP@¸j2èœ‡ä›5#Tò–@÷‰‚f‰≥;Ó7<ÎÄŒë<§HãÍæG—Pµı{$”o<k ÆÈ8N≈*a}°G∞¿@q+Úºàr◊--»ˇï}m` @åi	_&W rGÉ¨RyTIæ%`Afnüw€¬	GSÒg=õ‹¿3?ÑÔ≈O⁄,úµﬁäè625ëΩhÁ–lõƒp≈˛?e—=ÚêÁ¬{a'«2°9O©^Ìt_@“b&f/‚±JÑ€n'π ˆ∏ãÒ 7,îÎ·™mëÄò;≠C€Ω]ƒÜ%é$>‘f‘f[JZU¯∂#´Å≈  1ÇD0Ç@0Åå0x10	UBR10U
+
+ICP-Brasil1604U-Secretaria da Receita Federal do Brasil - RFB10UAC Certisign RFB G5*Eäe i'G¨ W0	+ †Åç0	*ÜHÜ˜	1	*ÜHÜ˜0	*ÜHÜ˜	1200702195236Z0#	*ÜHÜ˜	1Õ‹Ø⁄:~W 3VµfxWº∞ÁQ0.
++Ç7X1 | 1 | 7 . 0 . 4 | 8 0 0 1 | 4 0	*ÜHÜ˜ Ç ˚LΩU“ﬂ~kM	ª5ñ˝¶*}º‡‹¢ÄÙS-ÙáAû‡Z~@ƒŸXòŒwŒ°W¨◊e£Jn±HJﬁf–GîÙ˜)s©ˇöoÌÓn;vF“‘ö.ÕºÆÄN¬Åëqf%˝S¢á)$ñ8ﬂß[Ú·rØF*b)Ô_ÍÄ“Ñÿ†›Ö—Gõà©gqÙÂJOªÏ≤/t˘˜ÉÓ¨ß:&∫ÖCTÚh«â£S€µáREÉffhòÜ$Å›ä©î˛e‰<Ú§/+¿M!"ÌÉÜXËrÈƒñŒµqº7ÓÈ;Ò Nód∏Í≥7∆eÑ∑xrÒ8U∏Û∞ÉLΩh      SBRCAAEPDR023090Ä	*ÜHÜ˜†Ä0Ä10	+ 0Ä	*ÜHÜ˜†Ä$Äù<jZR˛»ÈeæŒì‰¸-πö+      †Ä0Ç`0ÇH†0	*ÜHÜ˜ 0Åó10	UBR10U
+
+ICP-Brasil1=0;U4Instituto Nacional de Tecnologia da Informacao - ITI1402U+Autoridade Certificadora Raiz Brasileira v50160720133204Z290302120004Z0Åê10	UBR10U
+
+ICP-Brasil1402U+Autoridade Certificadora Raiz Brasileira v51604U-AC Secretaria da Receita Federal do Brasil v40Ç"0	*ÜHÜ˜ Ç 0Ç
+Ç ù`w™ /`-ÂıµqT˝À€#D9RcØÙûπ+˘lM !œ‰R:T”.QÔÇL?ÇJã{™æ√≤ücü¡S.pÆ~£÷∆€íÄ¯ ‘»›a‘∫'üœ˙ ¶ˇáÁ3Ï¬=…©LóhÆ€Ãﬁ@ëÕœ4U3EΩ˛QªXg◊äp@{k•òù} ˙*˚Íè´NÄ=8®ı%íÑf	ã8Èë—·5@?”	]ˆN$äS≠ﬁÁ∞D˛ƒ(Ãå<ç=ÍÉµ`ñHüÓˆb-'+)&7óng	opTﬂ*CAºòúLXgµó∆ÔO|ët|Ö@≤‹ì‡´2TÉñÇ?+⁄ñ}◊|â~ÜÃDÏ•Û’˘ï‰v˜»3¿8MŸBâ\yüÌqs®‰‡–yxtÆKÕ(4Ì∂™(o∆0Wïg@VD›fée3ëPæn41r/`–¿;f§ –Ì
+’ã]¸∞≈åz]¥≤%¸∑fŒÖ«sQ‚P<DN ê√éx⁄ú¥S„ÛÂj≤•òrìÀË•–èÍÊ÷#Ø#÷S¨’„A8HîïàÛsñçÀÊ"æ>ﬂˆ<ÁI‹Í=u›îMK◊ÒØ†°7‡é‹ªXYÄ˝rP™ˆ3¿tÿ™°Óı¿9•1Û˜’&xl¬°¡Ä#¯®¡√*	[Reàøu@‰˜<ˆzò˚í>Ì £Åª0Å∏0UòÊC ›íûôcEZ*Èá Õ50Uˇ0ˇ0Uˇ0U 00	`L0 0?U80604†2†0Ü.http://acraiz.icpbrasil.gov.br/LCRacraizv5.crl0U#0Äi®æuŸƒÔlÁE‰anÂh¯∂@^0	*ÜHÜ˜ Ç kB‡È5õvs©∏Ã}>G>æænMﬁÊóå_<˚?#‡Md˝C£ì«˝∫õ™Ω¨ÍÂÎˇ@&ó¨ã ei?4ﬂºÎóxq±ûƒLv1⁄ò‰≥ª•óÆãe$‰süüπâä5Ö<∏ÈF €√◊tæy©9cäX¯.ÁçT¬ò≠¶ıZ5°JŒ˝}n¡PZv
+
+˛/ytSç6T£ˇˇ±ØOnJ∑$"u–DÙ‘iÅI:Ìä∑ù˚<‹ènêOHcAOP∞WoõÖL~XﬂÎ^"Èáœø.‡É»küâïÛË´∫Å±~˚rÃ2pCJ^πj˙¿ÿ∏¸ÜJ€}x•î3OÓß,‰é £€Z•ÔÕ^≤rKtG“›=f‹≈˛'ËD˜ceîí–QπÔÙ›
+’b‹∆àå_È˜pfo˛6≈˘˝1ø[°"p.k6IN)‹>41LCVƒ“P†“vª<gÃ™væ[öô∂Ü˛#Àîå•"ÄáZÛ÷ê1NÔ›˙ÍY-Ì Aétå7}I@≠Á∆7êyq‚πŸº∑≥6ù0lïbR$_5ñÍ|ç{∆SaD≥∏B	∆aﬁñ[{ÉÕY-ñ(ü€óE◊¿/z¨Ê–:∞?≥·/f∫i¨·ﬁîbê±˛∏ØHèù~°xáãDèqÁL¥0Ç°0Çâ†0	*ÜHÜ˜ 0Åó10	UBR10U
+
+ICP-Brasil1=0;U4Instituto Nacional de Tecnologia da Informacao - ITI1402U+Autoridade Certificadora Raiz Brasileira v50160302130138Z290302235938Z0Åó10	UBR10U
+
+ICP-Brasil1=0;U4Instituto Nacional de Tecnologia da Informacao - ITI1402U+Autoridade Certificadora Raiz Brasileira v50Ç"0	*ÜHÜ˜ Ç 0Ç
+Ç ˜-xmE¨Ë_˙`‡ﬁe‰®Lüìu^Ö€«Ìˇå$ø¢ÏXGA)ãh]†≈$3_›tåó' ®Nwá`	v1√æä≠,¢ï‰%&(¨—ÙÌa2Z…ÁΩ"∞®ØR‹“˙3\*C∂ÆgOc"áf◊.«kí_ßmˆ1óôªæ4‰Lƒ∫è«ﬂéasl”√îõï›\ª6©=Rk2^îı¬∆Œ]
+≈¯Ì.W	ãbF-Ò≥BﬂÉNÚ¯koÇÔí6¡bàÉX√Ôo≥ßjÙa:)ò£É6i4≠(≤;"nU”ﬁ#ûÀÈ•ôÙ”I<ûDîﬂµLa§Ü˝zshnëº}à'€öN‚õhF*4 Ò·˙·Sÿ°-™t¶œm›Ò1ÕŸ Ë`™rŸM®A5AIˇaz:|™7Œù›”b√∂`X§ΩS˜’ ¬ u¢∂`.·~,äiå1q1øãÕYÆ,L˚§2%ˆ/Í{∏Åƒ≈6I%N†6úBÊ}≥»œ}∫‘w∏`Yêﬂõ√wäé/(ï}ÎˇüIØ}<>(ƒwÁ~>Qö¢3K»ÿ]í'¶‚a#W •„˘ËFπÿπH'∆j∞ùÒÃuÆ›i W>!2™◊ËÃmàƒÎÑQàh `÷R:@∏è0{Ë€Ú{ÇÓ~§\®∂Ìm«À6¶ £Åı0ÅÚ0NU G0E0C`L 0:08+,http://acraiz.icpbrasil.gov.br/DPCacraiz.pdf0?U80604†2†0Ü.http://acraiz.icpbrasil.gov.br/LCRacraizv5.crl0U#0Äi®æuŸƒÔlÁE‰anÂh¯∂@^0Ui®æuŸƒÔlÁE‰anÂh¯∂@^0Uˇ0ˇ0Uˇ0	*ÜHÜ˜ Ç m€ÚbY™^∫?¶XQ‡¸röSßÚ^gëtùWi˘ò¶^`ÍîhêZ»D¡W/!!ñ
+9‘ç9"|Çs‘›ÈE„ñ√ÄI7?-Ø 0◊éTX±≥ù?Nfƒˇ”ÓõaMÇ…‘nΩt•˚
+˝LÚRÙnÈÜKû·	ö¿dÏùÙÃÓí!k0ËóËfMßA.t£òÚ‘rNì&3y~ÁœH-ÔÓ‘âR§Í£ú˚ÆÉg$G1Äc,˘^È[9ŒR¿˛Ÿ>(ˇ‹ï∂Íw¯az˘¶tó%.øjYñ\:ÓMò≤Î¢’n—ÒM\j˙(Ø_ªé)8v£òÀ\≠◊Óøœ¬}êTh√ëwEd.ë{F}x~ ô‘H,¿˙‚¯$˚G lØëµ¢∫Y.≤⁄N)Dï¿Ûº¨ACØ©÷¿G∞ºç¡ÿì.+aŸ8ªßY¶ˇ4´pùÏñ‡„ö≥•±mÑﬂUÓﬁØ2wK.¸«Ñm{!Ôc,≥–F˝-L¨Ggµkﬂ=NØûÉ‡bÛÜ;P≥ã!Ñ≤î.@á‚çïÇ]`B‚ñ;ÖzÚ±VÒØ„æ≠º±∂>À(–éhÜô¡qÄkÖo>≤&”õj6ª;Cˇ(cÆzÎâ\a∏†	<è˚X;`}_|Ëâê5L∂ Õ“¸n~MuE¸P√W÷¡·SqıRö0ÇÕ0Çµ†=§0pª≤Du6ds’T6C0	*ÜHÜ˜ 0x10	UBR10U
+
+ICP-Brasil1604U-Secretaria da Receita Federal do Brasil - RFB10UAC Certisign RFB G50180521133421Z210520133421Z0Å÷10	UBR10U
+
+ICP-Brasil1604U-Secretaria da Receita Federal do Brasil - RFB10URFB e-CPF A310U(EM BRANCO)1 0UAutenticado por AR ACSP1+0)U"APARECIDO ANGELO ROSSI:839513348000Ç"0	*ÜHÜ˜ Ç 0Ç
+Ç ï^ìSı”£¸ÓUë›ÌºõX‡4]Êli“ëdvKÉüöÎèœƒ˚€™¢A~îOW∏≥ìÍ∑¢ˆÅ‰ÚÍ9è<¸c÷∑Çﬂrƒ¯Í`∆¡Á8‚àÚ'z‹Ô-Ttπ“’6Õ,¨|º÷Ög
+ø/vŒE^ÒàD∂öU«¯'\P%j¨œâΩ;«™G¯òà#˛™∂–ã.πFU‡oœ£8¬R¸‘fAÑ&GÙxiÀ#X∏öÅÛR√µ;RÜ©èîî—˛¬úöŸªY¿úXOæ¨ﬁ	A^£KñÃ≥˙ãeîº•(2›c=]˝‹ˇ„“˛Ù|¢jn’ x÷êv È4ì› £ÇÚ0ÇÓ0Å°UÅô0Åñ†=`L†42231219548395133480000000000000000000011237149SSPSP†`L†000000000000†`L†0000000000000000000Åtoketeclas@toketeclas.com.br0	U0 0U#0ÄS}ùæ—a– ∫⁄ü„âßsXÕB0U x0v0t`L0j0h+\http://icp-brasil.certisign.com.br/repositorio/dpc/AC_Certisign_RFB/DPC_AC_Certisign_RFB.pdf0ÅºUÅ¥0Å±0W†U†SÜQhttp://icp-brasil.certisign.com.br/repositorio/lcr/ACCertisignRFBG5/LatestCRL.crl0V†T†RÜPhttp://icp-brasil.outralcr.com.br/repositorio/lcr/ACCertisignRFBG5/LatestCRL.crl0Uˇ‡0U%0++0Å¨+Åü0Åú0_+0ÜShttp://icp-brasil.certisign.com.br/repositorio/certificados/AC_Certisign_RFB_G5.p7c09+0Ü-http://ocsp-ac-certisign-rfb.certisign.com.br0	*ÜHÜ˜ Ç e_
+©]s˘º£ñ®|´4ÁËml 7H∞ÀK€≤F‡£®¶ŒFÅ´ﬂçÕìπ∂⁄J'zyNU∫ïì†ƒh#ÄX˚ÑW™ﬁ©¨≤ü=4i(∞U!/#ˇ∫[SuVÒÏ{YfÛf∞uÏ\Ex¶√∫⁄^n≠„q∫ñ·€ïF%èÃl–fÁ|ÀY}•+Huƒ(ë≈ê˙„FÄ8ß˙&hÂû«’y´âπí§˛’Ù•®6%;Äû
+fd_u%8ƒÙJa¡‰S”N¨V-~ç~¬çT‚-¸©„ø˚Ò•ú)≥Üôê4õÔî°‘¸ΩJ≈«n˜ÜΩ¯AÂ©j™tîÖŸHX+$eà‹L∑G;<Wﬂ˛&ÑÉ¸'‹b0¬~ÖSæxü¨ˆz[˚¢˛Ú5@bnË{Uõqô Ó¢Ôu∫k#tÇük63@hÌ8Û¸˛È	Æı;≠˛JDZ≤[öÃ©cSè‘DJŒ›Pó˝™
+' >hÈîÄäu≈∫á\∂'Å¿ÕÀı¥;äò∏ò,0XΩﬂ{»axÕQ¿H´’î†äÄ¢”û 0µUO—ˆ“≥^
+T2úÒ⁄˛€"≈ﬁJ”Îâ'˜p∆[á:u¬Ã’∏°≥˘5ºÅnéxŸ?$páÉ$AˆÙ]É*ìE¡≥—£§ŒyøÕΩ7g
+Éj¨í8(>∫”˘{é0Ç)0Ç†0	*ÜHÜ˜ 0Åê10	UBR10U
+
+ICP-Brasil1402U+Autoridade Certificadora Raiz Brasileira v51604U-AC Secretaria da Receita Federal do Brasil v40161208174403Z290220174403Z0x10	UBR10U
+
+ICP-Brasil1604U-Secretaria da Receita Federal do Brasil - RFB10UAC Certisign RFB G50Ç"0	*ÜHÜ˜ Ç 0Ç
+Ç ¿N≥’'‹£}Œ1-d	äm¿vã&Å]ä6L¶Î4ÒïƒFÿ˝≈jh°`d„8Õ0Ê∏°„É∫”˘z¥.7R≥ïÕ§Bs[√ÁZ÷kÆFUÚe”ÏÄ;†≈◊l”éß˜¶GŒ±xã≈MË¶M2√îqeßﬁ6ì{ŸdÃ√ç>r=G˛OË¯õCßùõa*s"ñÛ••oïÖùóßÁ¥YIº,	¬GLÍNV◊F£z∑Ω”(#+Ω=)P„˝∑c¸›iüCQÇÿJËwâπ,§¯Òv≠·°ƒñŒF®K-¡#æ∏TÜ¥-Ì¸’9X≤˝‡"bë‚øçÙ÷#¶˚*÷:‹È%÷„9á¥+hõ`I}7&πAB–·Oón∆"g1ã†f»òæØ∏®‡k)ctû{-Ë›='8ym#‹îvè¥^√x◊∆=9Cä-ztw€õO∑;lû;=∂6˜3^ûQ–™Rı¸y'=ﬂv%¯∏œE’Æ®ı# Åk¡Í—ôdk¡¨Ê“°q:)·œZ+åäƒµ¶	ù#G«7À‘./ÊD£@∞)0[› %§) ©XS»©JÊ`Zø_P{¿øÉsS#é«êèbﬂ7(” d¥Hå€ÁÄªπêÓêÒU≠õªM{aO}…Z‚mf˛KºlÕ‡Æìb ÒΩ3fyîá`∏‚∆	Üw £Ç£0Çü0ÅıU ÅÌ0ÅÍ0L`L0B0@+4http://www.receita.fazenda.gov.br/acrfb/dpcacrfb.pdf0L`L0B0@+4http://www.receita.fazenda.gov.br/acrfb/dpcacrfb.pdf0L`L0B0@+4http://www.receita.fazenda.gov.br/acrfb/dpcacrfb.pdf0DU=0;09†7†5Ü3http://www.receita.fazenda.gov.br/acrfb/acrfbv4.crl0U#0ÄòÊC ›íûôcEZ*Èá Õ50US}ùæ—a– ∫⁄ü„âßsXÕB0Uˇ0ˇ0Uˇ0	*ÜHÜ˜ Ç n*MLHO◊3ãmP1p>6Ì7Ã?Œï¶≤hS‚Yª®Ñ‚∂§MxBIW‘¢'Ó ®é?§\ÄD¿/r£œ§|„7¿ÓÇº<óZè‰ê≥SD.ÏŸ)Pë–E⁄%é ÷Ñ„˘:•ö±Ü≈«“ÌK‘r4™n©›å52Ó°2¸*hZÛ¯TÓ©nSêPä£¬u@GÓ*˝™lÃ\Ÿ‰’±∑pÒªäóA∫π§Â—nÒƒ‘‘Zø\ µ(
+Ã% :”7Ó°˝∏éc…:Úˇƒ⁄Ó ÂÃˇ[ZYåÒF‹∂‚f†
+.dø{OäùN#≤w ı2∂˜*≤ËÊÕí}¬Ñ÷;Ã!ùP@¸j2èœ‡ä›5#Tò–@÷‰‚f‰≥;Ó7<ÎÄŒë<§HãÍæG—Pµı{$”o<k ÆÈ8N≈*a}°G∞¿@q+Úºàr◊--»ˇï}m` @åi	_&W rGÉ¨RyTIæ%`Afnüw€¬	GSÒg=õ‹¿3?ÑÔ≈O⁄,úµﬁäè625ëΩhÁ–lõƒp≈˛?e—=ÚêÁ¬{a'«2°9O©^Ìt_@“b&f/‚±JÑ€n'π ˆ∏ãÒ 7,îÎ·™mëÄò;≠C€Ω]ƒÜ%é$>‘f‘f[JZU¯∂#´Å≈  1ÇD0Ç@0Åå0x10	UBR10U
+
+ICP-Brasil1604U-Secretaria da Receita Federal do Brasil - RFB10UAC Certisign RFB G5=§0pª≤Du6ds’T6C0	+ †Åç0	*ÜHÜ˜	1	*ÜHÜ˜0	*ÜHÜ˜	1200702195342Z0#	*ÜHÜ˜	1Õ‹Ø⁄:~W 3VµfxWº∞ÁQ0.
++Ç7X1 | 1 | 7 . 0 . 4 | 8 0 0 1 | 4 0	*ÜHÜ˜ Ç {¶±∑àı;∏¥JíŒ‡\ééÆ(≈z≤Ò#>‘™∆HYQNçn|¸û¸|û0„}yå^}Õv‹‹o$„t€H%ë∆J¨Rå,9ç0!!À2˝Y+¢v≤vÑJe⁄’$m™{:DÒ2ºX,û\øõ˜`NÜÉ®ñD[◊Ô–“@ΩX/ó}≥=j
+î√KBrı√PÀ|[ÊµcŒ@Ó:7¡ïÒ!K≈}‡∑2’Y;3»FLXQN`∆nÚ‘ÙŸ„µÊ6Cº‘ø0Õ·ô-≈ÜQûª∑_âÈ-cÊjö∑ÎÁ-¿{6Ò@Èà±|&û≠Xâ'÷G7-Îùï~ÔògÀQ%ôÂ      
