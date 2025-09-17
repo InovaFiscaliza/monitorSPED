@@ -22,7 +22,7 @@ classdef winECD_exported < matlab.apps.AppBase
         ASPECTOSGERAISTab           matlab.ui.container.Tab
         GridLayout3                 matlab.ui.container.GridLayout
         Separator1_3                matlab.ui.control.Image
-        SheetViewStatus_3           matlab.ui.control.StateButton
+        SheetViewStatus_3           matlab.ui.control.Button
         tool_OpenRTFFiles           matlab.ui.control.Image
         RowHeightOffsetLabel_3      matlab.ui.control.Label
         tool_ReadAllTables          matlab.ui.control.Image
@@ -481,7 +481,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             app.tool_ReadAllTables.Enable = ~selectedECD.GUI.isRead;
             app.tool_CompanyInfo.Text = sprintf('<font style="font-size: 11px; font-weight: bold;">%s</font> CNPJ %s\n%s', ...
-                selectedECD.CompanyName, selectedECD.CompanyId, strjoin(string(selectedECD.Period), ' a '));
+                upper(selectedECD.CompanyName), selectedECD.CompanyId, strjoin(string(selectedECD.Period), ' a '));
 
             updateSheetList(app)
             app.SheetList.Value        = app.SheetList.Items{1};
@@ -798,10 +798,42 @@ classdef winECD_exported < matlab.apps.AppBase
 
         end
 
-        % Value changed function: SheetViewStatus_3
+        % Button pushed function: SheetViewStatus_3
         function tool_ExportButtonImageClicked(app, event)
             
-            pause(1)
+            fileIndex   = selectedFileIndex(app);
+            selectedECD = app.ecdObj(fileIndex);
+
+            nameFormatMap = {'*.xlsx', 'Excel (*.xlsx)'};
+            defaultName   = appUtil.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'monitorSPED', -1);
+            [fileFullPath, ~, ~, fileName] = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', nameFormatMap, defaultName);
+            if isempty(fileFullPath)
+                return
+            end
+
+            app.progressDialog.Visible = 'visible';
+
+            try
+                tempName = fullfile(app.mainApp.General.fileFolder.userPath, [fileName '.xlsx']);
+                tableIds = setdiff(fieldnames(selectedECD.Table), {'x0000'});
+                
+                writetable(selectedECD.Table.x0000, tempName, "Sheet", "0000", "WriteMode", "replacefile")
+                for ii = 1:numel(tableIds)
+                    tableId = tableIds{ii};                    
+                    writetable(selectedECD.Table.(tableId), tempName, "Sheet", tableId(2:end), "WriteMode", "append")
+                end
+
+                copyfile(tempName, fileFullPath, 'f')
+
+                if ~strcmp(app.mainApp.executionMode, 'webApp')
+                    ccTools.fcn.OperationSystem('openFile', fileFullPath)
+                end
+
+            catch ME
+                appUtil.modalWindow(app.UIFigure, 'warning', getReport(ME));
+            end
+
+            app.progressDialog.Visible = 'hidden';
 
         end
 
@@ -1094,16 +1126,16 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_OpenRTFFiles.ImageSource = 'Publish_PDF_16.png';
 
             % Create SheetViewStatus_3
-            app.SheetViewStatus_3 = uibutton(app.GridLayout3, 'state');
-            app.SheetViewStatus_3.ValueChangedFcn = createCallbackFcn(app, @tool_ExportButtonImageClicked, true);
+            app.SheetViewStatus_3 = uibutton(app.GridLayout3, 'push');
+            app.SheetViewStatus_3.ButtonPushedFcn = createCallbackFcn(app, @tool_ExportButtonImageClicked, true);
             app.SheetViewStatus_3.Icon = 'Export_24.png';
             app.SheetViewStatus_3.IconAlignment = 'top';
-            app.SheetViewStatus_3.Text = 'EXCEL';
             app.SheetViewStatus_3.BackgroundColor = [0.9608 0.9608 0.9608];
             app.SheetViewStatus_3.FontSize = 10;
             app.SheetViewStatus_3.FontColor = [0.129411764705882 0.129411764705882 0.129411764705882];
             app.SheetViewStatus_3.Layout.Row = [1 2];
             app.SheetViewStatus_3.Layout.Column = 9;
+            app.SheetViewStatus_3.Text = 'EXCEL';
 
             % Create Separator1_3
             app.Separator1_3 = uiimage(app.GridLayout3);

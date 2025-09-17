@@ -927,31 +927,25 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             indexes = file_findSelectedNodeData(app);
 
             if ~isempty(indexes)
-                % <VALIDATION>
-                if all([app.ecdObj(indexes).PeriodMerged])
-                    appUtil.modalWindow(app.UIFigure, 'info', 'Consulta à Receita Federal não é aplicável a registro mesclado.');
-                    return
-                end
-
                 if numel(indexes) < numel(app.ecdObj)
                     msgQuestion   = 'Deseja gerar inventário de TODOS os arquivos lidos, ou apenas dos SELECIONADOS?';
-                    userSelection = appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'Todos', 'Selecionados', 'Cancelar'}, 1, 3);
+                    userSelection = appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'TODOS', 'SELECIONADOS', 'CANCELAR'}, 1, 3);
 
                     switch userSelection
-                        case 'Cancelar'
+                        case 'CANCELAR'
                             return
-                        case 'Todos'
+                        case 'TODOS'
                             indexes = 1:numel(app.ecdObj);
                     end
                 end
 
-                % app.progressDialog.Visible = 'visible';
+                app.progressDialog.Visible = 'visible';
 
-                % try
+                try
                     reportLibConnection.Controller.Run(app, app.ecdObj(indexes))
-                % catch ME
-                %     appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));
-                % end
+                catch ME
+                    appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));
+                end
 
                 app.progressDialog.Visible = 'hidden';
             end

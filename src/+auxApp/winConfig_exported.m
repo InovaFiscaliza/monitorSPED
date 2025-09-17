@@ -736,7 +736,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.openDevTools.ScaleMethod = 'none';
             app.openDevTools.ImageClickedFcn = createCallbackFcn(app, @Toolbar_OpenDevToolsClicked, true);
             app.openDevTools.Enable = 'off';
-            app.openDevTools.Tooltip = {'DevTools'};
+            app.openDevTools.Tooltip = {'Abre DevTools'};
             app.openDevTools.Layout.Row = 2;
             app.openDevTools.Layout.Column = 3;
             app.openDevTools.ImageSource = 'Debug_18.png';
@@ -745,6 +745,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.tool_simulationMode = uiimage(app.GridLayout2);
             app.tool_simulationMode.ScaleMethod = 'none';
             app.tool_simulationMode.ImageClickedFcn = createCallbackFcn(app, @Toolbar_SimulationModeButtonPushed, true);
+            app.tool_simulationMode.Tooltip = {'Leitura arquivos de simulação'};
             app.tool_simulationMode.Layout.Row = 2;
             app.tool_simulationMode.Layout.Column = 1;
             app.tool_simulationMode.ImageSource = 'Import_16.png';
