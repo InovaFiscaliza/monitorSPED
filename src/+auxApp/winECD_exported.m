@@ -3,6 +3,7 @@ classdef winECD_exported < matlab.apps.AppBase
     % Properties that correspond to app components
     properties (Access = public)
         UIFigure                    matlab.ui.Figure
+        Panel                       matlab.ui.container.Panel
         GridLayout                  matlab.ui.container.GridLayout
         dockModuleGrid              matlab.ui.container.GridLayout
         dockModule_Undock           matlab.ui.control.Image
@@ -19,7 +20,7 @@ classdef winECD_exported < matlab.apps.AppBase
         UITable1_CountIcon          matlab.ui.control.Image
         UITable1                    matlab.ui.control.Table
         TabGroup                    matlab.ui.container.TabGroup
-        ASPECTOSGERAISTab           matlab.ui.container.Tab
+        Tab1                        matlab.ui.container.Tab
         GridLayout3                 matlab.ui.container.GridLayout
         Separator1_3                matlab.ui.control.Image
         SheetViewStatus_3           matlab.ui.control.Button
@@ -34,7 +35,7 @@ classdef winECD_exported < matlab.apps.AppBase
         TimePeriodListLabel         matlab.ui.control.Label
         CompanyNameList             matlab.ui.control.DropDown
         CompanyNameListLabel        matlab.ui.control.Label
-        LAYOUTTab                   matlab.ui.container.Tab
+        Tab2                        matlab.ui.container.Tab
         GridLayout_2                matlab.ui.container.GridLayout
         FontColor                   matlab.ui.control.ColorPicker
         FontBackground              matlab.ui.control.ColorPicker
@@ -54,7 +55,7 @@ classdef winECD_exported < matlab.apps.AppBase
         SheetHeight_First           matlab.ui.control.Spinner
         SheetView_First             matlab.ui.control.DropDown
         SheetViewStatus             matlab.ui.control.StateButton
-        FILTRAGEMTab                matlab.ui.container.Tab
+        Tab3                        matlab.ui.container.Tab
         GridLayout4                 matlab.ui.container.GridLayout
         filter_SecondaryTextList_2  matlab.ui.control.DropDown
         filter_SecondaryTextList    matlab.ui.control.DropDown
@@ -67,9 +68,9 @@ classdef winECD_exported < matlab.apps.AppBase
         CheckBox                    matlab.ui.control.CheckBox
         DropDown_6                  matlab.ui.control.DropDown
         Image4_3                    matlab.ui.control.Image
-        TABELACUSTOMIZADATab        matlab.ui.container.Tab
+        Tab4                        matlab.ui.container.Tab
         GridLayout5                 matlab.ui.container.GridLayout
-        PROJETOTab                  matlab.ui.container.Tab
+        Tab5                        matlab.ui.container.Tab
         report_Tab2Grid             matlab.ui.container.GridLayout
         report_VersionLabel         matlab.ui.control.Label
         report_Version              matlab.ui.control.DropDown
@@ -202,7 +203,7 @@ classdef winECD_exported < matlab.apps.AppBase
                                 if ~isempty(elDataTag)
                                     appName = class(app);                    
                                     sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
-                                        struct('appName', appName, 'dataTag', elDataTag{1}, 'style', struct('transition', 'opacity 2s ease', 'opacity', '0.5')), ...
+                                        struct('appName', appName, 'dataTag', elDataTag{1}, 'style', struct('transition', 'opacity 2s ease', 'opacity', '0.5')) ...
                                     });
                                 end
                             end
@@ -1010,14 +1011,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.TabGroup.Layout.Row = [3 4];
             app.TabGroup.Layout.Column = [2 14];
 
-            % Create ASPECTOSGERAISTab
-            app.ASPECTOSGERAISTab = uitab(app.TabGroup);
-            app.ASPECTOSGERAISTab.AutoResizeChildren = 'off';
-            app.ASPECTOSGERAISTab.Title = 'ASPECTOS GERAIS';
-            app.ASPECTOSGERAISTab.BackgroundColor = 'none';
+            % Create Tab1
+            app.Tab1 = uitab(app.TabGroup);
+            app.Tab1.AutoResizeChildren = 'off';
+            app.Tab1.Title = 'ASPECTOS GERAIS';
+            app.Tab1.BackgroundColor = 'none';
 
             % Create GridLayout3
-            app.GridLayout3 = uigridlayout(app.ASPECTOSGERAISTab);
+            app.GridLayout3 = uigridlayout(app.Tab1);
             app.GridLayout3.ColumnWidth = {90, 230, 60, 229, 3, 20, 170, 3, 44};
             app.GridLayout3.RowHeight = {22, 22};
             app.GridLayout3.RowSpacing = 5;
@@ -1144,14 +1145,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.Separator1_3.Layout.Column = 8;
             app.Separator1_3.ImageSource = 'LineV.svg';
 
-            % Create LAYOUTTab
-            app.LAYOUTTab = uitab(app.TabGroup);
-            app.LAYOUTTab.AutoResizeChildren = 'off';
-            app.LAYOUTTab.Title = 'LAYOUT';
-            app.LAYOUTTab.BackgroundColor = 'none';
+            % Create Tab2
+            app.Tab2 = uitab(app.TabGroup);
+            app.Tab2.AutoResizeChildren = 'off';
+            app.Tab2.Title = 'LAYOUT';
+            app.Tab2.BackgroundColor = 'none';
 
             % Create GridLayout_2
-            app.GridLayout_2 = uigridlayout(app.LAYOUTTab);
+            app.GridLayout_2 = uigridlayout(app.Tab2);
             app.GridLayout_2.ColumnWidth = {44, 226, 40, 10, 3, 90, 3, 22, 22, 22, 22, 22, 44, 44};
             app.GridLayout_2.RowHeight = {22, 22};
             app.GridLayout_2.RowSpacing = 5;
@@ -1329,14 +1330,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontColor.Layout.Column = 14;
             app.FontColor.BackgroundColor = [1 1 1];
 
-            % Create FILTRAGEMTab
-            app.FILTRAGEMTab = uitab(app.TabGroup);
-            app.FILTRAGEMTab.AutoResizeChildren = 'off';
-            app.FILTRAGEMTab.Title = 'FILTRAGEM';
-            app.FILTRAGEMTab.BackgroundColor = 'none';
+            % Create Tab3
+            app.Tab3 = uitab(app.TabGroup);
+            app.Tab3.AutoResizeChildren = 'off';
+            app.Tab3.Title = 'FILTRAGEM';
+            app.Tab3.BackgroundColor = 'none';
 
             % Create GridLayout4
-            app.GridLayout4 = uigridlayout(app.FILTRAGEMTab);
+            app.GridLayout4 = uigridlayout(app.Tab3);
             app.GridLayout4.ColumnWidth = {14, 40, 206, 40, 285, 3, '1x'};
             app.GridLayout4.RowHeight = {22, 22};
             app.GridLayout4.RowSpacing = 5;
@@ -1436,22 +1437,24 @@ classdef winECD_exported < matlab.apps.AppBase
             app.filter_SecondaryTextList_2.Layout.Column = 5;
             app.filter_SecondaryTextList_2.Value = {};
 
-            % Create TABELACUSTOMIZADATab
-            app.TABELACUSTOMIZADATab = uitab(app.TabGroup);
-            app.TABELACUSTOMIZADATab.Title = 'TABELA CUSTOMIZADA';
-            app.TABELACUSTOMIZADATab.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
+            % Create Tab4
+            app.Tab4 = uitab(app.TabGroup);
+            app.Tab4.AutoResizeChildren = 'off';
+            app.Tab4.Title = 'TABELA CUSTOMIZADA';
+            app.Tab4.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
 
             % Create GridLayout5
-            app.GridLayout5 = uigridlayout(app.TABELACUSTOMIZADATab);
+            app.GridLayout5 = uigridlayout(app.Tab4);
             app.GridLayout5.ColumnWidth = {'1x', '1x', '1x', '1x', '1x', '1x'};
             app.GridLayout5.BackgroundColor = [0.9804 0.9804 0.9804];
 
-            % Create PROJETOTab
-            app.PROJETOTab = uitab(app.TabGroup);
-            app.PROJETOTab.Title = 'PROJETO';
+            % Create Tab5
+            app.Tab5 = uitab(app.TabGroup);
+            app.Tab5.AutoResizeChildren = 'off';
+            app.Tab5.Title = 'PROJETO';
 
             % Create report_Tab2Grid
-            app.report_Tab2Grid = uigridlayout(app.PROJETOTab);
+            app.report_Tab2Grid = uigridlayout(app.Tab5);
             app.report_Tab2Grid.ColumnWidth = {50, '1x', 50, '1x', 70, '1x', 130, '2x', 70, '1x', 16, 16, 16};
             app.report_Tab2Grid.RowHeight = {22, 22};
             app.report_Tab2Grid.RowSpacing = 5;
@@ -1691,7 +1694,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.dockModuleGrid.RowHeight = {'1x'};
             app.dockModuleGrid.ColumnSpacing = 2;
             app.dockModuleGrid.Padding = [5 2 5 2];
-            app.dockModuleGrid.Visible = 'off';
             app.dockModuleGrid.Layout.Row = [2 3];
             app.dockModuleGrid.Layout.Column = [14 15];
             app.dockModuleGrid.BackgroundColor = [0.2 0.2 0.2];
@@ -1716,6 +1718,12 @@ classdef winECD_exported < matlab.apps.AppBase
             app.dockModule_Undock.Layout.Row = 1;
             app.dockModule_Undock.Layout.Column = 1;
             app.dockModule_Undock.ImageSource = 'Undock_18White.png';
+
+            % Create Panel
+            app.Panel = uipanel(app.UIFigure);
+            app.Panel.AutoResizeChildren = 'off';
+            app.Panel.Title = 'Panel';
+            app.Panel.Position = [1253 425 131 175];
 
             % Create filter_ContextMenu
             app.filter_ContextMenu = uicontextmenu(app.UIFigure);

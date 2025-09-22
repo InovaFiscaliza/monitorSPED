@@ -1015,11 +1015,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create TabGroup
             app.TabGroup = uitabgroup(app.GridLayout);
+            app.TabGroup.AutoResizeChildren = 'off';
             app.TabGroup.Layout.Row = [1 2];
             app.TabGroup.Layout.Column = 1;
 
             % Create Tab1_File
             app.Tab1_File = uitab(app.TabGroup);
+            app.Tab1_File.AutoResizeChildren = 'off';
             app.Tab1_File.BackgroundColor = 'none';
             app.Tab1_File.ForegroundColor = [0.129411764705882 0.129411764705882 0.129411764705882];
 
@@ -1179,6 +1181,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create Tab3_Config
             app.Tab3_Config = uitab(app.TabGroup);
+            app.Tab3_Config.AutoResizeChildren = 'off';
             app.Tab3_Config.BackgroundColor = 'none';
             app.Tab3_Config.ForegroundColor = [0.129411764705882 0.129411764705882 0.129411764705882];
 

@@ -11,20 +11,20 @@ classdef winConfig_exported < matlab.apps.AppBase
         tool_simulationMode            matlab.ui.control.Image
         openDevTools                   matlab.ui.control.Image
         TabGroup                       matlab.ui.container.TabGroup
-        ASPECTOSGERAISTab              matlab.ui.container.Tab
+        Tab1                           matlab.ui.container.Tab
         General_Grid                   matlab.ui.container.GridLayout
         versionInfoRefresh             matlab.ui.control.Image
         AMBIENTELabel                  matlab.ui.control.Label
         openAuxiliarApp2Debug          matlab.ui.control.CheckBox
         openAuxiliarAppAsDocked        matlab.ui.control.CheckBox
         versionInfo                    matlab.ui.control.Label
-        ANLISETab                      matlab.ui.container.Tab
+        Tab2                           matlab.ui.container.Tab
         GridLayout_3                   matlab.ui.container.GridLayout
         Panel_2                        matlab.ui.container.Panel
         GridLayout4                    matlab.ui.container.GridLayout
         fontstylefontsize32pxfontTRABALHOEMANDAMENTOLabel  matlab.ui.control.Label
         PROCESSODEANLISEDOSDADOSLabel  matlab.ui.control.Label
-        Panel                          matlab.ui.container.Panel
+        Panel_3                        matlab.ui.container.Panel
         GridLayout3                    matlab.ui.container.GridLayout
         Encoding                       matlab.ui.control.DropDown
         EncodingLabel                  matlab.ui.control.Label
@@ -35,7 +35,7 @@ classdef winConfig_exported < matlab.apps.AppBase
         InputType                      matlab.ui.control.DropDown
         InputTypeLabel                 matlab.ui.control.Label
         PROCESSODELEITURADOSARQUIVOSEVISUALIZAODOSSEUSMETADADOSLabel  matlab.ui.control.Label
-        MAPEAMENTODEPASTASTab          matlab.ui.container.Tab
+        Tab3                           matlab.ui.container.Tab
         FolderMapGrid                  matlab.ui.container.GridLayout
         userPathButton                 matlab.ui.control.Image
         userPath                       matlab.ui.control.EditField
@@ -379,7 +379,9 @@ classdef winConfig_exported < matlab.apps.AppBase
             end
             
             selectedFolder = uigetdir(initialFolder);
-            figure(app.UIFigure)
+            if ~strcmp(app.mainApp.executionMode, 'webApp')
+                figure(app.UIFigure)
+            end
 
             if selectedFolder
                 switch event.Source
@@ -462,14 +464,14 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.TabGroup.Layout.Row = [3 4];
             app.TabGroup.Layout.Column = [2 3];
 
-            % Create ASPECTOSGERAISTab
-            app.ASPECTOSGERAISTab = uitab(app.TabGroup);
-            app.ASPECTOSGERAISTab.AutoResizeChildren = 'off';
-            app.ASPECTOSGERAISTab.Title = 'ASPECTOS GERAIS';
-            app.ASPECTOSGERAISTab.BackgroundColor = 'none';
+            % Create Tab1
+            app.Tab1 = uitab(app.TabGroup);
+            app.Tab1.AutoResizeChildren = 'off';
+            app.Tab1.Title = 'ASPECTOS GERAIS';
+            app.Tab1.BackgroundColor = 'none';
 
             % Create General_Grid
-            app.General_Grid = uigridlayout(app.ASPECTOSGERAISTab);
+            app.General_Grid = uigridlayout(app.Tab1);
             app.General_Grid.ColumnWidth = {'1x', 22};
             app.General_Grid.RowHeight = {17, 150, 22, '1x', 1, 22, 15};
             app.General_Grid.RowSpacing = 5;
@@ -523,14 +525,14 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.versionInfoRefresh.VerticalAlignment = 'bottom';
             app.versionInfoRefresh.ImageSource = 'Refresh_18.png';
 
-            % Create ANLISETab
-            app.ANLISETab = uitab(app.TabGroup);
-            app.ANLISETab.AutoResizeChildren = 'off';
-            app.ANLISETab.Title = 'ANÁLISE';
-            app.ANLISETab.BackgroundColor = 'none';
+            % Create Tab2
+            app.Tab2 = uitab(app.TabGroup);
+            app.Tab2.AutoResizeChildren = 'off';
+            app.Tab2.Title = 'ANÁLISE';
+            app.Tab2.BackgroundColor = 'none';
 
             % Create GridLayout_3
-            app.GridLayout_3 = uigridlayout(app.ANLISETab);
+            app.GridLayout_3 = uigridlayout(app.Tab2);
             app.GridLayout_3.ColumnWidth = {'1x'};
             app.GridLayout_3.RowHeight = {17, 126, 22, '1x'};
             app.GridLayout_3.RowSpacing = 5;
@@ -544,14 +546,15 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.PROCESSODELEITURADOSARQUIVOSEVISUALIZAODOSSEUSMETADADOSLabel.Layout.Column = 1;
             app.PROCESSODELEITURADOSARQUIVOSEVISUALIZAODOSSEUSMETADADOSLabel.Text = 'PROCESSO DE LEITURA DOS ARQUIVOS E VISUALIZAÇÃO DOS SEUS METADADOS';
 
-            % Create Panel
-            app.Panel = uipanel(app.GridLayout_3);
-            app.Panel.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
-            app.Panel.Layout.Row = 2;
-            app.Panel.Layout.Column = 1;
+            % Create Panel_3
+            app.Panel_3 = uipanel(app.GridLayout_3);
+            app.Panel_3.AutoResizeChildren = 'off';
+            app.Panel_3.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
+            app.Panel_3.Layout.Row = 2;
+            app.Panel_3.Layout.Column = 1;
 
             % Create GridLayout3
-            app.GridLayout3 = uigridlayout(app.Panel);
+            app.GridLayout3 = uigridlayout(app.Panel_3);
             app.GridLayout3.ColumnWidth = {150, 220, '1x'};
             app.GridLayout3.RowHeight = {22, 22, 22, 22};
             app.GridLayout3.RowSpacing = 5;
@@ -636,6 +639,7 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create Panel_2
             app.Panel_2 = uipanel(app.GridLayout_3);
+            app.Panel_2.AutoResizeChildren = 'off';
             app.Panel_2.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
             app.Panel_2.Layout.Row = 4;
             app.Panel_2.Layout.Column = 1;
@@ -658,14 +662,14 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.fontstylefontsize32pxfontTRABALHOEMANDAMENTOLabel.Interpreter = 'html';
             app.fontstylefontsize32pxfontTRABALHOEMANDAMENTOLabel.Text = {'<font style="font-size: 32px;">🚧</font>'; ''; 'TRABALHO EM '; 'ANDAMENTO'};
 
-            % Create MAPEAMENTODEPASTASTab
-            app.MAPEAMENTODEPASTASTab = uitab(app.TabGroup);
-            app.MAPEAMENTODEPASTASTab.AutoResizeChildren = 'off';
-            app.MAPEAMENTODEPASTASTab.Title = 'MAPEAMENTO DE PASTAS';
-            app.MAPEAMENTODEPASTASTab.BackgroundColor = 'none';
+            % Create Tab3
+            app.Tab3 = uitab(app.TabGroup);
+            app.Tab3.AutoResizeChildren = 'off';
+            app.Tab3.Title = 'MAPEAMENTO DE PASTAS';
+            app.Tab3.BackgroundColor = 'none';
 
             % Create FolderMapGrid
-            app.FolderMapGrid = uigridlayout(app.MAPEAMENTODEPASTASTab);
+            app.FolderMapGrid = uigridlayout(app.Tab3);
             app.FolderMapGrid.ColumnWidth = {'1x', 20};
             app.FolderMapGrid.RowHeight = {17, 22, 22, 22, '1x'};
             app.FolderMapGrid.ColumnSpacing = 5;

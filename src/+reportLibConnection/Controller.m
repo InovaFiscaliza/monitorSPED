@@ -82,6 +82,12 @@ classdef (Abstract) Controller
                                                    'var_Layout',     'analyzedData.InfoSet.Layout', ...
                                                    'table_Raw',      'reportLibConnection.tableAnalysis.Raw(analyzedData, tableSettings)'));
             
+            fieldsUnnecessary = {'rootFolder', 'entryPointFolder', 'tempSessionFolder', 'ctfRoot'};
+            fieldsUnnecessary(cellfun(@(x) ~isfield(reportInfo.Version.application, x), fieldsUnnecessary)) = [];
+            if ~isempty(fieldsUnnecessary)
+                reportInfo.Version.application = rmfield(reportInfo.Version.application, fieldsUnnecessary);
+            end
+
             % dataOverview
             % Caso dataOverview não seja escalar e exista um item no relatório
             % com recorrência, a própria lib cria a variável "var_Index", acessível 
