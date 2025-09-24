@@ -1,5 +1,5 @@
 {
-    "version": 0.28,
+    "version": 0.29,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -43,10 +43,33 @@
             "value": "CRLF"
         }
     },
-    "ui": {
-        "unit": {
-            "default": "",
-            "options": [
+    "Report": {
+        "system": "eFiscaliza",
+        "issue": -1,
+        "unit": "",
+        "model": "",
+        "reportVersion": "Preliminar",
+        "Basemap": "streets-dark",
+        "Image": {
+            "Format": "jpeg",
+            "Resolution": 120
+        }
+    },
+    "eFiscaliza": {
+        "internal": {
+            "originId": "G",
+            "typeId": "306"
+        },
+        "external": {
+            "originId": "R",
+            "typeId": "63"
+        },
+        "legalBasisId": "33",
+        "accessLevelId": "1",
+        "description": "",
+        "note": "Documento gerado no appAnalise",
+        "defaultValues": {
+            "unit": [
                 "",
                 "GR01", "GR01FI1", "GR01FI2", "GR01FI3",
                 "GR02", "GR02FI1", "GR02FI2", "GR02FI3",
@@ -75,23 +98,7 @@
                 "UO111",
                 "UO112",
                 "UO113"
-            ]
-        }
-    },
-    "eFiscaliza": {
-        "internal": {
-            "originId": "G",
-            "typeId": "306"
-        },
-        "external": {
-            "originId": "R",
-            "typeId": "63"
-        },
-        "legalBasisId": "33",
-        "accessLevelId": "1",
-        "description": "",
-        "note": "Documento gerado no monitorSPED",
-        "defaultValues": {
+            ],
             "servicos_da_inspecao": {
                 "value": [
                     "000 - Não Aplicável"

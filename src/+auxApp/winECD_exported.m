@@ -1727,6 +1727,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create filter_ContextMenu
             app.filter_ContextMenu = uicontextmenu(app.UIFigure);
+            app.filter_ContextMenu.Tag = 'auxApp.winECD';
 
             % Create filter_delButton
             app.filter_delButton = uimenu(app.filter_ContextMenu);

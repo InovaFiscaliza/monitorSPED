@@ -1,54 +1,75 @@
 classdef (Abstract) Controller
 
+    % Trata-se de classe abstrata, cujo método Run cria as variáveis requeridas
+    % pelo biblioteca reportLib, de SupportPackages. São elas:
+    % • reportInfo....: estrutura com os campos obrigatórios "App", "Version", 
+    %   "Path", "Model" e "Function". Campos opcionais podem ser criados.
+
+    % • dataOverview..: lista de estruturas com os campos obrigatórios "ID", 
+    %   "InfoSet" e "HTML". Em "InfoSet", armazena-se um handle para instância 
+    %   da classe model.ECD. As instância desse classe são agrupadas por CNPJ 
+    %   e ordenadas pelo fim do PERÍODO CONTÁBIL.
+
+    % • analyzedData..: instância de dataOverview (imaginando que dataOverview 
+    %   é a variável que possibilita a recorrência).
+
+    % Quando o objeto criado é uma IMAGEM, tem-se:
+    % • imgSettings.: campo extraído do script .JSON que norteia a criação
+    %   do relatório, o qual é uma estrutura com os campos "Origin", "Source", 
+    %   "Caption", "Settings", "Intro", "Error" e "LineBreak".
+    
+    % Quando o objeto criado uma TABELA, tem-se:
+    % • tableSettings.: campo extraído do script .JSON que norteia a criação
+    %   do relatório, o qual é uma estrutura com os campos "Origin", "Source", 
+    %   "Columns", "Caption", "Settings", "Intro", "Error" e "LineBreak".
+
     properties (Constant)
         %-----------------------------------------------------------------%
-        fileName   = 'ReportTemplates.json'
         docVersion = dictionary(["Preliminar", "Definitiva"], ...
             [struct('version', 'preview', 'encoding', 'UTF-8'), struct('version', 'final', 'encoding', 'ISO-8859-1')])
     end
 
     methods (Static)
         %-----------------------------------------------------------------%
-        function [modelFileContent, projectFolder, externalFolder] = Read(rootFolder)
+        function Run(callingApp, projectData, ecdObj, generalSettings)        
+            arguments
+                callingApp
+                projectData
+                ecdObj
+                generalSettings
+            end
+
+            switch class(callingApp)
+                case 'winMonitorSPED'
+                    app = callingApp;
+                case {'auxApp.winECD', ...
+                      'auxApp.winConfig'}
+                    app = callingApp.mainApp;
+                otherwise
+                    error('UnexpectedCaller')
+            end
+
             [projectFolder, ...
-             externalFolder] = appUtil.Path(class.Constants.appName, rootFolder);
-            fileName         = reportLibConnection.Controller.fileName;
+             programDataFolder] = appUtil.Path(class.Constants.appName, app.rootFolder);
         
-            projectFilePath  = fullfile(projectFolder,  fileName);
-            externalFilePath = fullfile(externalFolder, fileName);
+            issueId    = num2str(generalSettings.Report.issue);
+            docName    = generalSettings.Report.model;
+            docIndex   = find(strcmp({projectData.documentModel.Name}, docName), 1);
+            if isempty(docIndex)
+                error('Pendente escolha do modelo de relatório')
+            end
+
+            docType    = projectData.documentModel(docIndex).DocumentType;
+            docVersion = reportLibConnection.Controller.docVersion(generalSettings.Report.reportVersion);
 
             try
-                % !! INSERIDO AQUI APENAS P/ DEBUG, DEPOIS REMOVER !!        
-                % % % % modelFileContent = jsondecode(fileread(externalFilePath));
-                modelFileContent = jsondecode(fileread(projectFilePath));
+                if ~isdeployed()
+                    error('ForceDebugMode')
+                end
+                docScript = jsondecode(fileread(fullfile(programDataFolder, 'ReportTemplates', projectData.documentModel(docIndex).File)));
             catch
-                modelFileContent = jsondecode(fileread(projectFilePath));
-            end        
-        end
-
-        %-----------------------------------------------------------------%
-        function Run(app, ecdObj, issueId, modelNameIndex, reportVersion)        
-            arguments
-                app
-                ecdObj         = app.ecdObj
-                issueId        = -1
-                modelNameIndex = 1
-                reportVersion  = "Preliminar"
+                docScript = jsondecode(fileread(fullfile(projectFolder,     'ReportTemplates', projectData.documentModel(docIndex).File)));
             end
-        
-            [modelFileContent, ...
-             projectFolder,    ...
-             programDataFolder] = reportLibConnection.Controller.Read(app.rootFolder);
-        
-            docIndex   = modelNameIndex;
-            docName    = modelFileContent(docIndex).Name;
-            docType    = modelFileContent(docIndex).DocumentType;
-            
-            % BAGUNCEI AQUI TAMBÉM
-            % % docScript  = jsondecode(fileread(fullfile(programDataFolder, 'ReportTemplates', modelFileContent(docIndex).File)));
-            docScript  = jsondecode(fileread(fullfile(projectFolder, 'ReportTemplates', modelFileContent(docIndex).File)));
-            
-            docVersion = reportLibConnection.Controller.docVersion(reportVersion);
         
             % reportInfo
             % Importante observar que o campo "Function" armazena informações
@@ -56,31 +77,33 @@ classdef (Abstract) Controller
             % e informações específicas, a compor itens com recorrências, como 
             % "Resultados".
             reportInfo = struct('App',      app, ...
-                                'Version',  app.General.AppVersion,  ...
-                                'Path',     struct('rootFolder',     app.rootFolder, ...
-                                                   'userFolder',     app.General.fileFolder.userPath, ...
-                                                   'tempFolder',     app.General.fileFolder.tempPath, ...
-                                                   'appConnection',  projectFolder, ...
-                                                   'appDataFolder',  programDataFolder), ...
-                                'Model',    struct('Name',           docName, ...
-                                                   'DocumentType',   docType, ...
-                                                   'Script',         docScript, ...
-                                                   'Version',        docVersion.version), ...
-                                'Function', struct(...
-                                                   'var_Issue',      num2str(issueId), ...
-                                                   'table_FileStatus', 'reportLibConnection.tableInventory.FileStatus(dataOverview)', ...
-                                                   'table_FileByCompany', 'reportLibConnection.tableInventory.FileByCompany(dataOverview)', ...
-                                                   'table_PeriodByCompany', 'reportLibConnection.tableInventory.PeriodByCompany(dataOverview)', ...
+                                'Version',  app.General.AppVersion,                                              ...
+                                'Path',     struct('rootFolder',            app.rootFolder,                      ...
+                                                   'userFolder',            generalSettings.fileFolder.userPath, ...
+                                                   'tempFolder',            generalSettings.fileFolder.tempPath, ...
+                                                   'appConnection',         projectFolder,                       ...
+                                                   'appDataFolder',         programDataFolder),                  ...
+                                'Model',    struct('Name',                  docName,                             ...
+                                                   'DocumentType',          docType,                             ...
+                                                   'Script',                docScript,                           ...
+                                                   'Version',               docVersion.version),                 ...
+                                'Function', struct('var_Issue',             num2str(issueId),                    ...
+                                                   'table_FileStatus',      'reportLibConnection.Table.FileStatus(dataOverview)',      ...
+                                                   'table_FileByCompany',   'reportLibConnection.Table.FileByCompany(dataOverview)',   ...
+                                                   'table_PeriodByCompany', 'reportLibConnection.Table.PeriodByCompany(dataOverview)', ...
                                                    ... 
-                                                   'var_CompanyName', 'analyzedData.InfoSet.CompanyName', ...
-                                                   'var_CompanyId',  'analyzedData.InfoSet.CompanyId', ...
-                                                   'var_Hash',       'strjoin(unique([analyzedData.Sources.hash], "stable"), ", ")', ...
-                                                   'var_Period',     'strjoin(string(analyzedData.InfoSet.Period), " a ")', ...
-                                                   'var_FileName',   'analyzedData.InfoSet.FileName', ...
-                                                   'var_ReceitaFederal', 'jsonencode(analyzedData.InfoSet.Sources(end).validationMessage)', ...
-                                                   'var_ContentSample', '[strjoin(strtrim(splitlines(analyzedData.InfoSet.Content(1:min(500, numel(analyzedData.InfoSet.Content))))), ''<br>'') ''<br><font style="color: red;">... [texto truncado]</font>'']', ...
-                                                   'var_Layout',     'analyzedData.InfoSet.Layout', ...
-                                                   'table_Raw',      'reportLibConnection.tableAnalysis.Raw(analyzedData, tableSettings)'));
+                                                   'var_CompanyName',       'analyzedData.InfoSet.CompanyName', ...
+                                                   'var_CompanyId',         'analyzedData.InfoSet.CompanyId', ...
+                                                   'var_Hash',              'strjoin(unique([analyzedData.Sources.hash], "stable"), ", ")', ...
+                                                   'var_Period',            'strjoin(string(analyzedData.InfoSet.Period), " a ")', ...
+                                                   'var_FileName',          'analyzedData.InfoSet.FileName', ...
+                                                   'var_ReceitaFederal',    'jsonencode(analyzedData.InfoSet.Sources(end).validationMessage)', ...
+                                                   'var_ContentSample',     '[strjoin(strtrim(splitlines(analyzedData.InfoSet.Content(1:min(500, numel(analyzedData.InfoSet.Content))))), ''<br>'') ''<br><font style="color: red;">... [texto truncado]</font>'']', ...
+                                                   'var_Layout',            'analyzedData.InfoSet.Layout', ...
+                                                   'table_Raw',             'reportLibConnection.tableAnalysis.Raw(analyzedData, tableSettings)'), ...
+                                'Project',  projectData, ...
+                                'Object',   ecdObj,      ...
+                                'Settings', generalSettings);
             
             fieldsUnnecessary = {'rootFolder', 'entryPointFolder', 'tempSessionFolder', 'ctfRoot'};
             fieldsUnnecessary(cellfun(@(x) ~isfield(reportInfo.Version.application, x), fieldsUnnecessary)) = [];
@@ -112,19 +135,27 @@ classdef (Abstract) Controller
                 end
                 companyId = sprintf('%s - %s%s', ecdObj(idIndexes(1)).CompanyId, nireInfo, ecdObj(idIndexes(1)).CompanyName);
 
-                for idx = idIndexes
-                    dataOverview(end+1) = struct('ID',      companyId,   ...
-                                                 'InfoSet', ecdObj(idx), ...
-                                                 'HTML',    struct('Component', {}, 'Source', {}, 'Value', {}));
+                dataOverview(end+1) = struct('ID',      companyId,                           ...
+                                             'InfoSet', struct('indexes', idIndexes,         ...
+                                                               'ecdObj', ecdObj(idIndexes)), ...
+                                             'HTML',    struct('Component', {}, 'Source', {}, 'Value', {}));
                     
-                    if ~isempty(ecdObj(idx).GUI.externalFiles)
-                        dataOverview(end).HTML = ecdObj(idx).GUI.externalFiles;
-                    end
+
+                if any(arrayfun(@(x) ~isempty(x.GUI.externalFiles), ecdObj(idIndexes)))
+                    externalFilesList = arrayfun(@(x) x.GUI.externalFiles, ecdObj(idIndexes));
+                    dataOverview(end).HTML = vertcat(externalFilesList{:});
                 end
             end
             
             % Cria relatório:
             HTMLDocContent = reportLib.Controller(reportInfo, dataOverview);
+
+            % Exclui container criado para os plots, caso aplicável.
+            hFigure    = app.UIFigure;
+            hContainer = findobj(hFigure, 'Tag', 'reportGeneratorContainer');
+            if ~isempty(hContainer)
+                delete(hContainer)
+            end
             
             % Em sendo a versão "Preliminar", apenas apresenta o html no
             % navegador. Por outro lado, em sendo a versão "Definitiva",

@@ -1,24 +1,27 @@
-classdef tableInventory
+classdef (Abstract) Table
 
-    % Relação de variáveis que podem ser manipuladas quando da execução de
-    % um dos métodos desta classe estática. Importante, contudo, editar os
-    % argumentos previstos por método em "reportLibConnection.Controller".
-
-    % • reportInfo....: estrutura com os campos "App", "Version", "Path", 
-    %   "Model" e "Function".
-
-    % • dataOverview..: lista de estruturas com os campos "ID", "InfoSet" e
-    %   "HTML". Em "InfoSet", armazena-se um handle para instância da classe 
-    %   model.ECD. As instância desse classe são organizadas, em dataOverview, 
-    %   ordenadas ao CNPJ (ordenação primária) e Período Fiscal (secundária).
-
-    % • analyzedData..: instância da classe model.ECD.
-    
-    % • tableSettings.: campo extraído do script .JSON que norteia a criação
-    %   do relatório, o qual é uma estrutura com os campos "Origin", "Source", 
-    %   "Columns", "Caption", "Settings", "Intro", "Error" e "LineBreak".
+    % ## methods(ECD) ##
+    % - OBJETO VISTO COMO UM ARRAY (ESCALAR OU NÃO)
+    %   ├── addFiles
+    %   │    ├─ parseTableAndAddToCache
+    %   │    └─ checkFileStatus
+    %   ├── parseTableAndAddToCache
+    %   │    └─ parseTable
+    %   ├── mergeFiles
+    %   │    └─ addFiles
+    %   ├── customMergedTablesKeyOriented
+    %   │    └─ isTableRead
+    %   ├── customMergedTablesRowOriented
+    %   │    ├─ isTableRead
+    %   │    ├─ getColumnSpecifications
+    %   │    └─ parseFileBlock
+    %   ├── isTableRead
+    %   ├── checkFileStatus
+    %   └── findSpecificObject
 
     methods (Static)
+        %-----------------------------------------------------------------%
+        % TABELAS GERAIS
         %-----------------------------------------------------------------%
         function Table = FileStatus(dataOverview)
             ecdObj = [dataOverview.InfoSet];
@@ -57,7 +60,7 @@ classdef tableInventory
 
         %-----------------------------------------------------------------%
         function Table = PeriodByCompany(dataOverview)
-            ecdObj = [dataOverview.InfoSet];
+            ecdObj = dataOverview.InfoSet.ecdObj;
             Table  = table('Size',          [0, 4],                           ...
                            'VariableTypes', {'cell', 'cell', 'cell', 'cell'}, ...
                            'VariableNames', {'Empresa', 'CNPJ', 'Período Fiscal', 'Situação'});
@@ -81,6 +84,22 @@ classdef tableInventory
                     idPeriod, ...
                     idStatus};                    
             end
+        end
+
+        %-----------------------------------------------------------------%
+        % TABELAS POR CNPJ
+        %-----------------------------------------------------------------%
+        function Table = Raw(analyzedData, tableSettings)
+            ecdObj = analyzedData.InfoSet.ecdObj;
+
+            parsedSource = strsplit(tableSettings.Source, '+');
+            tableSource  = parsedSource{1};
+            tableId      = parsedSource{2};
+
+            checkIfScalar(ecdObj)
+
+            isTableRead(ecdObj, {tableId})
+            Table = ecdObj.Table.(['x' tableId]);
         end
     end
 end

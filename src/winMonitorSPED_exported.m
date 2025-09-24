@@ -424,6 +424,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function startup_AppProperties(app)
+            % app.projectData
+            app.projectData = model.projectLib(app, app.General);
+
+            % app.receitaFederalObj
             app.receitaFederalObj = ws.ReceitaFederal();
         end
 
@@ -730,7 +734,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         function file_TreeSelectionChanged(app, event)
             
             indexes = file_findSelectedNodeData(app);
-
             app.file_MergeFiles.Enable = 0;
             
             if isempty(indexes)
@@ -942,7 +945,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 app.progressDialog.Visible = 'visible';
 
                 try
-                    reportLibConnection.Controller.Run(app, app.ecdObj(indexes))
+                    reportLibConnection.Controller.Run(app, app.projectData, app.ecdObj(indexes), app.General)
                 catch ME
                     appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));
                 end
@@ -1037,10 +1040,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % Create file_toolGrid
             app.file_toolGrid = uigridlayout(app.file_Grid);
             app.file_toolGrid.ColumnWidth = {22, 5, 22, 5, 22, 22, '1x', 22};
-            app.file_toolGrid.RowHeight = {3, 17, 2};
+            app.file_toolGrid.RowHeight = {4, 17, 2};
             app.file_toolGrid.ColumnSpacing = 5;
             app.file_toolGrid.RowSpacing = 0;
-            app.file_toolGrid.Padding = [5 6 10 6];
+            app.file_toolGrid.Padding = [10 5 10 5];
             app.file_toolGrid.Layout.Row = 5;
             app.file_toolGrid.Layout.Column = [1 7];
             app.file_toolGrid.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
