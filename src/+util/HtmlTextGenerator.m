@@ -75,7 +75,19 @@ classdef (Abstract) HtmlTextGenerator
                 dataStruct(end+1) = struct('group', 'UF',      'value', ufMappingDict(ecdObj.State));
                 dataStruct(end+1) = struct('group', 'Period',  'value', strjoin(string(ecdObj.Period), ' a '));
                 dataStruct(end+1) = struct('group', 'Content', 'value', [strjoin(strtrim(splitlines(ecdObj.Content(1:min(500, numel(ecdObj.Content))))), '\n') '<br><font style="color: red;">... [texto truncado]</font>']);
-                dataStruct(end+1) = struct('group', 'Table',   'value', strjoin(getTableIds(ecdObj), ', '));
+                
+                [ordinaryIds, ~, readOrdinaryIds] = getTableIds(ecdObj, true);
+                if isequal(ordinaryIds, readOrdinaryIds)
+                    dataStruct(end+1) = struct('group', 'REGISTROS ORDINÁRIOS ✅', 'value', strjoin(ordinaryIds,     ', '));
+                else
+                    dataStruct(end+1) = struct('group', 'REGISTROS ORDINÁRIOS',          'value', strjoin(ordinaryIds,     ', '));
+                    dataStruct(end+1) = struct('group', 'REGISTROS ORDINÁRIOS LIDOS ❗', 'value', strjoin(readOrdinaryIds, ', '));
+                end
+
+                if ~isempty(ecdObj.GUI.warnings)
+                    dataStruct(end+1) = struct('group', 'ALERTAS ❌', 'value', strjoin(ecdObj.GUI.warnings, '<br>'));
+                end
+                
                 dataStruct(end+1) = struct('group', 'Layout',  'value', string(ecdObj.Layout));
                 
                 if ~ecdObj.PeriodMerged

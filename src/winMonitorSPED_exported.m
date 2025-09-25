@@ -30,12 +30,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         file_ModuleIntro               matlab.ui.control.Label
         file_toolGrid                  matlab.ui.container.GridLayout
         Image                          matlab.ui.control.Image
-        file_ReportRFB                 matlab.ui.control.Image
+        file_GenerateReport            matlab.ui.control.Image
         file_CheckRFB                  matlab.ui.control.Image
         file_Separator2                matlab.ui.control.Image
         file_MergeFiles                matlab.ui.control.Image
+        file_ReadFiles                 matlab.ui.control.Image
         file_Separator1                matlab.ui.control.Image
-        file_OpenFileButton            matlab.ui.control.Image
+        file_SelectFilesToRead         matlab.ui.control.Image
         Tab2_Playback                  matlab.ui.container.Tab
         Tab3_Config                    matlab.ui.container.Tab
         file_ContextMenu_Tree          matlab.ui.container.ContextMenu
@@ -189,7 +190,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'openDevTools', 'Fields', dialogBox))
                             case 'simulationModeChanged'
                                 if app.General.operationMode.Simulation
-                                    toolbar_OpenFileButtonPushed(app)
+                                    toolbar_SelectFileToReadImageClicked(app)
 
                                     % Muda programaticamente o modo p/ ARQUIVOS.
                                     set(app.menu_Button1, 'Enable', 1, 'Value', 1)                    
@@ -734,25 +735,31 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         function file_TreeSelectionChanged(app, event)
             
             indexes = file_findSelectedNodeData(app);
-            app.file_MergeFiles.Enable = 0;
             
             if isempty(indexes)
-                app.file_Metadata.Text     = '';
-                app.file_Metadata.UserData = [];                
-                app.file_CheckRFB.Enable   = 0;
-                app.file_ReportRFB.Enable  = 0;
+                app.file_Metadata.Text         = '';
+                app.file_Metadata.UserData     = [];
+                
+                app.file_ReadFiles.Enable      = 0;
+                app.file_MergeFiles.Enable     = 0;
+                app.file_CheckRFB.Enable       = 0;
+                app.file_GenerateReport.Enable = 0;
 
             else
                 if isequal(app.file_Metadata.UserData, indexes)
                     return
                 end
 
-                app.file_Metadata.Text     = util.HtmlTextGenerator.File(app.ecdObj(indexes));
-                app.file_Metadata.UserData = indexes;
-                app.file_CheckRFB.Enable   = 1;
-                app.file_ReportRFB.Enable  = 1;
+                app.file_Metadata.Text         = util.HtmlTextGenerator.File(app.ecdObj(indexes));
+                app.file_Metadata.UserData     = indexes;
 
-                if ~isscalar(indexes)
+                app.file_ReadFiles.Enable      = 1;
+                app.file_CheckRFB.Enable       = 1;
+                app.file_GenerateReport.Enable = 1;
+
+                if isscalar(indexes)
+                    app.file_MergeFiles.Enable = 0;
+                else
                     app.file_MergeFiles.Enable = 1;
                 end
             end
@@ -773,8 +780,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         end
 
-        % Image clicked function: file_OpenFileButton
-        function toolbar_OpenFileButtonPushed(app, event)
+        % Image clicked function: file_SelectFilesToRead
+        function toolbar_SelectFileToReadImageClicked(app, event)
 
             % VALIDAÇÃO
             if strcmp(checkIfAuxiliarAppIsOpen(app, 'INCLUIR ARQUIVO'), 'Não')
@@ -844,7 +851,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             filesError = struct('File', {}, 'Error', {});
 
             for ii = 1:numel(fileFullName)
-                d.Message = sprintf('<font style="font-size: 12px;">Em andamento a leitura do arquivo %d de %d:<br>• <b>%s</b></font>', ii, numel(fileFullName), fileName{ii});
+                d.Message = sprintf('Em andamento a leitura do arquivo %d de %d:<br>• <b>%s</b>', ii, numel(fileFullName), fileName{ii});
 
                 % Verifica se arquivo já foi lido, comparando o seu nome com 
                 % a variável app.ecdObj.
@@ -860,13 +867,47 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % LOG
             if ~isempty(filesError)
-                msgWarning = sprintf('<font style="font-size: 12px;">Arquivos que apresentaram erro na leitura:\n%s\n\n</font>', strjoin(strcat({'•&thinsp;<b>'}, {filesError.File}, {'</b>: <i>'}, {filesError.Error}), '</i>\n\n'));
+                msgWarning = sprintf('Arquivos que apresentaram erro na leitura:\n%s\n\n', strjoin(strcat({'•&thinsp;<b>'}, {filesError.File}, {'</b>: <i>'}, {filesError.Error}), '</i>\n\n'));
                 appUtil.modalWindow(app.UIFigure, "error", msgWarning);
             end
             
             % Atualiza app.file_Tree.
             indexes = file_findSelectedNodeData(app);
             file_TreeBuilding(app, indexes)
+
+            delete(d)
+
+        end
+
+        % Image clicked function: file_ReadFiles
+        function toolbar_ReadFilesImageClicked(app, event)
+            
+            d = appUtil.modalWindow(app.UIFigure, "progressdlg", "Em andamento...");
+
+            switch event.Source
+                case app.file_ReadFiles
+                    indexes = file_findSelectedNodeData(app);
+                case app.file_GenerateReport
+                    indexes = event.Indexes;
+                otherwise
+                    error('UnexpectedCaller')
+            end
+
+            warnings = {};
+            for ii = 1:numel(indexes)
+                d.Message = sprintf('<font style="font-size: 12px;">Em andamento a leitura dos registros do arquivo %d de %d:<br>• <b>%s</b></font>', ii, numel(indexes), app.ecdObj(indexes(ii)).FileName);
+                parseTableAndAddToCache(app.ecdObj(indexes(ii)))
+
+                if ~isempty(app.ecdObj(indexes(ii)).GUI.warnings)
+                    warnings{end+1} = sprintf('• <b>%s</b><br>%s', app.ecdObj(indexes(ii)).FileName, strjoin(app.ecdObj(indexes(ii)).GUI.warnings, '<br>'));
+                end
+            end
+            file_TreeBuilding(app, indexes)
+
+            if event.Source == app.file_ReadFiles && ~isempty(warnings)
+                msgWarning = ['Alarme(s) gerado(s) no processo de leitura do(s) arquivo(s):<br>', strjoin(warnings, '<br>')];
+                appUtil.modalWindow(app.UIFigure, "warning", msgWarning);
+            end
 
             delete(d)
 
@@ -889,7 +930,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 app.progressDialog.Visible = 'visible';
 
-                [app.ecdObj, msg] = app.ecdObj.mergeFiles(indexes, app.General.fileFolder.tempPath);
+                [app.ecdObj, msg] = mergeFiles(app.ecdObj, indexes, app.General.fileFolder.tempPath);
                 if isempty(msg)
                     file_TreeBuilding(app, indexes)
                 else
@@ -924,7 +965,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         end
 
-        % Image clicked function: file_ReportRFB
+        % Image clicked function: file_GenerateReport
         function toolbar_GenerateReportImageClicked(app, event)
             
             indexes = file_findSelectedNodeData(app);
@@ -942,16 +983,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     end
                 end
 
-                selectedECD = app.ecdObj(indexes);
-                % selectedECD([selectedECD.PeriodMerged]) = [];
-
-                if isempty(selectedECD)
-                    appUtil.modalWindow(app.UIFigure, 'warning', 'O inventário de arquivos não contempla registros mesclados.');
-                    return
-                end
-
-                app.progressDialog.Visible = 'visible';
-
                 try
                     % Eliminar isso com o popup de confirmação...
                     generalSettings = app.General;
@@ -959,7 +990,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         generalSettings.Report.model = 'Inventário de arquivos';
                     end
 
-                    reportLibConnection.Controller.Run(app, app.projectData, selectedECD, generalSettings)
+                    toolbar_ReadFilesImageClicked(app, struct('Source', app.file_GenerateReport, 'Indexes', indexes))
+
+                    app.progressDialog.Visible = 'visible';
+                    reportLibConnection.Controller.Run(app, app.projectData, app.ecdObj(indexes), generalSettings)
                 catch ME
                     appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));
                 end
@@ -972,11 +1006,17 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         % Image clicked function: Image
         function toolbar_ShowLegendImageClicked(app, event)
             
-            msg = ['&#x1F7E2; Registro encontrado na base da Receita Federal<br>' ...
+            msg = ['Em relação à situação:<br>' ...
+                   '&#x1F7E2; Registro encontrado na base da Receita Federal<br>' ...
                    '&#x1F534; Registro não encontrado na base da Receita Federal<br>' ...
-                   '⚪ Situação indeterminada<br>' ...
+                   '⚪ Situação indeterminada<br><br>' ...
+                   'Em relação à mesclagem:<br>' ...
                    '➕ Registro mesclado<br>' ...
-                   '⌛ Período fiscal não anual'];
+                   '⌛ Período fiscal não anual<br><br>' ...
+                   'Em relação à leitura:<br>' ...
+                   '✅ Registros ordinários já lidos<br>' ...
+                   '❗ Pendente leitura de todos os registros ordinários<br>' ...
+                   '❌ Erro de validação'];
 
             appUtil.modalWindow(app.UIFigure, 'none', msg);
 
@@ -1054,7 +1094,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create file_toolGrid
             app.file_toolGrid = uigridlayout(app.file_Grid);
-            app.file_toolGrid.ColumnWidth = {22, 5, 22, 5, 22, 22, '1x', 22};
+            app.file_toolGrid.ColumnWidth = {22, 5, 22, 22, 5, 22, 22, '1x', 22};
             app.file_toolGrid.RowHeight = {4, 17, 2};
             app.file_toolGrid.ColumnSpacing = 5;
             app.file_toolGrid.RowSpacing = 0;
@@ -1063,14 +1103,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.file_toolGrid.Layout.Column = [1 7];
             app.file_toolGrid.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
 
-            % Create file_OpenFileButton
-            app.file_OpenFileButton = uiimage(app.file_toolGrid);
-            app.file_OpenFileButton.ScaleMethod = 'none';
-            app.file_OpenFileButton.ImageClickedFcn = createCallbackFcn(app, @toolbar_OpenFileButtonPushed, true);
-            app.file_OpenFileButton.Tooltip = {'Seleciona arquivos'};
-            app.file_OpenFileButton.Layout.Row = [1 3];
-            app.file_OpenFileButton.Layout.Column = 1;
-            app.file_OpenFileButton.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Import_16.png');
+            % Create file_SelectFilesToRead
+            app.file_SelectFilesToRead = uiimage(app.file_toolGrid);
+            app.file_SelectFilesToRead.ScaleMethod = 'none';
+            app.file_SelectFilesToRead.ImageClickedFcn = createCallbackFcn(app, @toolbar_SelectFileToReadImageClicked, true);
+            app.file_SelectFilesToRead.Tooltip = {'Seleciona arquivos'};
+            app.file_SelectFilesToRead.Layout.Row = [1 3];
+            app.file_SelectFilesToRead.Layout.Column = 1;
+            app.file_SelectFilesToRead.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Import_16.png');
 
             % Create file_Separator1
             app.file_Separator1 = uiimage(app.file_toolGrid);
@@ -1080,13 +1120,23 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.file_Separator1.Layout.Column = 2;
             app.file_Separator1.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV.svg');
 
+            % Create file_ReadFiles
+            app.file_ReadFiles = uiimage(app.file_toolGrid);
+            app.file_ReadFiles.ScaleMethod = 'none';
+            app.file_ReadFiles.ImageClickedFcn = createCallbackFcn(app, @toolbar_ReadFilesImageClicked, true);
+            app.file_ReadFiles.Enable = 'off';
+            app.file_ReadFiles.Tooltip = {'Leitura de todos os registros ordinários'};
+            app.file_ReadFiles.Layout.Row = 2;
+            app.file_ReadFiles.Layout.Column = 3;
+            app.file_ReadFiles.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Run_16.png');
+
             % Create file_MergeFiles
             app.file_MergeFiles = uiimage(app.file_toolGrid);
             app.file_MergeFiles.ImageClickedFcn = createCallbackFcn(app, @toolbar_MergeFilesImageClicked, true);
             app.file_MergeFiles.Enable = 'off';
             app.file_MergeFiles.Tooltip = {'Mescla informação contábil'};
             app.file_MergeFiles.Layout.Row = [1 3];
-            app.file_MergeFiles.Layout.Column = 3;
+            app.file_MergeFiles.Layout.Column = 4;
             app.file_MergeFiles.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Merge_32.png');
 
             % Create file_Separator2
@@ -1094,7 +1144,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.file_Separator2.ScaleMethod = 'none';
             app.file_Separator2.Enable = 'off';
             app.file_Separator2.Layout.Row = [1 3];
-            app.file_Separator2.Layout.Column = 4;
+            app.file_Separator2.Layout.Column = 5;
             app.file_Separator2.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV.svg');
 
             % Create file_CheckRFB
@@ -1103,18 +1153,18 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.file_CheckRFB.Enable = 'off';
             app.file_CheckRFB.Tooltip = {'Consulta à Receita Federal'};
             app.file_CheckRFB.Layout.Row = [1 3];
-            app.file_CheckRFB.Layout.Column = 5;
+            app.file_CheckRFB.Layout.Column = 6;
             app.file_CheckRFB.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'receita-federal-novo-logo-png_seeklogo-203693.png');
 
-            % Create file_ReportRFB
-            app.file_ReportRFB = uiimage(app.file_toolGrid);
-            app.file_ReportRFB.ScaleMethod = 'none';
-            app.file_ReportRFB.ImageClickedFcn = createCallbackFcn(app, @toolbar_GenerateReportImageClicked, true);
-            app.file_ReportRFB.Enable = 'off';
-            app.file_ReportRFB.Tooltip = {'Gera relatório'; '(estado escrituração na Receita Federal)'};
-            app.file_ReportRFB.Layout.Row = [1 3];
-            app.file_ReportRFB.Layout.Column = 6;
-            app.file_ReportRFB.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Publish_HTML_16.png');
+            % Create file_GenerateReport
+            app.file_GenerateReport = uiimage(app.file_toolGrid);
+            app.file_GenerateReport.ScaleMethod = 'none';
+            app.file_GenerateReport.ImageClickedFcn = createCallbackFcn(app, @toolbar_GenerateReportImageClicked, true);
+            app.file_GenerateReport.Enable = 'off';
+            app.file_GenerateReport.Tooltip = {'Gera relatório'; '(estado escrituração na Receita Federal)'};
+            app.file_GenerateReport.Layout.Row = [1 3];
+            app.file_GenerateReport.Layout.Column = 7;
+            app.file_GenerateReport.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Publish_HTML_16.png');
 
             % Create Image
             app.Image = uiimage(app.file_toolGrid);
@@ -1122,7 +1172,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Image.ImageClickedFcn = createCallbackFcn(app, @toolbar_ShowLegendImageClicked, true);
             app.Image.Tooltip = {'Legenda de símbolos'};
             app.Image.Layout.Row = 2;
-            app.Image.Layout.Column = 8;
+            app.Image.Layout.Column = 9;
             app.Image.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Legend_16.png');
 
             % Create TabGroup2

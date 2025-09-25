@@ -294,7 +294,8 @@
                             1,
                             2,
                             3,
-                            4
+                            4,
+                            5
                         ],
                         "Caption": "Tabela ordinária criada em função...",
                         "Settings": [
@@ -321,6 +322,12 @@
                                 "ColumnName": "Qtd. arquivos anexos (J800 e J801)",
                                 "Precision": "%.0f",
                                 "Width": "110px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "LOG",
+                                "Precision": "%s",
+                                "Width": "auto"
                             }
                         ],
                         "Intro": [],

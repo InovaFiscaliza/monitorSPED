@@ -541,7 +541,7 @@ classdef ECD < model.ECDBase
             readOrdinaryIds = extractAfter(sort(readOrdinaryIds), 'x');
 
             if isfield(obj.Table, 'x9900') && ~isempty(obj.Table.x9900)
-                ordinaryIds = unique(obj.Table.x9900.("REG_BLC"));
+                ordinaryIds = unique(obj.Table.x9900.("REG_BLC")(obj.Table.x9900.("QTD_REG_BLC") > 0));
             else
                 ordinaryIds = {'-1'};
             end            
