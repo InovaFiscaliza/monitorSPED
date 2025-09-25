@@ -21,13 +21,11 @@ classdef (Abstract) Variable
     methods (Static)
         %-----------------------------------------------------------------%
         function fieldValue = GeneralSettings(reportInfo, fieldName)
-            appGeneral = reportInfo.Settings;
+            generalSettings = reportInfo.Settings;
 
             switch fieldName
-                case 'MonitoringPlan'
-                    fieldValue = jsonencode(appGeneral.(fieldName));
-                case 'ExternalRequest'
-                    fieldValue = jsonencode(appGeneral.(fieldName));
+                case 'ECD'
+                    fieldValue = jsonencode(generalSettings.(fieldName));
                 otherwise
                     error('UnexpectedFieldName')
             end
@@ -35,56 +33,33 @@ classdef (Abstract) Variable
 
         %-----------------------------------------------------------------%
         function fieldValue = ClassProperty(analyzedData, fieldName)
-            measData  = analyzedData.InfoSet.measData;
-            measTable = analyzedData.InfoSet.measTable;
+            ecdObj = analyzedData.InfoSet.ecdObj;
 
             switch fieldName
-                case 'Filename'
-                    fieldValue = strjoin(unique(strcat('"', {measData.(fieldName)}, '"')), ', ');
-                case {'Sensor', 'Location', 'Location_I'}
-                    fieldValue = strjoin(unique({measData.(fieldName)}), ', ');
-                case 'Content'
-                    fieldValue = strjoin(strcat({measData.Content}, '<br><font style="color: red;">[Texto truncado — Fonte:&thinsp;', ' ', {measData.Filename}, ']</font>'), '<br><br>');
-                case 'MetaData'
-                    fieldValue = strjoin(unique(arrayfun(@(x) jsonencode(x.MetaData), measData, 'UniformOutput', false)), '<br>');
-                case 'Measures'
-                    fieldValue = sum([measData.(fieldName)]);
-                case 'FieldValueLimits'
-                    [minFieldValue, maxFieldValue] = bounds(measTable.FieldValue);
-                    fieldValue = sprintf('%.1f - %.1f V/m', minFieldValue, maxFieldValue);
-                case 'ObservationTime'
-                    [beginTime, endTime] = bounds(measTable.Timestamp);
-                    fieldValue = sprintf('%s a %s', string(beginTime), string(endTime));
-                case 'CoveredDistance'
-                    fieldValue = sprintf('%.1f km', sum([measData.(fieldName)]));
-                case 'LatitudeLimits'
-                    [minLat, maxLat] = bounds(measTable.Latitude);
-                    fieldValue = sprintf('[%.6fº, %.6fº]', minLat, maxLat);
-                case 'LongitudeLimits'
-                    [minLng, maxLng] = bounds(measTable.Longitude);
-                    fieldValue = sprintf('[%.6fº, %.6fº]', minLng, maxLng);
-                case {'Latitude', 'Longitude'}
-                    fieldValue = sprintf('%.6fº', mean(measTable.(fieldName)));
-                otherwise
-                    error('UnexpectedFieldName')
-            end
-        end
-
-        %-----------------------------------------------------------------%
-        function fieldValue = ProjectProperty(reportInfo, analyzedData, fieldName)
-            generalSettings = reportInfo.Settings;
-            projectData  = reportInfo.Project;
-            stationTable = reportInfo.Function.table_Stations;
-            measData = analyzedData.InfoSet.measData;
-
-            switch fieldName
-                case 'LocationSummary'
-                    hash = strjoin(unique({measData.UUID}));
-                    hashIndex = find(strcmp({projectData.listOfLocations.Hash}, hash), 1);
-                    fieldValue = jsonencode(projectData.listOfLocations(hashIndex));
-
-                case 'LocationList'
-                    fieldValue = strjoin(getFullListOfLocation(projectData, measData, stationTable, max(generalSettings.MonitoringPlan.Distance_km, generalSettings.ExternalRequest.Distance_km)), ', ');
+                case {'NumFiles', 'FileNameList'}
+                    fileList = {};
+                    for ii = 1:numel(ecdObj)
+                        fileList = [fileList, {ecdObj(ii).Sources.file}];
+                    end
+                    fileList = unique(fileList);
+                    switch fieldName
+                        case 'NumFiles'
+                            fieldValue = num2str(numel(fileList));
+                        case 'FileNameList'
+                            fieldValue = strjoin(strcat('"', fileList, '"'), ', ');
+                    end
+                case {'CompanyName', 'CompanyId'}
+                    fieldValue = strjoin(unique({ecdObj.(fieldName)}), ', ');
+                case 'Period'
+                    [beginTime, endTime] = bounds([ecdObj.Period], "all");
+                    fieldValue = sprintf('%s a %s', beginTime, endTime);
+                case 'ReceitaFederal'
+                    fieldValue = jsonencode(ecdObj.Sources(end).validationMessage);
+                case 'ContentSample'
+                    contentArray = arrayfun(@(x) strjoin(splitlines(x.Content(1:min(500, numel(x.Content)))), '<br>'), ecdObj, 'UniformOutput', false);
+                    fieldValue = ['<font style="text-align: justify; word-break: break-all;">', strjoin(strcat(contentArray, '<br><font style="color: red;">[Texto truncado — Fonte:&thinsp;', ' ', {ecdObj.FileName}, ']</font>'), '<br><br>') '</font>'];
+                case 'Layout'
+                    fieldValue = strjoin(string(unique([ecdObj.Layout])));
                 otherwise
                     error('UnexpectedFieldName')
             end

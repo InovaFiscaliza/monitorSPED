@@ -3,12 +3,12 @@ classdef winECD_exported < matlab.apps.AppBase
     % Properties that correspond to app components
     properties (Access = public)
         UIFigure                    matlab.ui.Figure
-        Panel                       matlab.ui.container.Panel
         GridLayout                  matlab.ui.container.GridLayout
         dockModuleGrid              matlab.ui.container.GridLayout
         dockModule_Undock           matlab.ui.control.Image
         dockModule_Close            matlab.ui.control.Image
         toolGrid                    matlab.ui.container.GridLayout
+        file_ReportRFB              matlab.ui.control.Image
         Image4                      matlab.ui.control.Image
         tool_CompanyInfo            matlab.ui.control.Label
         UITable2_FilterText         matlab.ui.control.Label
@@ -70,26 +70,6 @@ classdef winECD_exported < matlab.apps.AppBase
         Image4_3                    matlab.ui.control.Image
         Tab4                        matlab.ui.container.Tab
         GridLayout5                 matlab.ui.container.GridLayout
-        Tab5                        matlab.ui.container.Tab
-        report_Tab2Grid             matlab.ui.container.GridLayout
-        report_VersionLabel         matlab.ui.control.Label
-        report_Version              matlab.ui.control.DropDown
-        report_ModelNameLabel       matlab.ui.control.Label
-        report_ModelName            matlab.ui.control.DropDown
-        report_UnitLabel            matlab.ui.control.Label
-        report_Unit                 matlab.ui.control.DropDown
-        report_Issue                matlab.ui.control.NumericEditField
-        report_IssueLabel           matlab.ui.control.Label
-        report_system               matlab.ui.control.DropDown
-        report_systemLabel          matlab.ui.control.Label
-        report_ProjectName          matlab.ui.control.TextArea
-        report_ProjectSave          matlab.ui.control.Image
-        report_ProjectOpen          matlab.ui.control.Image
-        report_ProjectNew           matlab.ui.control.Image
-        report_ProjectLabel         matlab.ui.control.Label
-        filter_ContextMenu          matlab.ui.container.ContextMenu
-        filter_delButton            matlab.ui.container.Menu
-        filter_delAllButton         matlab.ui.container.Menu
     end
 
     
@@ -116,6 +96,7 @@ classdef winECD_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         % ESPECIFICIDADES AUXAPP.ECD
         %-----------------------------------------------------------------%
+        projectData
         ecdObj
     end
 
@@ -175,7 +156,7 @@ classdef winECD_exported < matlab.apps.AppBase
         function jsBackDoor_Customizations(app, tabIndex)
             persistent customizationStatus
             if isempty(customizationStatus)
-                customizationStatus = [false, false, false, false, false];
+                customizationStatus = [false, false, false, false];
             end
 
             switch tabIndex
@@ -186,7 +167,7 @@ classdef winECD_exported < matlab.apps.AppBase
                         sendEventToHTMLSource(app.jsBackDoor, 'startup', app.mainApp.executionMode);
                         app.progressDialog = ccTools.ProgressDialog(app.jsBackDoor);                        
                     end
-                    customizationStatus = [false, false, false, false, false];
+                    customizationStatus = [false, false, false, false];
 
                 otherwise
                     if customizationStatus(tabIndex)
@@ -211,10 +192,6 @@ classdef winECD_exported < matlab.apps.AppBase
                             % Outros elementos:
                             hTableList = {app.UITable1, app.UITable2};
                             ui.CustomizationBase.getElementsDataTag(hTableList);
-
-                        case 5
-                            app.report_Unit.Items      = app.mainApp.General.ui.unit.options;
-                            app.report_ModelName.Items = [{''}, {reportLibConnection.Controller.Read(app.mainApp.rootFolder).Name}];
 
                         otherwise
                             % Customização de componentes constantes nas outras abas, 
@@ -443,8 +420,9 @@ classdef winECD_exported < matlab.apps.AppBase
         % Code that executes after component creation
         function startupFcn(app, mainApp, filterTable, rfDataHubAnnotation)
             
-            app.mainApp = mainApp;
-            app.ecdObj  = mainApp.ecdObj;
+            app.mainApp     = mainApp;
+            app.projectData = mainApp.projectData;
+            app.ecdObj      = mainApp.ecdObj;
 
             if app.isDocked
                 app.GridLayout.Padding(4)  = 30;
@@ -466,6 +444,172 @@ classdef winECD_exported < matlab.apps.AppBase
             
         end
 
+        % Image clicked function: dockModule_Close, dockModule_Undock
+        function DockModuleGroup_ButtonPushed(app, event)
+            
+            [idx, auxAppTag, relatedButton] = getAppInfoFromHandle(app.mainApp.tabGroupController, app);
+
+            switch event.Source
+                case app.dockModule_Undock
+                    appGeneral = app.mainApp.General;
+                    appGeneral.operationMode.Dock = false;
+
+                    inputArguments = ipcMainMatlabCallsHandler(app.mainApp, app, 'dockButtonPushed', auxAppTag);
+                    app.mainApp.tabGroupController.Components.appHandle{idx} = [];
+                    
+                    openModule(app.mainApp.tabGroupController, relatedButton, false, appGeneral, inputArguments{:})
+                    closeModule(app.mainApp.tabGroupController, auxAppTag, app.mainApp.General, 'undock')
+                    
+                    delete(app)
+
+                case app.dockModule_Close
+                    closeModule(app.mainApp.tabGroupController, auxAppTag, app.mainApp.General)
+            end
+
+        end
+
+        % Image clicked function: Image4
+        function Toolbar_LOGInfoImageClicked(app, event)
+            
+            fileIndex   = selectedFileIndex(app);
+            selectedECD = app.ecdObj(fileIndex);
+
+            htmlContent = util.HtmlTextGenerator.Warnings(selectedECD);
+            appUtil.modalWindow(app.UIFigure, 'info', htmlContent);
+
+        end
+
+        % Image clicked function: file_ReportRFB
+        function Toolbar_ReportImageClicked(app, event)
+            
+        end
+
+        % Button pushed function: SheetViewStatus_3
+        function Toolbar_ExportImageClicked(app, event)
+            
+            fileIndex   = selectedFileIndex(app);
+            selectedECD = app.ecdObj(fileIndex);
+
+            nameFormatMap = {'*.xlsx', 'Excel (*.xlsx)'};
+            defaultName   = appUtil.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'monitorSPED', -1);
+            [fileFullPath, ~, ~, fileName] = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', nameFormatMap, defaultName);
+            if isempty(fileFullPath)
+                return
+            end
+
+            app.progressDialog.Visible = 'visible';
+
+            try
+                tempName = fullfile(app.mainApp.General.fileFolder.userPath, [fileName '.xlsx']);
+                tableIds = setdiff(fieldnames(selectedECD.Table), {'x0000'});
+                
+                writetable(selectedECD.Table.x0000, tempName, "Sheet", "0000", "WriteMode", "replacefile")
+                for ii = 1:numel(tableIds)
+                    tableId = tableIds{ii};                    
+                    writetable(selectedECD.Table.(tableId), tempName, "Sheet", tableId(2:end), "WriteMode", "append")
+                end
+
+                copyfile(tempName, fileFullPath, 'f')
+
+                if ~strcmp(app.mainApp.executionMode, 'webApp')
+                    ccTools.fcn.OperationSystem('openFile', fileFullPath)
+                end
+
+            catch ME
+                appUtil.modalWindow(app.UIFigure, 'warning', getReport(ME));
+            end
+
+            app.progressDialog.Visible = 'hidden';
+
+        end
+
+        % Image clicked function: tool_OpenRTFFiles
+        function Toolbar_OpenRTFImageClicked(app, event)
+            
+            fileIndex   = selectedFileIndex(app);
+            selectedECD = app.ecdObj(fileIndex);
+
+            rtfFiles    = {};
+            msgError    = {};
+
+            rtfTableIds = {'J800', 'J801'};
+            parseTableAndAddToCache(selectedECD, rtfTableIds)
+
+            defaultName = appUtil.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'monitorSPED');
+            tempName    = appUtil.DefaultFileName(app.mainApp.General.fileFolder.tempPath, 'monitorSPED');
+            fileCount   = 0;
+
+            app.progressDialog.Visible = 'visible';
+            
+            for ii = 1:numel(rtfTableIds)
+                rtfTableField = ['x' rtfTableIds{ii}];
+        
+                if isfield(selectedECD.Table, rtfTableField) && ~isempty(selectedECD.Table.(rtfTableField))
+                    for jj = 1:height(selectedECD.Table.(rtfTableField))
+                        fileCount = fileCount+1;
+                        fileName  = sprintf('%s_%d.rtf', tempName, fileCount);
+                        
+                        try
+                            rtfContentFile  = selectedECD.Table.(rtfTableField).('ARQ_RTF'){jj};
+                            writematrix(rtfContentFile, fileName, "FileType", "text", "QuoteStrings", "none", "Encoding", 'ISO-8859-1');
+                            rtfFiles{end+1} = fileName;
+                        catch ME
+                            msgError{end+1} = ME.message;
+                        end
+                    end
+                end
+            end
+
+            app.progressDialog.Visible = 'hidden';
+
+            if ~isempty(rtfFiles)
+                appName = class.Constants.appName;
+
+                if isscalar(rtfFiles) && ~strcmp(app.mainApp.executionMode, 'webApp')
+                    nameFormat = {'*.rtf', [appName, ' (*.rtf)']};
+                else
+                    nameFormat = {'*.zip', [appName, ' (*.zip)']};
+                end
+
+                outputFile = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', nameFormat, defaultName);
+                if isempty(outputFile)
+                    return
+                end
+
+                app.progressDialog.Visible = 'visible';
+
+                if isscalar(rtfFiles) && ~strcmp(app.mainApp.executionMode, 'webApp')
+                    copyfile(rtfFiles{1}, outputFile, 'f')
+                else
+                    zip(outputFile, rtfFiles)
+                end
+
+                if ~strcmp(app.mainApp.executionMode, 'webApp')
+                    for kk = 1:numel(rtfFiles)
+                        ccTools.fcn.OperationSystem('openFile', rtfFiles{kk})
+                    end
+                end
+
+                app.progressDialog.Visible = 'hidden';
+            else
+                appUtil.modalWindow(app.UIFigure, 'info', sprintf('Escrituração não possui arquivo auxiliar no formato RTF.'));
+            end
+        
+            if ~isempty(msgError)
+                msgError = strjoin(msgError, '\n');
+                appUtil.modalWindow(app.UIFigure, 'error', msgError);
+            end
+
+        end
+
+        % Selection change function: TabGroup
+        function TabGroupSelectionChanged(app, event)
+            
+            [~, tabIndex] = ismember(app.TabGroup.SelectedTab, app.TabGroup.Children);
+            jsBackDoor_Customizations(app, tabIndex)
+
+        end
+
         % Value changed function: CompanyNameList
         function CompanyNameListValueChanged(app, event)
 
@@ -481,19 +625,19 @@ classdef winECD_exported < matlab.apps.AppBase
             selectedECD = app.ecdObj(fileIndex);
 
             app.tool_ReadAllTables.Enable = ~selectedECD.GUI.isRead;
-            app.tool_CompanyInfo.Text = sprintf('<font style="font-size: 11px; font-weight: bold;">%s</font> CNPJ %s\n%s', ...
-                upper(selectedECD.CompanyName), selectedECD.CompanyId, strjoin(string(selectedECD.Period), ' a '));
+            app.tool_CompanyInfo.Text = sprintf('<font style="font-size: 11px; font-weight: bold;">%s</font> CNPJ %s (%s)\n%s', ...
+                upper(selectedECD.CompanyName), selectedECD.CompanyId, selectedECD.State, strjoin(string(selectedECD.Period), ' a '));
 
             updateSheetList(app)
             app.SheetList.Value        = app.SheetList.Items{1};
             app.SheetView_First.Value  = app.SheetView_First.Items{1};
-            SheetListValueChanged(app, struct('Source', app.SheetList))
-            SheetView_SecondValueChanged(app)
+            SheetViewFirstValueChanged(app, struct('Source', app.SheetList))
+            SheetViewSecondValueChanged(app)
             
         end
 
         % Value changed function: SheetList, SheetView_First
-        function SheetListValueChanged(app, event)
+        function SheetViewFirstValueChanged(app, event)
             
             switch event.Source
                 case app.SheetList
@@ -507,10 +651,50 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         % Value changed function: SheetView_Second
-        function SheetView_SecondValueChanged(app, event)
+        function SheetViewSecondValueChanged(app, event)
             
             updateTable(app, app.UITable2, app.UITable2_CountText, app.UITable2_FilterText, app.SheetView_Second.Value)
             
+        end
+
+        % Value changed function: SheetViewStatus
+        function SheetViewStatusValueChanged(app, event)
+            
+            if app.SheetViewStatus.Value
+                app.SheetView_Second.Enable  = "on";
+                app.SheetHeight_First.Enable = 'on';
+
+                app.SheetHeight_Second.Limits(1) = 1;
+                set(app.SheetHeight_Second, 'Enable', 'on', 'Value', app.SheetHeight_First.Value)
+                
+                app.UITable2.Visible = 'on';
+                rowHeight = {10,2,18};
+                
+            else
+                app.SheetView_Second.Enable  = "off";
+                app.SheetHeight_First.Enable = 'off';
+                
+                app.SheetHeight_Second.Limits(1) = 0;
+                set(app.SheetHeight_Second, 'Enable', 'off', 'Value', 0)
+
+                app.UITable2.Visible = 'off';
+                rowHeight = {0,0,0};
+
+                if app.SheetOnFocus.Layout.Row ~= 1
+                    app.SheetOnFocus.Layout.Row = 1;
+                end
+            end
+
+            SheetViewHeightValueChanged(app, struct('Source', app.SheetHeight_First))
+            app.GridLayout.RowHeight([9,11,12]) = rowHeight;
+            
+        end
+
+        % Value changed function: SheetHeight_First, SheetHeight_Second
+        function SheetViewHeightValueChanged(app, event)
+            
+            app.GridLayout.RowHeight([6,10]) = {sprintf('%dx', app.SheetHeight_First.Value), sprintf('%dx', app.SheetHeight_Second.Value)};
+
         end
 
         % Image clicked function: tool_ReadAllTables
@@ -709,48 +893,8 @@ classdef winECD_exported < matlab.apps.AppBase
             
         end
 
-        % Value changed function: SheetViewStatus
-        function SheetViewStatusValueChanged(app, event)
-            
-            if app.SheetViewStatus.Value
-                app.SheetView_Second.Enable  = "on";
-                app.SheetHeight_First.Enable = 'on';
-
-                app.SheetHeight_Second.Limits(1) = 1;
-                set(app.SheetHeight_Second, 'Enable', 'on', 'Value', app.SheetHeight_First.Value)
-                
-                app.UITable2.Visible = 'on';
-                rowHeight = {10,2,18};
-                
-            else
-                app.SheetView_Second.Enable  = "off";
-                app.SheetHeight_First.Enable = 'off';
-                
-                app.SheetHeight_Second.Limits(1) = 0;
-                set(app.SheetHeight_Second, 'Enable', 'off', 'Value', 0)
-
-                app.UITable2.Visible = 'off';
-                rowHeight = {0,0,0};
-
-                if app.SheetOnFocus.Layout.Row ~= 1
-                    app.SheetOnFocus.Layout.Row = 1;
-                end
-            end
-
-            SpinnerValueChanged(app, struct('Source', app.SheetHeight_First))
-            app.GridLayout.RowHeight([9,11,12]) = rowHeight;
-            
-        end
-
-        % Value changed function: SheetHeight_First, SheetHeight_Second
-        function SpinnerValueChanged(app, event)
-            
-            app.GridLayout.RowHeight([6,10]) = {sprintf('%dx', app.SheetHeight_First.Value), sprintf('%dx', app.SheetHeight_Second.Value)};
-
-        end
-
         % Value changed function: RowHeightOffset
-        function AumentaralturadalinhaButtonPushed(app, event)
+        function TableRowHeightChanged(app, event)
 
             % ToDo:
             % Inserir comando pra forçar a renderização.
@@ -796,167 +940,6 @@ classdef winECD_exported < matlab.apps.AppBase
             catch ME
                 appUtil.modalWindow(app.UIFigure, 'error', ME.message);
             end
-
-        end
-
-        % Button pushed function: SheetViewStatus_3
-        function tool_ExportButtonImageClicked(app, event)
-            
-            fileIndex   = selectedFileIndex(app);
-            selectedECD = app.ecdObj(fileIndex);
-
-            nameFormatMap = {'*.xlsx', 'Excel (*.xlsx)'};
-            defaultName   = appUtil.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'monitorSPED', -1);
-            [fileFullPath, ~, ~, fileName] = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', nameFormatMap, defaultName);
-            if isempty(fileFullPath)
-                return
-            end
-
-            app.progressDialog.Visible = 'visible';
-
-            try
-                tempName = fullfile(app.mainApp.General.fileFolder.userPath, [fileName '.xlsx']);
-                tableIds = setdiff(fieldnames(selectedECD.Table), {'x0000'});
-                
-                writetable(selectedECD.Table.x0000, tempName, "Sheet", "0000", "WriteMode", "replacefile")
-                for ii = 1:numel(tableIds)
-                    tableId = tableIds{ii};                    
-                    writetable(selectedECD.Table.(tableId), tempName, "Sheet", tableId(2:end), "WriteMode", "append")
-                end
-
-                copyfile(tempName, fileFullPath, 'f')
-
-                if ~strcmp(app.mainApp.executionMode, 'webApp')
-                    ccTools.fcn.OperationSystem('openFile', fileFullPath)
-                end
-
-            catch ME
-                appUtil.modalWindow(app.UIFigure, 'warning', getReport(ME));
-            end
-
-            app.progressDialog.Visible = 'hidden';
-
-        end
-
-        % Image clicked function: Image4
-        function tool_LOGInfoImageClicked(app, event)
-            
-            fileIndex   = selectedFileIndex(app);
-            selectedECD = app.ecdObj(fileIndex);
-
-            htmlContent = util.HtmlTextGenerator.Warnings(selectedECD);
-            appUtil.modalWindow(app.UIFigure, 'info', htmlContent);
-
-        end
-
-        % Image clicked function: tool_OpenRTFFiles
-        function tool_OpenRTFFilesImageClicked(app, event)
-            
-            fileIndex   = selectedFileIndex(app);
-            selectedECD = app.ecdObj(fileIndex);
-
-            rtfFiles    = {};
-            msgError    = {};
-
-            rtfTableIds = {'J800', 'J801'};
-            parseTableAndAddToCache(selectedECD, rtfTableIds)
-
-            defaultName = appUtil.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'monitorSPED');
-            tempName    = appUtil.DefaultFileName(app.mainApp.General.fileFolder.tempPath, 'monitorSPED');
-            fileCount   = 0;
-
-            app.progressDialog.Visible = 'visible';
-            
-            for ii = 1:numel(rtfTableIds)
-                rtfTableField = ['x' rtfTableIds{ii}];
-        
-                if isfield(selectedECD.Table, rtfTableField) && ~isempty(selectedECD.Table.(rtfTableField))
-                    for jj = 1:height(selectedECD.Table.(rtfTableField))
-                        fileCount = fileCount+1;
-                        fileName  = sprintf('%s_%d.rtf', tempName, fileCount);
-                        
-                        try
-                            rtfContentFile  = selectedECD.Table.(rtfTableField).('ARQ_RTF'){jj};
-                            writematrix(rtfContentFile, fileName, "FileType", "text", "QuoteStrings", "none", "Encoding", 'ISO-8859-1');
-                            rtfFiles{end+1} = fileName;
-                        catch ME
-                            msgError{end+1} = ME.message;
-                        end
-                    end
-                end
-            end
-
-            app.progressDialog.Visible = 'hidden';
-
-            if ~isempty(rtfFiles)
-                appName = class.Constants.appName;
-
-                if isscalar(rtfFiles) && ~strcmp(app.mainApp.executionMode, 'webApp')
-                    nameFormat = {'*.rtf', [appName, ' (*.rtf)']};
-                else
-                    nameFormat = {'*.zip', [appName, ' (*.zip)']};
-                end
-
-                outputFile = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', nameFormat, defaultName);
-                if isempty(outputFile)
-                    return
-                end
-
-                app.progressDialog.Visible = 'visible';
-
-                if isscalar(rtfFiles) && ~strcmp(app.mainApp.executionMode, 'webApp')
-                    copyfile(rtfFiles{1}, outputFile, 'f')
-                else
-                    zip(outputFile, rtfFiles)
-                end
-
-                if ~strcmp(app.mainApp.executionMode, 'webApp')
-                    for kk = 1:numel(rtfFiles)
-                        ccTools.fcn.OperationSystem('openFile', rtfFiles{kk})
-                    end
-                end
-
-                app.progressDialog.Visible = 'hidden';
-            else
-                appUtil.modalWindow(app.UIFigure, 'info', sprintf('Escrituração não possui arquivo auxiliar no formato RTF.'));
-            end
-        
-            if ~isempty(msgError)
-                msgError = strjoin(msgError, '\n');
-                appUtil.modalWindow(app.UIFigure, 'error', msgError);
-            end
-
-        end
-
-        % Image clicked function: dockModule_Close, dockModule_Undock
-        function menu_DockButtonPushed(app, event)
-            
-            [idx, auxAppTag, relatedButton] = getAppInfoFromHandle(app.mainApp.tabGroupController, app);
-
-            switch event.Source
-                case app.dockModule_Undock
-                    appGeneral = app.mainApp.General;
-                    appGeneral.operationMode.Dock = false;
-                    
-                    app.mainApp.tabGroupController.Components.appHandle{idx} = [];
-
-                    inputArguments = ipcMainMatlabCallsHandler(app.mainApp, app, 'dockButtonPushed', auxAppTag);
-                    openModule(app.mainApp.tabGroupController, relatedButton, false, appGeneral, inputArguments{:})
-                    closeModule(app.mainApp.tabGroupController, auxAppTag, app.mainApp.General, 'undock')
-                    
-                    delete(app)
-
-                case app.dockModule_Close
-                    closeModule(app.mainApp.tabGroupController, auxAppTag, app.mainApp.General)
-            end
-
-        end
-
-        % Selection change function: TabGroup
-        function TabGroupSelectionChanged(app, event)
-            
-            [~, tabIndex] = ismember(app.TabGroup.SelectedTab, app.TabGroup.Children);
-            jsBackDoor_Customizations(app, tabIndex)
 
         end
     end
@@ -1074,7 +1057,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create SheetList
             app.SheetList = uidropdown(app.GridLayout3);
             app.SheetList.Items = {};
-            app.SheetList.ValueChangedFcn = createCallbackFcn(app, @SheetListValueChanged, true);
+            app.SheetList.ValueChangedFcn = createCallbackFcn(app, @SheetViewFirstValueChanged, true);
             app.SheetList.FontSize = 11;
             app.SheetList.FontColor = [0.129411764705882 0.129411764705882 0.129411764705882];
             app.SheetList.BackgroundColor = [1 1 1];
@@ -1120,7 +1103,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create tool_OpenRTFFiles
             app.tool_OpenRTFFiles = uiimage(app.GridLayout3);
             app.tool_OpenRTFFiles.ScaleMethod = 'none';
-            app.tool_OpenRTFFiles.ImageClickedFcn = createCallbackFcn(app, @tool_OpenRTFFilesImageClicked, true);
+            app.tool_OpenRTFFiles.ImageClickedFcn = createCallbackFcn(app, @Toolbar_OpenRTFImageClicked, true);
             app.tool_OpenRTFFiles.Tooltip = {'Abre/Salva arquivos .rtf'; '(Registros J800 e J801)'};
             app.tool_OpenRTFFiles.Layout.Row = 2;
             app.tool_OpenRTFFiles.Layout.Column = 6;
@@ -1128,7 +1111,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create SheetViewStatus_3
             app.SheetViewStatus_3 = uibutton(app.GridLayout3, 'push');
-            app.SheetViewStatus_3.ButtonPushedFcn = createCallbackFcn(app, @tool_ExportButtonImageClicked, true);
+            app.SheetViewStatus_3.ButtonPushedFcn = createCallbackFcn(app, @Toolbar_ExportImageClicked, true);
             app.SheetViewStatus_3.Icon = 'Export_24.png';
             app.SheetViewStatus_3.IconAlignment = 'top';
             app.SheetViewStatus_3.BackgroundColor = [0.9608 0.9608 0.9608];
@@ -1172,7 +1155,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create SheetView_First
             app.SheetView_First = uidropdown(app.GridLayout_2);
             app.SheetView_First.Items = {};
-            app.SheetView_First.ValueChangedFcn = createCallbackFcn(app, @SheetListValueChanged, true);
+            app.SheetView_First.ValueChangedFcn = createCallbackFcn(app, @SheetViewFirstValueChanged, true);
             app.SheetView_First.FontSize = 11;
             app.SheetView_First.BackgroundColor = [1 1 1];
             app.SheetView_First.Layout.Row = 1;
@@ -1184,7 +1167,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetHeight_First.Limits = [1 5];
             app.SheetHeight_First.RoundFractionalValues = 'on';
             app.SheetHeight_First.ValueDisplayFormat = '%d';
-            app.SheetHeight_First.ValueChangedFcn = createCallbackFcn(app, @SpinnerValueChanged, true);
+            app.SheetHeight_First.ValueChangedFcn = createCallbackFcn(app, @SheetViewHeightValueChanged, true);
             app.SheetHeight_First.FontSize = 11;
             app.SheetHeight_First.Enable = 'off';
             app.SheetHeight_First.Layout.Row = 1;
@@ -1194,7 +1177,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create SheetView_Second
             app.SheetView_Second = uidropdown(app.GridLayout_2);
             app.SheetView_Second.Items = {};
-            app.SheetView_Second.ValueChangedFcn = createCallbackFcn(app, @SheetView_SecondValueChanged, true);
+            app.SheetView_Second.ValueChangedFcn = createCallbackFcn(app, @SheetViewSecondValueChanged, true);
             app.SheetView_Second.Enable = 'off';
             app.SheetView_Second.FontSize = 11;
             app.SheetView_Second.BackgroundColor = [1 1 1];
@@ -1207,7 +1190,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetHeight_Second.Limits = [0 5];
             app.SheetHeight_Second.RoundFractionalValues = 'on';
             app.SheetHeight_Second.ValueDisplayFormat = '%d';
-            app.SheetHeight_Second.ValueChangedFcn = createCallbackFcn(app, @SpinnerValueChanged, true);
+            app.SheetHeight_Second.ValueChangedFcn = createCallbackFcn(app, @SheetViewHeightValueChanged, true);
             app.SheetHeight_Second.FontSize = 11;
             app.SheetHeight_Second.Enable = 'off';
             app.SheetHeight_Second.Layout.Row = 2;
@@ -1233,7 +1216,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.RowHeightOffset.Limits = [0 50];
             app.RowHeightOffset.RoundFractionalValues = 'on';
             app.RowHeightOffset.ValueDisplayFormat = '%d';
-            app.RowHeightOffset.ValueChangedFcn = createCallbackFcn(app, @AumentaralturadalinhaButtonPushed, true);
+            app.RowHeightOffset.ValueChangedFcn = createCallbackFcn(app, @TableRowHeightChanged, true);
             app.RowHeightOffset.FontSize = 11;
             app.RowHeightOffset.Layout.Row = 1;
             app.RowHeightOffset.Layout.Column = 6;
@@ -1448,146 +1431,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.GridLayout5.ColumnWidth = {'1x', '1x', '1x', '1x', '1x', '1x'};
             app.GridLayout5.BackgroundColor = [0.9804 0.9804 0.9804];
 
-            % Create Tab5
-            app.Tab5 = uitab(app.TabGroup);
-            app.Tab5.AutoResizeChildren = 'off';
-            app.Tab5.Title = 'PROJETO';
-
-            % Create report_Tab2Grid
-            app.report_Tab2Grid = uigridlayout(app.Tab5);
-            app.report_Tab2Grid.ColumnWidth = {50, '1x', 50, '1x', 70, '1x', 130, '2x', 70, '1x', 16, 16, 16};
-            app.report_Tab2Grid.RowHeight = {22, 22};
-            app.report_Tab2Grid.RowSpacing = 5;
-            app.report_Tab2Grid.BackgroundColor = [1 1 1];
-
-            % Create report_ProjectLabel
-            app.report_ProjectLabel = uilabel(app.report_Tab2Grid);
-            app.report_ProjectLabel.FontSize = 10;
-            app.report_ProjectLabel.Layout.Row = 1;
-            app.report_ProjectLabel.Layout.Column = [1 3];
-            app.report_ProjectLabel.Text = 'ARQUIVO:';
-
-            % Create report_ProjectNew
-            app.report_ProjectNew = uiimage(app.report_Tab2Grid);
-            app.report_ProjectNew.ScaleMethod = 'none';
-            app.report_ProjectNew.Tooltip = {'Cria novo projeto'};
-            app.report_ProjectNew.Layout.Row = 1;
-            app.report_ProjectNew.Layout.Column = 11;
-            app.report_ProjectNew.ImageSource = 'addFiles_18.png';
-
-            % Create report_ProjectOpen
-            app.report_ProjectOpen = uiimage(app.report_Tab2Grid);
-            app.report_ProjectOpen.Tooltip = {'Abre projeto'};
-            app.report_ProjectOpen.Layout.Row = 1;
-            app.report_ProjectOpen.Layout.Column = 12;
-            app.report_ProjectOpen.ImageSource = 'OpenFile_36x36.png';
-
-            % Create report_ProjectSave
-            app.report_ProjectSave = uiimage(app.report_Tab2Grid);
-            app.report_ProjectSave.Tooltip = {'Salva projeto'};
-            app.report_ProjectSave.Layout.Row = 1;
-            app.report_ProjectSave.Layout.Column = 13;
-            app.report_ProjectSave.ImageSource = 'saveFile_32.png';
-
-            % Create report_ProjectName
-            app.report_ProjectName = uitextarea(app.report_Tab2Grid);
-            app.report_ProjectName.Editable = 'off';
-            app.report_ProjectName.FontSize = 11;
-            app.report_ProjectName.Layout.Row = 1;
-            app.report_ProjectName.Layout.Column = [2 10];
-
-            % Create report_systemLabel
-            app.report_systemLabel = uilabel(app.report_Tab2Grid);
-            app.report_systemLabel.WordWrap = 'on';
-            app.report_systemLabel.FontSize = 10;
-            app.report_systemLabel.FontColor = [0.149 0.149 0.149];
-            app.report_systemLabel.Layout.Row = 2;
-            app.report_systemLabel.Layout.Column = [1 2];
-            app.report_systemLabel.Text = 'SISTEMA:';
-
-            % Create report_system
-            app.report_system = uidropdown(app.report_Tab2Grid);
-            app.report_system.Items = {'eFiscaliza', 'eFiscaliza DS', 'eFiscaliza HM'};
-            app.report_system.FontSize = 11;
-            app.report_system.BackgroundColor = [1 1 1];
-            app.report_system.Layout.Row = 2;
-            app.report_system.Layout.Column = 2;
-            app.report_system.Value = 'eFiscaliza';
-
-            % Create report_IssueLabel
-            app.report_IssueLabel = uilabel(app.report_Tab2Grid);
-            app.report_IssueLabel.HorizontalAlignment = 'right';
-            app.report_IssueLabel.WordWrap = 'on';
-            app.report_IssueLabel.FontSize = 10;
-            app.report_IssueLabel.FontColor = [0.149 0.149 0.149];
-            app.report_IssueLabel.Layout.Row = 2;
-            app.report_IssueLabel.Layout.Column = 3;
-            app.report_IssueLabel.Text = '# ID:';
-
-            % Create report_Issue
-            app.report_Issue = uieditfield(app.report_Tab2Grid, 'numeric');
-            app.report_Issue.Limits = [-1 Inf];
-            app.report_Issue.RoundFractionalValues = 'on';
-            app.report_Issue.ValueDisplayFormat = '%d';
-            app.report_Issue.FontSize = 11;
-            app.report_Issue.FontColor = [0.149 0.149 0.149];
-            app.report_Issue.Layout.Row = 2;
-            app.report_Issue.Layout.Column = 4;
-            app.report_Issue.Value = -1;
-
-            % Create report_Unit
-            app.report_Unit = uidropdown(app.report_Tab2Grid);
-            app.report_Unit.Items = {};
-            app.report_Unit.FontSize = 11;
-            app.report_Unit.BackgroundColor = [1 1 1];
-            app.report_Unit.Layout.Row = 2;
-            app.report_Unit.Layout.Column = 6;
-            app.report_Unit.Value = {};
-
-            % Create report_UnitLabel
-            app.report_UnitLabel = uilabel(app.report_Tab2Grid);
-            app.report_UnitLabel.HorizontalAlignment = 'right';
-            app.report_UnitLabel.WordWrap = 'on';
-            app.report_UnitLabel.FontSize = 10;
-            app.report_UnitLabel.Layout.Row = 2;
-            app.report_UnitLabel.Layout.Column = 5;
-            app.report_UnitLabel.Text = 'UNIDADE:';
-
-            % Create report_ModelName
-            app.report_ModelName = uidropdown(app.report_Tab2Grid);
-            app.report_ModelName.Items = {''};
-            app.report_ModelName.FontSize = 11;
-            app.report_ModelName.BackgroundColor = [1 1 1];
-            app.report_ModelName.Layout.Row = 2;
-            app.report_ModelName.Layout.Column = 8;
-            app.report_ModelName.Value = '';
-
-            % Create report_ModelNameLabel
-            app.report_ModelNameLabel = uilabel(app.report_Tab2Grid);
-            app.report_ModelNameLabel.HorizontalAlignment = 'right';
-            app.report_ModelNameLabel.FontSize = 10;
-            app.report_ModelNameLabel.Layout.Row = 2;
-            app.report_ModelNameLabel.Layout.Column = 7;
-            app.report_ModelNameLabel.Text = 'MODELO RELATÓRIO:';
-
-            % Create report_Version
-            app.report_Version = uidropdown(app.report_Tab2Grid);
-            app.report_Version.Items = {'Preliminar', 'Definitiva'};
-            app.report_Version.FontSize = 11;
-            app.report_Version.BackgroundColor = [1 1 1];
-            app.report_Version.Layout.Row = 2;
-            app.report_Version.Layout.Column = 10;
-            app.report_Version.Value = 'Preliminar';
-
-            % Create report_VersionLabel
-            app.report_VersionLabel = uilabel(app.report_Tab2Grid);
-            app.report_VersionLabel.HorizontalAlignment = 'right';
-            app.report_VersionLabel.WordWrap = 'on';
-            app.report_VersionLabel.FontSize = 10;
-            app.report_VersionLabel.Layout.Row = 2;
-            app.report_VersionLabel.Layout.Column = 9;
-            app.report_VersionLabel.Text = 'VERSÃO:';
-
             % Create UITable1
             app.UITable1 = uitable(app.GridLayout);
             app.UITable1.BackgroundColor = [1 1 1;0.9412 0.9412 0.9412];
@@ -1662,7 +1505,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create toolGrid
             app.toolGrid = uigridlayout(app.GridLayout);
-            app.toolGrid.ColumnWidth = {'1x', 22};
+            app.toolGrid.ColumnWidth = {22, 22, '1x'};
             app.toolGrid.RowHeight = {4, 17, 2};
             app.toolGrid.ColumnSpacing = 5;
             app.toolGrid.RowSpacing = 0;
@@ -1673,21 +1516,31 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create tool_CompanyInfo
             app.tool_CompanyInfo = uilabel(app.toolGrid);
+            app.tool_CompanyInfo.HorizontalAlignment = 'right';
             app.tool_CompanyInfo.VerticalAlignment = 'top';
             app.tool_CompanyInfo.WordWrap = 'on';
             app.tool_CompanyInfo.FontSize = 9;
             app.tool_CompanyInfo.FontColor = [0.149 0.149 0.149];
             app.tool_CompanyInfo.Layout.Row = [1 3];
-            app.tool_CompanyInfo.Layout.Column = 1;
+            app.tool_CompanyInfo.Layout.Column = 3;
             app.tool_CompanyInfo.Interpreter = 'html';
             app.tool_CompanyInfo.Text = {'<font style="font-size: 11px; font-weight: bold;">NOME DA EMPRESA</font> CNPJ 10.101.101/0001-02 '; '01/01/2023 - 31/12/2023 '};
 
             % Create Image4
             app.Image4 = uiimage(app.toolGrid);
-            app.Image4.ImageClickedFcn = createCallbackFcn(app, @tool_LOGInfoImageClicked, true);
+            app.Image4.ImageClickedFcn = createCallbackFcn(app, @Toolbar_LOGInfoImageClicked, true);
             app.Image4.Layout.Row = 2;
-            app.Image4.Layout.Column = 2;
+            app.Image4.Layout.Column = 1;
             app.Image4.ImageSource = 'LOG_32.png';
+
+            % Create file_ReportRFB
+            app.file_ReportRFB = uiimage(app.toolGrid);
+            app.file_ReportRFB.ScaleMethod = 'none';
+            app.file_ReportRFB.ImageClickedFcn = createCallbackFcn(app, @Toolbar_ReportImageClicked, true);
+            app.file_ReportRFB.Tooltip = {'Gera relatório análise'};
+            app.file_ReportRFB.Layout.Row = 2;
+            app.file_ReportRFB.Layout.Column = 2;
+            app.file_ReportRFB.ImageSource = 'Publish_HTML_16.png';
 
             % Create dockModuleGrid
             app.dockModuleGrid = uigridlayout(app.GridLayout);
@@ -1701,7 +1554,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create dockModule_Close
             app.dockModule_Close = uiimage(app.dockModuleGrid);
             app.dockModule_Close.ScaleMethod = 'none';
-            app.dockModule_Close.ImageClickedFcn = createCallbackFcn(app, @menu_DockButtonPushed, true);
+            app.dockModule_Close.ImageClickedFcn = createCallbackFcn(app, @DockModuleGroup_ButtonPushed, true);
             app.dockModule_Close.Tag = 'DRIVETEST';
             app.dockModule_Close.Tooltip = {'Fecha módulo'};
             app.dockModule_Close.Layout.Row = 1;
@@ -1711,31 +1564,13 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create dockModule_Undock
             app.dockModule_Undock = uiimage(app.dockModuleGrid);
             app.dockModule_Undock.ScaleMethod = 'none';
-            app.dockModule_Undock.ImageClickedFcn = createCallbackFcn(app, @menu_DockButtonPushed, true);
+            app.dockModule_Undock.ImageClickedFcn = createCallbackFcn(app, @DockModuleGroup_ButtonPushed, true);
             app.dockModule_Undock.Tag = 'DRIVETEST';
             app.dockModule_Undock.Enable = 'off';
             app.dockModule_Undock.Tooltip = {'Reabre módulo em outra janela'};
             app.dockModule_Undock.Layout.Row = 1;
             app.dockModule_Undock.Layout.Column = 1;
             app.dockModule_Undock.ImageSource = 'Undock_18White.png';
-
-            % Create Panel
-            app.Panel = uipanel(app.UIFigure);
-            app.Panel.AutoResizeChildren = 'off';
-            app.Panel.Title = 'Panel';
-            app.Panel.Position = [1253 425 131 175];
-
-            % Create filter_ContextMenu
-            app.filter_ContextMenu = uicontextmenu(app.UIFigure);
-            app.filter_ContextMenu.Tag = 'auxApp.winECD';
-
-            % Create filter_delButton
-            app.filter_delButton = uimenu(app.filter_ContextMenu);
-            app.filter_delButton.Text = 'Excluir';
-
-            % Create filter_delAllButton
-            app.filter_delAllButton = uimenu(app.filter_ContextMenu);
-            app.filter_delAllButton.Text = 'Excluir todos';
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';

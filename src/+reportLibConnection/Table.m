@@ -23,66 +23,99 @@ classdef (Abstract) Table
         %-----------------------------------------------------------------%
         % TABELAS GERAIS
         %-----------------------------------------------------------------%
-        function Table = FileStatus(dataOverview)
-            ecdObj = [dataOverview.InfoSet];
-            Table  = table('Size',          [0, 6],                                             ...
-                           'VariableTypes', {'double', 'cell', 'cell', 'cell', 'cell', 'cell'}, ...
-                           'VariableNames', {'#', 'Arquivo', 'Codificação', 'Hash', 'Resposta webservice', 'Situação'});
-        
-            for ii = 1:numel(ecdObj)
-                id = generateTextId(ecdObj(ii), 'period-oriented', false);
-
-                Table(end+1,:) = {ii, ...
-                    strjoin(unique({ecdObj(ii).Sources.file}, 'stable'), '<br>'), ...
-                    strjoin({ecdObj(ii).Sources.encoding}, '<br>'), ...
-                    strjoin({ecdObj(ii).Sources.hash}, '<br>'), ...
-                    strjoin(arrayfun(@(x) jsonencode(x), [ecdObj(ii).Sources.validationMessage], 'UniformOutput', false), ',<br>'), ...
-                    id};
-            end
-        end
-
-        %-----------------------------------------------------------------%
-        function Table = FileByCompany(dataOverview)
-            ecdObj = [dataOverview.InfoSet];
-            Table  = table('Size',          [0, 5],                                   ...
-                           'VariableTypes', {'cell', 'cell', 'cell', 'cell', 'cell'}, ...
-                           'VariableNames', {'Empresa', 'CNPJ', 'Arquivo', 'Período Fiscal', 'Registros'});
-        
-            for ii = 1:numel(ecdObj)
-                Table(end+1,:) = {...
-                    ecdObj(ii).CompanyName, ...
-                    ecdObj(ii).CompanyId, ...
-                    strjoin(unique({ecdObj(ii).Sources.file}, 'stable'), '<br>'), ...
-                    char(strjoin(string(ecdObj(ii).Period), ' a ')), ...
-                    strjoin(strcat(ecdObj(ii).Table.x9900.REG_BLC, ' (', cellstr(string(ecdObj(ii).Table.x9900.QTD_REG_BLC)), ')'), ', ')};
-            end
-        end
-
-        %-----------------------------------------------------------------%
-        function Table = PeriodByCompany(dataOverview)
-            ecdObj = dataOverview.InfoSet.ecdObj;
-            Table  = table('Size',          [0, 4],                           ...
-                           'VariableTypes', {'cell', 'cell', 'cell', 'cell'}, ...
-                           'VariableNames', {'Empresa', 'CNPJ', 'Período Fiscal', 'Situação'});
+        function Table = FileByCompany(reportInfo)
+            ecdObj = reportInfo.Object;
+            Table  = table('Size',          [0, 7],                                                       ...
+                           'VariableTypes', {'double', 'cell', 'cell', 'cell', 'cell', 'double', 'cell'}, ...
+                           'VariableNames', {'#', 'CNPJ', 'NIRE', 'Razão Social', 'UF', 'Número de arquivos', 'Período contábil – Arquivo'});
 
             idsList = {ecdObj.CompanyId};
             ids = unique(idsList);
-
-            for id = ids
+            
+            for ii = 1:numel(ids)
                 % Identifica fluxos relacionados a cada CNPJ, ordenando os 
                 % fluxos de acordo com a data de fim do seu período fiscal.
-                idIndexes   = find(strcmp(idsList, id));
+                idIndexes   = find(strcmp(idsList, ids{ii}));
                 [~, idSort] = sort(arrayfun(@(x) x.Period(2), ecdObj(idIndexes)));
                 idIndexes   = idIndexes(idSort);
 
-                idPeriod    = strjoin(arrayfun(@(x) char(strjoin(string(x.Period), ' a ')), ecdObj(idIndexes), 'UniformOutput', false), '<br>');
-                idStatus    = strjoin(arrayfun(@(x) generateTextId(x, 'period-oriented', false), ecdObj(idIndexes), 'UniformOutput', false), '<br>');
-
                 Table(end+1,:) = {...
-                    ecdObj(idIndexes(1)).CompanyName, ...
+                    ii, ...
                     ecdObj(idIndexes(1)).CompanyId, ...
-                    idPeriod, ...
-                    idStatus};                    
+                    ecdObj(idIndexes(1)).CompanyInfo.NIRE, ...                                        
+                    ecdObj(idIndexes(1)).CompanyName, ...
+                    strjoin(unique({ecdObj(idIndexes).State}), '<br>'), ...
+                    numel(ecdObj(idIndexes)), ...
+                    strjoin(strcat(arrayfun(@(x) sprintf('%s a %s', x.Period(:)), ecdObj(idIndexes), 'UniformOutput', false), '&emsp;–&emsp;', {ecdObj(idIndexes).FileName}), '<br>') ...
+                };                    
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function Table = SourceFileStatus(analyzedData)
+            ecdObj = analyzedData.InfoSet.ecdObj;
+            ecdIdx = analyzedData.Index;
+            Table  = table('Size',          [0, 7],                                                   ...
+                           'VariableTypes', {'cell', 'cell', 'cell', 'cell', 'cell', 'cell', 'cell'}, ...
+                           'VariableNames', {'#', 'Período contábil', 'Arquivo', 'Codificação', 'Hash', 'Resposta webservice', 'Situação'});
+        
+            kk = 0;
+            for ii = 1:numel(ecdObj)
+                kk = kk+1;
+                numFileSources = numel(ecdObj(ii).Sources);
+
+                for jj = 1:numFileSources
+                    zz = '';
+                    if numFileSources > 1
+                        zz = sprintf('.%d', jj);
+                    end
+
+                    id = generateTextId(ecdObj(ii), 'scalar-period-oriented', jj);
+
+                    validationMessage = ecdObj(ii).Sources(end).validationMessage;
+                    if all(cellfun(@(x) isfield(validationMessage, x), {'xmlns', 'versao', 'nire', 'hashEsc'}))
+                        validationMessage = rmfield(validationMessage, {'xmlns', 'versao', 'nire', 'hashEsc'});
+                    end
+
+                    Table(end+1,:) = { ...
+                        sprintf('%d.%d%s', ecdIdx, kk, zz), ...
+                        sprintf('%s a %s', ecdObj(ii).Period(:)), ...
+                        ecdObj(ii).Sources(jj).file, ...
+                        ecdObj(ii).Sources(jj).encoding, ...
+                        ecdObj(ii).Sources(jj).hash, ...
+                        jsonencode(validationMessage), ...
+                        id ...
+                    };
+                end
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function Table = FileMetadata(analyzedData)
+            ecdObj = analyzedData.InfoSet.ecdObj;
+            ecdIdx = analyzedData.Index;
+            Table  = table('Size',          [0, 4],                             ...
+                           'VariableTypes', {'cell', 'cell', 'cell', 'double'}, ...
+                           'VariableNames', {'#', 'Arquivo', 'Registros', 'Qtd. arquivos anexos (J800 e J801)'});
+
+            for ii = 1:numel(ecdObj)
+                sheetsInfo = '';
+                rtfFiles = 0;
+                if isfield(ecdObj(ii).Table, 'x9900')
+                    sheetsInfo = strjoin(strcat('"', ecdObj(ii).Table.x9900.REG_BLC, '": ', cellstr(string(ecdObj(ii).Table.x9900.QTD_REG_BLC))), ', ');
+
+                    rtfIndexes = find(contains(ecdObj(ii).Table.x9900.REG_BLC, {'J800', 'J801'}));
+                    if ~isempty(rtfIndexes)
+                        rtfFiles = sum(ecdObj(ii).Table.x9900.("QTD_REG_BLC")(rtfIndexes));
+                    end
+                end
+
+                Table(end+1,:) = { ...
+                    sprintf('%d.%d%s', ecdIdx, ii), ...
+                    ecdObj(ii).FileName, ...
+                    sheetsInfo, ...
+                    rtfFiles ...
+                };
             end
         end
 

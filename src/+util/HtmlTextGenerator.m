@@ -59,6 +59,8 @@ classdef (Abstract) HtmlTextGenerator
         %-----------------------------------------------------------------%
         function htmlContent = File(ecdObj)
             if isscalar(ecdObj)
+                ufMappingDict = class.Constants.ufMapping();
+
                 if ~ecdObj.PeriodMerged
                     groupName = 'FileName';
                 else
@@ -69,7 +71,8 @@ classdef (Abstract) HtmlTextGenerator
                 if ecdObj.PeriodMerged
                     dataStruct(end+1) = struct('group', 'Origin', 'value', textFormatGUI.cellstr2Bullets(cellfun(@(x) sprintf('"%s"', x), {ecdObj.Sources.file}, 'UniformOutput', false)));
                 end
-
+                
+                dataStruct(end+1) = struct('group', 'UF',      'value', ufMappingDict(ecdObj.State));
                 dataStruct(end+1) = struct('group', 'Period',  'value', strjoin(string(ecdObj.Period), ' a '));
                 dataStruct(end+1) = struct('group', 'Content', 'value', [strjoin(strtrim(splitlines(ecdObj.Content(1:min(500, numel(ecdObj.Content))))), '\n') '<br><font style="color: red;">... [texto truncado]</font>']);
                 dataStruct(end+1) = struct('group', 'Table',   'value', strjoin(getTableIds(ecdObj), ', '));

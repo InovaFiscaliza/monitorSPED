@@ -196,8 +196,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                     menu_mainButtonPushed(app, struct('Source', app.menu_Button1, 'PreviousValue', false))
                                 end
                             case 'fileSortMethodChanged'
-                                if ~strcmp(app.file_FileSortMethod.Value, app.General.sped.sortMethod)
-                                    app.file_FileSortMethod.Value = app.General.sped.sortMethod;
+                                if ~strcmp(app.file_FileSortMethod.Value, app.General.File.sortMethod)
+                                    app.file_FileSortMethod.Value = app.General.File.sortMethod;
                                     file_FileSortMethodValueChanged(app)
                                 end
                             otherwise
@@ -370,16 +370,16 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.General_I.fileFolder.tempPath  = tempDir;
             app.General_I.fileFolder.MFilePath = MFilePath;
 
-            if ~ismember(app.General_I.sped.input, {'file', 'folder'})
-                app.General_I.sped.input = 'file';
+            if ~ismember(app.General_I.File.input, {'file', 'folder'})
+                app.General_I.File.input = 'file';
             end
 
-            if ~ismember(app.General_I.sped.sortMethod, {'CNPJ', 'PERÍODO FISCAL', 'RECEITA FEDERAL'})
-                app.General_I.sped.sortMethod = 'CNPJ';
+            if ~ismember(app.General_I.File.sortMethod, {'CNPJ', 'PERÍODO FISCAL', 'RECEITA FEDERAL'})
+                app.General_I.File.sortMethod = 'CNPJ';
             end
 
-            if ~ismember(app.General_I.sped.checkStatus, {'OnlyCache', 'Cache+RealTime', 'RealTime'})
-                app.General_I.sped.checkStatus = 'Cache+RealTime';
+            if ~ismember(app.General_I.File.checkStatus, {'OnlyCache', 'Cache+RealTime', 'RealTime'})
+                app.General_I.File.checkStatus = 'Cache+RealTime';
             end
 
             switch app.executionMode
@@ -440,7 +440,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             addComponent(app.tabGroupController, "External", "auxApp.winConfig",      app.menu_Button4, "AlwaysOn", struct('On', 'Settings_36Yellow.png', 'Off', 'Settings_36White.png'), app.menu_Button1,                    3)
 
             DataHubWarningLamp(app)
-            app.file_FileSortMethod.Value = app.General.sped.sortMethod;
+            app.file_FileSortMethod.Value = app.General.File.sortMethod;
             addStyle(app.file_Tree, uistyle('Interpreter', 'html'))
         end
 
@@ -810,7 +810,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 end
 
             else
-                switch app.General.sped.input
+                switch app.General.File.input
                     case 'file'
                         [fileName, filePath] = uigetfile({'*.txt';'*.csv';'*.mat';'*.*'}, ...
                                                           '', app.General.fileFolder.lastVisited, 'MultiSelect', 'on');
@@ -914,7 +914,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 app.progressDialog.Visible = 'visible';
 
-                checkFileFlag = checkFileStatus(app.ecdObj(indexes), app.receitaFederalObj, app.General.sped.checkStatus);
+                checkFileFlag = checkFileStatus(app.ecdObj(indexes), app.receitaFederalObj, app.General.File.checkStatus);
                 if checkFileFlag
                     file_TreeBuilding(app, indexes)
                 end
@@ -931,21 +931,35 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             if ~isempty(indexes)
                 if numel(indexes) < numel(app.ecdObj)
-                    msgQuestion   = 'Deseja gerar inventário de TODOS os arquivos lidos, ou apenas dos SELECIONADOS?';
-                    userSelection = appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'TODOS', 'SELECIONADOS', 'CANCELAR'}, 1, 3);
+                    msgQuestion   = 'Deseja gerar inventário de TODOS os arquivos lidos, ou apenas do SELECIONADO?';
+                    userSelection = appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'Todos', 'Selecionado', 'Cancelar'}, 1, 3);
 
                     switch userSelection
-                        case 'CANCELAR'
+                        case 'Cancelar'
                             return
-                        case 'TODOS'
+                        case 'Todos'
                             indexes = 1:numel(app.ecdObj);
                     end
+                end
+
+                selectedECD = app.ecdObj(indexes);
+                % selectedECD([selectedECD.PeriodMerged]) = [];
+
+                if isempty(selectedECD)
+                    appUtil.modalWindow(app.UIFigure, 'warning', 'O inventário de arquivos não contempla registros mesclados.');
+                    return
                 end
 
                 app.progressDialog.Visible = 'visible';
 
                 try
-                    reportLibConnection.Controller.Run(app, app.projectData, app.ecdObj(indexes), app.General)
+                    % Eliminar isso com o popup de confirmação...
+                    generalSettings = app.General;
+                    if ismember('Inventário de arquivos', {app.projectData.documentModel.Name})
+                        generalSettings.Report.model = 'Inventário de arquivos';
+                    end
+
+                    reportLibConnection.Controller.Run(app, app.projectData, selectedECD, generalSettings)
                 catch ME
                     appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));
                 end
@@ -1013,6 +1027,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.GridLayout.ColumnSpacing = 0;
             app.GridLayout.RowSpacing = 0;
             app.GridLayout.Padding = [0 0 0 0];
+            app.GridLayout.Tag = 'winMonitorSPED';
             app.GridLayout.Tooltip = {''};
             app.GridLayout.BackgroundColor = [0.9412 0.9412 0.9412];
 
@@ -1312,6 +1327,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create file_ContextMenu_Tree
             app.file_ContextMenu_Tree = uicontextmenu(app.UIFigure);
+            app.file_ContextMenu_Tree.Tag = 'winMonitorSPED';
 
             % Create file_ContextMenu_delTree1Node
             app.file_ContextMenu_delTree1Node = uimenu(app.file_ContextMenu_Tree);

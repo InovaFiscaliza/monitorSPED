@@ -1,5 +1,5 @@
 {
-    "version": 0.29,
+    "version": 0.34,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -22,7 +22,7 @@
         "DataHub_POST": "",
         "lastVisited": ""
     },
-    "sped": {
+    "File": {
         "input": "file",
         "sortMethod": "CNPJ",
         "checkStatus": "Cache+RealTime",
@@ -41,15 +41,16 @@
                 "LF"
                 ],
             "value": "CRLF"
-        }
+        },
+        "novocampo": 10
     },
+    "ECD": {},
     "Report": {
         "system": "eFiscaliza",
         "issue": -1,
         "unit": "",
         "model": "",
         "reportVersion": "Preliminar",
-        "Basemap": "streets-dark",
         "Image": {
             "Format": "jpeg",
             "Resolution": 120
@@ -67,7 +68,7 @@
         "legalBasisId": "33",
         "accessLevelId": "1",
         "description": "",
-        "note": "Documento gerado no appAnalise",
+        "note": "Documento gerado no monitorSPED",
         "defaultValues": {
             "unit": [
                 "",

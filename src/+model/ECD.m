@@ -69,6 +69,7 @@ classdef ECD < model.ECDBase
         CompanyId % CNPJ
         CompanyInfo = struct('CNPJ', {}, 'IE', {}, 'IM', {}, 'NIRE', {}, 'UF', {}, 'City', {})
         
+        State
         Period
         PeriodMerged = false
 
@@ -85,8 +86,9 @@ classdef ECD < model.ECDBase
                          'rtfFiles', {{}}, ...
                          'externalFiles', table('Size', [0, 4], 'VariableTypes', {'cell', 'cell', 'cell', 'int8'}, 'VariableNames', {'Type', 'Tag', 'Filename', 'ID'}), ...
                          'tableView', struct('id', {}, 'widths', {}, 'filters', {}, 'style', {}));
-
-        UUID = char(matlab.lang.internal.uuid())
+        
+        Enable  = true
+        UUID    = char(matlab.lang.internal.uuid())
     end
 
 
@@ -173,6 +175,7 @@ classdef ECD < model.ECDBase
                                                          'UF',   obj(idx).Table.x0000.UF{1},   ...
                                                          'City', obj(idx).Table.x0000.COD_MUN{1});
 
+                        obj(idx).State          = obj(idx).CompanyInfo.UF;
                         obj(idx).Period         = [min(obj(idx).Table.x0000.DT_INI), max(obj(idx).Table.x0000.DT_FIN)];
                         obj(idx).Period.Format  = 'dd/MM/yyyy';
                     end
@@ -699,7 +702,7 @@ classdef ECD < model.ECDBase
         function textId = generateTextId(obj, elementType, varargin)
             arguments
                 obj
-                elementType char {mustBeMember(elementType, {'company-oriented', 'period-oriented'})}
+                elementType char {mustBeMember(elementType, {'company-oriented', 'period-oriented', 'scalar-period-oriented'})}
             end
 
             arguments (Repeating)
@@ -725,10 +728,10 @@ classdef ECD < model.ECDBase
 
                     [receitaFederalStatus, receitaFederalSourceFileStatus] = checkIfValidStatus(obj);
                     if receitaFederalStatus
-                        receitaFederalStatusIcon = '🟢';
+                        receitaFederalStatusIcon = '&#x1F7E2;'; % '🟢';
                     else
                         if all(receitaFederalSourceFileStatus < 0)
-                            receitaFederalStatusIcon = '🔴';
+                            receitaFederalStatusIcon ='&#x1F534;'; % '🔴';
                         else
                             receitaFederalStatusIcon = '⚪';
                         end
@@ -746,6 +749,33 @@ classdef ECD < model.ECDBase
 
                     textId = sprintf('%s%s%s%s', preffixText, receitaFederalStatusIcon, periodStatusIcon, mergeStatusIcon);
 
+                case 'scalar-period-oriented'
+                    sourceIndex = varargin{1};
+
+                    if obj.Sources(sourceIndex).validationStatus > 0
+                        receitaFederalStatusIcon = '&#x1F7E2;'; % '🟢';
+                    else
+                        if obj.Sources(sourceIndex).validationStatus < 0
+                            receitaFederalStatusIcon ='&#x1F534;'; % '🔴';
+                        else
+                            receitaFederalStatusIcon = '⚪';
+                        end
+                    end
+
+                    [beginPeriod, endPeriod] = bounds(obj.Sources(sourceIndex).period);
+                    monthsCovered = month(beginPeriod):month(endPeriod);
+
+                    periodStatusIcon = '';
+                    if ~isequal(monthsCovered, 1:12)
+                        periodStatusIcon = '⌛';
+                    end
+
+                    mergeStatusIcon = '';
+                    if obj.PeriodMerged
+                        mergeStatusIcon = '➕';
+                    end
+
+                    textId = sprintf('%s%s%s', receitaFederalStatusIcon, periodStatusIcon, mergeStatusIcon);
             end
         end
 

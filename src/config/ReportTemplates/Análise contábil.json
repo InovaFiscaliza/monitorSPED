@@ -135,6 +135,12 @@
                         "Settings": [
                             {
                                 "Editable": "false",
+                                "ColumnName": "#",
+                                "Precision": "%.0f",
+                                "Width": "40px"
+                            },
+                            {
+                                "Editable": "false",
                                 "ColumnName": "Empresa",
                                 "Precision": "%s",
                                 "Width": "auto"
@@ -156,12 +162,6 @@
                                 "ColumnName": "Período fiscal",
                                 "Precision": "%s",
                                 "Width": "140px"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Registros",
-                                "Precision": "%s",
-                                "Width": "auto"
                             }
                         ],
                         "Intro": [],
