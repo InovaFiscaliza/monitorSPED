@@ -8,8 +8,8 @@ classdef winECD_exported < matlab.apps.AppBase
         dockModule_Undock           matlab.ui.control.Image
         dockModule_Close            matlab.ui.control.Image
         toolGrid                    matlab.ui.container.GridLayout
+        Image5                      matlab.ui.control.Image
         file_ReportRFB              matlab.ui.control.Image
-        Image4                      matlab.ui.control.Image
         tool_CompanyInfo            matlab.ui.control.Label
         UITable2_FilterText         matlab.ui.control.Label
         UITable2_CountText          matlab.ui.control.Label
@@ -22,6 +22,7 @@ classdef winECD_exported < matlab.apps.AppBase
         TabGroup                    matlab.ui.container.TabGroup
         Tab1                        matlab.ui.container.Tab
         GridLayout3                 matlab.ui.container.GridLayout
+        Image4                      matlab.ui.control.Image
         Separator1_3                matlab.ui.control.Image
         SheetViewStatus_3           matlab.ui.control.Button
         tool_OpenRTFFiles           matlab.ui.control.Image
@@ -92,6 +93,7 @@ classdef winECD_exported < matlab.apps.AppBase
         % apenas a sua visibilidade - e tornando desnecessário criá-la a
         % cada chamada (usando uiprogressdlg, por exemplo).
         progressDialog
+        popupContainer
 
         %-----------------------------------------------------------------%
         % ESPECIFICIDADES AUXAPP.ECD
@@ -625,7 +627,7 @@ classdef winECD_exported < matlab.apps.AppBase
             selectedECD = app.ecdObj(fileIndex);
 
             app.tool_ReadAllTables.Enable = ~selectedECD.GUI.isRead;
-            app.tool_CompanyInfo.Text = sprintf('<font style="font-size: 11px; font-weight: bold;">%s</font> CNPJ %s (%s)\n%s', ...
+            app.tool_CompanyInfo.Text = sprintf('<font style="font-size: 11px; font-weight: bold;">%s</font> CNPJ %s (%s) \n%s ', ...
                 upper(selectedECD.CompanyName), selectedECD.CompanyId, selectedECD.State, strjoin(string(selectedECD.Period), ' a '));
 
             updateSheetList(app)
@@ -1002,7 +1004,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create GridLayout3
             app.GridLayout3 = uigridlayout(app.Tab1);
-            app.GridLayout3.ColumnWidth = {90, 230, 60, 229, 3, 20, 170, 3, 44};
+            app.GridLayout3.ColumnWidth = {90, 230, 60, 229, 3, 20, 170, 3, 44, 44};
             app.GridLayout3.RowHeight = {22, 22};
             app.GridLayout3.RowSpacing = 5;
             app.GridLayout3.BackgroundColor = [0.9804 0.9804 0.9804];
@@ -1127,6 +1129,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.Separator1_3.Layout.Row = [1 2];
             app.Separator1_3.Layout.Column = 8;
             app.Separator1_3.ImageSource = 'LineV.svg';
+
+            % Create Image4
+            app.Image4 = uiimage(app.GridLayout3);
+            app.Image4.ScaleMethod = 'none';
+            app.Image4.ImageClickedFcn = createCallbackFcn(app, @Toolbar_LOGInfoImageClicked, true);
+            app.Image4.Layout.Row = [1 2];
+            app.Image4.Layout.Column = 10;
+            app.Image4.ImageSource = 'LOG_32.png';
 
             % Create Tab2
             app.Tab2 = uitab(app.TabGroup);
@@ -1505,33 +1515,25 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create toolGrid
             app.toolGrid = uigridlayout(app.GridLayout);
-            app.toolGrid.ColumnWidth = {22, 22, '1x'};
-            app.toolGrid.RowHeight = {4, 17, 2};
+            app.toolGrid.ColumnWidth = {'1x', 22, 22};
+            app.toolGrid.RowHeight = {4, 17, '1x'};
             app.toolGrid.ColumnSpacing = 5;
             app.toolGrid.RowSpacing = 0;
-            app.toolGrid.Padding = [5 5 5 5];
+            app.toolGrid.Padding = [10 5 10 5];
             app.toolGrid.Layout.Row = 14;
             app.toolGrid.Layout.Column = [1 16];
             app.toolGrid.BackgroundColor = [0.9412 0.9412 0.9412];
 
             % Create tool_CompanyInfo
             app.tool_CompanyInfo = uilabel(app.toolGrid);
-            app.tool_CompanyInfo.HorizontalAlignment = 'right';
             app.tool_CompanyInfo.VerticalAlignment = 'top';
             app.tool_CompanyInfo.WordWrap = 'on';
             app.tool_CompanyInfo.FontSize = 9;
             app.tool_CompanyInfo.FontColor = [0.149 0.149 0.149];
             app.tool_CompanyInfo.Layout.Row = [1 3];
-            app.tool_CompanyInfo.Layout.Column = 3;
+            app.tool_CompanyInfo.Layout.Column = 1;
             app.tool_CompanyInfo.Interpreter = 'html';
             app.tool_CompanyInfo.Text = {'<font style="font-size: 11px; font-weight: bold;">NOME DA EMPRESA</font> CNPJ 10.101.101/0001-02 '; '01/01/2023 - 31/12/2023 '};
-
-            % Create Image4
-            app.Image4 = uiimage(app.toolGrid);
-            app.Image4.ImageClickedFcn = createCallbackFcn(app, @Toolbar_LOGInfoImageClicked, true);
-            app.Image4.Layout.Row = 2;
-            app.Image4.Layout.Column = 1;
-            app.Image4.ImageSource = 'LOG_32.png';
 
             % Create file_ReportRFB
             app.file_ReportRFB = uiimage(app.toolGrid);
@@ -1541,6 +1543,12 @@ classdef winECD_exported < matlab.apps.AppBase
             app.file_ReportRFB.Layout.Row = 2;
             app.file_ReportRFB.Layout.Column = 2;
             app.file_ReportRFB.ImageSource = 'Publish_HTML_16.png';
+
+            % Create Image5
+            app.Image5 = uiimage(app.toolGrid);
+            app.Image5.Layout.Row = 2;
+            app.Image5.Layout.Column = 3;
+            app.Image5.ImageSource = 'Up_24.png';
 
             % Create dockModuleGrid
             app.dockModuleGrid = uigridlayout(app.GridLayout);

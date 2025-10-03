@@ -1,5 +1,5 @@
 {
-    "version": 0.34,
+    "version": 0.36,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -41,20 +41,13 @@
                 "LF"
                 ],
             "value": "CRLF"
-        },
-        "novocampo": 10
+        }
     },
     "ECD": {},
     "Report": {
         "system": "eFiscaliza",
-        "issue": -1,
         "unit": "",
-        "model": "",
-        "reportVersion": "Preliminar",
-        "Image": {
-            "Format": "jpeg",
-            "Resolution": 120
-        }
+        "Document": "Relatório de Atividades"
     },
     "eFiscaliza": {
         "internal": {

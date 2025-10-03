@@ -31,85 +31,90 @@ classdef (Abstract) Controller
 
     methods (Static)
         %-----------------------------------------------------------------%
-        function Run(callingApp, projectData, ecdObj, generalSettings)        
+        function Run(callingApp, projectData, ecdObj, reportSettings, generalSettings)        
             arguments
                 callingApp
                 projectData
                 ecdObj
+                reportSettings
                 generalSettings
             end
 
             switch class(callingApp)
-                case 'winMonitorSPED'
+                case {'winMonitorSPED', 'winMonitorSPED_exported'}
                     app = callingApp;
-                case {'auxApp.winECD', ...
-                      'auxApp.winConfig'}
+                    context = 'File';
+                case {'auxApp.winECD',  'auxApp.winECD_exported'}
                     app = callingApp.mainApp;
+                    context = 'ECD';
                 otherwise
                     error('UnexpectedCaller')
             end
 
             [projectFolder, ...
              programDataFolder] = appUtil.Path(class.Constants.appName, app.rootFolder);
-        
-            issueId    = num2str(generalSettings.Report.issue);
-            docName    = generalSettings.Report.model;
-            docIndex   = find(strcmp({projectData.documentModel.Name}, docName), 1);
+
+            issueId    = num2str(reportSettings.issue);
+            docName    = reportSettings.model;
+            docIndex   = find(strcmp({projectData.report.templates.Name}, docName), 1);
             if isempty(docIndex)
                 error('Pendente escolha do modelo de relatório')
             end
 
-            docType    = projectData.documentModel(docIndex).DocumentType;
-            docVersion = reportLibConnection.Controller.docVersion(generalSettings.Report.reportVersion);
+            docType    = projectData.report.templates(docIndex).DocumentType;
+            docVersion = reportLibConnection.Controller.docVersion(reportSettings.reportVersion);
 
             try
                 if ~isdeployed()
                     error('ForceDebugMode')
                 end
-                docScript = jsondecode(fileread(fullfile(programDataFolder, 'ReportTemplates', projectData.documentModel(docIndex).File)));
+                docScript = jsondecode(fileread(fullfile(programDataFolder, 'ReportTemplates', projectData.report.templates(docIndex).File)));
             catch
-                docScript = jsondecode(fileread(fullfile(projectFolder,     'ReportTemplates', projectData.documentModel(docIndex).File)));
+                docScript = jsondecode(fileread(fullfile(projectFolder,     'ReportTemplates', projectData.report.templates(docIndex).File)));
             end
         
+            %-------------------------------------------------------------%
             % reportInfo
+            %
             % Importante observar que o campo "Function" armazena informações
             % gerais, a compor itens "Introdução", "Metodologia" e "Conclusão",
             % e informações específicas, a compor itens com recorrências, como 
             % "Resultados".
+            %-------------------------------------------------------------%
             reportInfo = struct('App',      app, ...
-                                'Version',  app.General.AppVersion,                                              ...
-                                'Path',     struct('rootFolder',            app.rootFolder,                      ...
-                                                   'userFolder',            generalSettings.fileFolder.userPath, ...
-                                                   'tempFolder',            generalSettings.fileFolder.tempPath, ...
-                                                   'appConnection',         projectFolder,                       ...
-                                                   'appDataFolder',         programDataFolder),                  ...
-                                'Model',    struct('Name',                  docName,                             ...
-                                                   'DocumentType',          docType,                             ...
-                                                   'Script',                docScript,                           ...
-                                                   'Version',               docVersion.version),                 ...
+                                'Version',  app.General.AppVersion,                                                   ...
+                                'Path',     struct('rootFolder',                 app.rootFolder,                      ...
+                                                   'userFolder',                 generalSettings.fileFolder.userPath, ...
+                                                   'tempFolder',                 generalSettings.fileFolder.tempPath, ...
+                                                   'appConnection',              projectFolder,                       ...
+                                                   'appDataFolder',              programDataFolder),                  ...
+                                'Model',    struct('Name',                       docName,                             ...
+                                                   'DocumentType',               docType,                             ...
+                                                   'Script',                     docScript,                           ...
+                                                   'Version',                    docVersion.version),                 ...
                                 'Function', struct(...
                                                    ... % APLICÁVEIS ÀS SEÇÕES GERAIS DO RELATÓRIO
-                                                   'cfg_ECD',               'reportLibConnection.Variable.GeneralSettings(reportInfo, "ECD")', ...
-                                                   'var_Issue',             issueId, ...
-                                                   'var_Unit',              generalSettings.Report.unit, ...
-                                                   'tbl_FileByCompany',     'reportLibConnection.Table.FileByCompany(reportInfo)', ...
-                                                   'tbl_PeriodByCompany',   'reportLibConnection.Table.PeriodByCompany(reportInfo)', ...
+                                                   'cfg_ECD',                   'reportLibConnection.Variable.GeneralSettings(reportInfo, "ECD")', ...
+                                                   'var_Issue',                  issueId, ...
+                                                   'var_Unit',                   reportSettings.unit, ...
+                                                   'tbl_FileByCompany',         'reportLibConnection.Table.FileByCompany(reportInfo)', ...
+                                                   'tbl_PeriodByCompany',       'reportLibConnection.Table.PeriodByCompany(reportInfo)', ...
                                                    ...
                                                    ... % APLICÁVEIS À SEÇÃO COM RECORRÊNCIA DO RELATÓRIO
                                                    ... % 'var_Index'
-                                                   'var_Id',                'analyzedData.ID', ...
-                                                   'var_NumFiles',          'reportLibConnection.Variable.ClassProperty(analyzedData, "NumFiles")', ...
-                                                   'var_FileNameList',      'reportLibConnection.Variable.ClassProperty(analyzedData, "FileNameList")', ...
-                                                   'var_CompanyName',       'reportLibConnection.Variable.ClassProperty(analyzedData, "CompanyName")', ...
-                                                   'var_CompanyId',         'reportLibConnection.Variable.ClassProperty(analyzedData, "CompanyId")', ...
-                                                   'var_Hash',              'reportLibConnection.Variable.ClassProperty(analyzedData, "Hash")', ...
-                                                   'var_Period',            'reportLibConnection.Variable.ClassProperty(analyzedData, "Period")', ...
-                                                   'var_ReceitaFederal',    'reportLibConnection.Variable.ClassProperty(analyzedData, "ReceitaFederal")', ...
-                                                   'var_ContentSample',     'reportLibConnection.Variable.ClassProperty(analyzedData, "ContentSample")', ...
-                                                   'var_Layout',            'reportLibConnection.Variable.ClassProperty(analyzedData, "Layout")', ...
-                                                   'tbl_SourceFileStatus',  'reportLibConnection.Table.SourceFileStatus(analyzedData)', ...
-                                                   'tbl_FileMetadata',      'reportLibConnection.Table.FileMetadata(analyzedData)', ...
-                                                   'tbl_Raw',               'reportLibConnection.Table.Raw(analyzedData, tableSettings)'), ...
+                                                   'var_Id',                    'analyzedData.ID', ...
+                                                   'var_NumFiles',              'reportLibConnection.Variable.ClassProperty(analyzedData, "NumFiles")', ...
+                                                   'var_FileNameList',          'reportLibConnection.Variable.ClassProperty(analyzedData, "FileNameList")', ...
+                                                   'var_CompanyName',           'reportLibConnection.Variable.ClassProperty(analyzedData, "CompanyName")', ...
+                                                   'var_CompanyId',             'reportLibConnection.Variable.ClassProperty(analyzedData, "CompanyId")', ...
+                                                   'var_Hash',                  'reportLibConnection.Variable.ClassProperty(analyzedData, "Hash")', ...
+                                                   'var_Period',                'reportLibConnection.Variable.ClassProperty(analyzedData, "Period")', ...
+                                                   'var_ReceitaFederal',        'reportLibConnection.Variable.ClassProperty(analyzedData, "ReceitaFederal")', ...
+                                                   'var_ContentSample',         'reportLibConnection.Variable.ClassProperty(analyzedData, "ContentSample")', ...
+                                                   'var_Layout',                'reportLibConnection.Variable.ClassProperty(analyzedData, "Layout")', ...
+                                                   'tbl_SourceFileStatus',      'reportLibConnection.Table.SourceFileStatus(analyzedData)', ...
+                                                   'tbl_FileMetadata',          'reportLibConnection.Table.FileMetadata(analyzedData)', ...
+                                                   'tbl_Raw',                   'reportLibConnection.Table.Raw(analyzedData, tableSettings)'), ...
                                 'Project',  projectData, ...
                                 'Object',   ecdObj,      ...
                                 'Settings', generalSettings);
@@ -120,14 +125,13 @@ classdef (Abstract) Controller
                 reportInfo.Version.application = rmfield(reportInfo.Version.application, fieldsUnnecessary);
             end
 
+            %-------------------------------------------------------------%
             % dataOverview
+            %
             % Caso dataOverview não seja escalar e exista um item no relatório
             % com recorrência, a própria lib cria a variável "var_Index", acessível 
             % em "reportInfo.Function.var_Index".
-
-            % Diferente da organização de "ecdObj", orientado à ordem de leitura
-            % dos arquivos, o "dataOverview" é orientado ao CNPJ (ordenação 
-            % primária) e período fiscal (ordenação secundária).
+            %-------------------------------------------------------------%
             dataOverview = struct('ID', {}, 'InfoSet', {}, 'HTML', {});
             
             idsList = {ecdObj.CompanyId};
@@ -155,21 +159,30 @@ classdef (Abstract) Controller
                 %     dataOverview(end).HTML = vertcat(externalFilesList{:});
                 % end
             end
-            
-            % Cria relatório:
+
+
+            %-------------------------------------------------------------%
+            % Conexão com reportLib, parte do repositório "SupportPackages"
+            %-------------------------------------------------------------%
             HTMLDocContent = reportLib.Controller(reportInfo, dataOverview);
 
+
+            %-------------------------------------------------------------%
             % Exclui container criado para os plots, caso aplicável.
+            %-------------------------------------------------------------%
             hFigure    = app.UIFigure;
             hContainer = findobj(hFigure, 'Tag', 'reportGeneratorContainer');
             if ~isempty(hContainer)
                 delete(hContainer)
             end
+
             
+            %-------------------------------------------------------------%
             % Em sendo a versão "Preliminar", apenas apresenta o html no
             % navegador. Por outro lado, em sendo a versão "Definitiva",
             % salva-se o arquivo ZIP em pasta local.
-            [baseFullFileName, baseFileName] = appUtil.DefaultFileName(app.General.fileFolder.tempPath, 'Report', issueId);
+            %-------------------------------------------------------------%
+            [baseFullFileName, baseFileName] = appUtil.DefaultFileName(generalSettings.fileFolder.tempPath, 'monitorSPED_FinalReport', issueId);
             HTMLFile = [baseFullFileName '.html'];
             
             writematrix(HTMLDocContent, HTMLFile, 'QuoteStrings', 'none', 'FileType', 'text', 'Encoding', docVersion.encoding)
@@ -177,40 +190,19 @@ classdef (Abstract) Controller
             switch docVersion.version
                 case 'preview'
                     web(HTMLFile, '-new')
+                    updateGeneratedFiles(projectData, context)
 
                 case 'final'
-                    % !! PENDENTE !!
-
-                    % JSONFile = [baseFullFileName '.json'];
-                    % XLSXFile = [baseFullFileName '.xlsx'];
-                    % ZIPFile  = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', {'*.zip', 'SCH (*.zip)'}, fullfile(app.General.fileFolder.userPath, [baseFileName '.zip']));
+                    % RAWFiles = {ecdObj.FileFullName};
+                    % XLSXFile = [baseFullFileName '.xlsx'];                    
+                    % ZIPFile  = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', {'*.zip', 'monitorRNI (*.zip)'}, fullfile(app.General.fileFolder.userPath, [baseFileName '.zip']));
                     % if isempty(ZIPFile)
                     %     return
-                    % end
+                    % end                    
                     % 
-                    % % Salva em pasta temporária os arquivos JSON e XLSX. E salva
-                    % % em pasta escolhida pelo usuário o arquivo ZIP.
-                    % jsonFileConfig  = {app.General.ui.reportTable.exportedFiles.sharepoint.name, ...
-                    %                    app.General.ui.reportTable.exportedFiles.sharepoint.label};
-                    % jsonFileTable   = renamevars(app.projectData.listOfProducts, jsonFileConfig{:});
+                    % zip(ZIPFile, [{HTMLFile}, {XLSXFile}, RAWFiles])
                     % 
-                    % jsonFileContent = struct('issueId', issueId,                    ...
-                    %                          'entity',  struct('type', entityType,  ...
-                    %                                            'id',   entityId,    ...
-                    %                                            'name', entityName), ...
-                    %                          'items',   jsonFileTable);
-                    % 
-                    % xlsxFileConfig  = app.General.ui.reportTable.exportedFiles.eFiscaliza;
-                    % xlsxFileContent = reportLibConnection.tableProducts(app.projectData.listOfProducts, xlsxFileConfig);
-                    % 
-                    % writematrix(jsonencode(jsonFileContent, 'PrettyPrint', true), JSONFile, "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite")
-                    % writetable(xlsxFileContent, XLSXFile, "UseExcel", false, "Sheet", "Upload", "FileType", "spreadsheet", "WriteMode", "replacefile")
-                    % 
-                    % zip(ZIPFile, {HTMLFile, JSONFile, XLSXFile})
-                    % 
-                    % app.projectData.generatedFiles.lastHTMLDocFullPath = HTMLFile;
-                    % app.projectData.generatedFiles.lastTableFullPath   = JSONFile;
-                    % app.projectData.generatedFiles.lastZIPFullPath     = ZIPFile;
+                    % updateGeneratedFiles(projectData, context, RAWFiles, HTMLFile, XLSXFile, ZIPFile)
             end
         end
     end

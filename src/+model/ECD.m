@@ -728,10 +728,10 @@ classdef ECD < model.ECDBase
 
                     [receitaFederalStatus, receitaFederalSourceFileStatus] = checkIfValidStatus(obj);
                     if receitaFederalStatus
-                        receitaFederalStatusIcon = '&#x1F7E2;'; % '🟢';
+                        receitaFederalStatusIcon = '🟢'; % '&#x1F7E2;'
                     else
                         if all(receitaFederalSourceFileStatus < 0)
-                            receitaFederalStatusIcon ='&#x1F534;'; % '🔴';
+                            receitaFederalStatusIcon = '🔴'; % '&#x1F534;'
                         else
                             receitaFederalStatusIcon = '⚪';
                         end
@@ -753,10 +753,10 @@ classdef ECD < model.ECDBase
                     sourceIndex = varargin{1};
 
                     if obj.Sources(sourceIndex).validationStatus > 0
-                        receitaFederalStatusIcon = '&#x1F7E2;'; % '🟢';
+                        receitaFederalStatusIcon = '🟢'; % '&#x1F7E2;'
                     else
                         if obj.Sources(sourceIndex).validationStatus < 0
-                            receitaFederalStatusIcon ='&#x1F534;'; % '🔴';
+                            receitaFederalStatusIcon = '🔴'; % '&#x1F534;'
                         else
                             receitaFederalStatusIcon = '⚪';
                         end

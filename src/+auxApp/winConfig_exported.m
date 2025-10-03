@@ -36,19 +36,15 @@ classdef winConfig_exported < matlab.apps.AppBase
         Tab3Grid                   matlab.ui.container.GridLayout
         reportPanel                matlab.ui.container.Panel
         reportGrid                 matlab.ui.container.GridLayout
-        reportVersion              matlab.ui.control.DropDown
-        reportVersionLabel         matlab.ui.control.Label
-        reportModelName            matlab.ui.control.DropDown
-        reportoModelNameLabel      matlab.ui.control.Label
+        reportDocType              matlab.ui.control.DropDown
+        reportDocTypeLabel         matlab.ui.control.Label
         reportLabel                matlab.ui.control.Label
         eFiscalizaPanel            matlab.ui.container.Panel
         eFiscalizaGrid             matlab.ui.container.GridLayout
-        unit                       matlab.ui.control.DropDown
-        unitLabel                  matlab.ui.control.Label
-        issueId                    matlab.ui.control.NumericEditField
-        issueIdLabel               matlab.ui.control.Label
-        systemVersion              matlab.ui.control.DropDown
-        systemVersionLabel         matlab.ui.control.Label
+        reportUnit                 matlab.ui.control.DropDown
+        reportUnitLabel            matlab.ui.control.Label
+        reportSystem               matlab.ui.control.DropDown
+        reportSystemLabel          matlab.ui.control.Label
         eFiscalizaRefresh          matlab.ui.control.Image
         eFiscalizaLabel            matlab.ui.control.Label
         Tab4                       matlab.ui.container.Tab
@@ -173,6 +169,9 @@ classdef winConfig_exported < matlab.apps.AppBase
                             updatePanel_Analysis(app)
 
                         case 3
+                            if ~isdeployed()
+                                app.reportSystem.Items = {'eFiscaliza', 'eFiscaliza TS', 'eFiscaliza HM', 'eFiscaliza DS'};
+                            end
                             updatePanel_Report(app)
 
                         case 4
@@ -274,11 +273,9 @@ classdef winConfig_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function updatePanel_Report(app)
-            app.systemVersion.Value = app.mainApp.General.Report.system;
-            app.issueId.Value       = app.mainApp.General.Report.issue;
-            set(app.unit,            'Items', app.mainApp.General.eFiscaliza.defaultValues.unit,    'Value', app.mainApp.General.Report.unit)
-            set(app.reportModelName, 'Items', [{''}, {app.mainApp.projectData.documentModel.Name}], 'Value', app.mainApp.General.Report.model)
-            app.reportVersion.Value = app.mainApp.General.Report.reportVersion;
+            app.reportSystem.Value  = app.mainApp.General.Report.system;
+            set(app.reportUnit, 'Items', app.mainApp.General.eFiscaliza.defaultValues.unit, 'Value', app.mainApp.General.Report.unit)
+            app.reportDocType.Value = app.mainApp.General.Report.Document;
 
             if checkEdition(app, 'REPORT')
                 app.eFiscalizaRefresh.Visible = 1;
@@ -501,29 +498,18 @@ classdef winConfig_exported < matlab.apps.AppBase
 
         end
 
-        % Value changed function: issueId, reportModelName, reportVersion, 
-        % ...and 2 other components
+        % Value changed function: reportDocType, reportSystem, reportUnit
         function Config_ProjectParameterValueChanged(app, event)
             
             switch event.Source
-                case app.systemVersion
-                    app.mainApp.General.Report.system = event.Value;
+                case app.reportSystem
+                    app.mainApp.General.Report.system   = event.Value;
 
-                case app.issueId
-                    if isinf(event.Value)
-                        app.issueId.Value = event.PreviousValue;
-                        return
-                    end
-                    app.mainApp.General.Report.issue  = event.Value;
+                case app.reportUnit
+                    app.mainApp.General.Report.unit     = event.Value;
 
-                case app.unit
-                    app.mainApp.General.Report.unit   = event.Value;
-
-                case app.reportModelName
-                    app.mainApp.General.Report.model  = event.Value;
-
-                case app.reportVersion
-                    app.mainApp.General.Report.reportVersion = event.Value;
+                case app.reportDocType
+                    app.mainApp.General.Report.Document = event.Value;
             end
 
             app.mainApp.General_I.Report = app.mainApp.General.Report;
@@ -632,7 +618,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create Toolbar
             app.Toolbar = uigridlayout(app.GridLayout);
             app.Toolbar.ColumnWidth = {22, '1x', 22};
-            app.Toolbar.RowHeight = {4, 17, 2};
+            app.Toolbar.RowHeight = {4, 17, '1x'};
             app.Toolbar.ColumnSpacing = 5;
             app.Toolbar.RowSpacing = 0;
             app.Toolbar.Padding = [10 5 10 5];
@@ -872,7 +858,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create Tab3Grid
             app.Tab3Grid = uigridlayout(app.Tab3);
             app.Tab3Grid.ColumnWidth = {'1x', 22};
-            app.Tab3Grid.RowHeight = {17, 100, 22, '1x'};
+            app.Tab3Grid.RowHeight = {17, 70, 22, '1x'};
             app.Tab3Grid.RowSpacing = 5;
             app.Tab3Grid.BackgroundColor = [1 1 1];
 
@@ -882,7 +868,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.eFiscalizaLabel.FontSize = 10;
             app.eFiscalizaLabel.Layout.Row = 1;
             app.eFiscalizaLabel.Layout.Column = 1;
-            app.eFiscalizaLabel.Text = 'eFISCALIZA';
+            app.eFiscalizaLabel.Text = 'INICIALIZAÇÃO eFISCALIZA';
 
             % Create eFiscalizaRefresh
             app.eFiscalizaRefresh = uiimage(app.Tab3Grid);
@@ -904,65 +890,45 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create eFiscalizaGrid
             app.eFiscalizaGrid = uigridlayout(app.eFiscalizaPanel);
             app.eFiscalizaGrid.ColumnWidth = {350, 110, 110};
-            app.eFiscalizaGrid.RowHeight = {22, 22, 22};
+            app.eFiscalizaGrid.RowHeight = {22, 22};
             app.eFiscalizaGrid.RowSpacing = 5;
             app.eFiscalizaGrid.BackgroundColor = [1 1 1];
 
-            % Create systemVersionLabel
-            app.systemVersionLabel = uilabel(app.eFiscalizaGrid);
-            app.systemVersionLabel.WordWrap = 'on';
-            app.systemVersionLabel.FontSize = 11;
-            app.systemVersionLabel.Layout.Row = 1;
-            app.systemVersionLabel.Layout.Column = 1;
-            app.systemVersionLabel.Text = 'Versão do sistema:';
+            % Create reportSystemLabel
+            app.reportSystemLabel = uilabel(app.eFiscalizaGrid);
+            app.reportSystemLabel.WordWrap = 'on';
+            app.reportSystemLabel.FontSize = 11;
+            app.reportSystemLabel.Layout.Row = 1;
+            app.reportSystemLabel.Layout.Column = 1;
+            app.reportSystemLabel.Text = 'Ambiente do sistema de gestão à fiscalização:';
 
-            % Create systemVersion
-            app.systemVersion = uidropdown(app.eFiscalizaGrid);
-            app.systemVersion.Items = {'eFiscaliza', 'eFiscaliza DS', 'eFiscaliza HM'};
-            app.systemVersion.ValueChangedFcn = createCallbackFcn(app, @Config_ProjectParameterValueChanged, true);
-            app.systemVersion.FontSize = 11;
-            app.systemVersion.BackgroundColor = [1 1 1];
-            app.systemVersion.Layout.Row = 1;
-            app.systemVersion.Layout.Column = [2 3];
-            app.systemVersion.Value = 'eFiscaliza';
+            % Create reportSystem
+            app.reportSystem = uidropdown(app.eFiscalizaGrid);
+            app.reportSystem.Items = {'eFiscaliza', 'eFiscaliza TS'};
+            app.reportSystem.ValueChangedFcn = createCallbackFcn(app, @Config_ProjectParameterValueChanged, true);
+            app.reportSystem.FontSize = 11;
+            app.reportSystem.BackgroundColor = [1 1 1];
+            app.reportSystem.Layout.Row = 1;
+            app.reportSystem.Layout.Column = [2 3];
+            app.reportSystem.Value = 'eFiscaliza';
 
-            % Create issueIdLabel
-            app.issueIdLabel = uilabel(app.eFiscalizaGrid);
-            app.issueIdLabel.WordWrap = 'on';
-            app.issueIdLabel.FontSize = 11;
-            app.issueIdLabel.Layout.Row = 2;
-            app.issueIdLabel.Layout.Column = 1;
-            app.issueIdLabel.Text = 'Atividade de inspeção (# ID):';
+            % Create reportUnitLabel
+            app.reportUnitLabel = uilabel(app.eFiscalizaGrid);
+            app.reportUnitLabel.WordWrap = 'on';
+            app.reportUnitLabel.FontSize = 11;
+            app.reportUnitLabel.Layout.Row = 2;
+            app.reportUnitLabel.Layout.Column = 1;
+            app.reportUnitLabel.Text = 'Unidade responsável pela fiscalização:';
 
-            % Create issueId
-            app.issueId = uieditfield(app.eFiscalizaGrid, 'numeric');
-            app.issueId.Limits = [-1 Inf];
-            app.issueId.RoundFractionalValues = 'on';
-            app.issueId.ValueDisplayFormat = '%d';
-            app.issueId.ValueChangedFcn = createCallbackFcn(app, @Config_ProjectParameterValueChanged, true);
-            app.issueId.FontSize = 11;
-            app.issueId.FontColor = [0.149 0.149 0.149];
-            app.issueId.Layout.Row = 2;
-            app.issueId.Layout.Column = 2;
-            app.issueId.Value = -1;
-
-            % Create unitLabel
-            app.unitLabel = uilabel(app.eFiscalizaGrid);
-            app.unitLabel.WordWrap = 'on';
-            app.unitLabel.FontSize = 11;
-            app.unitLabel.Layout.Row = 3;
-            app.unitLabel.Layout.Column = 1;
-            app.unitLabel.Text = 'Unidade responsável:';
-
-            % Create unit
-            app.unit = uidropdown(app.eFiscalizaGrid);
-            app.unit.Items = {};
-            app.unit.ValueChangedFcn = createCallbackFcn(app, @Config_ProjectParameterValueChanged, true);
-            app.unit.FontSize = 11;
-            app.unit.BackgroundColor = [1 1 1];
-            app.unit.Layout.Row = 3;
-            app.unit.Layout.Column = 2;
-            app.unit.Value = {};
+            % Create reportUnit
+            app.reportUnit = uidropdown(app.eFiscalizaGrid);
+            app.reportUnit.Items = {};
+            app.reportUnit.ValueChangedFcn = createCallbackFcn(app, @Config_ProjectParameterValueChanged, true);
+            app.reportUnit.FontSize = 11;
+            app.reportUnit.BackgroundColor = [1 1 1];
+            app.reportUnit.Layout.Row = 2;
+            app.reportUnit.Layout.Column = 2;
+            app.reportUnit.Value = {};
 
             % Create reportLabel
             app.reportLabel = uilabel(app.Tab3Grid);
@@ -982,44 +948,27 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create reportGrid
             app.reportGrid = uigridlayout(app.reportPanel);
             app.reportGrid.ColumnWidth = {350, 110, 110};
-            app.reportGrid.RowHeight = {22, 22};
+            app.reportGrid.RowHeight = {22};
             app.reportGrid.RowSpacing = 5;
             app.reportGrid.BackgroundColor = [1 1 1];
 
-            % Create reportoModelNameLabel
-            app.reportoModelNameLabel = uilabel(app.reportGrid);
-            app.reportoModelNameLabel.FontSize = 11;
-            app.reportoModelNameLabel.Layout.Row = 1;
-            app.reportoModelNameLabel.Layout.Column = 1;
-            app.reportoModelNameLabel.Text = 'Modelo (.json):';
+            % Create reportDocTypeLabel
+            app.reportDocTypeLabel = uilabel(app.reportGrid);
+            app.reportDocTypeLabel.WordWrap = 'on';
+            app.reportDocTypeLabel.FontSize = 11;
+            app.reportDocTypeLabel.Layout.Row = 1;
+            app.reportDocTypeLabel.Layout.Column = 1;
+            app.reportDocTypeLabel.Text = 'Tipo de documento a gerar:';
 
-            % Create reportModelName
-            app.reportModelName = uidropdown(app.reportGrid);
-            app.reportModelName.Items = {''};
-            app.reportModelName.ValueChangedFcn = createCallbackFcn(app, @Config_ProjectParameterValueChanged, true);
-            app.reportModelName.FontSize = 11;
-            app.reportModelName.BackgroundColor = [1 1 1];
-            app.reportModelName.Layout.Row = 1;
-            app.reportModelName.Layout.Column = [2 3];
-            app.reportModelName.Value = '';
-
-            % Create reportVersionLabel
-            app.reportVersionLabel = uilabel(app.reportGrid);
-            app.reportVersionLabel.WordWrap = 'on';
-            app.reportVersionLabel.FontSize = 11;
-            app.reportVersionLabel.Layout.Row = 2;
-            app.reportVersionLabel.Layout.Column = 1;
-            app.reportVersionLabel.Text = 'Versão do relatório:';
-
-            % Create reportVersion
-            app.reportVersion = uidropdown(app.reportGrid);
-            app.reportVersion.Items = {'Preliminar', 'Definitiva'};
-            app.reportVersion.ValueChangedFcn = createCallbackFcn(app, @Config_ProjectParameterValueChanged, true);
-            app.reportVersion.FontSize = 11;
-            app.reportVersion.BackgroundColor = [1 1 1];
-            app.reportVersion.Layout.Row = 2;
-            app.reportVersion.Layout.Column = [2 3];
-            app.reportVersion.Value = 'Preliminar';
+            % Create reportDocType
+            app.reportDocType = uidropdown(app.reportGrid);
+            app.reportDocType.Items = {'Relatório de Atividades'};
+            app.reportDocType.ValueChangedFcn = createCallbackFcn(app, @Config_ProjectParameterValueChanged, true);
+            app.reportDocType.FontSize = 11;
+            app.reportDocType.BackgroundColor = [1 1 1];
+            app.reportDocType.Layout.Row = 1;
+            app.reportDocType.Layout.Column = [2 3];
+            app.reportDocType.Value = 'Relatório de Atividades';
 
             % Create Tab4
             app.Tab4 = uitab(app.TabGroup);

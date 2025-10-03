@@ -2,15 +2,32 @@ classdef projectLib < handle
 
     properties
         %-----------------------------------------------------------------%
-        name  (1,:) char
-        file  (1,:) char
-        issue (1,1) double
-        unit  (1,:) char
+        name (1,:) char = ''
+        file (1,:) char = ''
 
-        documentType {mustBeMember(documentType, {'Relatório de Atividades', 'Relatório de Fiscalização', 'Informe'})} = 'Relatório de Atividades'
-        documentModel
-        documentScript
-        generatedFiles
+        report  = struct( ...
+            'templates', [], ...
+            'settings',  [] ...
+        )
+
+        modules = struct( ...
+            'File',  struct('annotationTable', [], ...
+                            'generatedFiles',  struct('rawFiles', {{}}, 'lastHTMLDocFullPath', '', 'lastTableFullPath', '', 'lastZIPFullPath', ''), ...
+                            'ui',              struct('system',        '',  ...
+                                                      'unit',          '',  ...
+                                                      'issue',         -1,  ...
+                                                      'templates',    {{}}, ...
+                                                      'reportModel',   '',  ...
+                                                      'reportVersion', 'Preliminar')), ...
+            'ECD',   struct('annotationTable', [], ...
+                            'generatedFiles',  struct('rawFiles', {{}}, 'lastHTMLDocFullPath', '', 'lastTableFullPath', '', 'lastZIPFullPath', ''), ...
+                            'ui',              struct('system',        '',  ...
+                                                      'unit',          '',  ...
+                                                      'issue',         -1,  ...
+                                                      'templates',    {{}}, ...
+                                                      'reportModel',   '',  ...
+                                                      'reportVersion', 'Preliminar')) ...
+        )
 
         INSS
     end
@@ -20,37 +37,31 @@ classdef projectLib < handle
         %-----------------------------------------------------------------%
         mainApp
         rootFolder
-        defaultFilePreffix = 'monitorSPED'
     end
 
 
     methods
         %-----------------------------------------------------------------%
-        function obj = projectLib(mainApp, generalSettings)            
+        function obj = projectLib(mainApp, rootFolder)            
             obj.mainApp    = mainApp;
-            obj.rootFolder = mainApp.rootFolder;
+            obj.rootFolder = rootFolder;
 
-            Restart(obj)
-            ReadReportTemplates(obj)
+            ReadReportTemplates(obj, rootFolder)
             ReadINSSReferenceTable(obj)
         end
 
         %-----------------------------------------------------------------%
         function Restart(obj)
-            obj.name           = '';
-            obj.file           = '';
-            obj.issue          = -1;
-            obj.unit           = '';
+            % ...
 
-            obj.documentType   = 'Relatório de Atividades';
-            obj.documentScript = [];
-            obj.generatedFiles = [];
+            updateGeneratedFiles(obj, 'File')
+            updateGeneratedFiles(obj, 'ECD')
         end
 
         %-----------------------------------------------------------------%
-        function ReadReportTemplates(obj)
+        function ReadReportTemplates(obj, rootFolder)
             [projectFolder, ...
-             programDataFolder] = appUtil.Path(class.Constants.appName, obj.rootFolder);
+             programDataFolder] = appUtil.Path(class.Constants.appName, rootFolder);
             projectFilePath  = fullfile(projectFolder,     'ReportTemplates.json');
             externalFilePath = fullfile(programDataFolder, 'ReportTemplates.json');
 
@@ -58,9 +69,18 @@ classdef projectLib < handle
                 if ~isdeployed()
                     error('ForceDebugMode')
                 end
-                obj.documentModel = jsondecode(fileread(externalFilePath));
+                obj.report.templates = jsondecode(fileread(externalFilePath));
             catch
-                obj.documentModel = jsondecode(fileread(projectFilePath));
+                obj.report.templates = jsondecode(fileread(projectFilePath));
+            end
+
+            % Identifica lista de templates por módulo...
+            moduleNameList   = fieldnames(obj.modules);
+            templateNameList = {obj.report.templates.Name};
+
+            for ii = 1:numel(moduleNameList)
+                templateIndexes = ismember({obj.report.templates.Module}, moduleNameList(ii));
+                obj.modules.(moduleNameList{ii}).ui.templates = [{''}, templateNameList(templateIndexes)];
             end
         end
 
@@ -125,6 +145,23 @@ classdef projectLib < handle
                 case 'eomonth'
                     rate = refINSSTable.("Alíquota máxima")(end);
             end
+        end
+
+        %-----------------------------------------------------------------%
+        function updateGeneratedFiles(obj, context, rawFiles, htmlFile, tableFile, zipFile)
+            arguments
+                obj
+                context   (1,:) char {mustBeMember(context, {'File', 'ECD'})}
+                rawFiles  cell = {}
+                htmlFile  char = ''
+                tableFile char = ''
+                zipFile   char = ''
+            end
+
+            obj.modules.(context).generatedFiles.rawFiles            = rawFiles;
+            obj.modules.(context).generatedFiles.lastHTMLDocFullPath = htmlFile;
+            obj.modules.(context).generatedFiles.lastTableFullPath   = tableFile;
+            obj.modules.(context).generatedFiles.lastZIPFullPath     = zipFile;
         end
     end
     
