@@ -1,4 +1,4 @@
-classdef dockReportInfo_exported < matlab.apps.AppBase
+classdef dockReportLib_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
@@ -32,32 +32,41 @@ classdef dockReportInfo_exported < matlab.apps.AppBase
         isDocked = true
 
         mainApp
-        callingApp
-        jsBackDoor
-
         projectData
-        context
+        inputArgs
     end
     
     
     methods (Access = private)
         %-----------------------------------------------------------------%
-        function initialValues(app, context)
+        function updatePanel(app, context)
+            % Inicialização do projectData:
+            if isempty(app.projectData.modules.(context).ui.system) && ~isequal(app.projectData.modules.(context).ui.system, app.mainApp.General.Report.system)
+                app.projectData.modules.(context).ui.system = app.mainApp.General.Report.system;
+            end
+            
+            if isempty(app.projectData.modules.(context).ui.unit)   && ~isequal(app.projectData.modules.(context).ui.unit,   app.mainApp.General.Report.unit)
+                app.projectData.modules.(context).ui.unit   = app.mainApp.General.Report.unit;
+            end
+
+            % Atualiza painel:
             if ~isdeployed()
                 app.reportSystem.Items = {'eFiscaliza', 'eFiscaliza TS', 'eFiscaliza HM', 'eFiscaliza DS'};
             end
             app.reportSystem.Value     = app.projectData.modules.(context).ui.system;
-            app.reportUnit.Value       = app.projectData.modules.(context).ui.unit;
+
+            set(app.reportUnit, 'Items', app.mainApp.General.eFiscaliza.defaultValues.unit, ...
+                                'Value', app.projectData.modules.(context).ui.unit)
             app.reportIssue.Value      = app.projectData.modules.(context).ui.issue;
             
             set(app.reportModelName, 'Items', app.projectData.modules.(context).ui.templates, ...
                                      'Value', app.projectData.modules.(context).ui.reportModel)
             app.reportVersion.Value    = app.projectData.modules.(context).ui.reportVersion;
-        end
 
-        %-----------------------------------------------------------------%
-        function CallingMainApp(app, callType, updateFlag, returnFlag, varargin)
-            ipcMainMatlabCallsHandler(app.mainApp, app, callType, updateFlag, returnFlag, varargin{:})
+            % Estado do botão:
+            app.btnOK.Enable = ~isempty(app.reportUnit.Value)                               && ... % unit
+                               (app.reportIssue.Value > 0) && ~isinf(app.reportIssue.Value) && ... % issue
+                               ~isempty(app.reportModelName.Value);                                % reportModel
         end
     end
     
@@ -66,23 +75,22 @@ classdef dockReportInfo_exported < matlab.apps.AppBase
     methods (Access = private)
 
         % Code that executes after component creation
-        function startupFcn(app, mainApp, callingApp, context)
+        function startupFcn(app, mainApp, context, indexes)
             
             app.mainApp     = mainApp;
-            app.callingApp  = callingApp;
+            app.projectData = app.mainApp.projectData;            
+            app.inputArgs   = struct('context', context, 'indexes', indexes);
 
-            app.projectData = app.mainApp.projectData;
-            app.context     = context;
-
-            app.jsBackDoor  = app.callingApp.jsBackDoor;            
-            initialValues(app, context)
+            updatePanel(app, context)
             
         end
 
         % Callback function: UIFigure, btnClose
         function closeFcn(app, event)
             
-            CallingMainApp(app, 'closeFcn', false, false, app.context)
+            context = app.inputArgs.context;
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcn', context)
+
             delete(app)
             
         end
@@ -91,6 +99,8 @@ classdef dockReportInfo_exported < matlab.apps.AppBase
         % ...and 3 other components
         function checkValues(app, event)
 
+            context = app.inputArgs.context;
+
             switch event.Source
                 case app.reportSystem;    fieldName = 'system';
                 case app.reportUnit;      fieldName = 'unit';
@@ -98,18 +108,18 @@ classdef dockReportInfo_exported < matlab.apps.AppBase
                 case app.reportModelName; fieldName = 'reportModel';
                 case app.reportVersion;   fieldName = 'reportVersion';
             end
-            app.projectData.modules.(app.context).ui.(fieldName) = event.Value;
-
-            app.btnOK.Enable = ~isempty(app.reportUnit.Value)                               && ... % unit
-                               (app.reportIssue.Value > 0) && ~isinf(app.reportIssue.Value) && ... % issue
-                               ~isempty(app.reportModelName.Value);                                % reportModel
+            updateUiInfo(app.projectData, context, fieldName, event.Value)
+            updatePanel(app, context)
             
         end
 
         % Button pushed function: btnOK
         function btnOKButtonPushed(app, event)
             
-            % ...
+            context = app.inputArgs.context;
+            indexes = app.inputArgs.indexes;
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'reportUserConfirmation', context, indexes)
+            closeFcn(app)
 
         end
     end
@@ -324,7 +334,7 @@ classdef dockReportInfo_exported < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = dockReportInfo_exported(Container, varargin)
+        function app = dockReportLib_exported(Container, varargin)
 
             % Create UIFigure and components
             createComponents(app, Container)

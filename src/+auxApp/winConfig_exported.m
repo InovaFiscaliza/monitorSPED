@@ -414,7 +414,8 @@ classdef winConfig_exported < matlab.apps.AppBase
 
         end
 
-        % Value changed function: openAuxiliarAppAsDocked
+        % Value changed function: openAuxiliarApp2Debug, 
+        % ...and 1 other component
         function Config_GeneralParameterValueChanged(app, event)
             
             switch event.Source
@@ -455,7 +456,7 @@ classdef winConfig_exported < matlab.apps.AppBase
         end
 
         % Value changed function: CheckStatus, Encoding, InputType, 
-        % ...and 2 other components
+        % ...and 1 other component
         function Config_AnalysisParameterValueChanged(app, event)
             
             switch event.Source
@@ -706,7 +707,7 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create openAuxiliarApp2Debug
             app.openAuxiliarApp2Debug = uicheckbox(app.Tab1Grid);
-            app.openAuxiliarApp2Debug.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
+            app.openAuxiliarApp2Debug.ValueChangedFcn = createCallbackFcn(app, @Config_GeneralParameterValueChanged, true);
             app.openAuxiliarApp2Debug.Enable = 'off';
             app.openAuxiliarApp2Debug.Text = 'Modo DEBUG';
             app.openAuxiliarApp2Debug.FontSize = 11;

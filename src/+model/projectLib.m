@@ -163,6 +163,18 @@ classdef projectLib < handle
             obj.modules.(context).generatedFiles.lastTableFullPath   = tableFile;
             obj.modules.(context).generatedFiles.lastZIPFullPath     = zipFile;
         end
+
+        %-----------------------------------------------------------------%
+        function updateUiInfo(obj, context, fieldName, fieldValue)
+            arguments
+                obj
+                context    (1,:) char {mustBeMember(context, {'File', 'ECD'})}
+                fieldName  (1,:) char
+                fieldValue
+            end
+
+            obj.modules.(context).ui.(fieldName) = fieldValue;
+        end
     end
     
 end

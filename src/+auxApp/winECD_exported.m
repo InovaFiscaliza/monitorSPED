@@ -104,6 +104,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
 
     methods
+        %-----------------------------------------------------------------%
         function ipcSecundaryJSEventsHandler(app, event)
             try
                 switch event.HTMLEventName
@@ -140,6 +141,35 @@ classdef winECD_exported < matlab.apps.AppBase
             catch ME
                 appUtil.modalWindow(app.UIFigure, 'error', ME.message);
             end
+        end
+
+        %-----------------------------------------------------------------%
+        function varargout = ipcMainMatlabCallsHandler(app, callingApp, operationType, varargin)
+            varargout = {};
+
+            try
+                switch class(callingApp)
+                    case {'winMonitorSPED', 'winMonitorSPED_exported'}
+                        switch operationType
+                            case 'closeFcn'
+                                app.popupContainer.Parent.Visible = 0;
+
+                            otherwise
+                                error('UnexpectedCall')
+                        end
+    
+                    otherwise
+                        error('UnexpectedCall')
+                end
+
+            catch ME
+                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));            
+            end
+
+            % Caso um app auxiliar esteja em modo DOCK, o progressDialog do
+            % app auxiliar coincide com o do appAnalise. Força-se, portanto, 
+            % a condição abaixo para evitar possível bloqueio da tela.
+            app.progressDialog.Visible = 'hidden';
         end
     end
 
@@ -292,6 +322,37 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % app.Image3.UserData = false;
             % app.DropDown.Items = listfonts;
+        end
+
+        %-----------------------------------------------------------------%
+        function menu_LayoutPopupApp(app, auxiliarApp, varargin)
+            arguments
+                app
+                auxiliarApp char {mustBeMember(auxiliarApp, {'ReportLib'})}
+            end
+
+            arguments (Repeating)
+                varargin 
+            end
+
+            % Inicialmente ajusta as dimensões do container.
+            switch auxiliarApp
+                case 'ReportLib'
+                    screenWidth  = 460;
+                    screenHeight = 308;
+            end
+
+            ui.PopUpContainer(app, class.Constants.appName, screenWidth, screenHeight)
+
+            % Executa o app auxiliar.
+            inputArguments = [{app}, varargin];
+            
+            if app.mainApp.General.operationMode.Debug
+                eval(sprintf('auxApp.dock%s(inputArguments{:})', auxiliarApp))
+            else
+                eval(sprintf('auxApp.dock%s_exported(app.popupContainer, inputArguments{:})', auxiliarApp))
+                app.popupContainer.Parent.Visible = 1;
+            end            
         end
     end
 

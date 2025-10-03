@@ -7,12 +7,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         popupContainerGrid             matlab.ui.container.GridLayout
         SplashScreen                   matlab.ui.control.Image
         menu_Grid                      matlab.ui.container.GridLayout
-        jsBackDoor                     matlab.ui.control.HTML
-        DataHubLamp                    matlab.ui.control.Image
-        FigurePosition                 matlab.ui.control.Image
         AppInfo                        matlab.ui.control.Image
-        menu_Button4                   matlab.ui.control.StateButton
-        menu_Separator2                matlab.ui.control.Image
+        FigurePosition                 matlab.ui.control.Image
+        DataHubLamp                    matlab.ui.control.Image
+        jsBackDoor                     matlab.ui.control.HTML
+        menu_Button3                   matlab.ui.control.StateButton
+        menu_Separator                 matlab.ui.control.Image
         menu_Button2                   matlab.ui.control.StateButton
         menu_Button1                   matlab.ui.control.StateButton
         menu_AppName                   matlab.ui.control.Label
@@ -113,6 +113,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 if isvalid(app.popupContainerGrid)
                                     delete(app.popupContainerGrid)
                                 end
+
                             otherwise
                                 error('UnexpectedEvent')
                         end
@@ -121,6 +122,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         switch event.HTMLEventData.uuid
                             case 'eFiscalizaSignInPage'
                                 report_uploadInfoController(app, event.HTMLEventData, 'uploadDocument')
+
                             case 'openDevTools'
                                 if isequal(app.General.operationMode.DevTools, rmfield(event.HTMLEventData, 'uuid'))
                                     webWin = struct(struct(struct(app.UIFigure).Controller).PlatformHost).CEF;
@@ -181,15 +183,19 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         switch operationType
                             case 'closeFcn'
                                 closeModule(app.tabGroupController, "CONFIG", app.General)
+
                             case 'dockButtonPushed'
                                 auxAppTag = varargin{1};
                                 varargout{1} = auxAppInputArguments(app, auxAppTag);
+
                             case 'checkDataHubLampStatus'
                                 DataHubWarningLamp(app)
+
                             case 'openDevTools'
                                 dialogBox    = struct('id', 'login',    'label', 'Usuário: ', 'type', 'text');
                                 dialogBox(2) = struct('id', 'password', 'label', 'Senha: ',   'type', 'password');
                                 sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'openDevTools', 'Fields', dialogBox))
+
                             case 'simulationModeChanged'
                                 if app.General.operationMode.Simulation
                                     toolbar_SelectFileToReadImageClicked(app)
@@ -198,11 +204,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                     set(app.menu_Button1, 'Enable', 1, 'Value', 1)                    
                                     menu_mainButtonPushed(app, struct('Source', app.menu_Button1, 'PreviousValue', false))
                                 end
+
                             case 'fileSortMethodChanged'
                                 if ~strcmp(app.file_FileSortMethod.Value, app.General.File.sortMethod)
                                     app.file_FileSortMethod.Value = app.General.File.sortMethod;
                                     file_FileSortMethodValueChanged(app)
                                 end
+
                             otherwise
                                 error('UnexpectedCall')
                         end
@@ -212,9 +220,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         switch operationType
                             case 'closeFcn'
                                 closeModule(app.tabGroupController, "ECD", app.General)
+
                             case 'dockButtonPushed'
                                 auxAppTag = varargin{1};
                                 varargout{1} = auxAppInputArguments(app, auxAppTag);
+
                             case 'updateTreeView'
                                 if ~isempty(app.file_Tree.SelectedNodes)
                                     nodeData = unique([app.file_Tree.SelectedNodes.NodeData]);
@@ -224,6 +234,27 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                         file_TreeSelectionChanged(app)
                                     end
                                 end
+                            otherwise
+                                error('UnexpectedCall')
+                        end
+
+                    % dockReportLib
+                    case {'auxApp.dockReportLib', 'auxApp.dockReportLib_exported'}
+                        switch operationType
+                            case 'closeFcn'
+                                context = varargin{1};
+                                switch context
+                                    case 'File'
+                                        app.popupContainer.Parent.Visible = 0;
+                                    case 'ECD'
+                                        ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
+                                end
+
+                            case 'reportUserConfirmation'
+                                context = varargin{1};
+                                indexes = varargin{2};
+                                reportGeneratorCall(app, context, indexes)
+
                             otherwise
                                 error('UnexpectedCall')
                         end
@@ -240,6 +271,23 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % app auxiliar coincide com o do appAnalise. Força-se, portanto, 
             % a condição abaixo para evitar possível bloqueio da tela.
             app.progressDialog.Visible = 'hidden';
+        end
+
+
+        %-----------------------------------------------------------------%
+        function ipcMainMatlabCallAuxiliarApp(app, auxAppName, communicationType, varargin)
+            hAuxApp = auxAppHandle(app, auxAppName);
+
+            if ~isempty(hAuxApp)
+                switch communicationType
+                    case 'MATLAB'
+                        operationType = varargin{1};
+                        ipcSecundaryMatlabCallsHandler(hAuxApp, app, operationType, varargin{2:end});
+                    case 'JS'
+                        event = varargin{1};
+                        ipcSecundaryJSEventsHandler(hAuxApp, event)
+                end
+            end
         end
     end
     
@@ -438,13 +486,44 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         function startup_GUIComponents(app)
             % Objeto que conecta o TabGroup ao GraphicMenu.
             app.tabGroupController = tabGroupGraphicMenu(app.menu_Grid, app.TabGroup, app.progressDialog, @app.jsBackDoor_Customizations, []);
-            addComponent(app.tabGroupController, "Built-in", "",                      app.menu_Button1, "AlwaysOn", struct('On', 'OpenFile_32Yellow.png', 'Off', 'OpenFile_32White.png'), matlab.graphics.GraphicsPlaceholder, 1)
-            addComponent(app.tabGroupController, "External", "auxApp.winECD",         app.menu_Button2, "AlwaysOn", struct('On', 'Zoom_32Yellow.png',     'Off', 'Zoom_32White.png'),     app.menu_Button1,                    2)
-            addComponent(app.tabGroupController, "External", "auxApp.winConfig",      app.menu_Button4, "AlwaysOn", struct('On', 'Settings_36Yellow.png', 'Off', 'Settings_36White.png'), app.menu_Button1,                    3)
+            addComponent(app.tabGroupController, "Built-in", "",                 app.menu_Button1, "AlwaysOn", struct('On', 'OpenFile_32Yellow.png', 'Off', 'OpenFile_32White.png'), matlab.graphics.GraphicsPlaceholder, 1)
+            addComponent(app.tabGroupController, "External", "auxApp.winECD",    app.menu_Button2, "AlwaysOn", struct('On', 'Zoom_32Yellow.png',     'Off', 'Zoom_32White.png'),     app.menu_Button1,                    2)
+            addComponent(app.tabGroupController, "External", "auxApp.winConfig", app.menu_Button3, "AlwaysOn", struct('On', 'Settings_36Yellow.png', 'Off', 'Settings_36White.png'), app.menu_Button1,                    3)
 
             DataHubWarningLamp(app)
             app.file_FileSortMethod.Value = app.General.File.sortMethod;
             addStyle(app.file_Tree, uistyle('Interpreter', 'html'))
+        end
+
+        %-----------------------------------------------------------------%
+        function menu_LayoutPopupApp(app, auxiliarApp, varargin)
+            arguments
+                app
+                auxiliarApp char {mustBeMember(auxiliarApp, {'ReportLib'})}
+            end
+
+            arguments (Repeating)
+                varargin 
+            end
+
+            % Inicialmente ajusta as dimensões do container.
+            switch auxiliarApp
+                case 'ReportLib'
+                    screenWidth  = 460;
+                    screenHeight = 308;
+            end
+
+            ui.PopUpContainer(app, class.Constants.appName, screenWidth, screenHeight)
+
+            % Executa o app auxiliar.
+            inputArguments = [{app}, varargin];
+            
+            if app.General.operationMode.Debug
+                eval(sprintf('auxApp.dock%s(inputArguments{:})', auxiliarApp))
+            else
+                eval(sprintf('auxApp.dock%s_exported(app.popupContainer, inputArguments{:})', auxiliarApp))
+                app.popupContainer.Parent.Visible = 1;
+            end            
         end
 
         %-----------------------------------------------------------------%
@@ -599,6 +678,33 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
     end
 
 
+    methods
+        %-----------------------------------------------------------------%
+        function reportGeneratorCall(app, context, indexes)
+            app.progressDialog.Visible = 'visible';
+
+            try
+                % Inicialmente, faz-se a leitura dos registros ordinários
+                % de cada arquivo...
+                toolbar_ReadFilesImageClicked(app, struct('Source', app.tool_GenerateReport, 'Indexes', indexes))
+
+                % E depois a biblioteca reportLib por meio de chamada à 
+                % reportLibConnection.Controller.
+                reportSettings = struct('system',        app.projectData.modules.(context).ui.system,      ...
+                                        'unit',          app.projectData.modules.(context).ui.unit,        ...
+                                        'issue',         app.projectData.modules.(context).ui.issue,       ...
+                                        'model',         app.projectData.modules.(context).ui.reportModel, ...
+                                        'reportVersion', app.projectData.modules.(context).ui.reportVersion);
+                reportLibConnection.Controller.Run(app, app.projectData, app.ecdObj(indexes), reportSettings, app.General)
+            catch ME
+                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));
+            end
+    
+            app.progressDialog.Visible = 'hidden';
+        end
+    end
+
+
     methods (Access = private)
         %-----------------------------------------------------------------%
         % TABGROUPCONTROLLER
@@ -701,7 +807,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             
         end
 
-        % Value changed function: menu_Button1, menu_Button2, menu_Button4
+        % Value changed function: menu_Button1, menu_Button2, menu_Button3
         function menu_mainButtonPushed(app, event)
 
             clickedButton  = event.Source;
@@ -973,7 +1079,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             indexes = file_findSelectedNodeData(app);
 
             if ~isempty(indexes)
-                % <VALIDAÇÕES>
                 if numel(indexes) < numel(app.ecdObj)
                     msgQuestion   = 'Deseja gerar inventário de TODOS os arquivos lidos, ou apenas do SELECIONADO?';
                     userSelection = appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'Todos', 'Selecionado', 'Cancelar'}, 1, 3);
@@ -985,26 +1090,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             indexes = 1:numel(app.ecdObj);
                     end
                 end
-                % </VALIDAÇÕES>
 
-                % <PROCESSO>
-                toolbar_ReadFilesImageClicked(app, struct('Source', app.tool_GenerateReport, 'Indexes', indexes))
-
-                app.progressDialog.Visible = 'visible';
-
-                try
-                    reportSettings = struct('system', 'eFiscaliza', ...
-                                            'unit',   '',           ...
-                                            'issue',  -1,           ...
-                                            'model',  'Inventário de arquivos', ...
-                                            'reportVersion', 'Preliminar');
-                    reportLibConnection.Controller.Run(app, app.projectData, app.ecdObj(indexes), reportSettings, app.General)
-                catch ME
-                    appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));
-                end
-
-                app.progressDialog.Visible = 'hidden';
-                % </PROCESSO>
+                menu_LayoutPopupApp(app, 'ReportLib', 'File', indexes)
             end
 
         end
@@ -1324,34 +1411,39 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.menu_Button2.Layout.Row = [2 4];
             app.menu_Button2.Layout.Column = 5;
 
-            % Create menu_Separator2
-            app.menu_Separator2 = uiimage(app.menu_Grid);
-            app.menu_Separator2.ScaleMethod = 'none';
-            app.menu_Separator2.Enable = 'off';
-            app.menu_Separator2.Layout.Row = [2 4];
-            app.menu_Separator2.Layout.Column = 6;
-            app.menu_Separator2.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV_White.svg');
+            % Create menu_Separator
+            app.menu_Separator = uiimage(app.menu_Grid);
+            app.menu_Separator.ScaleMethod = 'none';
+            app.menu_Separator.Enable = 'off';
+            app.menu_Separator.Layout.Row = [2 4];
+            app.menu_Separator.Layout.Column = 6;
+            app.menu_Separator.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV_White.svg');
 
-            % Create menu_Button4
-            app.menu_Button4 = uibutton(app.menu_Grid, 'state');
-            app.menu_Button4.ValueChangedFcn = createCallbackFcn(app, @menu_mainButtonPushed, true);
-            app.menu_Button4.Tag = 'CONFIG';
-            app.menu_Button4.Tooltip = {'Configurações gerais'};
-            app.menu_Button4.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'Settings_36White.png');
-            app.menu_Button4.IconAlignment = 'top';
-            app.menu_Button4.Text = '';
-            app.menu_Button4.BackgroundColor = [0.2 0.2 0.2];
-            app.menu_Button4.FontSize = 11;
-            app.menu_Button4.Layout.Row = [2 4];
-            app.menu_Button4.Layout.Column = 7;
+            % Create menu_Button3
+            app.menu_Button3 = uibutton(app.menu_Grid, 'state');
+            app.menu_Button3.ValueChangedFcn = createCallbackFcn(app, @menu_mainButtonPushed, true);
+            app.menu_Button3.Tag = 'CONFIG';
+            app.menu_Button3.Tooltip = {'Configurações gerais'};
+            app.menu_Button3.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'Settings_36White.png');
+            app.menu_Button3.IconAlignment = 'top';
+            app.menu_Button3.Text = '';
+            app.menu_Button3.BackgroundColor = [0.2 0.2 0.2];
+            app.menu_Button3.FontSize = 11;
+            app.menu_Button3.Layout.Row = [2 4];
+            app.menu_Button3.Layout.Column = 7;
 
-            % Create AppInfo
-            app.AppInfo = uiimage(app.menu_Grid);
-            app.AppInfo.ImageClickedFcn = createCallbackFcn(app, @menu_ToolbarImageCliced, true);
-            app.AppInfo.Tooltip = {'Informações gerais'};
-            app.AppInfo.Layout.Row = 3;
-            app.AppInfo.Layout.Column = 13;
-            app.AppInfo.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Dots_32White.png');
+            % Create jsBackDoor
+            app.jsBackDoor = uihtml(app.menu_Grid);
+            app.jsBackDoor.Layout.Row = 3;
+            app.jsBackDoor.Layout.Column = 9;
+
+            % Create DataHubLamp
+            app.DataHubLamp = uiimage(app.menu_Grid);
+            app.DataHubLamp.Visible = 'off';
+            app.DataHubLamp.Tooltip = {'Pendente mapear o Sharepoint'};
+            app.DataHubLamp.Layout.Row = 3;
+            app.DataHubLamp.Layout.Column = 10;
+            app.DataHubLamp.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'red-circle-blink.gif');
 
             % Create FigurePosition
             app.FigurePosition = uiimage(app.menu_Grid);
@@ -1362,18 +1454,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.FigurePosition.Layout.Column = 12;
             app.FigurePosition.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'layout1_32White.png');
 
-            % Create DataHubLamp
-            app.DataHubLamp = uiimage(app.menu_Grid);
-            app.DataHubLamp.Visible = 'off';
-            app.DataHubLamp.Tooltip = {'Pendente mapear o Sharepoint'};
-            app.DataHubLamp.Layout.Row = 3;
-            app.DataHubLamp.Layout.Column = 10;
-            app.DataHubLamp.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'red-circle-blink.gif');
-
-            % Create jsBackDoor
-            app.jsBackDoor = uihtml(app.menu_Grid);
-            app.jsBackDoor.Layout.Row = 3;
-            app.jsBackDoor.Layout.Column = 9;
+            % Create AppInfo
+            app.AppInfo = uiimage(app.menu_Grid);
+            app.AppInfo.ImageClickedFcn = createCallbackFcn(app, @menu_ToolbarImageCliced, true);
+            app.AppInfo.Tooltip = {'Informações gerais'};
+            app.AppInfo.Layout.Row = 3;
+            app.AppInfo.Layout.Column = 13;
+            app.AppInfo.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Dots_32White.png');
 
             % Create popupContainerGrid
             app.popupContainerGrid = uigridlayout(app.GridLayout);
