@@ -23,8 +23,8 @@ classdef (Abstract) Variable
         function fieldValue = GeneralSettings(reportInfo, fieldName)
             generalSettings = reportInfo.Settings;
 
-            switch fieldName
-                case 'ECD'
+            switch fieldName                
+                case {'File', 'ECD'}
                     fieldValue = jsonencode(generalSettings.(fieldName));
                 otherwise
                     error('UnexpectedFieldName')

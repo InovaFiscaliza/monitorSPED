@@ -30,7 +30,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "false",
-                        "Text": "A fiscalização tributária tem início com a coleta, junto à empresa fiscalizada, dos arquivos contábeis necessários à apuração dos valores devidos ao FUST e ao FUNTTEL. Para cada arquivo, procede-se ao cálculo do respectivo <i>hash</i> e à validação por meio de <i>webservice</i> disponibilizado pela Receita Federal, de modo a verificar se o arquivo coincide com o registrado em sua base de dados.",
+                        "Text": "A fiscalização tributária tem início com a coleta, junto à empresa fiscalizada, dos arquivos contábeis necessários à apuração dos valores devidos ao FUST e ao FUNTTEL.",
                         "Variable": []
                     }
                 },
@@ -39,12 +39,12 @@
                     "Data": [
                         {
                             "Editable": "false",
-                            "Text": "Elemento um da lista...",
+                            "Text": "Para cada arquivo, procede-se ao cálculo do respectivo <i>hash</i> e à validação por meio de <i>webservice</i> disponibilizado pela Receita Federal, de modo a verificar se o arquivo coincide com o registrado em sua base de dados.",
                             "Variable": []
                         },
                         {
                             "Editable": "false",
-                            "Text": "A validação aqui apresentada corresponde a uma fotografia no tempo. Qualquer empresa, contudo, pode, a qualquer momento, retificar suas declarações contábeis. Uma nova validação pode ser realizada por meio da inserção do <i>hash</i> do arquivo <a href=\"http://www.sped.fazenda.gov.br/appConsultaSituacaoContabil/\" target=\"_blank\" rel=\"noopener noreferrer\">aqui</a>.",
+                            "Text": "A validação apresentada neste relatório corresponde a uma fotografia no tempo. Cabe destacar que a empresa pode, a qualquer momento, retificar suas declarações contábeis, hipótese em que uma nova validação poderá ser realizada mediante a inserção do <i>hash</i> atualizado do arquivo <a href=\"http://www.sped.fazenda.gov.br/appConsultaSituacaoContabil/\" target=\"_blank\" rel=\"noopener noreferrer\">aqui</a>.",
                             "Variable": []
                         }
                     ]
@@ -64,7 +64,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "false",
-                        "Text": "Os dados coletados por sondas móveis (Monitem, NARDA, entre outros) são processados para identificar as medições correspondentes a cada estação de telecomunicações sob análise, gerando representações gráficas. Na tabela apresentada a seguir consta o sumário da análise por localidade de agrupamento.",
+                        "Text": "Na tabela apresentada a seguir consta o sumário da informação agrupada por CNPJ, incluindo a unidade da federação e o período contábil de cada arquivo.",
                         "Variable": []
                     }
                 },
@@ -116,7 +116,7 @@
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Número de arquivos",
+                                "ColumnName": "Qtd. arquivos",
                                 "Precision": "%.0f",
                                 "Width": "60px"
                             },
@@ -136,49 +136,12 @@
                     "Type": "Footnote",
                     "Data": {
                         "Editable": "false",
-                        "Text": "<span style=\"display: block; margin: 10px; margin-bottom: 20px; text-align: justify; word-break: break-all;\">Configurações:<br>•&thinsp;Módulo \"ECD\": %s</span>",
+                        "Text": "<span style=\"display: block; margin: 10px; margin-bottom: 20px; text-align: justify; word-break: break-all;\">CONFIGURAÇÕES:<br>•&thinsp;Módulo \"File\": %s<br>•&thinsp;Modelo do relatório: %s<br><br>SÍMBOLOS:<br>•&thinsp;&#x1F7E2; (registro encontrado na base da Receita Federal), &#x1F534; (não encontrado na base da Receita Federal) e ⚪ (situação indeterminada)<br>•&thinsp;➕ (registro mesclado) e ⌛ (período fiscal não anual)</span>",
                         "Variable": [
-                            "cfg_ECD"
+                            "cfg_File",
+                            "cfg_ReportTemplate"
                         ]
                     }
-                },
-                {
-                    "Type": "ItemN2",
-                    "Data": {
-                        "Editable": "false",
-                        "Text": "Os dados coletados por sondas móveis (Monitem, NARDA, entre outros) são processados para identificar as medições correspondentes a cada estação de telecomunicações sob análise, gerando representações gráficas. Na tabela apresentada a seguir consta o sumário da análise por localidade de agrupamento.",
-                        "Variable": []
-                    }
-                },
-                {
-                    "Type": "List",
-                    "Data": [
-                        {
-                            "Editable": "false",
-                            "Text": "<font style=\"font-size: 11px;\">&#x1F7E2;</font> Registro encontrado na base da Receita Federal",
-                            "Variable": []
-                        },
-                        {
-                            "Editable": "false",
-                            "Text": "<font style=\"font-size: 11px;\">&#x1F534;</font> Registro não encontrado na base da Receita Federal",
-                            "Variable": []
-                        },
-                        {
-                            "Editable": "false",
-                            "Text": "<font style=\"font-size: 11px;\">⚪</font> Situação indeterminada",
-                            "Variable": []
-                        },
-                        {
-                            "Editable": "false",
-                            "Text": "<font style=\"font-size: 11px;\">➕</font> Registro mesclado",
-                            "Variable": []
-                        },
-                        {
-                            "Editable": "false",
-                            "Text": "<font style=\"font-size: 11px;\">⌛</font> Período fiscal não anual",
-                            "Variable": []
-                        }
-                    ]
                 }
             ]
         }
@@ -366,7 +329,7 @@
             "Component": {
                 "Type": "ItemN2",
                 "Data": {
-                    "Editable": "true",
+                    "Editable": "false",
                     "Text": "Ante o exposto, conclui-se este relatório de atividades.",
                     "Variable": []
                 }

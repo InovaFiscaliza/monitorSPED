@@ -102,7 +102,9 @@ classdef (Abstract) Table
                 sheetsInfo = '';
                 rtfFiles = 0;
                 if isfield(ecdObj(ii).Table, 'x9900')
-                    sheetsInfo = strjoin(strcat('"', ecdObj(ii).Table.x9900.REG_BLC, '": ', cellstr(string(ecdObj(ii).Table.x9900.QTD_REG_BLC))), ', ');
+                    sheetsRaw  = ecdObj(ii).Table.x9900;
+                    sheetsRaw(sheetsRaw.("QTD_REG_BLC") <= 0, :) = [];
+                    sheetsInfo = strjoin(strcat('"', sheetsRaw.("REG_BLC"), '": ', cellstr(string(sheetsRaw.("QTD_REG_BLC")))), ', ');
 
                     rtfIndexes = find(contains(ecdObj(ii).Table.x9900.REG_BLC, {'J800', 'J801'}));
                     if ~isempty(rtfIndexes)

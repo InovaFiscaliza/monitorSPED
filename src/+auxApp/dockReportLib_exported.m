@@ -67,6 +67,10 @@ classdef dockReportLib_exported < matlab.apps.AppBase
             app.btnOK.Enable = ~isempty(app.reportUnit.Value)                               && ... % unit
                                (app.reportIssue.Value > 0) && ~isinf(app.reportIssue.Value) && ... % issue
                                ~isempty(app.reportModelName.Value);                                % reportModel
+
+            if app.btnOK.Enable
+                focus(app.btnOK)
+            end
         end
     end
     
