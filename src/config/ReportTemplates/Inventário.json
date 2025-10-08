@@ -169,10 +169,12 @@
                     "Type": "Paragraph",
                     "Data": {
                         "Editable": "false",
-                        "Text": "A empresa <b>%s</b>, inscrita no CNPJ sob o nº <b>%s</b>, apresentou... <i>placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder</i>, conforme pode ser observado a seguir, com uma amostra do arquivo.",
+                        "Text": "Análise orientada a %.0f arquivo(s) relacionado(s) à empresa %s, inscrita no CNPJ sob o nº %s, contendo informações do período %s.",
                         "Variable": [
+                            "var_NumFilesGlobal",
                             "var_CompanyName",
-                            "var_CompanyId"
+                            "var_CompanyId",                            
+                            "var_Period"
                         ]
                     }
                 },

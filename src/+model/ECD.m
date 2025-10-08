@@ -665,14 +665,15 @@ classdef ECD < model.ECDBase
         function validFile = checkIfValidPeriod(obj)
             checkIfScalar(obj)
 
-            yearsConvered = unique(year(obj.Period));
-            if isscalar(yearsConvered)
+            yearsCovered = unique(year(obj.Period));
+            if isscalar(yearsCovered)
                 monthsCovered = [];
                 for ii = 1:numel(obj.Sources)
                     [beginPeriod, endPeriod] = bounds(obj.Sources(ii).period);
                     monthsCovered = [monthsCovered, month(beginPeriod):month(endPeriod)];
                 end
                 monthsCovered = unique(monthsCovered);
+
                 validFile = isequal(monthsCovered, 1:12);
             else
                 validFile = false;

@@ -3,17 +3,17 @@ function varargout = compile(compilationType, rootCompiledFolder, matlabRuntimeF
     % Automatiza compilação da ferramenta, nas suas versões desktop e webapp.
     % No caso de criação de release no repo do GitHub, deve-se certificar
     % de instalar o GitHub CLI e estar conectado a uma conta que tem perfil
-    % de escrita no repo InovaFiscaliza/appAnalise.
+    % de escrita no repo InovaFiscaliza/monitorSPED.
 
     % ToDo:
     % Publicação do webapp no MATLAB WebServer ou no servidor local.
 
     arguments
         compilationType         char {mustBeMember(compilationType, {'Desktop+WebApp', 'Desktop', 'WebApp'})} = 'Desktop+WebApp'
-        rootCompiledFolder      char    = 'D:\_ANATEL - AppsDeployVersions'
-        matlabRuntimeFolder     char    = ''
-        showConsoleInDesktopBuild  (1,1) logical = true % versão desktop apresenta console
-        createGitHubReleaseForDesktopBuild (1,1) logical = false
+        rootCompiledFolder      char    = 'C:\InovaFiscaliza (AppsDeployVersions)'
+        matlabRuntimeFolder     char    = 'D:\MATLAB Runtime\MATLAB Runtime (Custom)\R2024a'
+        showConsoleInDesktopBuild  (1,1) logical = false % versão desktop apresenta console
+        createGitHubReleaseForDesktopBuild (1,1) logical = true
         githubCLIFolder         char    = 'C:\Program Files\GitHub CLI'
         githubAccount           char    = 'EricMagalhaesDelgado'
     end
@@ -39,7 +39,7 @@ function varargout = compile(compilationType, rootCompiledFolder, matlabRuntimeF
         end
     end
 
-    % Abre projeto do "appAnalise", caso fechado, o que mapeia as pastas do
+    % Abre projeto do "monitorSPED", caso fechado, o que mapeia as pastas do
     % projeto, possibilitar chamar class.Constants.appRelease, por exemplo.
     try
         prjInfo = currentProject;
@@ -52,7 +52,7 @@ function varargout = compile(compilationType, rootCompiledFolder, matlabRuntimeF
     end
 
     % Cria versões .M para cada um dos arquivos .MLAPP, possibilitando que
-    % a figura do app principal (winAppAnalise.mlapp) seja um container para
+    % a figura do app principal (monitorSPED.mlapp) seja um container para
     % os apps auxiliares.
     cd(initFolder)
     preCompile()
@@ -206,11 +206,19 @@ function desktopPostCompilation(finalFolder, matlabRuntimeFolder, githubReleaseF
 
         % Cria release no GitHub, caso aplicável.
         if githubReleaseFlag
+            cd(githubCLIFolder)
+            try                
+                ghMessage1 = sprintf('gh release upload %s "%s" --repo InovaFiscaliza/.github --clobber', appName, fullfile(finalFolder, sprintf('%s_Installer.zip', appName)));
+                [~, ghStatus1] = system(ghMessage1);
+                warning(ghStatus1)
+            catch ME
+                warning(ME.message)
+            end
+
             try
-                cd(githubCLIFolder)
-                ghMessage = sprintf('gh release create %s "%s" --title "%s" --notes "https://anatel365.sharepoint.com/sites/InovaFiscaliza/SitePages/%s.aspx" --repo InovaFiscaliza/%s', appVersion, fullfile(finalFolder, sprintf('%s_Matlab.zip', appName)), appName, appName, appName);
-                [~, ghStatus] = system(ghMessage);
-                warning(ghStatus)
+                ghMessage2 = sprintf('gh release create %s "%s" --title "%s" --notes "https://anatel365.sharepoint.com/sites/InovaFiscaliza/SitePages/%s.aspx" --repo InovaFiscaliza/%s', appVersion, fullfile(finalFolder, sprintf('%s_Matlab.zip', appName)), appName, appName, appName);
+                [~, ghStatus2] = system(ghMessage2);
+                warning(ghStatus2)
             catch ME
                 warning(ME.message)
             end

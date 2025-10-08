@@ -38,6 +38,10 @@ classdef winECD_exported < matlab.apps.AppBase
         CompanyNameListLabel        matlab.ui.control.Label
         Tab2                        matlab.ui.container.Tab
         GridLayout_2                matlab.ui.container.GridLayout
+        Image6                      matlab.ui.control.Image
+        Separator2_2                matlab.ui.control.Image
+        ColumnWidthLabel_2          matlab.ui.control.Label
+        FontIcon                    matlab.ui.control.DropDown
         FontColor                   matlab.ui.control.ColorPicker
         FontBackground              matlab.ui.control.ColorPicker
         FontAlign3                  matlab.ui.control.Image
@@ -47,8 +51,10 @@ classdef winECD_exported < matlab.apps.AppBase
         FontWeight                  matlab.ui.control.Button
         FontFamily                  matlab.ui.control.DropDown
         Separator2                  matlab.ui.control.Image
-        RowHeightOffsetLabel        matlab.ui.control.Label
-        RowHeightOffset             matlab.ui.control.Spinner
+        ColumnWidthLabel            matlab.ui.control.Label
+        ColumnWidth                 matlab.ui.control.DropDown
+        RowHeightLabel              matlab.ui.control.Label
+        RowHeight                   matlab.ui.control.Spinner
         Separator1                  matlab.ui.control.Image
         SheetOnFocus                matlab.ui.control.Lamp
         SheetHeight_Second          matlab.ui.control.Spinner
@@ -224,6 +230,9 @@ classdef winECD_exported < matlab.apps.AppBase
                             % Outros elementos:
                             hTableList = {app.UITable1, app.UITable2};
                             ui.CustomizationBase.getElementsDataTag(hTableList);
+
+                        case 2
+                            app.FontFamily.Items = [{''}; listfonts];
 
                         otherwise
                             % Customização de componentes constantes nas outras abas, 
@@ -431,6 +440,7 @@ classdef winECD_exported < matlab.apps.AppBase
             hTable.UserData.tableId = tableId;
             
             restartTableSelectionControl(app, hTable, hTableCountText)
+            applyTableStyle(app, selectedECD, hTable, tableId)
 
             if height(hTable.Data) > 1
                 numberOfRowsText = sprintf('%d DE %d LINHAS ', height(hTable.Data), height(hTable.Data)); % PENDENTE FILTRAGEM
@@ -450,6 +460,21 @@ classdef winECD_exported < matlab.apps.AppBase
             hTable.UserData.SelectionType = 'none';
 
             hTableCountText.Text = '  CONTAGEM: 0';
+        end
+
+        %-----------------------------------------------------------------%
+        function applyTableStyle(app, selectedECD, hTable, tableId)
+            if ~isempty(hTable.StyleConfigurations)
+                removeStyle(hTable)
+            end
+            
+            tableIdIndex = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
+            if ~isempty(tableIdIndex)
+                styleConfigTable = selectedECD.GUI.tableView(tableIdIndex).style;
+                for ii = 1:height(styleConfigTable)
+                    addStyle(hTable, styleConfigTable.Style(ii), styleConfigTable.Target(ii), styleConfigTable.TargetIndex{ii})
+                end
+            end
         end
 
         %-----------------------------------------------------------------%
@@ -890,13 +915,34 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         % Callback function: FontAlign1, FontAlign2, FontAlign3, 
-        % ...and 5 other components
+        % ...and 6 other components
         function TableStyleChanged(app, event)
+                        
+            clickedTable = onFocusTable(app);
+            if isempty(clickedTable.Selection)
+                return
+            end
+
+            fileIndex   = selectedFileIndex(app);
+            selectedECD = app.ecdObj(fileIndex);
             
+            switch clickedTable
+                case app.UITable1; tableId = app.SheetView_First.Value;
+                case app.UITable2; tableId = app.SheetView_Second.Value;
+            end
+
+            % Lista atual de estilos:
+            renderedTableIDStyleIndex = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
+            if isempty(renderedTableIDStyleIndex)
+                renderedTableIDStyleIndex = numel(selectedECD.GUI.tableView)+1;
+            end
+            
+            % Estilo novo:
             switch event.Source
                 case app.FontFamily
                     fieldName  = 'FontName';
                     fieldValue = {app.FontFamily.Value};
+                    app.FontFamily.Value = '';
 
                 case app.FontWeight
                     fieldName  = 'FontWeight';
@@ -906,39 +952,36 @@ classdef winECD_exported < matlab.apps.AppBase
                     fieldName  = 'FontAngle';
                     fieldValue = {'italic', 'normal'};
 
-                case app.FontAlign1
+                case {app.FontAlign1, app.FontAlign2, app.FontAlign3}
                     fieldName  = 'HorizontalAlignment';
-                    fieldValue = {'left'};    % 'left' | 'center' | 'right'
-
-                case app.FontAlign2
-                    fieldName  = 'HorizontalAlignment';
-                    fieldValue = {'center'};
-
-                case app.FontAlign3
-                    fieldName  = 'HorizontalAlignment';
-                    fieldValue = {'right'};
+                    switch event.Source
+                        case app.FontAlign1; fieldValue = {'left'};
+                        case app.FontAlign2; fieldValue = {'center'};
+                        case app.FontAlign3; fieldValue = {'right'};
+                    end
 
                 case app.FontBackground
                     fieldName  = 'BackgroundColor';
                     fieldValue = {event.Value};
-                    app.FontBackground.Value = [1 1 1];
+                    app.FontBackground.Value = [1 0 0.0118];
 
                 case app.FontColor
                     fieldName  = 'FontColor';
                     fieldValue = {event.Value};
-                    app.FontColor.Value = [0.149 0.149 0.149];
-            end
+                    app.FontColor.Value = [0 0 0.0118];
 
-            clickedTable = onFocusTable(app);
-            if isempty(clickedTable.Selection)
-                return
+                case app.FontIcon
+                    fieldName  = 'Icon';
+                    fieldValue = {event.Value};
+                    app.FontIcon.Value = '';
             end
 
             % Verifica se já existe estilo aplicado às células selecionadas:
             styleIndex = find(cellfun(@(x) isequal(clickedTable.Selection, x), clickedTable.StyleConfigurations.TargetIndex));
             if ~isempty(styleIndex)
                 styleIndex = styleIndex(end);
-                s = clickedTable.StyleConfigurations.Style(styleIndex);
+                s = clickedTable.StyleConfigurations.Style(styleIndex);                
+                removeStyle(clickedTable, styleIndex)
             else
                 s = uistyle();
             end
@@ -947,16 +990,22 @@ classdef winECD_exported < matlab.apps.AppBase
                 previousValue = s.(fieldName);
                 previouValueIndex = find(cellfun(@(x) isequal(x, previousValue), fieldValue));
                 s.(fieldName) = fieldValue{setdiff(1:numel(fieldValue), previouValueIndex)};
-
             else
                 s.(fieldName) = fieldValue{1};
             end
 
             addStyle(clickedTable, s, "cell", clickedTable.Selection)
+            if strcmp(app.SheetView_First.Value, app.SheetView_Second.Value)
+                otherTable = setdiff([app.UITable1, app.UITable2], clickedTable);
+                addStyle(otherTable, s, "cell", clickedTable.Selection)
+            end
+
+            selectedECD.GUI.tableView(renderedTableIDStyleIndex).id = tableId;
+            selectedECD.GUI.tableView(renderedTableIDStyleIndex).style = clickedTable.StyleConfigurations;
             
         end
 
-        % Value changed function: RowHeightOffset
+        % Value changed function: RowHeight
         function TableRowHeightChanged(app, event)
 
             % ToDo:
@@ -982,11 +1031,11 @@ classdef winECD_exported < matlab.apps.AppBase
                     waitForPropertyCreation(app, hTable, propertyName)
                 end
                 
-                if app.RowHeightOffset.Value
+                if app.RowHeight.Value
                     defaultProp   = regexp(hTable.StyleObservations.height, '(?<height>\d+[.]?\d*)px', 'names');
                     defaultHeight = str2double(defaultProp.height);
 
-                    sendEventToHTMLSource(app.jsBackDoor, 'changeTableRowHeight', defaultHeight + app.RowHeightOffset.Value);
+                    sendEventToHTMLSource(app.jsBackDoor, 'changeTableRowHeight', defaultHeight + app.RowHeight.Value);
                 else
                     sendEventToHTMLSource(app.jsBackDoor, 'changeTableRowHeight', 'default');
                 end
@@ -1002,6 +1051,60 @@ classdef winECD_exported < matlab.apps.AppBase
 
             catch ME
                 appUtil.modalWindow(app.UIFigure, 'error', ME.message);
+            end
+
+        end
+
+        % Value changed function: ColumnWidth
+        function ColumnWidthValueChanged(app, event)
+            
+            if ~isempty(app.ColumnWidth.Value)
+                hTable = onFocusTable(app);
+
+                if isequal(hTable.ColumnWidth, app.ColumnWidth.Value)
+                    widthOptions = setdiff(app.ColumnWidth.Items, {'', app.ColumnWidth.Value});
+                    hTable.ColumnWidth = widthOptions{1};
+                    drawnow
+                end
+
+                hTable.ColumnWidth = app.ColumnWidth.Value;
+                app.ColumnWidth.Value = '';
+            end
+            
+        end
+
+        % Image clicked function: Image6
+        function Image6Clicked(app, event)
+            
+            clickedTable = onFocusTable(app);
+            if isempty(clickedTable.Selection)
+                return
+            end
+
+            fileIndex   = selectedFileIndex(app);
+            selectedECD = app.ecdObj(fileIndex);
+            
+            switch clickedTable
+                case app.UITable1; tableId = app.SheetView_First.Value;
+                case app.UITable2; tableId = app.SheetView_Second.Value;
+            end
+
+            % Lista atual de estilos:
+            renderedTableIDStyleIndex = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
+            if ~isempty(renderedTableIDStyleIndex)
+                styleIndex = find(cellfun(@(x) isequal(clickedTable.Selection, x), clickedTable.StyleConfigurations.TargetIndex));
+
+                if ~isempty(styleIndex)             
+                    removeStyle(clickedTable, styleIndex)
+
+                    if strcmp(app.SheetView_First.Value, app.SheetView_Second.Value)
+                        otherTable = setdiff([app.UITable1, app.UITable2], clickedTable);
+                        removeStyle(otherTable, styleIndex)
+                    end
+        
+                    selectedECD.GUI.tableView(renderedTableIDStyleIndex).id = tableId;
+                    selectedECD.GUI.tableView(renderedTableIDStyleIndex).style = clickedTable.StyleConfigurations;
+                end
             end
 
         end
@@ -1207,7 +1310,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create GridLayout_2
             app.GridLayout_2 = uigridlayout(app.Tab2);
-            app.GridLayout_2.ColumnWidth = {44, 226, 40, 10, 3, 90, 3, 22, 22, 22, 22, 22, 44, 44};
+            app.GridLayout_2.ColumnWidth = {44, 226, 40, 10, 3, 90, 90, 3, 22, 22, 22, 22, 22, 44, 44, 3, 90, '1x', 16};
             app.GridLayout_2.RowHeight = {22, 22};
             app.GridLayout_2.RowSpacing = 5;
             app.GridLayout_2.BackgroundColor = [0.9804 0.9804 0.9804];
@@ -1281,31 +1384,50 @@ classdef winECD_exported < matlab.apps.AppBase
             app.Separator1.Layout.Column = 5;
             app.Separator1.ImageSource = 'LineV.svg';
 
-            % Create RowHeightOffset
-            app.RowHeightOffset = uispinner(app.GridLayout_2);
-            app.RowHeightOffset.Step = 5;
-            app.RowHeightOffset.Limits = [0 50];
-            app.RowHeightOffset.RoundFractionalValues = 'on';
-            app.RowHeightOffset.ValueDisplayFormat = '%d';
-            app.RowHeightOffset.ValueChangedFcn = createCallbackFcn(app, @TableRowHeightChanged, true);
-            app.RowHeightOffset.FontSize = 11;
-            app.RowHeightOffset.Layout.Row = 1;
-            app.RowHeightOffset.Layout.Column = 6;
+            % Create RowHeight
+            app.RowHeight = uispinner(app.GridLayout_2);
+            app.RowHeight.Step = 5;
+            app.RowHeight.Limits = [0 50];
+            app.RowHeight.RoundFractionalValues = 'on';
+            app.RowHeight.ValueDisplayFormat = '%d';
+            app.RowHeight.ValueChangedFcn = createCallbackFcn(app, @TableRowHeightChanged, true);
+            app.RowHeight.FontSize = 11;
+            app.RowHeight.Layout.Row = 1;
+            app.RowHeight.Layout.Column = 6;
 
-            % Create RowHeightOffsetLabel
-            app.RowHeightOffsetLabel = uilabel(app.GridLayout_2);
-            app.RowHeightOffsetLabel.HorizontalAlignment = 'center';
-            app.RowHeightOffsetLabel.WordWrap = 'on';
-            app.RowHeightOffsetLabel.FontSize = 10;
-            app.RowHeightOffsetLabel.Layout.Row = 2;
-            app.RowHeightOffsetLabel.Layout.Column = 6;
-            app.RowHeightOffsetLabel.Text = {'ALTURA LINHA'; '(offset)'};
+            % Create RowHeightLabel
+            app.RowHeightLabel = uilabel(app.GridLayout_2);
+            app.RowHeightLabel.HorizontalAlignment = 'center';
+            app.RowHeightLabel.WordWrap = 'on';
+            app.RowHeightLabel.FontSize = 10;
+            app.RowHeightLabel.Layout.Row = 2;
+            app.RowHeightLabel.Layout.Column = 6;
+            app.RowHeightLabel.Text = {'ALTURA LINHA'; '(offset)'};
+
+            % Create ColumnWidth
+            app.ColumnWidth = uidropdown(app.GridLayout_2);
+            app.ColumnWidth.Items = {'', 'auto', 'fit', '1x'};
+            app.ColumnWidth.ValueChangedFcn = createCallbackFcn(app, @ColumnWidthValueChanged, true);
+            app.ColumnWidth.FontSize = 11;
+            app.ColumnWidth.BackgroundColor = [1 1 1];
+            app.ColumnWidth.Layout.Row = 1;
+            app.ColumnWidth.Layout.Column = 7;
+            app.ColumnWidth.Value = '';
+
+            % Create ColumnWidthLabel
+            app.ColumnWidthLabel = uilabel(app.GridLayout_2);
+            app.ColumnWidthLabel.HorizontalAlignment = 'center';
+            app.ColumnWidthLabel.WordWrap = 'on';
+            app.ColumnWidthLabel.FontSize = 10;
+            app.ColumnWidthLabel.Layout.Row = 2;
+            app.ColumnWidthLabel.Layout.Column = 7;
+            app.ColumnWidthLabel.Text = {'LARGURA'; 'COLUNA'};
 
             % Create Separator2
             app.Separator2 = uiimage(app.GridLayout_2);
             app.Separator2.Enable = 'off';
             app.Separator2.Layout.Row = [1 2];
-            app.Separator2.Layout.Column = 7;
+            app.Separator2.Layout.Column = 8;
             app.Separator2.ImageSource = 'LineV.svg';
 
             % Create FontFamily
@@ -1316,27 +1438,27 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontFamily.FontSize = 11;
             app.FontFamily.BackgroundColor = [1 1 1];
             app.FontFamily.Layout.Row = 1;
-            app.FontFamily.Layout.Column = [8 14];
+            app.FontFamily.Layout.Column = [9 15];
             app.FontFamily.Value = {};
 
             % Create FontWeight
             app.FontWeight = uibutton(app.GridLayout_2, 'push');
             app.FontWeight.ButtonPushedFcn = createCallbackFcn(app, @TableStyleChanged, true);
-            app.FontWeight.BackgroundColor = [1 1 1];
+            app.FontWeight.BackgroundColor = [0.9804 0.9804 0.9804];
             app.FontWeight.FontName = 'Century';
             app.FontWeight.FontWeight = 'bold';
             app.FontWeight.Layout.Row = 2;
-            app.FontWeight.Layout.Column = 8;
+            app.FontWeight.Layout.Column = 9;
             app.FontWeight.Text = 'B';
 
             % Create FontStyle
             app.FontStyle = uibutton(app.GridLayout_2, 'push');
             app.FontStyle.ButtonPushedFcn = createCallbackFcn(app, @TableStyleChanged, true);
-            app.FontStyle.BackgroundColor = [1 1 1];
+            app.FontStyle.BackgroundColor = [0.9804 0.9804 0.9804];
             app.FontStyle.FontName = 'Century';
             app.FontStyle.FontAngle = 'italic';
             app.FontStyle.Layout.Row = 2;
-            app.FontStyle.Layout.Column = 9;
+            app.FontStyle.Layout.Column = 10;
             app.FontStyle.Text = 'I ';
 
             % Create FontAlign1
@@ -1345,7 +1467,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign1.ImageClickedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontAlign1.Tooltip = {'Sublinhado'};
             app.FontAlign1.Layout.Row = 2;
-            app.FontAlign1.Layout.Column = 10;
+            app.FontAlign1.Layout.Column = 11;
             app.FontAlign1.ImageSource = 'AlignedLeft_16-7f46662cd6fd7221119660e14bdcea56.png';
 
             % Create FontAlign2
@@ -1354,7 +1476,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign2.ImageClickedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontAlign2.Tooltip = {'Sublinhado'};
             app.FontAlign2.Layout.Row = 2;
-            app.FontAlign2.Layout.Column = 11;
+            app.FontAlign2.Layout.Column = 12;
             app.FontAlign2.ImageSource = 'AlignedCenter_16-b91485db227234029c43b7823c09ebff.png';
 
             % Create FontAlign3
@@ -1363,26 +1485,60 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign3.ImageClickedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontAlign3.Tooltip = {'Sublinhado'};
             app.FontAlign3.Layout.Row = 2;
-            app.FontAlign3.Layout.Column = 12;
+            app.FontAlign3.Layout.Column = 13;
             app.FontAlign3.ImageSource = 'AlignedRight_16-7827788943408c9bac98181b7ad0efb5.png';
 
             % Create FontBackground
             app.FontBackground = uicolorpicker(app.GridLayout_2);
-            app.FontBackground.Value = [1 1 1];
-            app.FontBackground.Icon = '_Background.png';
+            app.FontBackground.Value = [1 0 0.0118];
+            app.FontBackground.Icon = 'fill';
             app.FontBackground.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontBackground.Layout.Row = 2;
-            app.FontBackground.Layout.Column = 13;
+            app.FontBackground.Layout.Column = 14;
             app.FontBackground.BackgroundColor = [1 1 1];
 
             % Create FontColor
             app.FontColor = uicolorpicker(app.GridLayout_2);
-            app.FontColor.Value = [0.149 0.149 0.149];
-            app.FontColor.Icon = '_Color.png';
+            app.FontColor.Value = [0 0 0.0118];
+            app.FontColor.Icon = 'text';
             app.FontColor.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontColor.Layout.Row = 2;
-            app.FontColor.Layout.Column = 14;
+            app.FontColor.Layout.Column = 15;
             app.FontColor.BackgroundColor = [1 1 1];
+
+            % Create FontIcon
+            app.FontIcon = uidropdown(app.GridLayout_2);
+            app.FontIcon.Items = {'', 'question', 'info', 'success', 'warning', 'error', 'none'};
+            app.FontIcon.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
+            app.FontIcon.FontSize = 11;
+            app.FontIcon.BackgroundColor = [1 1 1];
+            app.FontIcon.Layout.Row = 1;
+            app.FontIcon.Layout.Column = 17;
+            app.FontIcon.Value = '';
+
+            % Create ColumnWidthLabel_2
+            app.ColumnWidthLabel_2 = uilabel(app.GridLayout_2);
+            app.ColumnWidthLabel_2.HorizontalAlignment = 'center';
+            app.ColumnWidthLabel_2.WordWrap = 'on';
+            app.ColumnWidthLabel_2.FontSize = 10;
+            app.ColumnWidthLabel_2.Layout.Row = 2;
+            app.ColumnWidthLabel_2.Layout.Column = 17;
+            app.ColumnWidthLabel_2.Text = 'ÍCONE';
+
+            % Create Separator2_2
+            app.Separator2_2 = uiimage(app.GridLayout_2);
+            app.Separator2_2.Enable = 'off';
+            app.Separator2_2.Layout.Row = [1 2];
+            app.Separator2_2.Layout.Column = 16;
+            app.Separator2_2.ImageSource = 'LineV.svg';
+
+            % Create Image6
+            app.Image6 = uiimage(app.GridLayout_2);
+            app.Image6.ImageClickedFcn = createCallbackFcn(app, @Image6Clicked, true);
+            app.Image6.Tooltip = {'Apaga estilos aplicados à tabela'};
+            app.Image6.Layout.Row = 2;
+            app.Image6.Layout.Column = 19;
+            app.Image6.ImageSource = 'delete.svg';
 
             % Create Tab3
             app.Tab3 = uitab(app.TabGroup);
@@ -1577,7 +1733,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create toolGrid
             app.toolGrid = uigridlayout(app.GridLayout);
             app.toolGrid.ColumnWidth = {'1x', 22, 22};
-            app.toolGrid.RowHeight = {4, 17, '1x'};
+            app.toolGrid.RowHeight = {4, 17, 2};
             app.toolGrid.ColumnSpacing = 5;
             app.toolGrid.RowSpacing = 0;
             app.toolGrid.Padding = [10 5 10 5];

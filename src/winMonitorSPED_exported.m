@@ -1247,7 +1247,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % Create file_toolGrid
             app.file_toolGrid = uigridlayout(app.file_Grid);
             app.file_toolGrid.ColumnWidth = {22, 5, 22, 22, 5, 22, '1x', 22, 22};
-            app.file_toolGrid.RowHeight = {4, 17, '1x'};
+            app.file_toolGrid.RowHeight = {4, 17, 2};
             app.file_toolGrid.ColumnSpacing = 5;
             app.file_toolGrid.RowSpacing = 0;
             app.file_toolGrid.Padding = [10 5 10 5];
@@ -1260,7 +1260,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_SelectFilesToRead.ScaleMethod = 'none';
             app.tool_SelectFilesToRead.ImageClickedFcn = createCallbackFcn(app, @toolbar_SelectFileToReadImageClicked, true);
             app.tool_SelectFilesToRead.Tooltip = {'Seleciona arquivos'};
-            app.tool_SelectFilesToRead.Layout.Row = [1 3];
+            app.tool_SelectFilesToRead.Layout.Row = 2;
             app.tool_SelectFilesToRead.Layout.Column = 1;
             app.tool_SelectFilesToRead.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Import_16.png');
 
@@ -1314,7 +1314,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_GenerateReport.ImageClickedFcn = createCallbackFcn(app, @toolbar_GenerateReportImageClicked, true);
             app.tool_GenerateReport.Enable = 'off';
             app.tool_GenerateReport.Tooltip = {'Gera relatório'; '(estado escrituração na Receita Federal)'};
-            app.tool_GenerateReport.Layout.Row = [1 3];
+            app.tool_GenerateReport.Layout.Row = 2;
             app.tool_GenerateReport.Layout.Column = 8;
             app.tool_GenerateReport.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Publish_HTML_16.png');
 

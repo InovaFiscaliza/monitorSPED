@@ -42,24 +42,61 @@ classdef (Abstract) Variable
                         fileList = [fileList, {ecdObj(ii).Sources.file}];
                     end
                     fileList = unique(fileList);
+
                     switch fieldName
                         case 'NumFiles'
-                            fieldValue = num2str(numel(fileList));
+                            fieldValue = numel(fileList);
                         case 'FileNameList'
                             fieldValue = strjoin(strcat('"', fileList, '"'), ', ');
                     end
+
                 case {'CompanyName', 'CompanyId'}
                     fieldValue = strjoin(unique({ecdObj.(fieldName)}), ', ');
+
                 case 'Period'
-                    [beginTime, endTime] = bounds([ecdObj.Period], "all");
-                    fieldValue = sprintf('%s a %s', beginTime, endTime);
+                    periodList = [];
+                    for ii = 1:numel(ecdObj)
+                        for jj = 1:numel(ecdObj(ii).Sources)
+                            periodList = [periodList, ecdObj(ii).Sources(jj).period];
+                        end
+                    end
+
+                    [beginPeriodGlobal, endPeriodGlobal] = bounds(periodList, "all");
+                    yearsCovered = unique(year(periodList));
+
+                    if isscalar(yearsCovered)
+                        monthsCovered = [];
+                        for ii = 1:2:numel(periodList)-1
+                            monthsCovered = [monthsCovered, month(periodList(ii)):month(periodList(ii+1))];
+                        end
+                        
+                        monthsCovered  = unique(monthsCovered);
+                        allYearCovered = isequal(monthsCovered, 1:12);
+
+                        if allYearCovered
+                            monthsCoveredNote = sprintf('todo o ano de %.0f', yearsCovered);
+                        else 
+                            if isscalar(monthsCovered)
+                                monthsCoveredNote = sprintf('um único mês do ano de %.0f', yearsCovered);
+                            else
+                                monthsCoveredNote = sprintf('%.0f meses do ano de %.0f', numel(monthsCovered), yearsCovered);
+                            end
+                        end
+                        fieldValue = sprintf('%s a %s, que contempla %s', beginPeriodGlobal, endPeriodGlobal, monthsCoveredNote);        
+                    else
+                        fieldValue = sprintf('%s a %s, que contempla %.0f anos fiscais', beginPeriodGlobal, endPeriodGlobal, numel(yearsCovered));
+                    end
+
                 case 'ReceitaFederal'
                     fieldValue = jsonencode(ecdObj.Sources(end).validationMessage);
+
                 case 'ContentSample'
                     contentArray = arrayfun(@(x) strjoin(splitlines(x.Content(1:min(500, numel(x.Content)))), '<br>'), ecdObj, 'UniformOutput', false);
                     fieldValue = ['<font style="text-align: justify; word-break: break-all;">', strjoin(strcat(contentArray, '<br><font style="color: red;">[Texto truncado — Fonte:&thinsp;', ' ', {ecdObj.FileName}, ']</font>'), '<br><br>') '</font>'];
+
                 case 'Layout'
                     fieldValue = strjoin(string(unique([ecdObj.Layout])));
+
                 otherwise
                     error('UnexpectedFieldName')
             end
