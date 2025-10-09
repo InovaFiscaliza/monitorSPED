@@ -294,6 +294,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             case 'reportUserConfirmation'
                                 context = varargin{1};
                                 indexes = varargin{2};
+
+                                delete(callingApp)
+                                app.popupContainer.Parent.Visible = 0;
+
                                 reportGeneratorCall(app, context, indexes)
 
                             otherwise
@@ -969,7 +973,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     filePath    = fullfile(simulationFolders{ii}, 'Simulation');    
                     listOfFiles = dir(filePath);
                     fileName    = {listOfFiles.name};
-                    fileName    = fileName(endsWith(lower(fileName), '.txt'));
+                    fileName    = fileName(endsWith(fileName, '.txt', 'IgnoreCase', true));
                     
                     if ~isempty(fileName)
                         fileFullName = fullfile(filePath, fileName);
@@ -986,7 +990,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             else
                 switch app.General.File.input
                     case 'file'
-                        [fileName, filePath] = uigetfile({'*.txt';'*.csv';'*.mat';'*.*'}, ...
+                        [fileName, filePath] = uigetfile({'*.txt;*.sped', '(.txt, .sped)'; '*.mat', '(.mat)'}, ...
                                                           '', app.General.fileFolder.lastVisited, 'MultiSelect', 'on');
                         figure(app.UIFigure)
             
@@ -995,7 +999,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         elseif ~iscellstr(fileName)
                             fileName = cellstr(fileName);
                         end
-                        fileFullName = fullfile(filePath, fileName);
+                        fileFullName = util.getFilesFromCompressedFile(fullfile(filePath, fileName), app.General.fileFolder.tempPath);
     
                     case 'folder'
                         filePath = uigetdir(app.General.fileFolder.lastVisited);
@@ -1006,7 +1010,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         end
     
                         d = appUtil.modalWindow(app.UIFigure, "progressdlg", "Em andamento...");
-                        [fileFullName, fileName] = util.getFilesFromFolder(filePath);
+                        [fileFullName, fileName] = util.getFilesFromFolder(filePath, {'.txt', '.sped'}, app.General.fileFolder.tempPath);
                 end
                 updateLastVisitedFolder(app, filePath)
             end
@@ -1026,7 +1030,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     [app.ecdObj, msg] = app.ecdObj.addFiles(fileFullName{ii}, [], app.receitaFederalObj);
 
                     if ~isempty(msg)
-                        filesError(end+1) = struct('File', sprintf('"%s"', fileName{ii}), 'Error', strjoin(msg));
+                        filesError(end+1) = struct('File', sprintf('"%s"', fileName{ii}), 'Error', msg);
                         continue
                     end
                 end

@@ -123,7 +123,6 @@ classdef dockReportLib_exported < matlab.apps.AppBase
             context = app.inputArgs.context;
             indexes = app.inputArgs.indexes;
             ipcMainMatlabCallsHandler(app.mainApp, app, 'reportUserConfirmation', context, indexes)
-            closeFcn(app)
 
         end
     end

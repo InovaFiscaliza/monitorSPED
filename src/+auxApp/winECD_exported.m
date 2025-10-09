@@ -638,9 +638,9 @@ classdef winECD_exported < matlab.apps.AppBase
                         fileName  = sprintf('%s_%d.rtf', tempName, fileCount);
                         
                         try
-                            rtfContentFile  = selectedECD.Table.(rtfTableField).('ARQ_RTF'){jj};
-                            writematrix(rtfContentFile, fileName, "FileType", "text", "QuoteStrings", "none", "Encoding", 'ISO-8859-1');
+                            util.recreateRTF(selectedECD.Table.(rtfTableField).('ARQ_RTF'){jj}, fileName)
                             rtfFiles{end+1} = fileName;
+
                         catch ME
                             msgError{end+1} = ME.message;
                         end

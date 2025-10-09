@@ -1,8 +1,8 @@
 function [fList, fNames] = getFilesFromFolder(folder, extension, tempFolder)
     arguments
         folder
-        extension (1,:) char = '.txt'
-        tempFolder  (1,:) char = ''
+        extension = {'.txt', '.sped'}
+        tempFolder (1,:) char = ''
     end
 
     % INITIAL DIR
@@ -20,10 +20,12 @@ function [fList, fNames] = getFilesFromFolder(folder, extension, tempFolder)
         try
             if d(ii).isdir
                 fList = [fList, util.getFilesFromFolder(current, extension, tempFolder)];    
+
             elseif endsWith(current, '.zip', 'IgnoreCase', true)
                 tempZipFolder = getTempFolder(tempFolder);
                 unzip(current, tempZipFolder);
-                fList = [fList, util.getFilesFromFolder(tempZipFolder, extension, tempFolder)];    
+                fList = [fList, util.getFilesFromFolder(tempZipFolder, extension, tempFolder)];
+
             elseif endsWith(current, extension, 'IgnoreCase', true)
                 fList{end+1} = current;
             end
@@ -32,11 +34,13 @@ function [fList, fNames] = getFilesFromFolder(folder, extension, tempFolder)
     end
 
     % KEEP ONLY UNIQUE VALUES
-    [~, fNames, fExt] = fileparts(fList);
-    [~, fIndexes] = unique(fNames, 'stable');
-    fList = fList(fIndexes);
+    fList = util.getFilesFromCompressedFile(fList);
 
+    [~, fNames, fExt] = fileparts(fList);
     fNames = strcat(fNames, fExt);
+
+    [fNames, fIndexes] = unique(fNames, 'stable');
+    fList = fList(fIndexes);    
 end
 
 %-------------------------------------------------------------------------%

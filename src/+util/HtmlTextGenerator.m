@@ -94,7 +94,18 @@ classdef (Abstract) HtmlTextGenerator
                 
                 if ~ecdObj.PeriodMerged
                     dataStruct(end+1) = struct('group', 'Hash', 'value', jsonencode(rmfield(ecdObj.Sources, {'file', 'period', 'validationMessage', 'validationStatus'})));
-                    dataStruct(end+1) = struct('group', 'ReceitaFederal', 'value', ecdObj.Sources(end).validationMessage);
+
+                    [receitaFederalStatus, receitaFederalSourceFileStatus] = checkIfValidStatus(ecdObj);
+                    if receitaFederalStatus
+                        receitaFederalStatusIcon = '🟢'; % '&#x1F7E2;'
+                    else
+                        if all(receitaFederalSourceFileStatus < 0)
+                            receitaFederalStatusIcon = '🔴'; % '&#x1F534;'
+                        else
+                            receitaFederalStatusIcon = '⚪';
+                        end
+                    end
+                    dataStruct(end+1) = struct('group', sprintf('ReceitaFederal %s', receitaFederalStatusIcon), 'value', ecdObj.Sources(end).validationMessage);
                 end                
 
                 nireInfo = '';
