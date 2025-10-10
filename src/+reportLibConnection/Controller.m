@@ -195,17 +195,14 @@ classdef (Abstract) Controller
                     web(HTMLFile, '-new')
                     updateGeneratedFiles(projectData, context)
 
-                case 'final'
-                    % RAWFiles = {ecdObj.FileFullName};
-                    % XLSXFile = [baseFullFileName '.xlsx'];                    
-                    % ZIPFile  = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', {'*.zip', 'monitorRNI (*.zip)'}, fullfile(app.General.fileFolder.userPath, [baseFileName '.zip']));
-                    % if isempty(ZIPFile)
-                    %     return
-                    % end                    
-                    % 
-                    % zip(ZIPFile, [{HTMLFile}, {XLSXFile}, RAWFiles])
-                    % 
-                    % updateGeneratedFiles(projectData, context, RAWFiles, HTMLFile, XLSXFile, ZIPFile)
+                case 'final'                    
+                    ZIPFile  = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', {'*.zip', 'monitorSPED (*.zip)'}, fullfile(generalSettings.fileFolder.userPath, [baseFileName '.zip']));
+                    if isempty(ZIPFile)
+                        return
+                    end                    
+
+                    zip(ZIPFile, HTMLFile)
+                    updateGeneratedFiles(projectData, context, {}, HTMLFile)
             end
         end
     end

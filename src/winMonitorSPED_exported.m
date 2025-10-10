@@ -162,7 +162,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     case 'customForm'
                         switch event.HTMLEventData.uuid
                             case 'eFiscalizaSignInPage'
-                                report_uploadInfoController(app, event.HTMLEventData, 'uploadDocument')
+                                context = event.HTMLEventData.context;
+                                report_uploadInfoController(app, event.HTMLEventData, 'uploadDocument', context)
 
                             case 'openDevTools'
                                 if isequal(app.General.operationMode.DevTools, rmfield(event.HTMLEventData, 'uuid'))
@@ -732,6 +733,25 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
+        function updateToolbar(app)
+            context = 'File';
+            indexes = file_findSelectedNodeData(app);
+
+            nonEmptyECDObject               = ~isempty(app.ecdObj);
+            nonEmptySelection               = ~isempty(indexes);
+            nonScalarSelection              = isscalar(indexes);
+            reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(context).generatedFiles.lastHTMLDocFullPath);
+
+            app.menu_Button2.Enable         = nonEmptyECDObject;
+            app.tool_ReadFiles.Enable       = nonEmptySelection;
+            app.tool_MergeFiles.Enable      = nonEmptySelection && nonScalarSelection;
+            app.tool_CheckRFB.Enable        = nonEmptySelection;
+            
+            app.tool_GenerateReport.Enable  = nonEmptySelection;
+            app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated;
+        end
+
+        %-----------------------------------------------------------------%
         function updateLastVisitedFolder(app, filePath)
             app.General_I.fileFolder.lastVisited = filePath;
             app.General.fileFolder.lastVisited   = filePath;
@@ -742,6 +762,112 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
 
     methods
+        %-----------------------------------------------------------------%
+        % SISTEMA DE GESTÃO DA FISCALIZAÇÃO (eFiscaliza/SEI)
+        %-----------------------------------------------------------------%                
+        function status = report_checkEFiscalizaIssueId(app, issue)
+            status = (issue > 0) && (issue < inf);
+        end
+
+        %-----------------------------------------------------------------%
+        function report_uploadInfoController(app, credentials, operation, context)
+            communicationStatus = report_sendHTMLDocToSEIviaEFiscaliza(app, credentials, operation, context);
+            if communicationStatus && strcmp(app.projectData.modules.(context).ui.system, 'eFiscaliza')
+                report_sendFilesToSharepoint(app, context)
+            end
+        end
+
+        %-------------------------------------------------------------------------%
+        function communicationStatus = report_sendHTMLDocToSEIviaEFiscaliza(app, credentials, operation, context)
+            app.progressDialog.Visible = 'visible';
+            communicationStatus = false;
+
+            try
+                if ~isempty(credentials)
+                    app.eFiscalizaObj = ws.eFiscaliza(credentials.login, credentials.password);
+                end
+
+                % Parâmetros configurados no módulo auxiliar:
+                env   = strsplit(app.projectData.modules.(context).ui.system);
+                if numel(env) < 2; env = 'PD';
+                else;              env = env{2};
+                end
+                unit  = app.projectData.modules.(context).ui.unit;
+                issue = struct('type', 'ATIVIDADE DE INSPEÇÃO', 'id', app.projectData.modules.(context).ui.issue);                
+
+                switch operation
+                    case 'uploadDocument'
+                        fileName = getGeneratedDocumentFileName(app.projectData, '.html', context);
+                        docSpec  = app.General.eFiscaliza;
+                        docSpec.originId = docSpec.internal.originId;
+                        docSpec.typeId   = docSpec.internal.typeId;
+
+                        msg = run(app.eFiscalizaObj, env, operation, issue, unit, docSpec, fileName);
+        
+                    otherwise
+                        error('Unexpected call')
+                end
+                
+                if ~contains(msg, 'Documento cadastrado no SEI', 'IgnoreCase', true)
+                    error(msg)
+                end
+
+                modalWindowIcon     = 'success';
+                modalWindowMessage  = msg;
+                communicationStatus = true;
+
+            catch ME
+                app.eFiscalizaObj   = [];
+                
+                modalWindowIcon     = 'error';
+                modalWindowMessage  = ME.message;
+            end
+
+            appUtil.modalWindow(app.UIFigure, modalWindowIcon, modalWindowMessage);
+            app.progressDialog.Visible = 'hidden';
+        end
+
+        %------------------------------------------------------------------------%
+        function report_sendFilesToSharepoint(app, context)
+            % Evita subir por engano, quando no ambiente de desenvolvimento,
+            % de arquivos na pasta "POST".
+            try
+                if ~isdeployed()
+                    error('ForceDebugMode')
+                end
+                sharepointFolder = app.General.fileFolder.DataHub_POST;
+            catch
+                sharepointFolder = app.General.fileFolder.userPath;
+            end
+
+            sharepointFileList = getGeneratedDocumentFileName(app.projectData, 'rawFiles', context);
+            if strcmp(context, 'MonitoringPlan')
+                sharepointFileList = [sharepointFileList, {getGeneratedDocumentFileName(app.projectData, '.xlsx', context)}];
+            end
+            
+            for ii = 1:numel(sharepointFileList)
+                tempFilename = sharepointFileList{ii};
+
+                try
+                    if isfile(tempFilename)
+                        % copyfile(tempFilename, sharepointFolder, 'f');
+                        % 
+                        % if ~endsWith(tempFilename, '.xlsx')
+                        %     [~, basename]  = fileparts(tempFilename);
+                        %     jsonFilename   = [basename '.json'];
+                        %     [~, fileIndex] = ismember(tempFilename, {app.measData.Filename});
+                        % 
+                        %     if fileIndex
+                        %         fileWriter.RawFileMetaData(fullfile(sharepointFolder, jsonFilename), app.measData(fileIndex));
+                        %     end
+                        % end
+                    end
+                catch ME
+                    appUtil.modalWindow(app.UIFigure, 'error', getReport(ME))
+                end
+            end
+        end
+
         %-----------------------------------------------------------------%
         function reportGeneratorCall(app, context, indexes)
             app.progressDialog.Visible = 'visible';
@@ -762,6 +888,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             catch ME
                 appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));
             end
+
+            updateToolbar(app)
     
             app.progressDialog.Visible = 'hidden';
         end
@@ -908,38 +1036,18 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             indexes = file_findSelectedNodeData(app);
             
             if isempty(indexes)
-                app.file_Metadata.Text         = '';
-                app.file_Metadata.UserData     = [];
-                
-                app.tool_ReadFiles.Enable      = 0;
-                app.tool_MergeFiles.Enable     = 0;
-                app.tool_CheckRFB.Enable       = 0;
-                app.tool_GenerateReport.Enable = 0;
-
+                app.file_Metadata.Text     = '';
+                app.file_Metadata.UserData = [];
             else
                 if isequal(app.file_Metadata.UserData, indexes)
                     return
                 end
 
-                app.file_Metadata.Text         = util.HtmlTextGenerator.File(app.ecdObj(indexes));
-                app.file_Metadata.UserData     = indexes;
-
-                app.tool_ReadFiles.Enable      = 1;
-                app.tool_CheckRFB.Enable       = 1;
-                app.tool_GenerateReport.Enable = 1;
-
-                if isscalar(indexes)
-                    app.tool_MergeFiles.Enable = 0;
-                else
-                    app.tool_MergeFiles.Enable = 1;
-                end
+                app.file_Metadata.Text     = util.HtmlTextGenerator.File(app.ecdObj(indexes));
+                app.file_Metadata.UserData = indexes;
             end
 
-            if isempty(app.ecdObj)
-                app.menu_Button2.Enable = 0;
-            else
-                app.menu_Button2.Enable = 1;
-            end
+            updateToolbar(app)
             
         end
 
@@ -1159,6 +1267,46 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         end
 
+        % Image clicked function: tool_UploadFinalFile
+        function toolbar_UploadFinalFileImageClicked(app, event)
+            
+            % <VALIDAÇÕES>
+            context = 'File';
+            lastHTMLDocFullPath = getGeneratedDocumentFileName(app.projectData, '.html', context);
+
+            msg = '';
+            if isempty(lastHTMLDocFullPath)
+                msg = 'A versão definitiva do relatório ainda não foi gerada.';
+            elseif ~isfile(lastHTMLDocFullPath)
+                msg = sprintf('O arquivo "%s" não foi encontrado.', lastHTMLDocFullPath);
+            elseif ~isfolder(app.General.fileFolder.DataHub_POST)
+                msg = 'Pendente mapear pasta do Sharepoint';
+            elseif ~report_checkEFiscalizaIssueId(app, app.projectData.modules.(context).ui.issue)
+                msg = sprintf('O número da inspeção "%.0f" é inválido.', app.projectData.modules.(context).ui.issue);
+            elseif isempty(app.projectData.modules.(context).ui.system)
+                msg = 'Ambiente do eFiscaliza precisa ser selecionado.';
+            elseif isempty(app.projectData.modules.(context).ui.unit)
+                msg = 'Unidade geradora do documento precisa ser selecionada.';
+            end
+
+            if ~isempty(msg)
+                appUtil.modalWindow(app.UIFigure, 'warning', msg);
+                return
+            end
+            % </VALIDAÇÕES>
+
+            % <PROCESSO>
+            if isempty(app.eFiscalizaObj)
+                dialogBox    = struct('id', 'login',    'label', 'Usuário: ', 'type', 'text');
+                dialogBox(2) = struct('id', 'password', 'label', 'Senha: ',   'type', 'password');
+                sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'eFiscalizaSignInPage', 'Fields', dialogBox, 'Context', context))
+            else
+                report_uploadInfoController(app, [], 'uploadDocument', context)
+            end
+            % </PROCESSO>
+
+        end
+
         % Image clicked function: Image
         function toolbar_ShowLegendImageClicked(app, event)
             
@@ -1324,6 +1472,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create tool_UploadFinalFile
             app.tool_UploadFinalFile = uiimage(app.file_toolGrid);
+            app.tool_UploadFinalFile.ImageClickedFcn = createCallbackFcn(app, @toolbar_UploadFinalFileImageClicked, true);
             app.tool_UploadFinalFile.Enable = 'off';
             app.tool_UploadFinalFile.Tooltip = {'Upload relatório'};
             app.tool_UploadFinalFile.Layout.Row = 2;
