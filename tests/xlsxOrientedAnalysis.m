@@ -86,8 +86,8 @@ mergedTable_I250_I200
 % |I355|3.1.05.001.4852||383,11|C|
 
 mergedTable_I355_I350 = model.TableGenerator.tableTypes1And3(ecdObj, 3, {'I150', 'I155', 'I350', 'I355'});
-mergedTable_I355_I350.REG = strcat(refTable_I350_I355.REG, '-', ecdObj.Table.('xI355').REG);
-mergedTable_I355_I350 = [refTable_I350_I355, removevars(ecdObj.Table.('xI355'), 'REG')];
+mergedTable_I355_I350.REG = strcat(mergedTable_I355_I350.REG, '-', ecdObj.Table.('xI355').REG);
+mergedTable_I355_I350 = [mergedTable_I355_I350, removevars(ecdObj.Table.('xI355'), 'REG')];
 
 mergedTable_I355_I350.("VL_CTA_COM_SINAL") = mergedTable_I355_I350.("VL_CTA");
 negativeValueIndexes = find(strcmp(mergedTable_I355_I350.("IND_DC"), 'D'));
@@ -136,23 +136,16 @@ Table_J005_J150      = model.TableGenerator.parseSplitLineOthers(ecdObj, {'J150'
 tableBalancete       = model.TableGenerator.Balancete(ecdObj, tableDinamica, Table_I050_I051_I052, Table_J005_J150)
 
 %% Exporta saída para Excel
+outFile = [tempname, '.xlsx'];
 
-% outFile = fullfile(MFilePath, 'output', sprintf('ECD_%s.xlsx', datestr(now, 'yyyy.mm.dd_THH.MM.SS')));
-% 
-% writematrix(Table0, outFile, "Sheet", "DadosBrutos");
-% writetable(Table1,  outFile, "Sheet", "0000",                 "WriteMode", "append")
-% writetable(Table2,  outFile, "Sheet", "I030(Termo_Abert_Lv)", "WriteMode", "append")
-% writetable(Table3,  outFile, "Sheet", "I050(Plano Ctas)",     "WriteMode", "append")
-% writetable(Table4,  outFile, "Sheet", "C050",                 "WriteMode", "append")
-% writetable(Table5,  outFile, "Sheet", "I150_I155_I350_I355",  "WriteMode", "append")
-% writetable(Table6,  outFile, "Sheet", "J100(BP)",             "WriteMode", "append")
-% writetable(Table7,  outFile, "Sheet", "J150(DRE)",            "WriteMode", "append")
-% writetable(Table8,  outFile, "Sheet", "J930(Signatários)",    "WriteMode", "append")
-% writetable(Table9,  outFile, "Sheet", "I200",                 "WriteMode", "append")
-% writetable(Table10, outFile, "Sheet", "I300",                 "WriteMode", "append")
-% writetable(Table11, outFile, "Sheet", "I050_051_052",         "WriteMode", "append")
-% writetable(Table12, outFile, "Sheet", "C050_051_052",         "WriteMode", "append")
-% writetable(Table13, outFile, "Sheet", "I200_I250",            "WriteMode", "append")
-% writetable(Table14, outFile, "Sheet", "J005_J100",            "WriteMode", "append")
-% writetable(Table15, outFile, "Sheet", "TabDinam(I150)",       "WriteMode", "append")
-% writetable(Table16, outFile, "Sheet", "TabBalancete",         "WriteMode", "append")
+writematrix(ecdObj.Content,                           outFile, "Sheet", "DadosBrutos");
+writetable(ecdObj.Table.x_C050_C051_C052_RowOriented, outFile, "Sheet", "C050-C051-C052", "WriteMode", "append")
+writetable(ecdObj.Table.x_I050_I051_I052_RowOriented, outFile, "Sheet", "I050-I051-I052", "WriteMode", "append")
+writetable(mergedTable_I250_I200,                     outFile, "Sheet", "I250_I200",      "WriteMode", "append")
+writetable(mergedTable_I355_I350,                     outFile, "Sheet", "I355-I350",      "WriteMode", "append")
+writetable(mergedTable_J150_J005,                     outFile, "Sheet", "J150-J005",      "WriteMode", "append")
+writetable(refTable_I150_I155,                        outFile, "Sheet", "I150-I155",      "WriteMode", "append")
+writetable(tableDinamica,                             outFile, "Sheet", "TabelaDinamica", "WriteMode", "append")
+writetable(tableBalancete,                            outFile, "Sheet", "Balancete",      "WriteMode", "append")
+
+winopen(outFile)
