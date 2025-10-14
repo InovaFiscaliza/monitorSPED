@@ -76,7 +76,7 @@ classdef (Abstract) Table
                         zz = sprintf('.%d', jj);
                     end
 
-                    id = generateTextId(ecdObj(ii), 'scalar-period-oriented', jj);
+                    id = util.HtmlTextGenerator.generateTextId(ecdObj(ii), 'scalar-period-oriented', jj);
 
                     validationMessage = ecdObj(ii).Sources(end).validationMessage;
                     if all(cellfun(@(x) isfield(validationMessage, x), {'xmlns', 'versao', 'nire', 'hashEsc'}))

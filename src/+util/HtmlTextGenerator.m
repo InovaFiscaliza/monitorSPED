@@ -59,6 +59,87 @@ classdef (Abstract) HtmlTextGenerator
         %-----------------------------------------------------------------%
         % WINMONITORSPED: FILE
         %-----------------------------------------------------------------%
+        function textId = generateTextId(ecdObj, elementType, varargin)
+            arguments
+                ecdObj
+                elementType char {mustBeMember(elementType, {'company-oriented', 'period-oriented', 'scalar-period-oriented'})}
+            end
+
+            arguments (Repeating)
+                varargin
+            end
+
+            checkIfScalar(ecdObj)
+
+            switch elementType
+                case 'company-oriented'
+                    nireInfo = '';
+                    if ~isempty(ecdObj.CompanyInfo.NIRE)
+                        nireInfo = sprintf('%s - ', ecdObj.CompanyInfo.NIRE);
+                    end
+                    textId = sprintf('%s - %s%s', ecdObj.CompanyId, nireInfo, ecdObj.CompanyName);
+
+                case 'period-oriented'
+                    preffixFlag = varargin{1};
+                    preffixText = '';
+                    if preffixFlag
+                        preffixText = sprintf('%s     ', strjoin(string(ecdObj.Period), ' a '));
+                    end
+
+                    [receitaFederalStatus, receitaFederalSourceFileStatus] = checkIfValidStatus(ecdObj);
+                    if receitaFederalStatus
+                        receitaFederalStatusIcon = '🟢'; % '&#x1F7E2;'
+                    else
+                        if all(receitaFederalSourceFileStatus < 0)
+                            receitaFederalStatusIcon = '🔴'; % '&#x1F534;'
+                        else
+                            receitaFederalStatusIcon = '⚪';
+                        end
+                    end
+
+                    periodStatusIcon = '';
+                    if ~checkIfValidPeriod(ecdObj)
+                        periodStatusIcon = '⌛';
+                    end
+
+                    mergeStatusIcon = '';
+                    if ecdObj.PeriodMerged
+                        mergeStatusIcon = '➕';
+                    end
+
+                    textId = sprintf('%s%s%s%s', preffixText, receitaFederalStatusIcon, periodStatusIcon, mergeStatusIcon);
+
+                case 'scalar-period-oriented'
+                    sourceIndex = varargin{1};
+
+                    if ecdObj.Sources(sourceIndex).validationStatus > 0
+                        receitaFederalStatusIcon = '🟢'; % '&#x1F7E2;'
+                    else
+                        if ecdObj.Sources(sourceIndex).validationStatus < 0
+                            receitaFederalStatusIcon = '🔴'; % '&#x1F534;'
+                        else
+                            receitaFederalStatusIcon = '⚪';
+                        end
+                    end
+
+                    [beginPeriod, endPeriod] = bounds(ecdObj.Sources(sourceIndex).period);
+                    monthsCovered = month(beginPeriod):month(endPeriod);
+
+                    periodStatusIcon = '';
+                    if ~isequal(monthsCovered, 1:12)
+                        periodStatusIcon = '⌛';
+                    end
+
+                    mergeStatusIcon = '';
+                    if ecdObj.PeriodMerged
+                        mergeStatusIcon = '➕';
+                    end
+
+                    textId = sprintf('%s%s%s', receitaFederalStatusIcon, periodStatusIcon, mergeStatusIcon);
+            end
+        end
+        
+        %-----------------------------------------------------------------%
         function htmlContent = File(ecdObj)
             if isscalar(ecdObj)
                 ufMappingDict = class.Constants.ufMapping();

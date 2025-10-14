@@ -706,13 +706,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     end
                 end
 
-                textCompanyNode = generateTextId(app.ecdObj(idIndexes(1)), 'company-oriented');
+                textCompanyNode = util.HtmlTextGenerator.generateTextId(app.ecdObj(idIndexes(1)), 'company-oriented');
                 treeCompanyNode = uitreenode(parentNode, ...
                     'Text', textCompanyNode, ...
                     'NodeData', idIndexes, 'ContextMenu', app.file_ContextMenu_Tree);
     
                 for idx = idIndexes
-                    textPeriodNode = generateTextId(app.ecdObj(idx), 'period-oriented', true);
+                    textPeriodNode = util.HtmlTextGenerator.generateTextId(app.ecdObj(idx), 'period-oriented', true);
                     treePeriodNode = uitreenode(treeCompanyNode, ...
                         'Text', textPeriodNode, ...
                         'NodeData', idx, 'ContextMenu', app.file_ContextMenu_Tree);
@@ -739,7 +739,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             nonEmptyECDObject               = ~isempty(app.ecdObj);
             nonEmptySelection               = ~isempty(indexes);
-            nonScalarSelection              = isscalar(indexes);
+            nonScalarSelection              = ~isscalar(indexes);
             reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(context).generatedFiles.lastHTMLDocFullPath);
 
             app.menu_Button2.Enable         = nonEmptyECDObject;
