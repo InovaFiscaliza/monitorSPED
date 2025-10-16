@@ -116,36 +116,26 @@ refTable_I150_I155.("VL_SLD_FIN_COM_SINAL")(negativeValueIndexes) = -refTable_I1
 refTable_I150_I155.("VL_RESULTADO_COM_SINAL") = refTable_I150_I155.("VL_CRED") - refTable_I150_I155.("VL_DEB");
 refTable_I150_I155
 
-%% Aba #7: TABELA DINÂMICA I155 + I355 🛑⚠️❗
+%% Abas #7 e #8: TABELA DINÂMICA I155 + I355 E BALANCETE 🛑⚠️❗
  
 % * Sumariza resultados da planilha I155 por conta na HOR e mês na VERT.
 % * O somatório do resultado de todas as contas por mês deve ser igual a zero.
 % * COD_CTA | JAN | FEV | ... | DEZ | TOTAL
 
 Table_I150_I155_I350_I355 = model.TableGenerator.parseSplitLine(ecdObj)
-Table_I200_I250 = model.TableGenerator.parseSplitLineOthers(ecdObj, {'I250' 'I200'})
-tableDinamica = model.TableGenerator.tableDinamica_I150_I155_I350_I355(ecdObj, Table_I150_I155_I350_I355, Table_I200_I250)
-
-%% Aba #7: BALANCETE 🛑⚠️❗
- 
-% * Adiciona à TABELA DINÂMICA as colunas COD_NAT, CTA_AGRUP, CLASS_DRE, NIVEL, 
-% DESC_CONTA
-
-Table_I050_I051_I052 = model.TableGenerator.parseSplitLineOthers(ecdObj, {'I050' 'I051' 'I052'})
-Table_J005_J150      = model.TableGenerator.parseSplitLineOthers(ecdObj, {'J150' 'J005'})
-tableBalancete       = model.TableGenerator.Balancete(ecdObj, tableDinamica, Table_I050_I051_I052, Table_J005_J150)
+accountMonthlySummary     = model.TableGenerator.SummaryByAccount(ecdObj, Table_I150_I155_I350_I355, mergedTable_I250_I200)
+analyticalMonthlySummary  = model.TableGenerator.SummaryByAnalyticalAccount(ecdObj, accountMonthlySummary, '04')
 
 %% Exporta saída para Excel
 outFile = [tempname, '.xlsx'];
 
-writematrix(ecdObj.Content,                           outFile, "Sheet", "DadosBrutos");
-writetable(ecdObj.Table.x_C050_C051_C052_RowOriented, outFile, "Sheet", "C050-C051-C052", "WriteMode", "append")
-writetable(ecdObj.Table.x_I050_I051_I052_RowOriented, outFile, "Sheet", "I050-I051-I052", "WriteMode", "append")
-writetable(mergedTable_I250_I200,                     outFile, "Sheet", "I250_I200",      "WriteMode", "append")
-writetable(mergedTable_I355_I350,                     outFile, "Sheet", "I355-I350",      "WriteMode", "append")
-writetable(mergedTable_J150_J005,                     outFile, "Sheet", "J150-J005",      "WriteMode", "append")
-writetable(refTable_I150_I155,                        outFile, "Sheet", "I150-I155",      "WriteMode", "append")
-writetable(tableDinamica,                             outFile, "Sheet", "TabelaDinamica", "WriteMode", "append")
-writetable(tableBalancete,                            outFile, "Sheet", "Balancete",      "WriteMode", "append")
+writetable(ecdObj.Table.x_C050_C051_C052_RowOriented, outFile, "Sheet", "C050-C051-C052")
+writetable(ecdObj.Table.x_I050_I051_I052_RowOriented, outFile, "Sheet", "I050-I051-I052",                "WriteMode", "append")
+writetable(mergedTable_I250_I200,                     outFile, "Sheet", "I250_I200",                     "WriteMode", "append")
+writetable(mergedTable_I355_I350,                     outFile, "Sheet", "I355-I350",                     "WriteMode", "append")
+writetable(mergedTable_J150_J005,                     outFile, "Sheet", "J150-J005",                     "WriteMode", "append")
+writetable(refTable_I150_I155,                        outFile, "Sheet", "I150-I155",                     "WriteMode", "append")
+writetable(accountMonthlySummary,                     outFile, "Sheet", "Balancete",                     "WriteMode", "append")
+writetable(analyticalMonthlySummary,                  outFile, "Sheet", "Balancete - ContasDeResultado", "WriteMode", "append")
 
 winopen(outFile)

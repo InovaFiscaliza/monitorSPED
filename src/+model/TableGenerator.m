@@ -48,7 +48,7 @@ classdef (Abstract) TableGenerator
                     tableI150_I155_I350_I355Null = [refTable_I150_I155, tableI350_I355Null];
         
                     % Concatenar as tabelas T_I150_I155 e T_I350_I355
-                    datas_I350 = ecdObj.Table.xI350.DT_RES;
+                    datas_I350 = ecdObj.Table.xI350.("DT_RES");
         
                     lineIni = 1;
                     for kk = 1:numel(datas_I350)
@@ -116,6 +116,10 @@ classdef (Abstract) TableGenerator
             if ~isempty(outTable)
                 I133Result = sum(outTable.Mov_I155);
                 I355Result = sum(outTable.Mov_I155_I355);
+
+                if ~iscellstr(outTable.("COD_CTA"))
+                    outTable.("COD_CTA") = cellstr(outTable.("COD_CTA"));
+                end
             end
         end
         
@@ -154,9 +158,7 @@ classdef (Abstract) TableGenerator
             tableI150_I155_CTA = tableI150_I155_CTA(:, varNames);
         end
 
-        %-----------------------------------------------------------------%
-        % <CódigoEscritoPorLeandro>
-        %-----------------------------------------------------------------%
+        %--------------------------------------------------------------%
         function tableOutIdtypes = tableTypes1And3(obj, idtype, tabletype)
 
                 % Filtras as linhas com as informações do primeiro e do segundo tabletype
@@ -412,151 +414,114 @@ classdef (Abstract) TableGenerator
         end
 
         %-----------------------------------------------------------------%
-        function tableDinamica = tableDinamica_I150_I155_I350_I355(obj, Table_I150_I155_I350_I355, Table_I200_I250)
+        function accountMonthlySummary = SummaryByAccount(ecdObj, Table_I150_I155_I350_I355, Table_I200_I250)
             arguments
-                obj
+                ecdObj
                 Table_I150_I155_I350_I355;
                 Table_I200_I250;
             end
 
-            checkIfScalar(obj)
+            checkIfScalar(ecdObj)
 
-            Cod_CTA_I155_Din = unique(Table_I150_I155_I350_I355.COD_CTA, 'stable');
-            tableDinamica    = table('Size', [height(Cod_CTA_I155_Din), 14], ...
-                                     'VariableTypes', {'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'}, ...
-                                     'VariableNames',  {'COD_CTA'	'MES01',	'MES02',	'MES03',	'MES04',	'MES05',	'MES06',	'MES07',	'MES08',	'MES09',	'MES10',	'MES11',	'MES12',	'MesTotal_Geral'});
+            accountUniqueIdList   = unique(Table_I150_I155_I350_I355.("COD_CTA"), 'stable');
+            accountMonthlySummary = table('Size',          [numel(accountUniqueIdList), 14],                                                                                                           ...
+                                          'VariableTypes', {'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'}, ...
+                                          'VariableNames', {'COD_CTA', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'});
+
+            % ToDo: Entender exatamente o que está sendo feito aqui...
+            % quando não existe o registro "I200", o que significa?!
 
             if ~isempty(Table_I200_I250)
-                Table_I200_I250_IND_LCTO_N = Table_I200_I250(Table_I200_I250.IND_LCTO == "N",:);
-                idx_IND_DC_D = find(Table_I200_I250_IND_LCTO_N.IND_DC == "D");
-                Table_I200_I250_IND_LCTO_N.VL_DC(idx_IND_DC_D) = -abs(Table_I200_I250_IND_LCTO_N.VL_DC(idx_IND_DC_D));
+                xI200_I250_IND_LCTO_N = Table_I200_I250(strcmp(Table_I200_I250.("IND_LCTO"),  'N'), :);
+                xI200_I250_IND_LCTO_N.("VL_DC_COM_SINAL") = xI200_I250_IND_LCTO_N.("VL_DC");
+                negativeValueIndexes = find(strcmp(xI200_I250_IND_LCTO_N.("IND_DC"), 'D'));
+                xI200_I250_IND_LCTO_N.("VL_DC_COM_SINAL")(negativeValueIndexes) = -xI200_I250_IND_LCTO_N.("VL_DC_COM_SINAL")(negativeValueIndexes);
+
+                dateReferenceColumn  = 'DT_LCTO';
+                valueReferenceColumn = 'VL_DC_COM_SINAL';
+
             else
-                Table_I200_I250_IND_LCTO_N = Table_I150_I155_I350_I355;
+                xI200_I250_IND_LCTO_N = Table_I150_I155_I350_I355;
+
+                dateReferenceColumn  = 'DT_INI';
+                valueReferenceColumn = 'VL_CRED';
             end            
           
-            for ii = 1: 1:height(Cod_CTA_I155_Din)
-                index_COD_CTA_Din = strcmp(Table_I200_I250_IND_LCTO_N.COD_CTA, Cod_CTA_I155_Din{ii});
-                Table_I200_I250_COD_CTA_Din = Table_I200_I250_IND_LCTO_N(index_COD_CTA_Din, :);
-                kk = 1;
-                Val_Mes = zeros(1, 12);
-
-                try
-                    months_Table_I200_I250 = unique(month(Table_I200_I250_COD_CTA_Din.DT_LCTO));
-                catch
-                    months_Table_I200_I250 = unique(month(Table_I200_I250_COD_CTA_Din.DT_INI));
+            for ii = 1: 1:numel(accountUniqueIdList)
+                accountId      = accountUniqueIdList{ii};
+                accountIndexes = strcmp(xI200_I250_IND_LCTO_N.("COD_CTA"), accountId);
+                accountTable   = xI200_I250_IND_LCTO_N(accountIndexes, :);
+                
+                accountValuesByMonth = zeros(1, 12);
+                for jj = 1:12
+                    monthIndexes = month(accountTable.(dateReferenceColumn)) == jj;
+                    accountValuesByMonth(jj) = sum(accountTable.(valueReferenceColumn)(monthIndexes));
                 end
-                    
 
-                    if ~isempty(months_Table_I200_I250)
-                        for jj = 1:numel(months_Table_I200_I250)
-                            try
-                                Value_Month = Table_I200_I250_COD_CTA_Din(month(Table_I200_I250_COD_CTA_Din.DT_LCTO) == months_Table_I200_I250(jj),:);
-                                Val_Mes(months_Table_I200_I250(jj)) = sum(Value_Month.VL_DC);
-                            catch
-                                Value_Month = Table_I200_I250_COD_CTA_Din(month(Table_I200_I250_COD_CTA_Din.DT_INI) == months_Table_I200_I250(jj),:);
-                                Val_Mes(months_Table_I200_I250(jj)) = sum(Value_Month.VL_CRED);
-                            end
-                            
+                accountMonthlySummary(ii, :) = [{accountId}, num2cell([accountValuesByMonth, sum(accountValuesByMonth)])];
+            end
 
-                            Valor_Total_Mes = sum(Val_Mes);
+            % Valida-se se o valor total de transações entre as contas por 
+            % mês é igual a zero.
+            floatDiffTolerance = 1e-5;
+            if any(cellfun(@(x) sum(accountMonthlySummary.(x)) > floatDiffTolerance, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}))
+                error('Ao menos um dos meses apresentou um balanço diferente de zero')
+            end
+
+            % Cria-se a descrição de todo o encadeamento das suas contas 
+            % superiores, caso existentes.
+            for kk = 1:height(accountMonthlySummary)
+                    dotPositions = strfind(accountMonthlySummary.("COD_CTA"){kk}, '.');
+                    description  = {};
+
+                    for dotPosition = dotPositions
+                        codeId    = accountMonthlySummary.("COD_CTA"){kk}(1:dotPosition-1);
+                        codeIndex = find(strcmp(ecdObj.Table.xI050.("COD_CTA"), codeId), 1);
+                        
+                        if ~isempty(codeIndex)
+                            description{end+1} = ecdObj.Table.xI050.("CTA"){codeIndex};
                         end
-                    else
-                        Valor_Total_Mes = sum(Val_Mes);
                     end
 
-                if iscell(Cod_CTA_I155_Din)
-                    tableDinamica(ii,:) = [ { Cod_CTA_I155_Din(ii) }, num2cell([Val_Mes, Valor_Total_Mes]) ];
-                else
-                    tableDinamica(ii,:) = [ cellstr(Cod_CTA_I155_Din(ii)), num2cell([Val_Mes, Valor_Total_Mes]) ];
-                end
+                    accountMonthlySummary.("CTA_SUP"){kk} = strjoin(description, '\n');
             end
+
+            % Complementa com informações do registro "I050", inserindo as
+            % colunas na mesma ordem que aparecem em "I050".
+            accountMonthlySummary = innerjoin( ...
+                accountMonthlySummary, ...
+                ecdObj.Table.xI050, ...
+                'Keys', 'COD_CTA', ...
+                'RightVariables', {'COD_NAT', 'IND_CTA', 'NIVEL', 'CTA'} ...
+            );
+
+            accountMonthlySummary = movevars(accountMonthlySummary, {'COD_NAT', 'IND_CTA', 'NIVEL'}, 'Before', 'COD_CTA');
+            accountMonthlySummary = movevars(accountMonthlySummary, {'CTA_SUP', 'CTA'},              'After',  'COD_CTA');
         end
 
         %-----------------------------------------------------------------%
-        function tableBalancete = Balancete(obj, tableDinamica, Table_I050_I051_I052, Table_J005_J150)
+        function analyticalMonthlySummary = SummaryByAnalyticalAccount(ecdObj, accountMonthlySummary, analyticalCode)
             arguments
-                obj
-                tableDinamica;
-                Table_I050_I051_I052;
-                Table_J005_J150;
+                ecdObj
+                accountMonthlySummary
+                analyticalCode = '04'
             end
 
-            checkIfScalar(obj)
+            % Código da Natureza das Contas/Grupos de Contas
+            % '01': Contas de Ativo
+            % '02': Contas de Passivo
+            % '03': Patrimônio Líquido
+            % '04': Contas de Resultado
+            % '05': Contas de Compensação
+            % '09': Outras
 
-            tableDinamica.COD_CTA = string(tableDinamica.COD_CTA);
+            checkIfScalar(ecdObj)
 
-            if ~isempty(Table_J005_J150)
-                Table_J150_parcial = Table_J005_J150(:, {'COD_AGL', 'DESCR_COD_AGL'});
-                Table_J150_parcial.Properties.VariableNames{'DESCR_COD_AGL'} = 'CLASS_DRE';
-                Table_J150_parcial.COD_AGL = string(Table_J150_parcial.COD_AGL);
-                Table_J150_parcial.CLASS_DRE = string(Table_J150_parcial.CLASS_DRE);
-            end
-
-            Table_I050_I051_I052_parcial = Table_I050_I051_I052(:, {'COD_CTA', 'COD_NAT', 'COD_CTA_SUP', 'CTA', 'NIVEL', 'COD_AGL'});
-            Table_I050_I051_I052_parcial.COD_CTA = string(Table_I050_I051_I052_parcial.COD_CTA);
-
-            tableDinamicaParcial = outerjoin(tableDinamica, Table_I050_I051_I052_parcial, ...
-                'Keys', 'COD_CTA', ...
-                'MergeKeys', true, ...
-                'Type', 'inner');
-
-            tableDinamicaUnica = unique(tableDinamicaParcial, 'rows');
-
-            if ~isempty(Table_J005_J150) && isempty(tableDinamicaUnica.COD_AGL)
-                tableDinamicaUnica.COD_AGL = string(tableDinamicaUnica.COD_AGL);
-                tableDinamicaTotal = outerjoin(tableDinamicaUnica, Table_J150_parcial, ...
-                    'Keys', 'COD_AGL', ...
-                    'MergeKeys', true, ...
-                    'Type', 'inner');
-                % Remove linhas duplicadas (todas as colunas iguais)
-                tableDinamicaTotal = unique(tableDinamicaTotal);
-
-                tableDinamicaTotal = rmmissing(tableDinamicaTotal, 'DataVariables', {'COD_CTA'});
-
-                tableDinamicaTotal.Properties.VariableNames{'COD_AGL'} = 'CTA_AGRUP';
-
-                tableDinamicaTotal.Properties.VariableNames{'CTA'} = 'DESC_CONTA';
-
-                tableBalancete = tableDinamicaTotal(:, {'COD_NAT', 'CTA_AGRUP',  'CLASS_DRE', 'NIVEL', 'COD_CTA', 'DESC_CONTA', 'MES01', ...
-                    'MES02', 'MES03', 'MES04', 'MES05', 'MES06', 'MES07', 'MES08', 'MES09', 'MES10', 'MES11', 'MES12', 'MesTotal_Geral'});
-
-                tableBalancete.COD_NAT = string(tableBalancete.COD_NAT);
-                tableBalancete = tableBalancete(tableBalancete.COD_NAT == "04", :);
-            else
-                % Remove linhas duplicadas (todas as colunas iguais)
-                tableDinamicaTotal = tableDinamicaUnica;
-
-                tableDinamicaTotal = rmmissing(tableDinamicaTotal, 'DataVariables', {'COD_CTA'});
-
-                tableDinamicaTotal.Properties.VariableNames{'COD_AGL'} = 'CTA_AGRUP';
-
-                tableDinamicaTotal.Properties.VariableNames{'CTA'} = 'DESC_CONTA';
-
-                tableBalancete = tableDinamicaTotal(:, {'COD_NAT', 'CTA_AGRUP',  'NIVEL', 'COD_CTA', 'DESC_CONTA', 'MES01', ...
-                    'MES02', 'MES03', 'MES04', 'MES05', 'MES06', 'MES07', 'MES08', 'MES09', 'MES10', 'MES11', 'MES12', 'MesTotal_Geral'});
-
-                tableBalancete.COD_NAT = string(tableBalancete.COD_NAT);
-                tableBalancete = tableBalancete(tableBalancete.COD_NAT == "04", :);
-            end
-
-            % Colunas para agrupar (sem CTA_AGRUP)
-            colsAgrupar = {'COD_NAT', 'NIVEL', 'COD_CTA', 'DESC_CONTA', ...
-                'MES01','MES02','MES03','MES04','MES05','MES06', ...
-                'MES07','MES08','MES09','MES10','MES11','MES12', ...
-                'MesTotal_Geral'};
-
-            % Criar grupos a partir da tabela original
-            [G, keysTable] = findgroups(tableBalancete(:, colsAgrupar));
-
-            % Pegar a primeira CTA_AGRUP de cada grupo
-            CTA_AGRUP_first = splitapply(@(x) x(1), tableBalancete.CTA_AGRUP, G);
-
-            % Montar tabela final
-            tableBalancete = [keysTable, table(CTA_AGRUP_first)];
+            indexes = strcmp(accountMonthlySummary.("COD_NAT"), analyticalCode);
+            analyticalMonthlySummary = accountMonthlySummary(indexes, :);
         end
         %-----------------------------------------------------------------%
         % </CódigoEscritoPorLeandroEmRevisão>
         %-----------------------------------------------------------------%
     end
-
 end
