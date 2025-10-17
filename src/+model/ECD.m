@@ -212,12 +212,16 @@ classdef ECD < model.ECDBase
             for ii = 1:numel(obj)
                 for jj = 1:numel(tableIdList)
                     tableId = tableIdList{jj};
+                    tableIdPreffix = 'x';
+                    if contains(tableId, '_')
+                        tableIdPreffix = 'm';
+                    end
 
-                    if isfield(obj(ii).Table, ['x' tableId])
+                    if isfield(obj(ii).Table, [tableIdPreffix, tableId])
                         continue
                     end
 
-                    obj(ii).Table.(['x' tableId]) = parseTable(obj(ii), tableId);
+                    obj(ii).Table.([tableIdPreffix, tableId]) = parseTable(obj(ii), tableId);
 
                     % Valida se foi lido o número de linhas esperado...
                     if isfield(obj(ii).Table, 'x9900')
@@ -295,7 +299,7 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function customMergedTablesRowOriented(obj, mainId, secundaryIds, secundaryIdsKey)
+        function mergedTable = customMergedTablesRowOriented(obj, mainId, secundaryIds, secundaryIdsKey)
             arguments
                 obj
                 mainId          (1,:) char              = 'I050'            % 'C050'
@@ -303,59 +307,64 @@ classdef ECD < model.ECDBase
                 secundaryIdsKey (1,:) char              = 'COD_CCUS'
             end
 
+            checkIfScalar(obj)
+
             tableIdList     = [mainId, secundaryIds];
             tableIdFileList = strcat('|', tableIdList, '|');
 
-            mergedTableId   = ['x_' strjoin(tableIdList, '_') '_RowOriented'];
+            mergedTableId   = ['m' strjoin(tableIdList, '_')];
+            if isfield(obj.Table, mergedTableId)
+                mergedTable = obj.Table.(mergedTableId);
+                return
+            end
 
-            for ii = 1:numel(obj)
-                if isfield(obj(ii).Table, mergedTableId)
+            isTableRead(obj, {mainId})
+
+            splitContent = splitlines(obj.Content);
+            fileIndexes  = cellfun(@(x) find(startsWith(splitContent, x)), tableIdFileList, 'UniformOutput', false);
+            mainFileIdx  = fileIndexes{1};
+
+            mainIdTable  = ['x', mainId];                
+            mainTable    = obj.Table.(mainIdTable);
+            if isempty(mainTable)
+                return
+            end
+
+            mainTableHeight = height(mainTable);
+            mainTable.("_TEMP_KEY") = (1:mainTableHeight)';
+            
+            % Em relação às tabelas auxiliares:
+            secundaryTable = [];
+            secundarySpec  = getColumnSpecifications(obj, secundaryIds, 'index');
+
+            for jj = 1:mainTableHeight
+                currentIdx  = mainFileIdx(jj);
+                if jj < mainTableHeight
+                    nextIdx = mainFileIdx(jj+1);
+                else
+                    nextIdx = currentIdx+1;
+                    while true
+                        if nextIdx < numel(splitContent) && any(cellfun(@(x) startsWith(splitContent{nextIdx}, x), strcat('|', {secundarySpec.id}, '|')))
+                            nextIdx = nextIdx+1;
+                        else
+                            break;
+                        end
+                    end
+                end
+
+                if nextIdx == currentIdx+1
                     continue
                 end
 
-                isTableRead(obj(ii), {mainId})
-
-                splitContent = splitlines(obj(ii).Content);
-
-                % Em relação à tabela principal:                
-                % mainIdFile   = ['|', mainId, '|'];
-                % mainFileIdx  = find(startsWith(splitContent, mainIdFile));
-
-                fileIndexes  = cellfun(@(x) find(startsWith(splitContent, x)), tableIdFileList, 'UniformOutput', false);
-                mainFileIdx  = fileIndexes{1};
-
-                mainIdTable  = ['x', mainId];                
-                mainTable    = obj(ii).Table.(mainIdTable);
-                if isempty(mainTable)
-                    return
-                end
-
-                mainTableHeight = height(mainTable);
-                mainTable.("_TEMP_KEY") = (1:mainTableHeight)';
-                
-                % Em relação às tabelas auxiliares:
-                secundaryTable = [];
-                secundarySpec  = getColumnSpecifications(obj(ii), secundaryIds, 'index');
-
-                for jj = 1:mainTableHeight
-                    currentIdx  = mainFileIdx(jj);
-                    if jj < mainTableHeight
-                        nextIdx = mainFileIdx(jj+1);
-                    else
-                        nextIdx = currentIdx+1;
-                        while true
-                            if nextIdx < numel(splitContent) && any(cellfun(@(x) startsWith(splitContent{nextIdx}, x), strcat('|', {secundarySpec.id}, '|')))
-                                nextIdx = nextIdx+1;
-                            else
-                                break;
-                            end
-                        end
+                if isscalar(secundarySpec)
+                    if isempty(secundaryTable)
+                        secundaryTable = obj.Table.(['x' secundaryIds{1}]);
                     end
-    
-                    if nextIdx == currentIdx+1
-                        continue
-                    end
-    
+
+                    secundaryTableIndexes = fileIndexes{2} > currentIdx & fileIndexes{2} < nextIdx;
+                    secundaryTable.("_TEMP_KEY")(secundaryTableIndexes) = jj;
+
+                else        
                     % Para cada bloco entre duas linhas |mainId|, parseiam-se
                     % as tabelas auxiliares, guardando-as em "tempTable".
                     % E, posteriormente, mesclam-se essas tabelas auxiliares,
@@ -364,13 +373,13 @@ classdef ECD < model.ECDBase
                     refTable = [];
 
                     for kk = 1:numel(secundarySpec)
-                        tempTable = parseFileBlock(obj(ii), blockLines, secundarySpec(kk), true);
+                        tempTable = parseFileBlock(obj, blockLines, secundarySpec(kk), true);
                         if isempty(tempTable)
                             continue
                         end
 
                         preffixCol = secundarySpec(kk).preffix;
-                        tempTable.Properties.VariableNames = replace(tempTable.Properties.VariableNames, strcat(preffixCol, secundaryIdsKey), secundaryIdsKey);
+                        tempTable  = renamevars(tempTable, strcat(preffixCol, secundaryIdsKey), secundaryIdsKey);
 
                         if isempty(refTable)
                             refTable = tempTable;
@@ -385,6 +394,8 @@ classdef ECD < model.ECDBase
                             else
                                 refTable = outerjoin(refTable, tempTable, 'Keys', secundaryIdsKey, 'MergeKeys', true, 'Type', 'full');
                             end
+
+                            refTable = renamevars(refTable, secundaryIdsKey, strcat('_', secundaryIdsKey));
                         end
                     end
 
@@ -392,7 +403,6 @@ classdef ECD < model.ECDBase
                         continue
                     end
 
-                    refTable.Properties.VariableNames = replace(refTable.Properties.VariableNames, secundaryIdsKey, strcat('_', secundaryIdsKey));
                     refTable.("_TEMP_KEY")(:) = jj;
 
                     if isempty(secundaryTable)
@@ -401,12 +411,17 @@ classdef ECD < model.ECDBase
                         secundaryTable = outerjoin(secundaryTable, refTable, 'MergeKeys', true, 'Type', 'full');
                     end
                 end
-
-                mergedTable = outerjoin(mainTable, secundaryTable, 'Keys', '_TEMP_KEY', 'MergeKeys', true, 'Type', 'left');
-                mergedTable = removevars(mergedTable, '_TEMP_KEY');
-
-                obj(ii).Table.(mergedTableId) = mergedTable;
             end
+
+            if isscalar(secundarySpec)
+                columnNameToRename = setdiff(secundaryTable.Properties.VariableNames(ismember(secundaryTable.Properties.VariableNames, mainTable.Properties.VariableNames)), {'_TEMP_KEY'});
+                if ~isempty(columnNameToRename)
+                    secundaryTable = renamevars(secundaryTable, columnNameToRename, strcat('_', columnNameToRename));
+                end
+            end
+
+            mergedTable = outerjoin(mainTable, secundaryTable, 'Keys', '_TEMP_KEY', 'MergeKeys', true, 'Type', 'left');
+            mergedTable = removevars(mergedTable, '_TEMP_KEY');
         end
 
         %-----------------------------------------------------------------%
@@ -574,12 +589,12 @@ classdef ECD < model.ECDBase
 
                 switch obj.(columnName).DataType
                     case 'double'
-                        if ~isa(tableOut.(columnName), 'double')
-                            tableOut.(columnName) = str2double(replace(tableOut.(columnName), ',', '.'));
+                        if ~isa(tableOut.([columnsSpec.preffix columnName]), 'double')
+                            tableOut.([columnsSpec.preffix columnName]) = str2double(replace(tableOut.([columnsSpec.preffix columnName]), ',', '.'));
                         end
                     case 'datetime'
-                        if ~isa(tableOut.(columnName), 'datetime')
-                            tableOut.(columnName) = datetime(tableOut.(columnName), 'InputFormat', 'ddMMyyyy');
+                        if ~isa(tableOut.([columnsSpec.preffix columnName]), 'datetime')
+                            tableOut.([columnsSpec.preffix columnName]) = datetime(tableOut.([columnsSpec.preffix columnName]), 'InputFormat', 'ddMMyyyy');
                         end
                 end
             end
@@ -623,14 +638,27 @@ classdef ECD < model.ECDBase
         function tableOut = parseTable(obj, tableId)
             arguments
                 obj
-                tableId (1,4) char
+                tableId (1,:) char
             end
 
             checkIfScalar(obj)
 
             switch tableId
+                case {'C050_C051_C052', 'I050_I051_I052', 'I200_I250'}
+                    switch tableId
+                        case 'C050_C051_C052'
+                            tableOut = customMergedTablesRowOriented(obj, 'C050', {'C051', 'C052'}, 'COD_CCUS');
+                        case 'I050_I051_I052'
+                            tableOut = customMergedTablesRowOriented(obj, 'I050', {'I051', 'I052'}, 'COD_CCUS');
+                        case 'I200_I250'
+                            tableOut = customMergedTablesRowOriented(obj, 'I200', {'I250'}, '');
+                    end
+
+                    return
+
                 case {'J800', 'J801'}
                     regexMatches = extractBetween(obj.Content, ['|' tableId '|'], ['|' tableId 'FIM|'], 'Boundaries', 'inclusive');
+
                 otherwise
                     regexPattern = ['^\|' tableId '\|[^\r\n]*'];
                     regexMatches = regexp(obj.Content, regexPattern, 'match', 'lineanchors')';

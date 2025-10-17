@@ -307,7 +307,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
                     % Nome empresa que aparecerá no dropdown (idêntico à
                     % forma da uitree, no winMonitorSPED.mlapp)
-                    idsNames{end+1} = generateTextId(app.ecdObj(idIndexes(1)), 'company-oriented');
+                    idsNames{end+1} = util.HtmlTextGenerator.generateTextId(app.ecdObj(idIndexes(1)), 'company-oriented');
                     mappingIds = mappingIds.insert(string(ids{ii}), {idIndexes(idSortedIndexes)});
                 end
 
@@ -405,7 +405,7 @@ classdef winECD_exported < matlab.apps.AppBase
             periodList = {};
             for ii = 1:numel(companyIndexes)
                 idx = companyIndexes(ii);
-                periodList{end+1} = generateTextId(app.ecdObj(idx), 'period-oriented', true);
+                periodList{end+1} = util.HtmlTextGenerator.generateTextId(app.ecdObj(idx), 'period-oriented', true);
             end
 
             set(app.TimePeriodList, 'Items', periodList, 'ItemsData', 1:numel(periodList))
