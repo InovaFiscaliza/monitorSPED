@@ -1,5 +1,5 @@
 {
-    "version": 0.37,
+    "version": 0.39,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -43,7 +43,13 @@
             "value": "CRLF"
         }
     },
-    "ECD": {},
+    "ECD": {
+        "assessmentOptions": [
+            "Sim",
+            "Sim - ICMS",
+            "Não"
+        ]
+    },
     "Report": {
         "system": "eFiscaliza",
         "unit": "",

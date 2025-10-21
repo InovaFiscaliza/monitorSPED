@@ -41,6 +41,10 @@ classdef ECD < model.ECDBase
         FileName
         FileFullName
 
+        Hash        
+        Encoding
+        EncodingInfo
+
         Content
         Layout
         Table
@@ -97,7 +101,6 @@ classdef ECD < model.ECDBase
 
     properties (Constant)
         %-----------------------------------------------------------------%
-        ENCODING   (1,:) char  = 'ISO-8859-1'
         TERMINATOR (1,2) uint8 = [13, 10]
     end
 
@@ -135,7 +138,11 @@ classdef ECD < model.ECDBase
                 try
                     obj(idx).FileName = fileName;
                     obj(idx).FileFullName = fileFullName;
-                    obj(idx).Content = fileread(fileFullName, 'Encoding', obj(idx).ENCODING);
+                    
+                    [obj(idx).Content, ...
+                     obj(idx).Encoding, ...
+                     obj(idx).EncodingInfo, ...
+                     obj(idx).Hash] = util.fileread(fileFullName);
 
                     % Leitura do registro "I010", identificando o layout do
                     % arquivo. Como essa ficha não mudou ao longo do tempo, 
@@ -275,7 +282,7 @@ classdef ECD < model.ECDBase
             try
                 content  = strjoin({obj(indexes).Content}, char(obj(indexes(1)).TERMINATOR));
                 tempFile = [appUtil.DefaultFileName(tempPath, 'monitorSPED') '.txt'];
-                writematrix(content, tempFile, "FileType", "text", "QuoteStrings", "none", "Encoding", obj(indexes(1)).ENCODING);
+                writematrix(content, tempFile, "FileType", "text", "QuoteStrings", "none", "Encoding", obj(indexes(1)).Encoding);
     
                 [obj, msg] = obj.addFiles(tempFile, indexes);
             catch ME
@@ -471,7 +478,7 @@ classdef ECD < model.ECDBase
                         fileHash = obj(ii).Sources(index).hash;
                     else
                         switch encoding
-                            case obj(ii).ENCODING % 'ISO-8859-1'
+                            case obj(ii).Encoding
                                 fileContent = obj(ii).Content;
                             otherwise
                                 fileContent = fileread(obj(ii).FileFullName, 'Encoding', encoding);

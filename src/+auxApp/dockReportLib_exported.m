@@ -142,7 +142,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
                 app.UIFigure.AutoResizeChildren = 'off';
                 app.UIFigure.Position = [100 100 460 308];
                 app.UIFigure.Name = 'monitorSPED';
-                app.UIFigure.Icon = 'icon_48.png';
+                app.UIFigure.Icon = 'icon_16.png';
                 app.UIFigure.CloseRequestFcn = createCallbackFcn(app, @closeFcn, true);
 
                 app.Container = app.UIFigure;

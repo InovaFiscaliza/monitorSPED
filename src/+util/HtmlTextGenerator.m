@@ -152,8 +152,6 @@ classdef (Abstract) HtmlTextGenerator
         %-----------------------------------------------------------------%
         function htmlContent = File(ecdObj)
             if isscalar(ecdObj)
-                ufMappingDict = class.Constants.ufMapping();
-
                 if ~ecdObj.PeriodMerged
                     groupName = 'FileName';
                 else
@@ -164,10 +162,11 @@ classdef (Abstract) HtmlTextGenerator
                 if ecdObj.PeriodMerged
                     dataStruct(end+1) = struct('group', 'Origin', 'value', textFormatGUI.cellstr2Bullets(cellfun(@(x) sprintf('"%s"', x), {ecdObj.Sources.file}, 'UniformOutput', false)));
                 end
-                
-                dataStruct(end+1) = struct('group', 'UF',      'value', ufMappingDict(ecdObj.State));
-                dataStruct(end+1) = struct('group', 'Period',  'value', strjoin(string(ecdObj.Period), ' a '));
-                dataStruct(end+1) = struct('group', 'Content', 'value', [strjoin(strtrim(splitlines(ecdObj.Content(1:min(500, numel(ecdObj.Content))))), '\n') '<br><font style="color: red;">... [texto truncado]</font>']);
+
+                dataStruct(end+1) = struct('group', 'Hash',     'value', ecdObj.Hash);
+                dataStruct(end+1) = struct('group', 'Encoding', 'value', ecdObj.Encoding);
+                dataStruct(end+1) = struct('group', 'EncodingTest', 'value', ecdObj.EncodingInfo);                
+                dataStruct(end+1) = struct('group', 'Content',  'value', [strjoin(strtrim(splitlines(ecdObj.Content(1:min(500, numel(ecdObj.Content))))), '\n') '<br><font style="color: red;">... [texto truncado]</font>']);
                 
                 [ordinaryIds, ~, readOrdinaryIds] = getTableIds(ecdObj, true);
                 if isequal(ordinaryIds, readOrdinaryIds)
@@ -190,8 +189,6 @@ classdef (Abstract) HtmlTextGenerator
                 dataStruct(end+1) = struct('group', 'Layout',  'value', string(ecdObj.Layout));
                 
                 if ~ecdObj.PeriodMerged
-                    dataStruct(end+1) = struct('group', 'Hash', 'value', jsonencode(rmfield(ecdObj.Sources, {'file', 'period', 'validationMessage', 'validationStatus'})));
-
                     [receitaFederalStatus, receitaFederalSourceFileStatus] = checkIfValidStatus(ecdObj);
                     if receitaFederalStatus
                         receitaFederalStatusIcon = '🟢'; % '&#x1F7E2;'
@@ -203,16 +200,21 @@ classdef (Abstract) HtmlTextGenerator
                         end
                     end
                     dataStruct(end+1) = struct('group', sprintf('ReceitaFederal %s', receitaFederalStatusIcon), 'value', ecdObj.Sources(end).validationMessage);
+
+                    if numel(ecdObj.Sources) > 1
+                        dataStruct(end+1) = struct('group', 'TESTE DE DECODIFICAÇÕES', 'value', jsonencode(rmfield(ecdObj.Sources, {'file', 'period', 'validationMessage', 'validationStatus'})));
+                    end
                 end                
 
                 nireInfo = '';
                 if ~isempty(ecdObj.CompanyInfo.NIRE)
-                    nireInfo = sprintf('<font style="font-size: 11px;">NIRE nº %s</font><br>', ecdObj.CompanyInfo.NIRE);
+                    nireInfo = sprintf('NIRE nº %s<br>', ecdObj.CompanyInfo.NIRE);
                 end
                 
                 freeInitialText = [sprintf('<font style="font-size: 16px; "><b>%s</b></font><br>', ecdObj.CompanyName) ...
-                                   sprintf('<font style="font-size: 11px;">CNPJ nº %s</font><br>', ecdObj.CompanyId)   ...
-                                   sprintf('%s<br>', nireInfo)];
+                                   sprintf('<font style="font-size: 11px;">CNPJ nº %s (%s)<br>', ecdObj.CompanyId, ecdObj.State) ...
+                                   sprintf('%s', nireInfo), ...
+                                   sprintf('%s</font><br><br>', strjoin(string(ecdObj.Period), ' a '))];
                 
             else
                 idsList = {ecdObj.CompanyId};
