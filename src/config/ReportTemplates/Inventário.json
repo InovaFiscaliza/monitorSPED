@@ -136,7 +136,7 @@
                     "Type": "Footnote",
                     "Data": {
                         "Editable": "false",
-                        "Text": "<span style=\"display: block; margin: 10px; margin-bottom: 20px; text-align: justify; word-break: break-all;\">CONFIGURAÇÕES:<br>•&thinsp;Módulo \"File\": %s<br>•&thinsp;Modelo do relatório: %s<br><br>SÍMBOLOS:<br>•&thinsp;&#x1F7E2; (registro encontrado na base da Receita Federal), &#x1F534; (não encontrado na base da Receita Federal) e ⚪ (situação indeterminada)<br>•&thinsp;➕ (registro mesclado) e ⌛ (período fiscal não anual)</span>",
+                        "Text": "<span style=\"display: block; margin: 10px; margin-bottom: 20px; text-align: justify; word-break: break-all;\">CONFIGURAÇÕES:<br>•&thinsp;Módulo \"File\": %s<br>•&thinsp;Modelo do relatório: %s<br><br>SÍMBOLOS:<br>•&thinsp;&#x1F6AB; (escrituração não possui lançamentos contábeis)<br>•&thinsp;&#x1F7E2; (registro encontrado na base da Receita Federal), &#x1F534; (não encontrado na base da Receita Federal) e ⚪ (situação indeterminada)<br>•&thinsp;➕ (registro mesclado) e ⌛ (período fiscal não anual)</span>",
                         "Variable": [
                             "cfg_File",
                             "cfg_ReportTemplate"

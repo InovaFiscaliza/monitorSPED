@@ -86,6 +86,11 @@ classdef (Abstract) HtmlTextGenerator
                         preffixText = sprintf('%s     ', strjoin(string(ecdObj.Period), ' a '));
                     end
 
+                    hasTransactions = '';
+                    if ~ecdObj.GUI.hasTransactions
+                        hasTransactions = '🚫';
+                    end
+
                     [receitaFederalStatus, receitaFederalSourceFileStatus] = checkIfValidStatus(ecdObj);
                     if receitaFederalStatus
                         receitaFederalStatusIcon = '🟢'; % '&#x1F7E2;'
@@ -98,7 +103,7 @@ classdef (Abstract) HtmlTextGenerator
                     end
 
                     periodStatusIcon = '';
-                    if ~checkIfValidPeriod(ecdObj)
+                    if ~ecdObj.GUI.hasValidPeriod
                         periodStatusIcon = '⌛';
                     end
 
@@ -107,10 +112,15 @@ classdef (Abstract) HtmlTextGenerator
                         mergeStatusIcon = '➕';
                     end
 
-                    textId = sprintf('%s%s%s%s', preffixText, receitaFederalStatusIcon, periodStatusIcon, mergeStatusIcon);
+                    textId = sprintf('%s%s%s%s%s', preffixText, hasTransactions, receitaFederalStatusIcon, periodStatusIcon, mergeStatusIcon);
 
                 case 'scalar-period-oriented'
                     sourceIndex = varargin{1};
+
+                    hasTransactions = '';
+                    if ~ecdObj.GUI.hasTransactions
+                        hasTransactions = '🚫';
+                    end
 
                     if ecdObj.Sources(sourceIndex).validationStatus > 0
                         receitaFederalStatusIcon = '🟢'; % '&#x1F7E2;'
@@ -135,7 +145,7 @@ classdef (Abstract) HtmlTextGenerator
                         mergeStatusIcon = '➕';
                     end
 
-                    textId = sprintf('%s%s%s', receitaFederalStatusIcon, periodStatusIcon, mergeStatusIcon);
+                    textId = sprintf('%s%s%s%s', hasTransactions, receitaFederalStatusIcon, periodStatusIcon, mergeStatusIcon);
             end
         end
         
@@ -161,16 +171,22 @@ classdef (Abstract) HtmlTextGenerator
                 
                 [ordinaryIds, ~, readOrdinaryIds] = getTableIds(ecdObj, true);
                 if isequal(ordinaryIds, readOrdinaryIds)
-                    dataStruct(end+1) = struct('group', 'REGISTROS ORDINÁRIOS ✅', 'value', strjoin(ordinaryIds,     ', '));
+                    dataStruct(end+1) = struct('group', 'REGISTROS ORDINÁRIOS', 'value', strjoin(ordinaryIds,     ', '));
                 else
                     dataStruct(end+1) = struct('group', 'REGISTROS ORDINÁRIOS',          'value', strjoin(ordinaryIds,     ', '));
-                    dataStruct(end+1) = struct('group', 'REGISTROS ORDINÁRIOS LIDOS ❗', 'value', strjoin(readOrdinaryIds, ', '));
+                    dataStruct(end+1) = struct('group', 'REGISTROS ORDINÁRIOS LIDOS', 'value', strjoin(readOrdinaryIds, ', '));
                 end
 
                 if ~isempty(ecdObj.GUI.warnings)
                     dataStruct(end+1) = struct('group', 'ALERTAS ❌', 'value', strjoin(ecdObj.GUI.warnings, '<br>'));
                 end
                 
+                if ~ecdObj.GUI.hasTransactions
+                    hasTransactionsMessage = ['<font style="color: red;">Não foram encontrados lançamentos contábeis (I200) nesta escrituração. ' ...
+                                              'Isso indica que a empresa provavelmente está inativa, sem movimentação fiscal.</font>'];
+                    dataStruct(end+1) = struct('group', 'FATO CONTÁBIL 🚫', 'value', hasTransactionsMessage);
+                end
+
                 dataStruct(end+1) = struct('group', 'Layout',  'value', string(ecdObj.Layout));
                 
                 if ~ecdObj.PeriodMerged
