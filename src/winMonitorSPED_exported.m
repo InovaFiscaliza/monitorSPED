@@ -290,6 +290,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                     case 'File'
                                         app.popupContainer.Parent.Visible = 0;
                                     case 'ECD'
+                                        varargin = [{'closeFcnCallFromDockModule'}, varargin];
                                         ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
                                 end
 
@@ -301,6 +302,24 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 app.popupContainer.Parent.Visible = 0;
 
                                 reportGeneratorCall(app, context, indexes)
+
+                            otherwise
+                                error('UnexpectedCall')
+                        end
+
+                    case {'auxApp.dockECDExport', 'auxApp.dockECDExport_exported'}
+                        switch operationType
+                            case 'closeFcn'
+                                context  = varargin{1};
+                                varargin = [{'closeFcnCallFromDockModule'}, varargin(2:end)];
+                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
+
+                            case 'exportECD'
+                                delete(callingApp)
+                                
+                                context  = varargin{1};
+                                varargin = [{operationType}, varargin(2:end)];
+                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
 
                             otherwise
                                 error('UnexpectedCall')

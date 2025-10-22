@@ -10,11 +10,11 @@ classdef winECD_exported < matlab.apps.AppBase
         TabGroup              matlab.ui.container.TabGroup
         Tab1                  matlab.ui.container.Tab
         Tab1Grid              matlab.ui.container.GridLayout
-        MiscellaneousLabel    matlab.ui.control.Label
-        ExportExcel           matlab.ui.control.Button
-        OpenRTFFiles          matlab.ui.control.Image
-        ReadProcessLog        matlab.ui.control.Image
-        Tab1Separator         matlab.ui.control.Image
+        EscrituraonopossuiarquivosrtfLabel  matlab.ui.control.Label
+        Tab1Separator2        matlab.ui.control.Image
+        LogButton             matlab.ui.control.Button
+        ExportButton          matlab.ui.control.Button
+        Tab1Separator1        matlab.ui.control.Image
         SheetList             matlab.ui.control.DropDown
         SheetListLabel        matlab.ui.control.Label
         TimePeriodList        matlab.ui.control.DropDown
@@ -135,8 +135,28 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function varargout = ipcSecundaryMatlabCallsHandler(app, callingApp, operationType, varargin)
-            % ...
+        function ipcSecundaryMatlabCallsHandler(app, callingApp, operationType, varargin)
+            try
+                switch class(callingApp)
+                    case {'winMonitorSPED', 'winMonitorSPED_exported'}
+                        app.popupContainer.Parent.Visible = 0;
+
+                        switch operationType
+                            case 'closeFcnCallFromDockModule'
+                                % ...
+                            case 'exportECD'
+                                exportFiles(app, varargin{:})
+                            otherwise
+                                error('UnexpectedCall')
+                        end
+    
+                    otherwise
+                        error('UnexpectedCall')
+                end
+
+            catch ME
+                appUtil.modalWindow(app.UIFigure, 'error', ME.message);
+            end
         end
     end
 
@@ -295,7 +315,7 @@ classdef winECD_exported < matlab.apps.AppBase
         function menu_LayoutPopupApp(app, auxiliarApp, varargin)
             arguments
                 app
-                auxiliarApp char {mustBeMember(auxiliarApp, {'ReportLib'})}
+                auxiliarApp char {mustBeMember(auxiliarApp, {'ReportLib', 'ECDExport'})}
             end
 
             arguments (Repeating)
@@ -307,12 +327,15 @@ classdef winECD_exported < matlab.apps.AppBase
                 case 'ReportLib'
                     screenWidth  = 460;
                     screenHeight = 308;
+                case 'ECDExport'
+                    screenWidth  = 460;
+                    screenHeight = 404;
             end
 
             ui.PopUpContainer(app, class.Constants.appName, screenWidth, screenHeight)
 
             % Executa o app auxiliar.
-            inputArguments = [{app}, varargin];
+            inputArguments = [{app.mainApp}, varargin];
             
             if app.mainApp.General.operationMode.Debug
                 eval(sprintf('auxApp.dock%s(inputArguments{:})', auxiliarApp))
@@ -456,6 +479,82 @@ classdef winECD_exported < matlab.apps.AppBase
                 hTableName = 'app.UITable2';
             end
         end
+
+        %-----------------------------------------------------------------%
+        function exportFiles(app, fileIndex, rawTableIdFields)
+            selectedECD     = app.ecdObj(fileIndex);
+
+            defaultBaseName =  appUtil.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'monitorSPED');
+            excelTempName   = [appUtil.DefaultFileName(app.mainApp.General.fileFolder.tempPath, 'monitorSPED') '.xlsx'];
+            rtfTempFiles    = {};
+
+            app.progressDialog.Visible = 'visible';
+
+            % EXCEL
+            msgError = {};
+            try
+                excelTableIdList = cellfun(@(x) strsplit(x, '|'), setdiff(rawTableIdFields, {'xJ800|xJ801'}, 'stable'), 'UniformOutput', false);                
+                tableIdFields    = horzcat(excelTableIdList{:});
+                
+                if ~isempty(tableIdFields)
+                    writetable(selectedECD.Table.(tableIdFields{1}), excelTempName, "Sheet", tableIdFields{1}(2:end), "WriteMode", "replacefile")
+
+                    for ii = 2:numel(tableIdFields)
+                        tableId = tableIdFields{ii};
+                        writetable(selectedECD.Table.(tableId), excelTempName, "Sheet", tableId(2:end), "WriteMode", "append")
+                    end
+                end
+            catch ME
+                msgError{end+1} = ME.message;
+            end
+               
+            % RTF
+            if ismember('xJ800|xJ801', rawTableIdFields)
+                [rtfTempFiles, rtfMsgError] = util.exportRTF(selectedECD, app.mainApp.General);
+                if ~isempty(rtfMsgError)
+                    msgError{end+1} = rtfMsgError;
+                end
+
+            end
+
+            % OUTPUTFILES
+            try                
+                outputfiles = [{excelTempName}, rtfTempFiles];
+                outputfiles(~isfile(outputfiles)) = [];
+
+                if isscalar(outputfiles)
+                    [~, ~, fileExt] = fileparts(outputfiles{1});
+                    nameFormatMap = {sprintf('*.%s', fileExt), sprintf('(*%s)', fileExt)};
+                else
+                    nameFormatMap = {'*.zip', '(*.zip)'};
+                end
+                
+                fileFullPath = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', nameFormatMap, defaultBaseName);
+                if isempty(fileFullPath)
+                    return
+                end
+
+                if isscalar(outputfiles) && ~strcmp(app.mainApp.executionMode, 'webApp')
+                    copyfile(outputfiles{1}, fileFullPath, 'f')
+
+                    if ~strcmp(app.mainApp.executionMode, 'webApp')
+                        ccTools.fcn.OperationSystem('openFile', fileFullPath)
+                    end
+                else
+                    zip(fileFullPath, outputfiles)
+                end
+            catch ME
+                msgError{end+1} = ME.message;
+            end
+
+            app.progressDialog.Visible = 'hidden';
+
+            % WARNING MESSAGE
+            if ~isempty(msgError)
+                msgError = strjoin(msgError, '<br><br>');
+                appUtil.modalWindow(app.UIFigure, 'warning', msgError);
+            end
+        end
     end
     
 
@@ -513,7 +612,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
         end
 
-        % Image clicked function: ReadProcessLog
+        % Button pushed function: LogButton
         function Toolbar_LOGInfoImageClicked(app, event)
             
             selectedECD = selectedECDObject(app);
@@ -525,122 +624,14 @@ classdef winECD_exported < matlab.apps.AppBase
 
         % Image clicked function: tool_GenerateReport
         function Toolbar_ReportImageClicked(app, event)
-            
+            pause(1)
         end
 
-        % Button pushed function: ExportExcel
-        function Toolbar_ExportImageClicked(app, event)
+        % Button pushed function: ExportButton
+        function Toolbar_ExportExportExcelClicked(app, event)
             
-            selectedECD = selectedECDObject(app);
-
-            nameFormatMap = {'*.xlsx', 'Excel (*.xlsx)'};
-            defaultName   = appUtil.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'monitorSPED', -1);
-            [fileFullPath, ~, ~, fileName] = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', nameFormatMap, defaultName);
-            if isempty(fileFullPath)
-                return
-            end
-
-            app.progressDialog.Visible = 'visible';
-
-            try
-                tempName = fullfile(app.mainApp.General.fileFolder.userPath, [fileName '.xlsx']);
-                tableIds = setdiff(fieldnames(selectedECD.Table), {'x0000'});
-                
-                writetable(selectedECD.Table.x0000, tempName, "Sheet", "0000", "WriteMode", "replacefile")
-                for ii = 1:numel(tableIds)
-                    tableId = tableIds{ii};                    
-                    writetable(selectedECD.Table.(tableId), tempName, "Sheet", tableId(2:end), "WriteMode", "append")
-                end
-
-                copyfile(tempName, fileFullPath, 'f')
-
-                if ~strcmp(app.mainApp.executionMode, 'webApp')
-                    ccTools.fcn.OperationSystem('openFile', fileFullPath)
-                end
-
-            catch ME
-                appUtil.modalWindow(app.UIFigure, 'warning', getReport(ME));
-            end
-
-            app.progressDialog.Visible = 'hidden';
-
-        end
-
-        % Image clicked function: OpenRTFFiles
-        function Toolbar_OpenRTFImageClicked(app, event)
-            
-            selectedECD = selectedECDObject(app);
-
-            rtfFiles    = {};
-            msgError    = {};
-
-            rtfTableIds = {'J800', 'J801'};
-            parseTableAndAddToCache(selectedECD, rtfTableIds)
-
-            defaultName = appUtil.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'monitorSPED');
-            tempName    = appUtil.DefaultFileName(app.mainApp.General.fileFolder.tempPath, 'monitorSPED');
-            fileCount   = 0;
-
-            app.progressDialog.Visible = 'visible';
-            
-            for ii = 1:numel(rtfTableIds)
-                rtfTableField = ['x' rtfTableIds{ii}];
-        
-                if isfield(selectedECD.Table, rtfTableField) && ~isempty(selectedECD.Table.(rtfTableField))
-                    for jj = 1:height(selectedECD.Table.(rtfTableField))
-                        fileCount = fileCount+1;
-                        fileName  = sprintf('%s_%d.rtf', tempName, fileCount);
-                        
-                        try
-                            util.recreateRTF(selectedECD.Table.(rtfTableField).('ARQ_RTF'){jj}, fileName)
-                            rtfFiles{end+1} = fileName;
-
-                        catch ME
-                            msgError{end+1} = ME.message;
-                        end
-                    end
-                end
-            end
-
-            app.progressDialog.Visible = 'hidden';
-
-            if ~isempty(rtfFiles)
-                appName = class.Constants.appName;
-
-                if isscalar(rtfFiles) && ~strcmp(app.mainApp.executionMode, 'webApp')
-                    nameFormat = {'*.rtf', [appName, ' (*.rtf)']};
-                else
-                    nameFormat = {'*.zip', [appName, ' (*.zip)']};
-                end
-
-                outputFile = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', nameFormat, defaultName);
-                if isempty(outputFile)
-                    return
-                end
-
-                app.progressDialog.Visible = 'visible';
-
-                if isscalar(rtfFiles) && ~strcmp(app.mainApp.executionMode, 'webApp')
-                    copyfile(rtfFiles{1}, outputFile, 'f')
-                else
-                    zip(outputFile, rtfFiles)
-                end
-
-                if ~strcmp(app.mainApp.executionMode, 'webApp')
-                    for kk = 1:numel(rtfFiles)
-                        ccTools.fcn.OperationSystem('openFile', rtfFiles{kk})
-                    end
-                end
-
-                app.progressDialog.Visible = 'hidden';
-            else
-                appUtil.modalWindow(app.UIFigure, 'info', sprintf('Escrituração não possui arquivo auxiliar no formato RTF.'));
-            end
-        
-            if ~isempty(msgError)
-                msgError = strjoin(msgError, '\n');
-                appUtil.modalWindow(app.UIFigure, 'error', msgError);
-            end
+            [~, fileIndex] = selectedECDObject(app);
+            menu_LayoutPopupApp(app, 'ECDExport', 'ECD', fileIndex)
 
         end
 
@@ -831,10 +822,10 @@ classdef winECD_exported < matlab.apps.AppBase
                         selectedECD = selectedECDObject(app);
     
                         selectedAccount = clickedTable.Data.("COD_CTA"){selectedRows};
-                        selectedAccountIndex = find(strcmp(selectedECD.Table.mDESCRICAO.("COD_CTA"), selectedAccount), 1);
+                        selectedAccountIndex = find(strcmp(selectedECD.Table.mCONTAS_DESCRICAO.("COD_CTA"), selectedAccount), 1);
             
                         if ~isempty(selectedAccountIndex)
-                            selectedAccountDescription = sprintf('COD_CTA %s\n%s', selectedAccount, selectedECD.Table.mDESCRICAO.("DESCRIÇÃO"){selectedAccountIndex});
+                            selectedAccountDescription = sprintf('COD_CTA %s\n%s', selectedAccount, selectedECD.Table.mCONTAS_DESCRICAO.("DESCRIÇÃO"){selectedAccountIndex});
                         end
                     end                    
                     tableSelectedAccount.Text = selectedAccountDescription;
@@ -870,15 +861,15 @@ classdef winECD_exported < matlab.apps.AppBase
             % criação de nova categoria.
             if strcmp(editedCellColumnName, 'Apurado?  ✎') && ~ismember(newData, app.mainApp.General.ECD.assessmentOptions)
                 clickedTable = event.Source;
-                clickedTable.Data.(editedCellColumnName)(rowIndex) = selectedECD.Table.mCONTAS.(editedCellColumnName)(rowIndex);
+                clickedTable.Data.(editedCellColumnName)(rowIndex) = selectedECD.Table.mCONTAS_ANOTACAO.(editedCellColumnName)(rowIndex);
                 return
             end
 
-            if iscell(selectedECD.Table.mCONTAS{rowIndex, colIndex})
+            if iscell(selectedECD.Table.mCONTAS_ANOTACAO{rowIndex, colIndex})
                 newData = {strtrim(newData)};
             end
 
-            selectedECD.Table.mCONTAS{rowIndex, colIndex} = newData;
+            selectedECD.Table.mCONTAS_ANOTACAO{rowIndex, colIndex} = newData;
 
         end
 
@@ -1276,7 +1267,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create Tab1Grid
             app.Tab1Grid = uigridlayout(app.Tab1);
-            app.Tab1Grid.ColumnWidth = {90, 230, 60, 229, 3, 20, 22, 20};
+            app.Tab1Grid.ColumnWidth = {90, 230, 60, 229, 3, 44, 44, 3, '1x'};
             app.Tab1Grid.RowHeight = {22, 22};
             app.Tab1Grid.RowSpacing = 5;
             app.Tab1Grid.BackgroundColor = [0.9804 0.9804 0.9804];
@@ -1339,51 +1330,48 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetList.Layout.Column = 4;
             app.SheetList.Value = {};
 
-            % Create Tab1Separator
-            app.Tab1Separator = uiimage(app.Tab1Grid);
-            app.Tab1Separator.Enable = 'off';
-            app.Tab1Separator.Layout.Row = [1 2];
-            app.Tab1Separator.Layout.Column = 5;
-            app.Tab1Separator.ImageSource = 'LineV.svg';
+            % Create Tab1Separator1
+            app.Tab1Separator1 = uiimage(app.Tab1Grid);
+            app.Tab1Separator1.Enable = 'off';
+            app.Tab1Separator1.Layout.Row = [1 2];
+            app.Tab1Separator1.Layout.Column = 5;
+            app.Tab1Separator1.ImageSource = 'LineV.svg';
 
-            % Create ReadProcessLog
-            app.ReadProcessLog = uiimage(app.Tab1Grid);
-            app.ReadProcessLog.ImageClickedFcn = createCallbackFcn(app, @Toolbar_LOGInfoImageClicked, true);
-            app.ReadProcessLog.Tooltip = {'LOG do processo de leitura dos registros ordinários'};
-            app.ReadProcessLog.Layout.Row = 1;
-            app.ReadProcessLog.Layout.Column = 6;
-            app.ReadProcessLog.ImageSource = 'LOG_32.png';
+            % Create ExportButton
+            app.ExportButton = uibutton(app.Tab1Grid, 'push');
+            app.ExportButton.ButtonPushedFcn = createCallbackFcn(app, @Toolbar_ExportExportExcelClicked, true);
+            app.ExportButton.Icon = 'Export_16.png';
+            app.ExportButton.IconAlignment = 'top';
+            app.ExportButton.FontSize = 10;
+            app.ExportButton.Layout.Row = [1 2];
+            app.ExportButton.Layout.Column = 6;
+            app.ExportButton.Text = {'.xlsx'; '.rtf'};
 
-            % Create OpenRTFFiles
-            app.OpenRTFFiles = uiimage(app.Tab1Grid);
-            app.OpenRTFFiles.ScaleMethod = 'none';
-            app.OpenRTFFiles.ImageClickedFcn = createCallbackFcn(app, @Toolbar_OpenRTFImageClicked, true);
-            app.OpenRTFFiles.Tooltip = {'Abre/Salva arquivos .rtf'; '(Registros J800 e J801)'};
-            app.OpenRTFFiles.Layout.Row = 1;
-            app.OpenRTFFiles.Layout.Column = 7;
-            app.OpenRTFFiles.ImageSource = 'Publish_PDF_16.png';
+            % Create LogButton
+            app.LogButton = uibutton(app.Tab1Grid, 'push');
+            app.LogButton.ButtonPushedFcn = createCallbackFcn(app, @Toolbar_LOGInfoImageClicked, true);
+            app.LogButton.Icon = 'LOG_32.png';
+            app.LogButton.IconAlignment = 'top';
+            app.LogButton.FontSize = 10;
+            app.LogButton.Layout.Row = [1 2];
+            app.LogButton.Layout.Column = 7;
+            app.LogButton.Text = 'Leitura';
 
-            % Create ExportExcel
-            app.ExportExcel = uibutton(app.Tab1Grid, 'push');
-            app.ExportExcel.ButtonPushedFcn = createCallbackFcn(app, @Toolbar_ExportImageClicked, true);
-            app.ExportExcel.Icon = 'Export_24.png';
-            app.ExportExcel.IconAlignment = 'top';
-            app.ExportExcel.BackgroundColor = [0.9608 0.9608 0.9608];
-            app.ExportExcel.FontSize = 10;
-            app.ExportExcel.FontColor = [0.129411764705882 0.129411764705882 0.129411764705882];
-            app.ExportExcel.Tooltip = {'Exporta registros como arquivo .xlsx'};
-            app.ExportExcel.Layout.Row = 1;
-            app.ExportExcel.Layout.Column = 8;
-            app.ExportExcel.Text = '';
+            % Create Tab1Separator2
+            app.Tab1Separator2 = uiimage(app.Tab1Grid);
+            app.Tab1Separator2.Enable = 'off';
+            app.Tab1Separator2.Layout.Row = [1 2];
+            app.Tab1Separator2.Layout.Column = 8;
+            app.Tab1Separator2.ImageSource = 'LineV.svg';
 
-            % Create MiscellaneousLabel
-            app.MiscellaneousLabel = uilabel(app.Tab1Grid);
-            app.MiscellaneousLabel.HorizontalAlignment = 'center';
-            app.MiscellaneousLabel.FontSize = 10;
-            app.MiscellaneousLabel.FontColor = [0.149 0.149 0.149];
-            app.MiscellaneousLabel.Layout.Row = 2;
-            app.MiscellaneousLabel.Layout.Column = [6 8];
-            app.MiscellaneousLabel.Text = 'MISCELÂNEAS';
+            % Create EscrituraonopossuiarquivosrtfLabel
+            app.EscrituraonopossuiarquivosrtfLabel = uilabel(app.Tab1Grid);
+            app.EscrituraonopossuiarquivosrtfLabel.VerticalAlignment = 'top';
+            app.EscrituraonopossuiarquivosrtfLabel.WordWrap = 'on';
+            app.EscrituraonopossuiarquivosrtfLabel.FontSize = 11;
+            app.EscrituraonopossuiarquivosrtfLabel.Layout.Row = [1 2];
+            app.EscrituraonopossuiarquivosrtfLabel.Layout.Column = 9;
+            app.EscrituraonopossuiarquivosrtfLabel.Text = '🔗 Escrituração não possui arquivos .rtf';
 
             % Create Tab2
             app.Tab2 = uitab(app.TabGroup);

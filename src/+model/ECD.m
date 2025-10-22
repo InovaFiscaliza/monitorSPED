@@ -440,7 +440,15 @@ classdef ECD < model.ECDBase
             for ii = 1:numel(obj)
                 for jj = 1:numel(tableIdList)
                     tableId = tableIdList{jj};
-                    if ~isfield(obj(ii).Table, ['x' tableId])
+
+                    if ismember(tableId, {'CONTAS_DESCRICAO', 'CONTAS_ANOTACAO', 'BALANCETE_GERAL', 'BALANCETE_RESULTADOS', 'TABELA_APURACAO'})
+                        continue
+                    end
+
+                    tableIdFields = {['x' tableId], ['m', tableId]};
+                    tableIdStatus = any(isfield(obj(ii).Table, tableIdFields));
+
+                    if ~tableIdStatus
                         status = true;
                         parseTableAndAddToCache(obj(ii), {tableId})
                     end
@@ -591,12 +599,13 @@ classdef ECD < model.ECDBase
 
             checkIfScalar(obj)
 
-            tableNames = fieldnames(obj.Table);
+            tableNames = sort(fieldnames(obj.Table));
+            customIds  = tableNames(startsWith(tableNames, 'm'));
+
             if nonemptyFlag
                 tableNames(cellfun(@(x) isempty(obj.Table.(x)), tableNames)) = [];
             end
-
-            customIds = tableNames(startsWith(tableNames, 'm'));
+            
             readOrdinaryIds = setdiff(tableNames, customIds);
             readOrdinaryIds = extractAfter(sort(readOrdinaryIds), 'x');
 
@@ -739,7 +748,7 @@ classdef ECD < model.ECDBase
             checkIfScalar(obj)
 
             % xDESCRIÇÃO
-            obj.Table.mDESCRICAO = table( ...
+            obj.Table.mCONTAS_DESCRICAO = table( ...
                 'Size', [0, 2], ...
                 'VariableNames', {'COD_CTA', 'DESCRIÇÃO'}, ...
                 'VariableTypes', {'cell', 'cell'} ...
@@ -780,7 +789,7 @@ classdef ECD < model.ECDBase
                 end
 
                 description  = strjoin(flip(description), '  ↳  ');
-                obj.Table.mDESCRICAO(end+1, :) = {accountId, description};
+                obj.Table.mCONTAS_DESCRICAO(end+1, :) = {accountId, description};
             end
 
             % xBALANCETE
@@ -789,16 +798,16 @@ classdef ECD < model.ECDBase
 
             % xCONTAS
             numAccounts = height(obj.Table.mBALANCETE_RESULTADO);
-            obj.Table.mCONTAS = table( ...
+            obj.Table.mCONTAS_ANOTACAO = table( ...
                 obj.Table.mBALANCETE_RESULTADO.("COD_CTA"), ...
-                repmat(categorical("Não", ["Não", "Sim", "Sim - ICMS"]), numAccounts, 1), ...
+                repmat(categorical("-", ["-", "Não", "Sim", "Sim - ICMS"]), numAccounts, 1), ...
                 repmat({''}, numAccounts, 1), ...
                 repmat({''}, numAccounts, 1), ...
                 'VariableNames', {'COD_CTA', 'Apurado?  ✎', 'Observação  ✎', 'Alíquota ICMS  ✎'} ...
             );
 
             % xAPURAÇÃO
-            obj.Table.mAPURACAO  = table( ...
+            obj.Table.mTABELA_APURACAO  = table( ...
                 'Size', [0, 17], ...
                 'VariableNames', {'Tipo', 'COD_CTA', 'CTA', 'Alíquota ICMS', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
                 'VariableTypes', {'cell', 'cell', 'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'} ...

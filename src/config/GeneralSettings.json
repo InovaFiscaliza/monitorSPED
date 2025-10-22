@@ -1,5 +1,5 @@
 {
-    "version": 0.39,
+    "version": 0.40,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -45,9 +45,10 @@
     },
     "ECD": {
         "assessmentOptions": [
+            "-",
+            "Não",
             "Sim",
-            "Sim - ICMS",
-            "Não"
+            "Sim - ICMS"
         ]
     },
     "Report": {
