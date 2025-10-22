@@ -47,8 +47,7 @@ classdef (Abstract) TableGenerator
                 % mês é igual a zero.
                 floatDiffTolerance = 1e-5;
                 if any(cellfun(@(x) sum(accountMonthlySummary.(x)) > floatDiffTolerance, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}))
-                    error(['Ao menos um dos meses apresentou um balanço diferente de zero, o que ' ...
-                           'evidencia erro no arquivo contábil ou na análise dos seus dados.'])
+                    ecdObj.GUI.warnings{end+1} = jsonencode(struct('id', 'mBALANCETE_GERAL', 'message', 'Ao menos um dos meses apresentou um balanço diferente de zero, o que evidencia erro no arquivo contábil ou na análise dos seus dados.'));
                 end
             end
             
@@ -57,9 +56,9 @@ classdef (Abstract) TableGenerator
 
         %-----------------------------------------------------------------%
         function accountMonthlySummary = AddAccountGeneralInfo(ecdObj, accountMonthlySummary)
-            [~, accountUniqueIndexes] = unique(ecdObj.Table.xI050, "sorted");
-            accountDataBase = ecdObj.Table.xI050(accountUniqueIndexes, :);
-
+            xI050 = flip(ecdObj.Table.xI050);
+            [~, accountUniqueIdFirstIndex] = unique(xI050.('COD_CTA'), "sorted");
+            accountDataBase = xI050(accountUniqueIdFirstIndex, :);
 
             accountMonthlySummary = join( ...
                 accountMonthlySummary, ...

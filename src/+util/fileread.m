@@ -25,7 +25,7 @@ function [content, encoding, encodingJson, hashHex] = fileread(fileFullName, enc
     encodingInfo = table( ...
         'Size', [0, 3], ...
         'VariableTypes', {'cell', 'double', 'double'}, ...
-        'VariableNames', {'name', 'numSpecialCharsType', 'numSpecialChars'} ...
+        'VariableNames', {'encoding', 'numSpecialCharsType', 'numSpecialChars'} ...
     );
 
     for ii = 1:numel(encodingList)
@@ -35,7 +35,7 @@ function [content, encoding, encodingJson, hashHex] = fileread(fileFullName, enc
     end
     encodingInfo = sortrows(encodingInfo, {'numSpecialCharsType', 'numSpecialChars'}, 'descend');
     
-    encoding = encodingInfo.name{1};
+    encoding = encodingInfo.encoding{1};
     content  = native2unicode(byteArray, encoding);
     encodingJson = jsonencode(encodingInfo);
 end

@@ -192,6 +192,7 @@ classdef ECD < model.ECDBase
                     % ("0000" e "I030"), plano de contas ("I050") e fatos 
                     % contábeis ("I200_I250").
                     parseTableAndAddToCache(obj(idx), {'0000', 'I030', 'I050', 'I200_I250'})
+
                     if isfield(obj(idx).Table, 'x0000') && ~isempty(obj(idx).Table.x0000)
                         obj(idx).CompanyName    = obj(idx).Table.x0000.NOME{1};
                         obj(idx).CompanyId      = checkCNPJOrCPF(obj(idx).Table.x0000.CNPJ{1}, 'NumberValidation');
@@ -219,7 +220,7 @@ classdef ECD < model.ECDBase
                     obj(idx).GUI.hasValidPeriod  = checkIfValidPeriod(obj(idx));
                     obj(idx).GUI.hasValidStatus  = checkIfValidStatus(obj(idx));
 
-                    addCustomTables(obj(idx), mergedIndexes);
+                    addCustomTables(obj(idx));
 
                 catch ME
                     delete(obj(idx))
@@ -302,7 +303,7 @@ classdef ECD < model.ECDBase
             % parameters(1) = struct('fcn', 'outerjoin', 'leftId', 'I050', 'rightId', 'I155', 'args', {{'LeftKeys', 'COD_CTA', 'RightKeys', 'COD_CTA', 'MergeKeys', true, 'Type', 'full'}})
             % parameters(2) = struct('fcn', 'innerjoin', 'leftId', '*',    'rightId', 'I165', 'args', {{'LeftKeys', 'COD_CTA', 'RightKeys', 'COD_CTA', 'MergeKeys', true, 'Type', 'full'}})
 
-            isTableRead(obj, tableIdList)
+            isTableRead(obj, tableIdList);
 
             % Verifica se a tabela mesclada já foi criada.
             mergedTableId = ['m' strjoin(tableIdList, '_')];
@@ -343,7 +344,7 @@ classdef ECD < model.ECDBase
 
             % Verifica se os registros ordinários foram lidos.
             tableIdList = [mainId, secundaryIds];
-            isTableRead(obj, tableIdList)
+            isTableRead(obj, tableIdList);
 
             % Verifica se a tabela mesclada já foi criada.
             mergedTableId = ['m' strjoin(tableIdList, '_')];
@@ -429,16 +430,18 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function isTableRead(obj, tableIdList)
+        function status = isTableRead(obj, tableIdList)
             arguments
                 obj
                 tableIdList (1,:) cell {mustBeText}
             end
 
+            status = false;
             for ii = 1:numel(obj)
                 for jj = 1:numel(tableIdList)
                     tableId = tableIdList{jj};
                     if ~isfield(obj(ii).Table, ['x' tableId])
+                        status = true;
                         parseTableAndAddToCache(obj(ii), {tableId})
                     end
                 end
@@ -531,14 +534,8 @@ classdef ECD < model.ECDBase
             checkIfScalar(obj)
 
             hasTransactions = false;
-            if isfield(obj.Table, 'xI200') && ~isempty(obj.Table.xI200)
+            if isfield(obj.Table, 'xI050') && any(strcmp(obj.Table.xI050.('COD_NAT'), '04')) && isfield(obj.Table, 'xI200') && ~isempty(obj.Table.xI200)
                 hasTransactions = true;
-
-            elseif isfield(obj.Table, 'x9900') && ~isempty(obj.Table.x9900)
-                xI200Index = find(strcmp(obj.Table.x9900.("REG_BLC"), 'I200'), 1);
-                if ~isempty(xI200Index) && obj.Table.x9900.("QTD_REG_BLC")(xI200Index) > 0
-                    hasTransactions = true;
-                end
             end
         end
 
@@ -738,73 +735,74 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function addCustomTables(obj, mergedIndexes)
+        function addCustomTables(obj)
             checkIfScalar(obj)
 
-            if isempty(mergedIndexes)
-                % xDESCRIÇÃO
-                obj.Table.mDESCRICAO = table( ...
-                    'Size', [0, 2], ...
-                    'VariableNames', {'COD_CTA', 'DESCRIÇÃO'}, ...
-                    'VariableTypes', {'cell', 'cell'} ...
-                );
+            % xDESCRIÇÃO
+            obj.Table.mDESCRICAO = table( ...
+                'Size', [0, 2], ...
+                'VariableNames', {'COD_CTA', 'DESCRIÇÃO'}, ...
+                'VariableTypes', {'cell', 'cell'} ...
+            );
 
-                [accountUniqueIdList, accountUniqueIdFirstIndex] = unique(obj.Table.xI050.("COD_CTA"));
-                for ii = 1:numel(accountUniqueIdList)
-                    accountId = accountUniqueIdList{ii};
-                    accountDescription = strtrim(obj.Table.xI050.("CTA"){accountUniqueIdFirstIndex(ii)});
-                    accountNumLevel = str2double(obj.Table.xI050.("NIVEL"){accountUniqueIdFirstIndex(ii)});
+            % Esse ordenamento é essencial quando se trata de registros
+            % mesclados, tendo em vista que os planos de contas estão
+            % replicados. Ao ordenar, registra-se o última estado de
+            % cada conta.
+            xI050 = flip(obj.Table.xI050);
+            [accountUniqueIdList, accountUniqueIdFirstIndex] = unique(xI050.("COD_CTA"), "sorted");
+            
+            for ii = 1:numel(accountUniqueIdList)
+                accountId = accountUniqueIdList{ii};
+                accountDescription = strtrim(xI050.("CTA"){accountUniqueIdFirstIndex(ii)});
+                accountNumLevel = str2double(xI050.("NIVEL"){accountUniqueIdFirstIndex(ii)});
 
-                    description = {};
-                    currentId   = accountId;
+                description = {};
+                currentId   = accountId;
 
-                    for jj = 1:accountNumLevel
-                        currentIndex  = find(strcmp(obj.Table.xI050.("COD_CTA"), currentId),  1);
-                        currentId     = obj.Table.xI050.("COD_CTA_SUP"){currentIndex};
-                        superiorIndex = find(strcmp(obj.Table.xI050.("COD_CTA_SUP"), currentId), 1);
+                for jj = 1:accountNumLevel
+                    currentIndex  = find(strcmp(xI050.("COD_CTA"), currentId),  1);
+                    currentId     = xI050.("COD_CTA_SUP"){currentIndex};
+                    superiorIndex = find(strcmp(xI050.("COD_CTA_SUP"), currentId), 1);
 
-                        superiorDescription = '';
-                        if ~isempty(superiorIndex)
-                            superiorDescription = strtrim(obj.Table.xI050.("CTA"){superiorIndex});
-                        end
-
-                        if jj == 1 && ~isempty(accountDescription) && ~isequal(accountDescription, superiorDescription)
-                            description{end+1} = accountDescription;
-                        end
-                        
-                        if ~isempty(superiorDescription)
-                            description{end+1} = superiorDescription;
-                        end
+                    superiorDescription = '';
+                    if ~isempty(superiorIndex)
+                        superiorDescription = strtrim(xI050.("CTA"){superiorIndex});
                     end
 
-                    description  = strjoin(flip(description), '  ↳  ');
-                    obj.Table.mDESCRICAO(end+1, :) = {accountId, description};
+                    if jj == 1 && ~isempty(accountDescription) && ~isequal(accountDescription, superiorDescription)
+                        description{end+1} = accountDescription;
+                    end
+                    
+                    if ~isempty(superiorDescription)
+                        description{end+1} = superiorDescription;
+                    end
                 end
 
-                % xBALANCETE
-                obj.Table.mBALANCETE_GERAL = model.TableGenerator.SummaryByAccount(obj);
-                obj.Table.mBALANCETE_RESULTADO = model.TableGenerator.SummaryByAccountType(obj, '04');
-
-                % xCONTAS
-                numAccounts = height(obj.Table.mBALANCETE_RESULTADO);
-                obj.Table.mCONTAS = table( ...
-                    obj.Table.mBALANCETE_RESULTADO.("COD_CTA"), ...
-                    repmat(categorical("Não", ["Não", "Sim", "Sim - ICMS"]), numAccounts, 1), ...
-                    repmat({''}, numAccounts, 1), ...
-                    repmat({''}, numAccounts, 1), ...
-                    'VariableNames', {'COD_CTA', 'Apurado?  ✎', 'Observação  ✎', 'Alíquota ICMS  ✎'} ...
-                );
-
-                % xAPURAÇÃO
-                obj.Table.mAPURACAO  = table( ...
-                    'Size', [0, 17], ...
-                    'VariableNames', {'Tipo', 'COD_CTA', 'CTA', 'Alíquota ICMS', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
-                    'VariableTypes', {'cell', 'cell', 'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'} ...
-                );
-            else
-                % ToDo:
-                % Concatenar Plano de Contas e Balencete.
+                description  = strjoin(flip(description), '  ↳  ');
+                obj.Table.mDESCRICAO(end+1, :) = {accountId, description};
             end
+
+            % xBALANCETE
+            obj.Table.mBALANCETE_GERAL = model.TableGenerator.SummaryByAccount(obj);
+            obj.Table.mBALANCETE_RESULTADO = model.TableGenerator.SummaryByAccountType(obj, '04');
+
+            % xCONTAS
+            numAccounts = height(obj.Table.mBALANCETE_RESULTADO);
+            obj.Table.mCONTAS = table( ...
+                obj.Table.mBALANCETE_RESULTADO.("COD_CTA"), ...
+                repmat(categorical("Não", ["Não", "Sim", "Sim - ICMS"]), numAccounts, 1), ...
+                repmat({''}, numAccounts, 1), ...
+                repmat({''}, numAccounts, 1), ...
+                'VariableNames', {'COD_CTA', 'Apurado?  ✎', 'Observação  ✎', 'Alíquota ICMS  ✎'} ...
+            );
+
+            % xAPURAÇÃO
+            obj.Table.mAPURACAO  = table( ...
+                'Size', [0, 17], ...
+                'VariableNames', {'Tipo', 'COD_CTA', 'CTA', 'Alíquota ICMS', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
+                'VariableTypes', {'cell', 'cell', 'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'} ...
+            );
         end
     end
 end

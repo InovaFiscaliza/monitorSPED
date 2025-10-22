@@ -332,7 +332,7 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function selectedECD = selectedECDObject(app)
+        function [selectedECD, fileIndex] = selectedECDObject(app)
             companyIndexes  = selectedFileIndexByCompany(app);
              [~, companySortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(companyIndexes)));
              companyIndexes = companyIndexes(companySortedIndexes);
@@ -386,11 +386,13 @@ classdef winECD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function updateTable(app, hTable, hTableAccountInfo, hTableCountText, hTableFilterText, tableId)
-            selectedECD = selectedECDObject(app);
+            [selectedECD, fileIndex] = selectedECDObject(app);
 
             if ~startsWith(tableId, 'm')
                 tableIdField = ['x' tableId];
-                isTableRead(selectedECD, {tableId})
+                if isTableRead(selectedECD, {tableId})
+                    ipcMainMatlabCallsHandler(app.mainApp, app, 'updateTreeView', fileIndex);
+                end
             else
                 tableIdField = tableId;
             end            

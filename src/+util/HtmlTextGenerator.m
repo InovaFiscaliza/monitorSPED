@@ -165,8 +165,8 @@ classdef (Abstract) HtmlTextGenerator
 
                 dataStruct(end+1) = struct('group', 'Hash',     'value', ecdObj.Hash);
                 dataStruct(end+1) = struct('group', 'Encoding', 'value', ecdObj.Encoding);
-                dataStruct(end+1) = struct('group', 'EncodingTest', 'value', ecdObj.EncodingInfo);                
-                dataStruct(end+1) = struct('group', 'Content',  'value', [strjoin(strtrim(splitlines(ecdObj.Content(1:min(500, numel(ecdObj.Content))))), '\n') '<br><font style="color: red;">... [texto truncado]</font>']);
+                dataStruct(end+1) = struct('group', 'Encoding Test', 'value', ecdObj.EncodingInfo);                
+                dataStruct(end+1) = struct('group', 'Content',  'value', [strjoin(strtrim(splitlines(ecdObj.Content(1:min(500, numel(ecdObj.Content))))), '\n') '<br><font style="color: gray;">... [texto truncado]</font>']);
                 
                 [ordinaryIds, ~, readOrdinaryIds] = getTableIds(ecdObj, true);
                 if isequal(ordinaryIds, readOrdinaryIds)
@@ -177,12 +177,15 @@ classdef (Abstract) HtmlTextGenerator
                 end
 
                 if ~isempty(ecdObj.GUI.warnings)
-                    dataStruct(end+1) = struct('group', 'ALERTAS ❌', 'value', strjoin(ecdObj.GUI.warnings, '<br>'));
+                    dataStruct(end+1) = struct('group', 'ALERTAS ❌', 'value', ['<font style="color: red;">' strjoin(ecdObj.GUI.warnings, '<br>') '</font>']);
                 end
                 
                 if ~ecdObj.GUI.hasTransactions
-                    hasTransactionsMessage = ['<font style="color: red;">Não foram encontrados lançamentos contábeis (I200) nesta escrituração. ' ...
-                                              'Isso indica que a empresa provavelmente está inativa, sem movimentação fiscal.</font>'];
+                    hasTransactionsMessage = [ ...
+                        '<font style="color: red;">Empresa provavelmente está inativa, sem movimentação fiscal. ' ...
+                        'Isto porque não foram encontrados contas de resultados (I050) ou lançamentos contábeis (I200) ' ...
+                        'nesta escrituração.</font>' ...
+                    ];
                     dataStruct(end+1) = struct('group', 'FATO CONTÁBIL 🚫', 'value', hasTransactionsMessage);
                 end
 
@@ -199,10 +202,10 @@ classdef (Abstract) HtmlTextGenerator
                             receitaFederalStatusIcon = '⚪';
                         end
                     end
-                    dataStruct(end+1) = struct('group', sprintf('ReceitaFederal %s', receitaFederalStatusIcon), 'value', ecdObj.Sources(end).validationMessage);
+                    dataStruct(end+1) = struct('group', sprintf('RECEITA FEDERAL %s', receitaFederalStatusIcon), 'value', ecdObj.Sources(end).validationMessage);
 
                     if numel(ecdObj.Sources) > 1
-                        dataStruct(end+1) = struct('group', 'TESTE DE DECODIFICAÇÕES', 'value', jsonencode(rmfield(ecdObj.Sources, {'file', 'period', 'validationMessage', 'validationStatus'})));
+                        dataStruct(end+1) = struct('group', 'RECEITA FEDERAL TEST', 'value', jsonencode(rmfield(ecdObj.Sources, {'file', 'period', 'validationMessage', 'validationStatus'})));
                     end
                 end                
 

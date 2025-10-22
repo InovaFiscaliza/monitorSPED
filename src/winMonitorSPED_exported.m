@@ -276,6 +276,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                         file_TreeSelectionChanged(app)
                                     end
                                 end
+
                             otherwise
                                 error('UnexpectedCall')
                         end
@@ -1200,6 +1201,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             if numel(indexes) >= 2
                 if ~isscalar(unique({app.ecdObj(indexes).CompanyId}))
                     appUtil.modalWindow(app.UIFigure, 'info', 'A mesclagem é aplicável apenas a registros de uma mesma empresa.');
+                    return
+                elseif ~isscalar(unique(year([app.ecdObj(indexes).Period])))
+                    appUtil.modalWindow(app.UIFigure, 'info', 'A mesclagem é aplicável apenas a registros de um mesmo ano fiscal.');
                     return
                 end
 
