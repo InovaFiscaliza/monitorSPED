@@ -620,6 +620,26 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
+        function file_ProjectRestart(app, indexes, updateType)
+            arguments
+                app
+                indexes
+                updateType char {mustBeMember(updateType, {'FileListChanged:Add', ...
+                                                           'FileListChanged:Del', ...
+                                                           'FileListChanged:Merge', ...
+                                                           'FilesReordered', ...
+                                                           'FileFullyLoaded', ...
+                                                           'FileStatusChecked'})}
+            end
+
+            file_TreeBuilding(app, indexes)
+
+            if contains(updateType, 'FileListChanged')
+                ipcMainMatlabCallAuxiliarApp(app, 'ECD', 'MATLAB', updateType)
+            end
+        end
+
+        %-----------------------------------------------------------------%
         function file_TreeBuilding(app, selectedNodeData)
             arguments
                 app
@@ -757,12 +777,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             context = 'File';
             indexes = file_findSelectedNodeData(app);
 
-            nonEmptyECDObject               = ~isempty(app.ecdObj);
             nonEmptySelection               = ~isempty(indexes);
             nonScalarSelection              = ~isscalar(indexes);
             reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(context).generatedFiles.lastHTMLDocFullPath);
 
-            app.menu_Button2.Enable         = nonEmptyECDObject;
             app.tool_ReadFiles.Enable       = nonEmptySelection;
             app.tool_MergeFiles.Enable      = nonEmptySelection && nonScalarSelection;
             app.tool_CheckRFB.Enable        = nonEmptySelection;
@@ -948,24 +966,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     end
             end
         end
-
-        %-----------------------------------------------------------------%
-        function userSelection = checkIfAuxiliarAppIsOpen(app, operationType)
-            userSelection    = 'Sim';
-
-            hECD  = auxAppHandle(app, "ECD");
-
-            if ~isempty(hECD) && isvalid(hECD)
-                msgQuestion   = sprintf(['A operação "%s" demanda que o módulo auxiliar "ECD" seja fechado, '          ...
-                                         'caso aberto, pois as informações consumidas por esse módulo poderá ficar desatualizada. ' ...
-                                         'Deseja continuar?'], operationType);
-                userSelection = appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 2, 2);
-
-                if userSelection == "Sim"
-                    closeModule(app.tabGroupController, "ECD",  app.General)
-                end
-            end
-        end
     end
     
 
@@ -1075,17 +1075,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         function file_FileSortMethodValueChanged(app, event)
             
             indexes = file_findSelectedNodeData(app);
-            file_TreeBuilding(app, indexes)
+            file_ProjectRestart(app, indexes, 'FilesReordered')
 
         end
 
         % Image clicked function: tool_SelectFilesToRead
         function toolbar_SelectFileToReadImageClicked(app, event)
-
-            % VALIDAÇÃO
-            if strcmp(checkIfAuxiliarAppIsOpen(app, 'INCLUIR ARQUIVO'), 'Não')
-                return
-            end
 
             d = [];
             fileFullName = {};
@@ -1172,7 +1167,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             
             % Atualiza app.file_Tree.
             indexes = file_findSelectedNodeData(app);
-            file_TreeBuilding(app, indexes)
+            file_ProjectRestart(app, indexes, 'FileListChanged:Add')
 
             delete(d)
 
@@ -1201,7 +1196,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     warnings{end+1} = sprintf('• <b>%s</b><br>%s', app.ecdObj(indexes(ii)).FileName, strjoin(app.ecdObj(indexes(ii)).GUI.warnings, '<br>'));
                 end
             end
-            file_TreeBuilding(app, indexes)
+            file_ProjectRestart(app, indexes, 'FileFullyLoaded')
 
             if event.Source == app.tool_ReadFiles && ~isempty(warnings)
                 msgWarning = ['Alarme(s) gerado(s) no processo de leitura do(s) arquivo(s):<br>', strjoin(warnings, '<br>')];
@@ -1226,15 +1221,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     return
                 end
 
-                if strcmp(checkIfAuxiliarAppIsOpen(app, 'MESCLAR FLUXOS'), 'Não')
-                    return
-                end
-
                 app.progressDialog.Visible = 'visible';
 
                 [app.ecdObj, msg] = mergeFiles(app.ecdObj, indexes, app.General.fileFolder.tempPath);
                 if isempty(msg)
-                    file_TreeBuilding(app, indexes)
+                    file_ProjectRestart(app, indexes, 'FileListChanged:Merge')
                 else
                     appUtil.modalWindow(app.UIFigure, "error", msg); 
                 end
@@ -1259,7 +1250,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 checkFileFlag = checkFileStatus(app.ecdObj(indexes), app.receitaFederalObj, app.General.File.checkStatus);
                 if checkFileFlag
-                    file_TreeBuilding(app, indexes)
+                    file_ProjectRestart(app, indexes, 'FileStatusChecked')
                 end
 
                 app.progressDialog.Visible = 'hidden';
@@ -1354,14 +1345,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             indexes = file_findSelectedNodeData(app);
 
             if ~isempty(indexes)
-                % VALIDAÇÃO
-                if strcmp(checkIfAuxiliarAppIsOpen(app, 'EXCLUIR ARQUIVO'), 'Não')
-                    return
-                end
-
-                % EXCLUIR ARQUIVO(S)                
                 app.ecdObj(indexes) = [];
-                file_TreeBuilding(app)
+                file_ProjectRestart(app, [], 'FileListChanged:Del')
             end
 
         end
@@ -1635,7 +1620,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.menu_Button2 = uibutton(app.menu_Grid, 'state');
             app.menu_Button2.ValueChangedFcn = createCallbackFcn(app, @menu_mainButtonPushed, true);
             app.menu_Button2.Tag = 'ECD';
-            app.menu_Button2.Enable = 'off';
             app.menu_Button2.Tooltip = {'Escrituração Contábil Digital'};
             app.menu_Button2.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'Zoom_32White.png');
             app.menu_Button2.IconAlignment = 'top';
@@ -1717,8 +1701,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % Create file_ContextMenu_delTree1Node
             app.file_ContextMenu_delTree1Node = uimenu(app.file_ContextMenu_Tree);
             app.file_ContextMenu_delTree1Node.MenuSelectedFcn = createCallbackFcn(app, @contextMenu_delTreeNodeSelected, true);
-            app.file_ContextMenu_delTree1Node.ForegroundColor = [1 0 0];
-            app.file_ContextMenu_delTree1Node.Text = 'Excluir';
+            app.file_ContextMenu_delTree1Node.Text = '❌ Excluir';
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';

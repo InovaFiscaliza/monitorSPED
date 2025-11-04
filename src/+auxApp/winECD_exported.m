@@ -10,7 +10,7 @@ classdef winECD_exported < matlab.apps.AppBase
         TabGroup              matlab.ui.container.TabGroup
         Tab1                  matlab.ui.container.Tab
         Tab1Grid              matlab.ui.container.GridLayout
-        EscrituraonopossuiarquivosrtfLabel  matlab.ui.control.Label
+        FinanceFacts          matlab.ui.control.Label
         Tab1Separator2        matlab.ui.control.Image
         LogButton             matlab.ui.control.Button
         ExportButton          matlab.ui.control.Button
@@ -142,10 +142,18 @@ classdef winECD_exported < matlab.apps.AppBase
                         app.popupContainer.Parent.Visible = 0;
 
                         switch operationType
+                            case {'FileListChanged:Add', ...
+                                  'FileListChanged:Del', ...
+                                  'FileListChanged:Merge'}
+                                startup_AppProperties(app)
+                                startup_InitialLayout(app)
+
                             case 'closeFcnCallFromDockModule'
                                 % ...
+
                             case 'exportECD'
                                 exportFiles(app, varargin{:})
+
                             otherwise
                                 error('UnexpectedCall')
                         end
@@ -253,13 +261,15 @@ classdef winECD_exported < matlab.apps.AppBase
             
             startup_AppProperties(app)
             startup_GUIComponents(app)
+            startup_InitialLayout(app)
 
             app.progressDialog.Visible = 'hidden';
         end
 
         %-----------------------------------------------------------------%
-        function startup_AppProperties(app)            
-            % ...
+        function startup_AppProperties(app)
+            app.projectData = app.mainApp.projectData;
+            app.ecdObj      = app.mainApp.ecdObj;
         end
 
         %-----------------------------------------------------------------%
@@ -273,9 +283,37 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable2.RowName = 'numbered';
             restartTableSelectionControl(app, app.UITable1, app.UITable1_CountText)
             restartTableSelectionControl(app, app.UITable2, app.UITable2_CountText)
+        end
 
-            % Seleção inicial:
-            if ~isempty(app.ecdObj)
+        %-----------------------------------------------------------------%
+        function startup_InitialLayout(app)
+            context = 'ECD';
+
+            nonEmptyECDObject               = ~isempty(app.ecdObj);
+            reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(context).generatedFiles.lastHTMLDocFullPath);
+
+            app.tool_GenerateReport.Enable  = nonEmptyECDObject;
+            app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated;
+
+            cellfun(@(x) set(x, 'Enable', nonEmptyECDObject), { ...
+                app.ExportButton, ...
+                app.LogButton, ...
+                app.RowHeight, ...
+                app.ColumnWidth, ...
+                app.FontFamily, ...
+                app.FontWeight, ...
+                app.FontStyle, ...
+                app.FontAlign1, ...
+                app.FontAlign2, ...
+                app.FontAlign3, ...
+                app.FontBackground, ...
+                app.FontColor, ...
+                app.FontIcon, ...
+                app.StyleDelete, ...
+                app.StyleRefresh ...
+            })
+
+            if nonEmptyECDObject
                 idsList = {app.ecdObj.CompanyId};
                 [ids, ~, idsIndexes] = unique(idsList);
 
@@ -308,6 +346,41 @@ classdef winECD_exported < matlab.apps.AppBase
                 
                 updateTimePeriodList(app, fileIndex)
                 TimePeriodListValueChanged(app)
+
+            else
+                cellfun(@(x) set(x, 'Items', {}), { ...
+                    app.CompanyNameList, ...
+                    app.TimePeriodList, ...
+                    app.SheetList, ...
+                    app.SheetView_First, ...
+                    app.SheetView_Second ...
+                })
+                
+                app.FinanceFacts.Text       = '⚠️ Pendente leitura de informação contábil';
+                app.tool_CompanyInfo.Text   = '';
+
+                if app.SheetViewStatus.Value
+                    app.SheetViewStatus.Value = false;
+                    SheetViewStatusValueChanged(app)
+                end
+
+                if ~isempty(app.UITable1.Data)
+                    set(app.UITable1, 'ColumnWidth', 'auto', ...
+                                      'ColumnName', {}, ...
+                                      'ColumnEditable', false, ...
+                                      'Data', [])
+                    app.UITable1_CountText.Text  = ' CONTAGEM : 0';
+                    app.UITable1_FilterText.Text = '0 DE 0';
+                end
+
+                if ~isempty(app.UITable2.Data)
+                    set(app.UITable2, 'ColumnWidth', 'auto', ...
+                                      'ColumnName', {}, ...
+                                      'ColumnEditable', false, ...
+                                      'Data', [])
+                    app.UITable2_CountText.Text  = ' CONTAGEM : 0';
+                    app.UITable2_FilterText.Text = '0 DE 0';
+                end
             end
         end
 
@@ -439,6 +512,8 @@ classdef winECD_exported < matlab.apps.AppBase
                 numberOfRowsText = sprintf('%d DE %d LINHA ',  height(hTable.Data), height(hTable.Data)); % PENDENTE FILTRAGEM
             end
             hTableFilterText.Text = numberOfRowsText;
+
+            updateFinanceFacts(app, selectedECD)
         end
 
         %-----------------------------------------------------------------%
@@ -467,6 +542,38 @@ classdef winECD_exported < matlab.apps.AppBase
                     addStyle(hTable, styleConfigTable.Style(ii), styleConfigTable.Target(ii), styleConfigTable.TargetIndex{ii})
                 end
             end
+        end
+
+        %-----------------------------------------------------------------%
+        function updateFinanceFacts(app, selectedECD)
+            periodResult = sum(selectedECD.Table.mBALANCETE_RESULTADO.TOTAL);
+            if periodResult < 0
+                periodResult = sprintf('&thinsp;∑&thinsp;  <font style="color:red;">R$ %.2f</font>', periodResult);
+            else
+                periodResult = sprintf('&thinsp;∑&thinsp;  R$ %.2f', periodResult);
+            end
+
+            numAccounts = height(selectedECD.Table.mBALANCETE_RESULTADO);
+            switch numAccounts
+                case 0
+                    numAccounts = '💵 <font style="color:red;">Nenhuma</font> conta movimentada';
+                case 1
+                    numAccounts = '💵 Uma única conta movimentada';
+                otherwise
+                    numAccounts = sprintf('💵 %d contas movimentadas', numAccounts);
+            end
+            
+            numAttachedFiles = sum(selectedECD.Table.x9900.('QTD_REG_BLC')(contains(selectedECD.Table.x9900.('REG_BLC'), {'J800', 'J801'})));
+            switch numAttachedFiles
+                case 0
+                    numAttachedFiles = '🔗 Escrituração <font style="color:red;">não</font> possui arquivos .rtf';
+                case 1
+                    numAttachedFiles = '🔗 Escrituração possui um arquivo .rtf';
+                otherwise
+                    numAttachedFiles = sprintf('🔗 Escrituração possui %d arquivos .rtf', numAttachedFiles);
+            end
+
+            app.FinanceFacts.Text = sprintf('%s\n%s\n%s', periodResult, numAccounts, numAttachedFiles);
         end
 
         %-----------------------------------------------------------------%
@@ -514,13 +621,16 @@ classdef winECD_exported < matlab.apps.AppBase
                 if ~isempty(rtfMsgError)
                     msgError{end+1} = rtfMsgError;
                 end
-
             end
 
             % OUTPUTFILES
             try                
                 outputfiles = [{excelTempName}, rtfTempFiles];
                 outputfiles(~isfile(outputfiles)) = [];
+
+                if isempty(outputfiles)
+                    error('Nenhum arquivo para exportar.')
+                end
 
                 if isscalar(outputfiles)
                     [~, ~, fileExt] = fileparts(outputfiles{1});
@@ -564,9 +674,7 @@ classdef winECD_exported < matlab.apps.AppBase
         % Code that executes after component creation
         function startupFcn(app, mainApp, filterTable, rfDataHubAnnotation)
             
-            app.mainApp     = mainApp;
-            app.projectData = mainApp.projectData;
-            app.ecdObj      = mainApp.ecdObj;
+            app.mainApp = mainApp;
 
             if app.isDocked
                 app.GridLayout.Padding(4)  = 30;
@@ -983,17 +1091,37 @@ classdef winECD_exported < matlab.apps.AppBase
             if ~isempty(renderedTableIDStyleIndex)
                 switch event.Source
                     case app.StyleDelete
-                        styleIndex = find(cellfun(@(x) isequal(clickedTable.Selection, x), clickedTable.StyleConfigurations.TargetIndex));
-                        if ~isempty(styleIndex)             
-                            removeStyle(clickedTable, styleIndex)
-        
+                        currentStyleTable   = selectedECD.GUI.tableView(renderedTableIDStyleIndex).style;
+                        userCellSelection   = clickedTable.Selection;
+                        rerenderizationFlag = false;
+
+                        for ii = 1:height(userCellSelection)
+                            cellSelection = userCellSelection(ii,:);
+
+                            for jj = height(currentStyleTable):-1:1
+                                [~, cellSelectionIndex] = ismember(cellSelection, currentStyleTable.TargetIndex{jj}, "rows");
+                                
+                                if cellSelectionIndex
+                                    rerenderizationFlag = true;
+                                    newTargetIndexes    = setdiff(currentStyleTable.TargetIndex{jj}, cellSelection, "rows");
+
+                                    if isempty(newTargetIndexes)
+                                        currentStyleTable(jj, :) = [];
+                                    else
+                                        currentStyleTable.TargetIndex{jj} = newTargetIndexes;
+                                    end
+                                end
+                            end
+                        end
+
+                        if rerenderizationFlag
+                            selectedECD.GUI.tableView(renderedTableIDStyleIndex).style = currentStyleTable;
+                            applyTableStyle(app, selectedECD, clickedTable, tableId)
+
                             if strcmp(app.SheetView_First.Value, app.SheetView_Second.Value)
                                 otherTable = setdiff([app.UITable1, app.UITable2], clickedTable);
-                                removeStyle(otherTable, styleIndex)
+                                applyTableStyle(app, selectedECD, otherTable, tableId)
                             end
-                
-                            selectedECD.GUI.tableView(renderedTableIDStyleIndex).id = tableId;
-                            selectedECD.GUI.tableView(renderedTableIDStyleIndex).style = clickedTable.StyleConfigurations;
                         end
 
                     case app.StyleRefresh
@@ -1141,12 +1269,13 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_CompanyInfo.Layout.Row = [1 3];
             app.tool_CompanyInfo.Layout.Column = 1;
             app.tool_CompanyInfo.Interpreter = 'html';
-            app.tool_CompanyInfo.Text = {'<font style="font-size: 11px; font-weight: bold;">NOME DA EMPRESA</font> CNPJ 10.101.101/0001-02 '; '01/01/2023 - 31/12/2023 '};
+            app.tool_CompanyInfo.Text = '';
 
             % Create tool_GenerateReport
             app.tool_GenerateReport = uiimage(app.toolGrid);
             app.tool_GenerateReport.ScaleMethod = 'none';
             app.tool_GenerateReport.ImageClickedFcn = createCallbackFcn(app, @Toolbar_ReportImageClicked, true);
+            app.tool_GenerateReport.Enable = 'off';
             app.tool_GenerateReport.Tooltip = {'Gera relatório análise'};
             app.tool_GenerateReport.Layout.Row = 2;
             app.tool_GenerateReport.Layout.Column = 2;
@@ -1154,6 +1283,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create tool_UploadFinalFile
             app.tool_UploadFinalFile = uiimage(app.toolGrid);
+            app.tool_UploadFinalFile.Enable = 'off';
             app.tool_UploadFinalFile.Layout.Row = 2;
             app.tool_UploadFinalFile.Layout.Column = 3;
             app.tool_UploadFinalFile.ImageSource = 'Up_24.png';
@@ -1193,7 +1323,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable1_FilterText.FontColor = [0.502 0.502 0.502];
             app.UITable1_FilterText.Layout.Row = 8;
             app.UITable1_FilterText.Layout.Column = [5 6];
-            app.UITable1_FilterText.Text = '0 DE 0 ';
+            app.UITable1_FilterText.Text = '0 DE 0';
 
             % Create UITable1_AccountInfo
             app.UITable1_AccountInfo = uilabel(app.GridLayout);
@@ -1343,6 +1473,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ExportButton.Icon = 'Export_16.png';
             app.ExportButton.IconAlignment = 'top';
             app.ExportButton.FontSize = 10;
+            app.ExportButton.Enable = 'off';
             app.ExportButton.Layout.Row = [1 2];
             app.ExportButton.Layout.Column = 6;
             app.ExportButton.Text = {'.xlsx'; '.rtf'};
@@ -1353,6 +1484,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.LogButton.Icon = 'LOG_32.png';
             app.LogButton.IconAlignment = 'top';
             app.LogButton.FontSize = 10;
+            app.LogButton.Enable = 'off';
             app.LogButton.Layout.Row = [1 2];
             app.LogButton.Layout.Column = 7;
             app.LogButton.Text = 'Leitura';
@@ -1364,14 +1496,13 @@ classdef winECD_exported < matlab.apps.AppBase
             app.Tab1Separator2.Layout.Column = 8;
             app.Tab1Separator2.ImageSource = 'LineV.svg';
 
-            % Create EscrituraonopossuiarquivosrtfLabel
-            app.EscrituraonopossuiarquivosrtfLabel = uilabel(app.Tab1Grid);
-            app.EscrituraonopossuiarquivosrtfLabel.VerticalAlignment = 'top';
-            app.EscrituraonopossuiarquivosrtfLabel.WordWrap = 'on';
-            app.EscrituraonopossuiarquivosrtfLabel.FontSize = 11;
-            app.EscrituraonopossuiarquivosrtfLabel.Layout.Row = [1 2];
-            app.EscrituraonopossuiarquivosrtfLabel.Layout.Column = 9;
-            app.EscrituraonopossuiarquivosrtfLabel.Text = '🔗 Escrituração não possui arquivos .rtf';
+            % Create FinanceFacts
+            app.FinanceFacts = uilabel(app.Tab1Grid);
+            app.FinanceFacts.FontSize = 11;
+            app.FinanceFacts.Layout.Row = [1 2];
+            app.FinanceFacts.Layout.Column = 9;
+            app.FinanceFacts.Interpreter = 'html';
+            app.FinanceFacts.Text = '⚠️ Pendente leitura de informação contábil';
 
             % Create Tab2
             app.Tab2 = uitab(app.TabGroup);
@@ -1463,6 +1594,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.RowHeight.ValueDisplayFormat = '%d';
             app.RowHeight.ValueChangedFcn = createCallbackFcn(app, @TableRowHeightChanged, true);
             app.RowHeight.FontSize = 11;
+            app.RowHeight.Enable = 'off';
             app.RowHeight.Layout.Row = 1;
             app.RowHeight.Layout.Column = 6;
 
@@ -1479,6 +1611,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ColumnWidth = uidropdown(app.Tab2Grid);
             app.ColumnWidth.Items = {'', 'auto', 'fit', '1x'};
             app.ColumnWidth.ValueChangedFcn = createCallbackFcn(app, @TableColumnWidthChanged, true);
+            app.ColumnWidth.Enable = 'off';
             app.ColumnWidth.FontSize = 11;
             app.ColumnWidth.BackgroundColor = [1 1 1];
             app.ColumnWidth.Layout.Row = 1;
@@ -1505,6 +1638,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontFamily = uidropdown(app.Tab2Grid);
             app.FontFamily.Items = {};
             app.FontFamily.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
+            app.FontFamily.Enable = 'off';
             app.FontFamily.Tooltip = {'Fonte'};
             app.FontFamily.FontSize = 11;
             app.FontFamily.BackgroundColor = [1 1 1];
@@ -1518,6 +1652,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontWeight.BackgroundColor = [0.9804 0.9804 0.9804];
             app.FontWeight.FontName = 'Century';
             app.FontWeight.FontWeight = 'bold';
+            app.FontWeight.Enable = 'off';
             app.FontWeight.Layout.Row = 2;
             app.FontWeight.Layout.Column = 9;
             app.FontWeight.Text = 'B';
@@ -1528,6 +1663,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontStyle.BackgroundColor = [0.9804 0.9804 0.9804];
             app.FontStyle.FontName = 'Century';
             app.FontStyle.FontAngle = 'italic';
+            app.FontStyle.Enable = 'off';
             app.FontStyle.Layout.Row = 2;
             app.FontStyle.Layout.Column = 10;
             app.FontStyle.Text = 'I ';
@@ -1536,6 +1672,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign1 = uiimage(app.Tab2Grid);
             app.FontAlign1.ScaleMethod = 'none';
             app.FontAlign1.ImageClickedFcn = createCallbackFcn(app, @TableStyleChanged, true);
+            app.FontAlign1.Enable = 'off';
             app.FontAlign1.Tooltip = {'Sublinhado'};
             app.FontAlign1.Layout.Row = 2;
             app.FontAlign1.Layout.Column = 11;
@@ -1545,6 +1682,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign2 = uiimage(app.Tab2Grid);
             app.FontAlign2.ScaleMethod = 'none';
             app.FontAlign2.ImageClickedFcn = createCallbackFcn(app, @TableStyleChanged, true);
+            app.FontAlign2.Enable = 'off';
             app.FontAlign2.Tooltip = {'Sublinhado'};
             app.FontAlign2.Layout.Row = 2;
             app.FontAlign2.Layout.Column = 12;
@@ -1554,6 +1692,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign3 = uiimage(app.Tab2Grid);
             app.FontAlign3.ScaleMethod = 'none';
             app.FontAlign3.ImageClickedFcn = createCallbackFcn(app, @TableStyleChanged, true);
+            app.FontAlign3.Enable = 'off';
             app.FontAlign3.Tooltip = {'Sublinhado'};
             app.FontAlign3.Layout.Row = 2;
             app.FontAlign3.Layout.Column = 13;
@@ -1564,6 +1703,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontBackground.Value = [1 0 0.0118];
             app.FontBackground.Icon = 'fill';
             app.FontBackground.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
+            app.FontBackground.Enable = 'off';
             app.FontBackground.Layout.Row = 2;
             app.FontBackground.Layout.Column = 14;
             app.FontBackground.BackgroundColor = [1 1 1];
@@ -1573,6 +1713,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontColor.Value = [0 0 0.0118];
             app.FontColor.Icon = 'text';
             app.FontColor.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
+            app.FontColor.Enable = 'off';
             app.FontColor.Layout.Row = 2;
             app.FontColor.Layout.Column = 15;
             app.FontColor.BackgroundColor = [1 1 1];
@@ -1588,6 +1729,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontIcon = uidropdown(app.Tab2Grid);
             app.FontIcon.Items = {'', 'question', 'info', 'success', 'warning', 'error', 'none'};
             app.FontIcon.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
+            app.FontIcon.Enable = 'off';
             app.FontIcon.FontSize = 11;
             app.FontIcon.BackgroundColor = [1 1 1];
             app.FontIcon.Layout.Row = 1;
@@ -1607,15 +1749,17 @@ classdef winECD_exported < matlab.apps.AppBase
             app.StyleDelete = uiimage(app.Tab2Grid);
             app.StyleDelete.ScaleMethod = 'none';
             app.StyleDelete.ImageClickedFcn = createCallbackFcn(app, @TableStyleDeleteOrRefresh, true);
+            app.StyleDelete.Enable = 'off';
             app.StyleDelete.Tooltip = {'Exclui estilo relacionado às células selecionadas'};
             app.StyleDelete.Layout.Row = 2;
             app.StyleDelete.Layout.Column = 19;
-            app.StyleDelete.ImageSource = 'delete.svg';
+            app.StyleDelete.ImageSource = 'clear_all_outputs_16-3d3c482971dfdb6852db717989f585fa.png';
 
             % Create StyleRefresh
             app.StyleRefresh = uiimage(app.Tab2Grid);
             app.StyleRefresh.ScaleMethod = 'none';
             app.StyleRefresh.ImageClickedFcn = createCallbackFcn(app, @TableStyleDeleteOrRefresh, true);
+            app.StyleRefresh.Enable = 'off';
             app.StyleRefresh.Tooltip = {'Retorna às configurações iniciais de estilo'};
             app.StyleRefresh.Layout.Row = 2;
             app.StyleRefresh.Layout.Column = 20;

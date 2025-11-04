@@ -30,7 +30,6 @@ classdef dockECDExport_exported < matlab.apps.AppBase
         isDocked = true
 
         mainApp
-        projectData
         inputArgs
     end
     
@@ -41,9 +40,8 @@ classdef dockECDExport_exported < matlab.apps.AppBase
         % Code that executes after component creation
         function startupFcn(app, mainApp, context, indexes)
             
-            app.mainApp     = mainApp;
-            app.projectData = app.mainApp.projectData;            
-            app.inputArgs   = struct('context', context, 'indexes', indexes);
+            app.mainApp   = mainApp;       
+            app.inputArgs = struct('context', context, 'indexes', indexes);
 
             expand(app.Tree, 'all')
             
