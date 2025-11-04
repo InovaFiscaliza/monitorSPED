@@ -32,8 +32,10 @@ classdef dockReportLib_exported < matlab.apps.AppBase
         isDocked = true
 
         mainApp
-        projectData
+        callingApp
         inputArgs
+
+        projectData
     end
     
     
@@ -79,11 +81,12 @@ classdef dockReportLib_exported < matlab.apps.AppBase
     methods (Access = private)
 
         % Code that executes after component creation
-        function startupFcn(app, mainApp, context, indexes)
+        function startupFcn(app, mainApp, callingApp, context, indexes)
             
             app.mainApp     = mainApp;
-            app.projectData = app.mainApp.projectData;            
+            app.callingApp  = callingApp;
             app.inputArgs   = struct('context', context, 'indexes', indexes);
+            app.projectData = app.mainApp.projectData;
 
             updatePanel(app, context)
             

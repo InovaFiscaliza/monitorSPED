@@ -5,6 +5,8 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         UIFigure           matlab.ui.Figure
         GridLayout         matlab.ui.container.GridLayout
         Document           matlab.ui.container.GridLayout
+        icmsTypeLabel_2    matlab.ui.control.Label
+        icmsType_2         matlab.ui.control.DropDown
         NextSelection      matlab.ui.control.Image
         PreviousSelection  matlab.ui.control.Image
         freenote           matlab.ui.control.TextArea
@@ -40,7 +42,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         taxType            matlab.ui.control.DropDown
         taxTypeLabel       matlab.ui.control.Label
         accountInfo        matlab.ui.control.Label
-        buttonOK           matlab.ui.control.Button
+        btnOK              matlab.ui.control.Button
         btnClose           matlab.ui.control.Image
     end
 
@@ -51,8 +53,71 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         isDocked = true
 
         mainApp
-        projectData
+        callingApp        
         inputArgs
+
+        projectData
+    end
+    
+
+    methods (Access = private)
+        %-----------------------------------------------------------------%        
+        function updateLayout(app, index, accountName)
+            selectedECD = app.mainApp.ecdObj(index);
+
+            [~, accountNameIndex] = ismember(accountName, selectedECD.Table.mCONTAS_ANOTACAO.("COD_CTA"));
+            [~, accountDescriptionIndex] = ismember(accountName, selectedECD.Table.mCONTAS_DESCRICAO.("COD_CTA"));
+
+            app.accountInfo.Text = sprintf('<font style="font-size: 12px;">Conta nº <b>%s</b></font><br><br>%s', ...
+                accountName, ...
+                textFormatGUI.strToIndentedTree(selectedECD.Table.mCONTAS_DESCRICAO.('DESCRIÇÃO'){accountDescriptionIndex}) ...
+            );
+
+            if accountNameIndex
+                set(app.taxType,  'Enable', true, 'Value', char(selectedECD.Table.mCONTAS_ANOTACAO.('Apurado?  ✎')(accountNameIndex)))
+                set(app.freenote, 'Enable', true, 'Value', selectedECD.Table.mCONTAS_ANOTACAO.('Observação  ✎'){accountNameIndex})
+                parseICMS(app, selectedECD, accountNameIndex)
+
+            else
+                set(app.taxType,  'Enable', false, 'Value', '-')
+                set(app.freenote, 'Enable', false, 'Value', '')
+                % ...
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function parseICMS(app, selectedECD, accountNameIndex)
+            icms = jsondecode(selectedECD.Table.mCONTAS_ANOTACAO.('Alíquota ICMS  ✎'){accountNameIndex});
+            
+            switch icms.type
+                case 'Manual - Anual'
+                    app.icmsType.Layout.Column = [1 4];
+                    app.icmsTypeLabel_2.Visible = "off";
+                    app.icmsType_2.Visible = "off";
+                    set(findobj(app.icmsMonthsGrid.Children, 'Type', 'uispinner'), 'Enable', 'off')
+                    set(setdiff(findobj(app.icmsMonthsGrid.Children, 'Type', 'uispinner'), app.icmsMonth1), 'Value', app.icmsMonth1.Value)
+                    app.icmsMonth1.Enable = "on";
+
+                case 'Manual - Mês a mês'
+                    app.icmsType.Layout.Column = [1 5];
+                    app.icmsTypeLabel_2.Visible = "on";
+                    app.icmsType_2.Visible = "on";
+                    set(findobj(app.icmsMonthsGrid.Children, 'Type', 'uispinner'), 'Enable', 'on')
+
+                case 'Tabela histórica de referência do ICMS (por UF)'
+                    app.icmsType.Layout.Column = [1 5];
+                    app.icmsTypeLabel_2.Visible = "on";
+                    app.icmsType_2.Visible = "on";
+                    set(findobj(app.icmsMonthsGrid.Children, 'Type', 'uispinner'), 'Enable', 'off')
+
+                    state = selectedECD.State;
+                    for ii = 1:12
+                        period = datetime([year(selectedECD.Period(1)), ii, 1]);
+                        rateType = 'mean'; % 'mean' | 'eomonth'
+                        calculateINSSRate(app.projectData, state, period, rateType)
+                    end
+            end
+        end
     end
     
 
@@ -60,10 +125,14 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
     methods (Access = private)
 
         % Code that executes after component creation
-        function startupFcn(app, mainApp, context, indexes)
+        function startupFcn(app, mainApp, callingApp, context, index, accountName)
             
-            app.mainApp   = mainApp;       
-            app.inputArgs = struct('context', context, 'indexes', indexes);
+            app.mainApp     = mainApp;
+            app.callingApp  = callingApp;            
+            app.inputArgs   = struct('context', context, 'index', index, 'account', accountName);
+            app.projectData = mainApp.projectData;
+
+            updateLayout(app, index, accountName)
             
         end
 
@@ -77,23 +146,35 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             
         end
 
-        % Button pushed function: buttonOK
-        function buttonOKButtonPushed(app, event)
+        % Button pushed function: btnOK
+        function btnOKButtonPushed(app, event)
             
             if isempty(app.Tree.CheckedNodes)
-                app.buttonOK.Enable = "off";
+                app.btnOK.Enable = "off";
                 return
             end
 
             context = app.inputArgs.context;
-            indexes = app.inputArgs.indexes;
+            index = app.inputArgs.index;
 
             tableIdFields = {app.Tree.CheckedNodes.Tag};
             tableIdFields(cellfun(@(x) isempty(x), tableIdFields)) = [];
             tableIdFields = [sort(tableIdFields(startsWith(tableIdFields, 'x'))), sort(tableIdFields(startsWith(tableIdFields, 'm')))];
 
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'exportECD', context, indexes, tableIdFields)
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'exportECD', context, index, tableIdFields)
 
+        end
+
+        % Image clicked function: NextSelection, PreviousSelection
+        function PreviousSelectionImageClicked(app, event)
+            
+        end
+
+        % Value changed function: freenote, icmsMonth1, icmsMonth10, 
+        % ...and 13 other components
+        function freenoteValueChanged(app, event)
+            value = app.freenote.Value;
+            
         end
     end
 
@@ -110,7 +191,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             if isempty(Container)
                 app.UIFigure = uifigure('Visible', 'off');
                 app.UIFigure.AutoResizeChildren = 'off';
-                app.UIFigure.Position = [92 92 460 475];
+                app.UIFigure.Position = [92 92 460 540];
                 app.UIFigure.Name = 'monitorSPED';
                 app.UIFigure.Icon = 'icon_16.png';
                 app.UIFigure.CloseRequestFcn = createCallbackFcn(app, @closeFcn, true);
@@ -159,15 +240,15 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.Document.Layout.Column = [1 2];
             app.Document.BackgroundColor = [1 1 1];
 
-            % Create buttonOK
-            app.buttonOK = uibutton(app.Document, 'push');
-            app.buttonOK.ButtonPushedFcn = createCallbackFcn(app, @buttonOKButtonPushed, true);
-            app.buttonOK.Tag = 'OK';
-            app.buttonOK.IconAlignment = 'right';
-            app.buttonOK.BackgroundColor = [0.9804 0.9804 0.9804];
-            app.buttonOK.Layout.Row = 10;
-            app.buttonOK.Layout.Column = 5;
-            app.buttonOK.Text = 'OK';
+            % Create btnOK
+            app.btnOK = uibutton(app.Document, 'push');
+            app.btnOK.ButtonPushedFcn = createCallbackFcn(app, @btnOKButtonPushed, true);
+            app.btnOK.Tag = 'OK';
+            app.btnOK.IconAlignment = 'right';
+            app.btnOK.BackgroundColor = [0.9804 0.9804 0.9804];
+            app.btnOK.Layout.Row = 10;
+            app.btnOK.Layout.Column = 5;
+            app.btnOK.Text = 'OK';
 
             % Create accountInfo
             app.accountInfo = uilabel(app.Document);
@@ -177,7 +258,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.accountInfo.Layout.Row = 1;
             app.accountInfo.Layout.Column = [1 5];
             app.accountInfo.Interpreter = 'html';
-            app.accountInfo.Text = {'<font style="font-size: 12px;">Conta nº <b>1.1.7.0002.02</b></font>'; 'Provisão de Impostos  ↳  CONTRATOS DE ALUGUEL  - IFRS 16  ↳  Despesa do Exercicio Seguinte  ↳  Despesas a Apropriar no Exercicio Seguinte - IFRS15  ↳  Custos de instalação a apropriar - até 1 ano - IFRS15 - PL  ↳  Custos de comissões a apropriar - até 1 ano - IFRS15 - PL'};
+            app.accountInfo.Text = '';
 
             % Create taxTypeLabel
             app.taxTypeLabel = uilabel(app.Document);
@@ -190,6 +271,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             % Create taxType
             app.taxType = uidropdown(app.Document);
             app.taxType.Items = {'-', 'Não', 'Sim', 'Sim - ICMS'};
+            app.taxType.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.taxType.FontSize = 11;
             app.taxType.BackgroundColor = [1 1 1];
             app.taxType.Layout.Row = 3;
@@ -207,10 +289,11 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             % Create icmsType
             app.icmsType = uidropdown(app.Document);
             app.icmsType.Items = {'Manual - Anual', 'Manual - Mês a mês', 'Tabela histórica de referência do ICMS (por UF)'};
+            app.icmsType.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.icmsType.FontSize = 11;
             app.icmsType.BackgroundColor = [1 1 1];
             app.icmsType.Layout.Row = 5;
-            app.icmsType.Layout.Column = [1 5];
+            app.icmsType.Layout.Column = [1 4];
             app.icmsType.Value = 'Tabela histórica de referência do ICMS (por UF)';
 
             % Create icmsMonthsPanel
@@ -236,6 +319,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth1.Step = 0.5;
             app.icmsMonth1.Limits = [0 100];
             app.icmsMonth1.ValueDisplayFormat = '%.1f';
+            app.icmsMonth1.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.icmsMonth1.FontSize = 11;
             app.icmsMonth1.Enable = 'off';
             app.icmsMonth1.Layout.Row = 1;
@@ -253,6 +337,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth2.Step = 0.5;
             app.icmsMonth2.Limits = [0 100];
             app.icmsMonth2.ValueDisplayFormat = '%.1f';
+            app.icmsMonth2.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.icmsMonth2.FontSize = 11;
             app.icmsMonth2.Enable = 'off';
             app.icmsMonth2.Layout.Row = 2;
@@ -270,6 +355,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth3.Step = 0.5;
             app.icmsMonth3.Limits = [0 100];
             app.icmsMonth3.ValueDisplayFormat = '%.1f';
+            app.icmsMonth3.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.icmsMonth3.FontSize = 11;
             app.icmsMonth3.Enable = 'off';
             app.icmsMonth3.Layout.Row = 3;
@@ -287,6 +373,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth4.Step = 0.5;
             app.icmsMonth4.Limits = [0 100];
             app.icmsMonth4.ValueDisplayFormat = '%.1f';
+            app.icmsMonth4.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.icmsMonth4.FontSize = 11;
             app.icmsMonth4.Enable = 'off';
             app.icmsMonth4.Layout.Row = 1;
@@ -304,6 +391,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth5.Step = 0.5;
             app.icmsMonth5.Limits = [0 100];
             app.icmsMonth5.ValueDisplayFormat = '%.1f';
+            app.icmsMonth5.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.icmsMonth5.FontSize = 11;
             app.icmsMonth5.Enable = 'off';
             app.icmsMonth5.Layout.Row = 2;
@@ -321,6 +409,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth6.Step = 0.5;
             app.icmsMonth6.Limits = [0 100];
             app.icmsMonth6.ValueDisplayFormat = '%.1f';
+            app.icmsMonth6.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.icmsMonth6.FontSize = 11;
             app.icmsMonth6.Enable = 'off';
             app.icmsMonth6.Layout.Row = 3;
@@ -338,6 +427,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth7.Step = 0.5;
             app.icmsMonth7.Limits = [0 100];
             app.icmsMonth7.ValueDisplayFormat = '%.1f';
+            app.icmsMonth7.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.icmsMonth7.FontSize = 11;
             app.icmsMonth7.Enable = 'off';
             app.icmsMonth7.Layout.Row = 1;
@@ -355,6 +445,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth8.Step = 0.5;
             app.icmsMonth8.Limits = [0 100];
             app.icmsMonth8.ValueDisplayFormat = '%.1f';
+            app.icmsMonth8.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.icmsMonth8.FontSize = 11;
             app.icmsMonth8.Enable = 'off';
             app.icmsMonth8.Layout.Row = 2;
@@ -372,6 +463,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth9.Step = 0.5;
             app.icmsMonth9.Limits = [0 100];
             app.icmsMonth9.ValueDisplayFormat = '%.1f';
+            app.icmsMonth9.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.icmsMonth9.FontSize = 11;
             app.icmsMonth9.Enable = 'off';
             app.icmsMonth9.Layout.Row = 3;
@@ -389,6 +481,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth10.Step = 0.5;
             app.icmsMonth10.Limits = [0 100];
             app.icmsMonth10.ValueDisplayFormat = '%.1f';
+            app.icmsMonth10.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.icmsMonth10.FontSize = 11;
             app.icmsMonth10.Enable = 'off';
             app.icmsMonth10.Layout.Row = 1;
@@ -406,6 +499,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth11.Step = 0.5;
             app.icmsMonth11.Limits = [0 100];
             app.icmsMonth11.ValueDisplayFormat = '%.1f';
+            app.icmsMonth11.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.icmsMonth11.FontSize = 11;
             app.icmsMonth11.Enable = 'off';
             app.icmsMonth11.Layout.Row = 2;
@@ -423,6 +517,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth12.Step = 0.5;
             app.icmsMonth12.Limits = [0 100];
             app.icmsMonth12.ValueDisplayFormat = '%.1f';
+            app.icmsMonth12.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.icmsMonth12.FontSize = 11;
             app.icmsMonth12.Enable = 'off';
             app.icmsMonth12.Layout.Row = 3;
@@ -438,23 +533,44 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
 
             % Create freenote
             app.freenote = uitextarea(app.Document);
+            app.freenote.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.freenote.FontSize = 11;
             app.freenote.Layout.Row = 8;
             app.freenote.Layout.Column = [1 5];
 
             % Create PreviousSelection
             app.PreviousSelection = uiimage(app.Document);
-            app.PreviousSelection.Tooltip = {'Navega para o produto anterior'};
+            app.PreviousSelection.ImageClickedFcn = createCallbackFcn(app, @PreviousSelectionImageClicked, true);
+            app.PreviousSelection.Tooltip = {'Navega para a conta anterior'};
             app.PreviousSelection.Layout.Row = 10;
             app.PreviousSelection.Layout.Column = 1;
             app.PreviousSelection.ImageSource = 'Previous_32.png';
 
             % Create NextSelection
             app.NextSelection = uiimage(app.Document);
-            app.NextSelection.Tooltip = {'Navega para o produto posterior'};
+            app.NextSelection.ImageClickedFcn = createCallbackFcn(app, @PreviousSelectionImageClicked, true);
+            app.NextSelection.Tooltip = {'Navega para a conta posterior'};
             app.NextSelection.Layout.Row = 10;
             app.NextSelection.Layout.Column = 2;
             app.NextSelection.ImageSource = 'After_32.png';
+
+            % Create icmsType_2
+            app.icmsType_2 = uidropdown(app.Document);
+            app.icmsType_2.Items = {};
+            app.icmsType_2.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
+            app.icmsType_2.FontSize = 11;
+            app.icmsType_2.BackgroundColor = [1 1 1];
+            app.icmsType_2.Layout.Row = 5;
+            app.icmsType_2.Layout.Column = 5;
+            app.icmsType_2.Value = {};
+
+            % Create icmsTypeLabel_2
+            app.icmsTypeLabel_2 = uilabel(app.Document);
+            app.icmsTypeLabel_2.VerticalAlignment = 'bottom';
+            app.icmsTypeLabel_2.FontSize = 11;
+            app.icmsTypeLabel_2.Layout.Row = 4;
+            app.icmsTypeLabel_2.Layout.Column = 5;
+            app.icmsTypeLabel_2.Text = 'UF:';
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';

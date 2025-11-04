@@ -30,6 +30,7 @@ classdef dockECDExport_exported < matlab.apps.AppBase
         isDocked = true
 
         mainApp
+        callingApp
         inputArgs
     end
     
@@ -38,10 +39,11 @@ classdef dockECDExport_exported < matlab.apps.AppBase
     methods (Access = private)
 
         % Code that executes after component creation
-        function startupFcn(app, mainApp, context, indexes)
+        function startupFcn(app, mainApp, callingApp, context, index)
             
-            app.mainApp   = mainApp;       
-            app.inputArgs = struct('context', context, 'indexes', indexes);
+            app.mainApp    = mainApp;       
+            app.callingApp = callingApp;
+            app.inputArgs  = struct('context', context, 'index', index);
 
             expand(app.Tree, 'all')
             
@@ -66,13 +68,13 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             end
 
             context = app.inputArgs.context;
-            indexes = app.inputArgs.indexes;
+            index = app.inputArgs.index;
 
             tableIdFields = {app.Tree.CheckedNodes.Tag};
             tableIdFields(cellfun(@(x) isempty(x), tableIdFields)) = [];
             tableIdFields = [sort(tableIdFields(startsWith(tableIdFields, 'x'))), sort(tableIdFields(startsWith(tableIdFields, 'm')))];
 
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'exportECD', context, indexes, tableIdFields)
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'exportECD', context, index, tableIdFields)
 
         end
 

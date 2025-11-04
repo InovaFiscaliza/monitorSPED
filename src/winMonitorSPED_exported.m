@@ -102,6 +102,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         %   comunicação entre apps secundários e, também, redirecionando os 
         %   eventos JS quando o app secundário é executado em modo DOCK (e, 
         %   por essa razão, usa o "jsBackDoor" do app principal).
+        %
+        % • ipcMainMatlabOpenPopupApp
+        %   Abre um app secundário como popup, no mainApp.
         %-----------------------------------------------------------------%
         function ipcMainJSEventsHandler(app, event)
             try
@@ -220,7 +223,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             try
                 switch class(callingApp)
-                    % CONFIG
+                    % auxApp.winConfig
                     case {'auxApp.winConfig', 'auxApp.winConfig_exported'}
                         switch operationType
                             case 'closeFcn'
@@ -257,7 +260,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 error('UnexpectedCall')
                         end
 
-                    % ECD
+                    % auxApp.winECD
                     case {'auxApp.winECD', 'auxApp.winECD_exported'}
                         switch operationType
                             case 'closeFcn'
@@ -281,7 +284,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 error('UnexpectedCall')
                         end
 
-                    % dockReportLib
+                    % auxApp.dockReportLib
                     case {'auxApp.dockReportLib', 'auxApp.dockReportLib_exported'}
                         switch operationType
                             case 'closeFcn'
@@ -307,6 +310,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 error('UnexpectedCall')
                         end
 
+                    % auxApp.dockECDExport
                     case {'auxApp.dockECDExport', 'auxApp.dockECDExport_exported'}
                         switch operationType
                             case 'closeFcn'
@@ -324,9 +328,26 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             otherwise
                                 error('UnexpectedCall')
                         end
+
+                    % auxApp.dockECDAccount
+                    case {'auxApp.dockECDAccount', 'auxApp.dockECDAccount_exported'}
+                        switch operationType
+                            case 'closeFcn'
+                                context  = varargin{1};
+                                varargin = [{'closeFcnCallFromDockModule'}, varargin(2:end)];
+                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
+
+                            case 'accountEdited'
+                                context  = varargin{1};
+                                varargin = [{operationType}, varargin(2:end)];
+                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
+
+                            otherwise
+                                error('UnexpectedCall')
+                        end
     
                     otherwise
-                        error('UnexpectedCall')
+                        error('UnexpectedCaller')
                 end
 
             catch ME
@@ -354,6 +375,43 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         ipcSecundaryJSEventsHandler(hAuxApp, event)
                 end
             end
+        end
+
+        %-----------------------------------------------------------------%
+        function ipcMainMatlabOpenPopupApp(app, callingApp, auxAppName, varargin)
+            arguments
+                app
+                callingApp
+                auxAppName char {mustBeMember(auxAppName, {'ReportLib', 'ECDExport', 'ECDAccount'})}
+            end
+
+            arguments (Repeating)
+                varargin 
+            end
+
+            switch auxAppName
+                case 'ReportLib'
+                    screenWidth  = 460;
+                    screenHeight = 308;
+                case 'ECDExport'
+                    screenWidth  = 460;
+                    screenHeight = 404;
+                case 'ECDAccount'
+                    screenWidth  = 460;
+                    screenHeight = 540;
+            end
+
+            ui.PopUpContainer(callingApp, class.Constants.appName, screenWidth, screenHeight)
+
+            % Executa o app auxiliar.
+            inputArguments = [{app, callingApp}, varargin];
+            
+            if app.General.operationMode.Debug
+                eval(sprintf('auxApp.dock%s(inputArguments{:})', auxAppName))
+            else
+                eval(sprintf('auxApp.dock%s_exported(callingApp.popupContainer, inputArguments{:})', auxAppName))
+                callingApp.popupContainer.Parent.Visible = 1;
+            end            
         end
     end
     
@@ -577,37 +635,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             DataHubWarningLamp(app)
             app.file_FileSortMethod.Value = app.General.File.sortMethod;
             addStyle(app.file_Tree, uistyle('Interpreter', 'html'))
-        end
-
-        %-----------------------------------------------------------------%
-        function menu_LayoutPopupApp(app, auxiliarApp, varargin)
-            arguments
-                app
-                auxiliarApp char {mustBeMember(auxiliarApp, {'ReportLib'})}
-            end
-
-            arguments (Repeating)
-                varargin 
-            end
-
-            % Inicialmente ajusta as dimensões do container.
-            switch auxiliarApp
-                case 'ReportLib'
-                    screenWidth  = 460;
-                    screenHeight = 308;
-            end
-
-            ui.PopUpContainer(app, class.Constants.appName, screenWidth, screenHeight)
-
-            % Executa o app auxiliar.
-            inputArguments = [{app}, varargin];
-            
-            if app.General.operationMode.Debug
-                eval(sprintf('auxApp.dock%s(inputArguments{:})', auxiliarApp))
-            else
-                eval(sprintf('auxApp.dock%s_exported(app.popupContainer, inputArguments{:})', auxiliarApp))
-                app.popupContainer.Parent.Visible = 1;
-            end            
         end
 
         %-----------------------------------------------------------------%
@@ -1276,7 +1303,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     end
                 end
 
-                menu_LayoutPopupApp(app, 'ReportLib', 'File', indexes)
+                ipcMainMatlabOpenPopupApp(app, app, 'ReportLib', 'File', indexes)
             end
 
         end
