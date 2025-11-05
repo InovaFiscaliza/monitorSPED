@@ -141,8 +141,6 @@ classdef winECD_exported < matlab.apps.AppBase
             try
                 switch class(callingApp)
                     case {'winMonitorSPED', 'winMonitorSPED_exported'}
-                        app.popupContainer.Parent.Visible = 0;
-
                         switch operationType
                             case {'FileListChanged:Add', ...
                                   'FileListChanged:Del', ...
@@ -151,21 +149,27 @@ classdef winECD_exported < matlab.apps.AppBase
                                 startup_InitialLayout(app)
 
                             case 'closeFcnCallFromDockModule'
-                                % ...
+                                app.popupContainer.Parent.Visible = 0;
 
                             case 'exportECD'
+                                app.popupContainer.Parent.Visible = 0;
                                 exportFiles(app, varargin{:})
 
                             case 'accountEdited'
-                                % ...
-                                'Chegou aqui...'
+                                if strcmp(app.SheetList.Value, 'mCONTAS_ANOTACAO')
+                                    SheetViewFirstValueChanged(app, struct('Source', app.SheetList))
+                                end
+
+                                if strcmp(app.SheetView_Second.Value, 'mCONTAS_ANOTACAO')
+                                    SheetViewSecondValueChanged(app)
+                                end
 
                             otherwise
                                 error('UnexpectedCall')
                         end
     
                     otherwise
-                        error('UnexpectedCall')
+                        error('UnexpectedCaller')
                 end
 
             catch ME
@@ -295,16 +299,15 @@ classdef winECD_exported < matlab.apps.AppBase
         function startup_InitialLayout(app)
             context = 'ECD';
 
-            nonEmptyECDObject               = ~isempty(app.ecdObj);
-            reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(context).generatedFiles.lastHTMLDocFullPath);
+            nonEmptyECDObject                = ~isempty(app.ecdObj);
+            reportFinalVersionGenerated      = ~isempty(app.projectData.modules.(context).generatedFiles.lastHTMLDocFullPath);
 
-            app.tool_GenerateReport.Enable  = nonEmptyECDObject;
-            app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated;
-
+            app.tool_GenerateReport.Enable   = nonEmptyECDObject;
+            app.tool_UploadFinalFile.Enable  = reportFinalVersionGenerated;
+            
             cellfun(@(x) set(x, 'Enable', nonEmptyECDObject), { ...
                 app.ExportButton, ...
                 app.LogButton, ...
-                app.tool_GenerateReport_2, ...
                 app.RowHeight, ...
                 app.ColumnWidth, ...
                 app.FontFamily, ...
@@ -388,6 +391,8 @@ classdef winECD_exported < matlab.apps.AppBase
                     app.UITable2_CountText.Text  = ' CONTAGEM : 0';
                     app.UITable2_FilterText.Text = '0 DE 0';
                 end
+
+                app.tool_GenerateReport_2.Enable = false;
             end
         end
 
@@ -776,6 +781,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             app.tool_CompanyInfo.Text = sprintf('<font style="font-size: 11px; font-weight: bold;">%s</font> CNPJ %s (%s) \n%s ', ...
                 upper(selectedECD.CompanyName), selectedECD.CompanyId, selectedECD.State, strjoin(string(selectedECD.Period), ' a '));
+            app.tool_GenerateReport_2.Enable = ~isempty(selectedECD.Table.mCONTAS_ANOTACAO);
 
             updateSheetList(app)
             SheetViewFirstValueChanged(app, struct('Source', app.SheetList))
@@ -1048,7 +1054,21 @@ classdef winECD_exported < matlab.apps.AppBase
 
                 case app.FontIcon
                     fieldName  = 'Icon';
-                    fieldValue = {event.Value};
+
+                    % Ao invés de um simples fieldValue = {event.Value}, foi 
+                    % necessário adicionar ao projeto as imagens .svg relacionadas
+                    % a cada estado. Isto porque o MATLAB R2024a apresentou um 
+                    % BUG, não renderizando esses ícones nos webapps.
+
+                    % ToDo: abrir chamado na Mathworks e simplificar código, 
+                    % após correção do BUG.
+
+                    switch event.Value
+                        case 'none'
+                            fieldValue = {'none'};
+                        otherwise
+                            fieldValue = {sprintf('styleIcon_%s.svg', event.Value)};
+                    end
                     app.FontIcon.Value = '';
             end
 
@@ -1218,21 +1238,17 @@ classdef winECD_exported < matlab.apps.AppBase
         % Image clicked function: tool_GenerateReport_2
         function ExportButton_2Pushed(app, event)
             
-            [~, fileIndex] = selectedECDObject(app);
-
             clickedTable = onFocusTable(app);
-            if isempty(clickedTable.Selection)
-                appUtil.modalWindow(app.UIFigure, 'warning', 'É necessário selecionar apenas uma linha de tabela que contenha a coluna "COD_CTA".');
-                return
+            
+            if ~isempty(clickedTable.Selection) && isscalar(unique(clickedTable.Selection(:,1))) && ismember('COD_CTA', clickedTable.Data.Properties.VariableNames)
+                selectedRow = unique(clickedTable.Selection(:,1));
+                accountName = clickedTable.Data.('COD_CTA'){selectedRow};
+            else
+                accountName = '';
             end
 
-            selectedRows = unique(clickedTable.Selection(:,1));
-            if isscalar(selectedRows) && ismember('COD_CTA', clickedTable.Data.Properties.VariableNames)
-                accountName = clickedTable.Data.('COD_CTA'){selectedRows};
-                ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDAccount', 'ECD', fileIndex, accountName)
-            else
-                appUtil.modalWindow(app.UIFigure, 'warning', 'É necessário selecionar apenas uma linha de tabela que contenha a coluna "COD_CTA".');
-            end
+            [~, fileIndex] = selectedECDObject(app);
+            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDAccount', 'ECD', fileIndex, accountName)
 
         end
     end
@@ -1324,7 +1340,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_GenerateReport_2.ScaleMethod = 'none';
             app.tool_GenerateReport_2.ImageClickedFcn = createCallbackFcn(app, @ExportButton_2Pushed, true);
             app.tool_GenerateReport_2.Enable = 'off';
-            app.tool_GenerateReport_2.Tooltip = {'Edita informações da conta'};
+            app.tool_GenerateReport_2.Tooltip = {'Edita informações das contas movimentadas'};
             app.tool_GenerateReport_2.Layout.Row = 2;
             app.tool_GenerateReport_2.Layout.Column = 2;
             app.tool_GenerateReport_2.ImageSource = 'Variable_edit_16.png';

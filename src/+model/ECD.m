@@ -219,7 +219,7 @@ classdef ECD < model.ECDBase
                         end
 
                         if isscalar(unique(periodRate))
-                            periodRate = unique(periodRate);
+                            periodRate = periodRate(1);
                         end
 
                         obj(idx).GUI.icmsDefaultRate.rate = periodRate;

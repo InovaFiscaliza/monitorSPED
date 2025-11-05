@@ -341,6 +341,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 context  = varargin{1};
                                 varargin = [{operationType}, varargin(2:end)];
                                 ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
+                                return
 
                             otherwise
                                 error('UnexpectedCall')
