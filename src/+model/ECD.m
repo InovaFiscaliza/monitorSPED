@@ -81,6 +81,10 @@ classdef ECD < model.ECDBase
             'hasValidPeriod', false, ...
             'warnings', {{}}, ...
             'rtfFiles', {{}}, ...
+            'icmsDefaultRate', struct( ...
+                'type', 'auto', ...
+                'rate', [] ...
+            ), ...
             'externalFiles', table( ...
                 'Size', [0, 4], ...
                 'VariableTypes', {'cell', 'cell', 'cell', 'int8'}, ...
@@ -110,9 +114,10 @@ classdef ECD < model.ECDBase
         % MÉTODOS RELACIONADOS AO OBJETO VISTO COMO UM ARRAY
         % (ESCALAR, OU NÃO)
         %-----------------------------------------------------------------%
-        function [obj, msg] = addFiles(obj, fileNameList, mergedIndexes, receitaFederalObj)
+        function [obj, msg] = addFiles(obj, projectData, fileNameList, mergedIndexes, receitaFederalObj)
             arguments
                 obj
+                projectData
                 fileNameList
                 mergedIndexes     = []
                 receitaFederalObj = []
@@ -206,6 +211,18 @@ classdef ECD < model.ECDBase
                         obj(idx).State          = obj(idx).CompanyInfo.UF;
                         obj(idx).Period         = [min(obj(idx).Table.x0000.DT_INI), max(obj(idx).Table.x0000.DT_FIN)];
                         obj(idx).Period.Format  = 'dd/MM/yyyy';
+
+                        periodYear = year(obj(idx).Table.x0000.DT_INI);
+                        periodRate = zeros(1, 12);
+                        for periodMonth = 1:12
+                            periodRate(periodMonth) = round(calculateINSSRate(projectData, obj(idx).CompanyInfo.UF, datetime([periodYear, periodMonth, 1]), 'mean'), 3);
+                        end
+
+                        if isscalar(unique(periodRate))
+                            periodRate = unique(periodRate);
+                        end
+
+                        obj(idx).GUI.icmsDefaultRate.rate = periodRate;
                     end
 
                     if isfield(obj(idx).Table, 'xI030') && ~isempty(obj(idx).Table.xI030)
@@ -279,13 +296,13 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function [obj, msg] = mergeFiles(obj, indexes, tempPath)
+        function [obj, msg] = mergeFiles(obj, projectData, indexes, tempPath)
             try
                 content  = strjoin({obj(indexes).Content}, char(obj(indexes(1)).TERMINATOR));
                 tempFile = [appUtil.DefaultFileName(tempPath, 'monitorSPED') '.txt'];
                 writematrix(content, tempFile, "FileType", "text", "QuoteStrings", "none", "Encoding", obj(indexes(1)).Encoding);
     
-                [obj, msg] = obj.addFiles(tempFile, indexes);
+                [obj, msg] = addFiles(obj, projectData, tempFile, indexes);
             catch ME
                 msg = ME.message;
             end
@@ -801,9 +818,9 @@ classdef ECD < model.ECDBase
             obj.Table.mCONTAS_ANOTACAO = table( ...
                 obj.Table.mBALANCETE_RESULTADO.("COD_CTA"), ...
                 repmat(categorical("-", ["-", "Não", "Sim", "Sim - ICMS"]), numAccounts, 1), ...
-                repmat({jsonencode('')}, numAccounts, 1), ...
+                repmat({jsonencode(obj.GUI.icmsDefaultRate)}, numAccounts, 1), ...
                 repmat({''}, numAccounts, 1), ...
-                'VariableNames', {'COD_CTA', 'Apurado?  ✎', 'Alíquota ICMS  ✎', 'Observação  ✎'} ...
+                'VariableNames', {'COD_CTA', 'Apurado?  ✎', 'Alíquota ICMS', 'Observação  ✎'} ...
             );
 
             % xAPURAÇÃO

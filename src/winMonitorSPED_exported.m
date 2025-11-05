@@ -1177,7 +1177,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 % Verifica se arquivo já foi lido, comparando o seu nome com 
                 % a variável app.ecdObj.
                 if ~ismember(fileName{ii}, {app.ecdObj.FileName})
-                    [app.ecdObj, msg] = app.ecdObj.addFiles(fileFullName{ii}, [], app.receitaFederalObj);
+                    [app.ecdObj, msg] = addFiles(app.ecdObj, app.projectData, fileFullName{ii}, [], app.receitaFederalObj);
 
                     if ~isempty(msg)
                         filesError(end+1) = struct('File', sprintf('"%s"', fileName{ii}), 'Error', msg);
@@ -1250,7 +1250,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 app.progressDialog.Visible = 'visible';
 
-                [app.ecdObj, msg] = mergeFiles(app.ecdObj, indexes, app.General.fileFolder.tempPath);
+                [app.ecdObj, msg] = mergeFiles(app.ecdObj, app.projectData, indexes, app.General.fileFolder.tempPath);
                 if isempty(msg)
                     file_ProjectRestart(app, indexes, 'FileListChanged:Merge')
                 else

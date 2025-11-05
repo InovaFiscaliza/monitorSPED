@@ -2,68 +2,68 @@ classdef winECD_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure              matlab.ui.Figure
-        GridLayout            matlab.ui.container.GridLayout
-        dockModuleGrid        matlab.ui.container.GridLayout
-        dockModule_Undock     matlab.ui.control.Image
-        dockModule_Close      matlab.ui.control.Image
-        TabGroup              matlab.ui.container.TabGroup
-        Tab1                  matlab.ui.container.Tab
-        Tab1Grid              matlab.ui.container.GridLayout
-        FinanceFacts          matlab.ui.control.Label
-        Tab1Separator2        matlab.ui.control.Image
-        LogButton             matlab.ui.control.Button
-        ExportButton          matlab.ui.control.Button
-        Tab1Separator1        matlab.ui.control.Image
-        SheetList             matlab.ui.control.DropDown
-        SheetListLabel        matlab.ui.control.Label
-        TimePeriodList        matlab.ui.control.DropDown
-        TimePeriodListLabel   matlab.ui.control.Label
-        CompanyNameList       matlab.ui.control.DropDown
-        CompanyNameListLabel  matlab.ui.control.Label
-        Tab2                  matlab.ui.container.Tab
-        Tab2Grid              matlab.ui.container.GridLayout
-        Tab2Separator1_2      matlab.ui.control.Image
-        ExportButton_2        matlab.ui.control.Button
-        StyleRefresh          matlab.ui.control.Image
-        StyleDelete           matlab.ui.control.Image
-        FontIconLabel         matlab.ui.control.Label
-        FontIcon              matlab.ui.control.DropDown
-        Tab2Separator3        matlab.ui.control.Image
-        FontColor             matlab.ui.control.ColorPicker
-        FontBackground        matlab.ui.control.ColorPicker
-        FontAlign3            matlab.ui.control.Image
-        FontAlign2            matlab.ui.control.Image
-        FontAlign1            matlab.ui.control.Image
-        FontStyle             matlab.ui.control.Button
-        FontWeight            matlab.ui.control.Button
-        FontFamily            matlab.ui.control.DropDown
-        Tab2Separator2        matlab.ui.control.Image
-        ColumnWidthLabel      matlab.ui.control.Label
-        ColumnWidth           matlab.ui.control.DropDown
-        RowHeightLabel        matlab.ui.control.Label
-        RowHeight             matlab.ui.control.Spinner
-        Tab2Separator1        matlab.ui.control.Image
-        SheetOnFocus          matlab.ui.control.Lamp
-        SheetHeight_Second    matlab.ui.control.Spinner
-        SheetView_Second      matlab.ui.control.DropDown
-        SheetHeight_First     matlab.ui.control.Spinner
-        SheetView_First       matlab.ui.control.DropDown
-        SheetViewStatus       matlab.ui.control.StateButton
-        UITable2_AccountInfo  matlab.ui.control.Label
-        UITable2_FilterText   matlab.ui.control.Label
-        UITable2_CountText    matlab.ui.control.Label
-        UITable2_CountIcon    matlab.ui.control.Image
-        UITable2              matlab.ui.control.Table
-        UITable1_AccountInfo  matlab.ui.control.Label
-        UITable1_FilterText   matlab.ui.control.Label
-        UITable1_CountText    matlab.ui.control.Label
-        UITable1_CountIcon    matlab.ui.control.Image
-        UITable1              matlab.ui.control.Table
-        toolGrid              matlab.ui.container.GridLayout
-        tool_UploadFinalFile  matlab.ui.control.Image
-        tool_GenerateReport   matlab.ui.control.Image
-        tool_CompanyInfo      matlab.ui.control.Label
+        UIFigure               matlab.ui.Figure
+        GridLayout             matlab.ui.container.GridLayout
+        dockModuleGrid         matlab.ui.container.GridLayout
+        dockModule_Undock      matlab.ui.control.Image
+        dockModule_Close       matlab.ui.control.Image
+        TabGroup               matlab.ui.container.TabGroup
+        Tab1                   matlab.ui.container.Tab
+        Tab1Grid               matlab.ui.container.GridLayout
+        FinanceFacts           matlab.ui.control.Label
+        Tab1Separator2         matlab.ui.control.Image
+        LogButton              matlab.ui.control.Button
+        ExportButton           matlab.ui.control.Button
+        Tab1Separator1         matlab.ui.control.Image
+        SheetList              matlab.ui.control.DropDown
+        SheetListLabel         matlab.ui.control.Label
+        TimePeriodList         matlab.ui.control.DropDown
+        TimePeriodListLabel    matlab.ui.control.Label
+        CompanyNameList        matlab.ui.control.DropDown
+        CompanyNameListLabel   matlab.ui.control.Label
+        Tab2                   matlab.ui.container.Tab
+        Tab2Grid               matlab.ui.container.GridLayout
+        StyleRefresh           matlab.ui.control.Image
+        StyleDelete            matlab.ui.control.Image
+        FontIconLabel          matlab.ui.control.Label
+        FontIcon               matlab.ui.control.DropDown
+        Tab2Separator3         matlab.ui.control.Image
+        FontColor              matlab.ui.control.ColorPicker
+        FontBackground         matlab.ui.control.ColorPicker
+        FontAlign3             matlab.ui.control.Image
+        FontAlign2             matlab.ui.control.Image
+        FontAlign1             matlab.ui.control.Image
+        FontStyle              matlab.ui.control.Button
+        FontWeight             matlab.ui.control.Button
+        FontFamily             matlab.ui.control.DropDown
+        Tab2Separator2         matlab.ui.control.Image
+        ColumnWidthLabel       matlab.ui.control.Label
+        ColumnWidth            matlab.ui.control.DropDown
+        RowHeightLabel         matlab.ui.control.Label
+        RowHeight              matlab.ui.control.Spinner
+        Tab2Separator1         matlab.ui.control.Image
+        SheetOnFocus           matlab.ui.control.Lamp
+        SheetHeight_Second     matlab.ui.control.Spinner
+        SheetView_Second       matlab.ui.control.DropDown
+        SheetHeight_First      matlab.ui.control.Spinner
+        SheetView_First        matlab.ui.control.DropDown
+        SheetViewStatus        matlab.ui.control.StateButton
+        UITable2_AccountInfo   matlab.ui.control.Label
+        UITable2_FilterText    matlab.ui.control.Label
+        UITable2_CountText     matlab.ui.control.Label
+        UITable2_CountIcon     matlab.ui.control.Image
+        UITable2               matlab.ui.control.Table
+        UITable1_AccountInfo   matlab.ui.control.Label
+        UITable1_FilterText    matlab.ui.control.Label
+        UITable1_CountText     matlab.ui.control.Label
+        UITable1_CountIcon     matlab.ui.control.Image
+        UITable1               matlab.ui.control.Table
+        toolGrid               matlab.ui.container.GridLayout
+        tool_Separator2        matlab.ui.control.Image
+        tool_GenerateReport_2  matlab.ui.control.Image
+        tool_UploadFinalFile   matlab.ui.control.Image
+        tool_GenerateReport    matlab.ui.control.Image
+        tool_CompanyInfo       matlab.ui.control.Label
     end
 
     
@@ -304,7 +304,7 @@ classdef winECD_exported < matlab.apps.AppBase
             cellfun(@(x) set(x, 'Enable', nonEmptyECDObject), { ...
                 app.ExportButton, ...
                 app.LogButton, ...
-                app.ExportButton_2, ...
+                app.tool_GenerateReport_2, ...
                 app.RowHeight, ...
                 app.ColumnWidth, ...
                 app.FontFamily, ...
@@ -1215,7 +1215,7 @@ classdef winECD_exported < matlab.apps.AppBase
             
         end
 
-        % Button pushed function: ExportButton_2
+        % Image clicked function: tool_GenerateReport_2
         function ExportButton_2Pushed(app, event)
             
             [~, fileIndex] = selectedECDObject(app);
@@ -1282,7 +1282,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create toolGrid
             app.toolGrid = uigridlayout(app.GridLayout);
-            app.toolGrid.ColumnWidth = {'1x', 22, 22};
+            app.toolGrid.ColumnWidth = {'1x', 22, 5, 22, 22};
             app.toolGrid.RowHeight = {4, 17, 2};
             app.toolGrid.ColumnSpacing = 5;
             app.toolGrid.RowSpacing = 0;
@@ -1309,15 +1309,33 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_GenerateReport.Enable = 'off';
             app.tool_GenerateReport.Tooltip = {'Gera relatório análise'};
             app.tool_GenerateReport.Layout.Row = 2;
-            app.tool_GenerateReport.Layout.Column = 2;
+            app.tool_GenerateReport.Layout.Column = 4;
             app.tool_GenerateReport.ImageSource = 'Publish_HTML_16.png';
 
             % Create tool_UploadFinalFile
             app.tool_UploadFinalFile = uiimage(app.toolGrid);
             app.tool_UploadFinalFile.Enable = 'off';
             app.tool_UploadFinalFile.Layout.Row = 2;
-            app.tool_UploadFinalFile.Layout.Column = 3;
+            app.tool_UploadFinalFile.Layout.Column = 5;
             app.tool_UploadFinalFile.ImageSource = 'Up_24.png';
+
+            % Create tool_GenerateReport_2
+            app.tool_GenerateReport_2 = uiimage(app.toolGrid);
+            app.tool_GenerateReport_2.ScaleMethod = 'none';
+            app.tool_GenerateReport_2.ImageClickedFcn = createCallbackFcn(app, @ExportButton_2Pushed, true);
+            app.tool_GenerateReport_2.Enable = 'off';
+            app.tool_GenerateReport_2.Tooltip = {'Edita informações da conta'};
+            app.tool_GenerateReport_2.Layout.Row = 2;
+            app.tool_GenerateReport_2.Layout.Column = 2;
+            app.tool_GenerateReport_2.ImageSource = 'Variable_edit_16.png';
+
+            % Create tool_Separator2
+            app.tool_Separator2 = uiimage(app.toolGrid);
+            app.tool_Separator2.ScaleMethod = 'none';
+            app.tool_Separator2.Enable = 'off';
+            app.tool_Separator2.Layout.Row = [1 3];
+            app.tool_Separator2.Layout.Column = 3;
+            app.tool_Separator2.ImageSource = 'LineV.svg';
 
             % Create UITable1
             app.UITable1 = uitable(app.GridLayout);
@@ -1543,7 +1561,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create Tab2Grid
             app.Tab2Grid = uigridlayout(app.Tab2);
-            app.Tab2Grid.ColumnWidth = {44, 226, 40, 10, 3, 44, 3, 90, 90, 3, 22, 22, 22, 22, 22, 44, 44, 3, 90, '1x', 18, 18};
+            app.Tab2Grid.ColumnWidth = {44, 226, 40, 10, 3, 90, 90, 3, 22, 22, 22, 22, 22, 44, 44, 3, 90, '1x', 18, 18};
             app.Tab2Grid.RowHeight = {22, 22};
             app.Tab2Grid.RowSpacing = 5;
             app.Tab2Grid.BackgroundColor = [0.9804 0.9804 0.9804];
@@ -1627,7 +1645,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.RowHeight.FontSize = 11;
             app.RowHeight.Enable = 'off';
             app.RowHeight.Layout.Row = 1;
-            app.RowHeight.Layout.Column = 8;
+            app.RowHeight.Layout.Column = 6;
 
             % Create RowHeightLabel
             app.RowHeightLabel = uilabel(app.Tab2Grid);
@@ -1635,7 +1653,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.RowHeightLabel.WordWrap = 'on';
             app.RowHeightLabel.FontSize = 10;
             app.RowHeightLabel.Layout.Row = 2;
-            app.RowHeightLabel.Layout.Column = 8;
+            app.RowHeightLabel.Layout.Column = 6;
             app.RowHeightLabel.Text = {'ALTURA LINHA'; '(offset)'};
 
             % Create ColumnWidth
@@ -1646,7 +1664,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ColumnWidth.FontSize = 11;
             app.ColumnWidth.BackgroundColor = [1 1 1];
             app.ColumnWidth.Layout.Row = 1;
-            app.ColumnWidth.Layout.Column = 9;
+            app.ColumnWidth.Layout.Column = 7;
             app.ColumnWidth.Value = '';
 
             % Create ColumnWidthLabel
@@ -1655,14 +1673,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ColumnWidthLabel.WordWrap = 'on';
             app.ColumnWidthLabel.FontSize = 10;
             app.ColumnWidthLabel.Layout.Row = 2;
-            app.ColumnWidthLabel.Layout.Column = 9;
+            app.ColumnWidthLabel.Layout.Column = 7;
             app.ColumnWidthLabel.Text = {'LARGURA'; 'COLUNA'};
 
             % Create Tab2Separator2
             app.Tab2Separator2 = uiimage(app.Tab2Grid);
             app.Tab2Separator2.Enable = 'off';
             app.Tab2Separator2.Layout.Row = [1 2];
-            app.Tab2Separator2.Layout.Column = 10;
+            app.Tab2Separator2.Layout.Column = 8;
             app.Tab2Separator2.ImageSource = 'LineV.svg';
 
             % Create FontFamily
@@ -1674,7 +1692,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontFamily.FontSize = 11;
             app.FontFamily.BackgroundColor = [1 1 1];
             app.FontFamily.Layout.Row = 1;
-            app.FontFamily.Layout.Column = [11 17];
+            app.FontFamily.Layout.Column = [9 15];
             app.FontFamily.Value = {};
 
             % Create FontWeight
@@ -1685,7 +1703,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontWeight.FontWeight = 'bold';
             app.FontWeight.Enable = 'off';
             app.FontWeight.Layout.Row = 2;
-            app.FontWeight.Layout.Column = 11;
+            app.FontWeight.Layout.Column = 9;
             app.FontWeight.Text = 'B';
 
             % Create FontStyle
@@ -1696,7 +1714,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontStyle.FontAngle = 'italic';
             app.FontStyle.Enable = 'off';
             app.FontStyle.Layout.Row = 2;
-            app.FontStyle.Layout.Column = 12;
+            app.FontStyle.Layout.Column = 10;
             app.FontStyle.Text = 'I ';
 
             % Create FontAlign1
@@ -1706,7 +1724,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign1.Enable = 'off';
             app.FontAlign1.Tooltip = {'Sublinhado'};
             app.FontAlign1.Layout.Row = 2;
-            app.FontAlign1.Layout.Column = 13;
+            app.FontAlign1.Layout.Column = 11;
             app.FontAlign1.ImageSource = 'AlignedLeft_16-7f46662cd6fd7221119660e14bdcea56.png';
 
             % Create FontAlign2
@@ -1716,7 +1734,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign2.Enable = 'off';
             app.FontAlign2.Tooltip = {'Sublinhado'};
             app.FontAlign2.Layout.Row = 2;
-            app.FontAlign2.Layout.Column = 14;
+            app.FontAlign2.Layout.Column = 12;
             app.FontAlign2.ImageSource = 'AlignedCenter_16-b91485db227234029c43b7823c09ebff.png';
 
             % Create FontAlign3
@@ -1726,7 +1744,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign3.Enable = 'off';
             app.FontAlign3.Tooltip = {'Sublinhado'};
             app.FontAlign3.Layout.Row = 2;
-            app.FontAlign3.Layout.Column = 15;
+            app.FontAlign3.Layout.Column = 13;
             app.FontAlign3.ImageSource = 'AlignedRight_16-7827788943408c9bac98181b7ad0efb5.png';
 
             % Create FontBackground
@@ -1736,7 +1754,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontBackground.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontBackground.Enable = 'off';
             app.FontBackground.Layout.Row = 2;
-            app.FontBackground.Layout.Column = 16;
+            app.FontBackground.Layout.Column = 14;
             app.FontBackground.BackgroundColor = [1 1 1];
 
             % Create FontColor
@@ -1746,14 +1764,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontColor.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontColor.Enable = 'off';
             app.FontColor.Layout.Row = 2;
-            app.FontColor.Layout.Column = 17;
+            app.FontColor.Layout.Column = 15;
             app.FontColor.BackgroundColor = [1 1 1];
 
             % Create Tab2Separator3
             app.Tab2Separator3 = uiimage(app.Tab2Grid);
             app.Tab2Separator3.Enable = 'off';
             app.Tab2Separator3.Layout.Row = [1 2];
-            app.Tab2Separator3.Layout.Column = 18;
+            app.Tab2Separator3.Layout.Column = 16;
             app.Tab2Separator3.ImageSource = 'LineV.svg';
 
             % Create FontIcon
@@ -1764,7 +1782,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontIcon.FontSize = 11;
             app.FontIcon.BackgroundColor = [1 1 1];
             app.FontIcon.Layout.Row = 1;
-            app.FontIcon.Layout.Column = 19;
+            app.FontIcon.Layout.Column = 17;
             app.FontIcon.Value = '';
 
             % Create FontIconLabel
@@ -1773,7 +1791,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontIconLabel.WordWrap = 'on';
             app.FontIconLabel.FontSize = 10;
             app.FontIconLabel.Layout.Row = 2;
-            app.FontIconLabel.Layout.Column = 19;
+            app.FontIconLabel.Layout.Column = 17;
             app.FontIconLabel.Text = 'ÍCONE';
 
             % Create StyleDelete
@@ -1783,7 +1801,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.StyleDelete.Enable = 'off';
             app.StyleDelete.Tooltip = {'Exclui estilo relacionado às células selecionadas'};
             app.StyleDelete.Layout.Row = 2;
-            app.StyleDelete.Layout.Column = 21;
+            app.StyleDelete.Layout.Column = 19;
             app.StyleDelete.ImageSource = 'clear_all_outputs_16-3d3c482971dfdb6852db717989f585fa.png';
 
             % Create StyleRefresh
@@ -1793,26 +1811,8 @@ classdef winECD_exported < matlab.apps.AppBase
             app.StyleRefresh.Enable = 'off';
             app.StyleRefresh.Tooltip = {'Retorna às configurações iniciais de estilo'};
             app.StyleRefresh.Layout.Row = 2;
-            app.StyleRefresh.Layout.Column = 22;
+            app.StyleRefresh.Layout.Column = 20;
             app.StyleRefresh.ImageSource = 'Refresh_18.png';
-
-            % Create ExportButton_2
-            app.ExportButton_2 = uibutton(app.Tab2Grid, 'push');
-            app.ExportButton_2.ButtonPushedFcn = createCallbackFcn(app, @ExportButton_2Pushed, true);
-            app.ExportButton_2.Icon = 'Variable_edit_16.png';
-            app.ExportButton_2.IconAlignment = 'top';
-            app.ExportButton_2.FontSize = 10;
-            app.ExportButton_2.Enable = 'off';
-            app.ExportButton_2.Layout.Row = [1 2];
-            app.ExportButton_2.Layout.Column = 6;
-            app.ExportButton_2.Text = {'Edita'; 'conta'};
-
-            % Create Tab2Separator1_2
-            app.Tab2Separator1_2 = uiimage(app.Tab2Grid);
-            app.Tab2Separator1_2.Enable = 'off';
-            app.Tab2Separator1_2.Layout.Row = [1 2];
-            app.Tab2Separator1_2.Layout.Column = 7;
-            app.Tab2Separator1_2.ImageSource = 'LineV.svg';
 
             % Create dockModuleGrid
             app.dockModuleGrid = uigridlayout(app.GridLayout);

@@ -2,48 +2,48 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure           matlab.ui.Figure
-        GridLayout         matlab.ui.container.GridLayout
-        Document           matlab.ui.container.GridLayout
-        icmsTypeLabel_2    matlab.ui.control.Label
-        icmsType_2         matlab.ui.control.DropDown
-        NextSelection      matlab.ui.control.Image
-        PreviousSelection  matlab.ui.control.Image
-        freenote           matlab.ui.control.TextArea
-        freenoteLabel      matlab.ui.control.Label
-        icmsMonthsPanel    matlab.ui.container.Panel
-        icmsMonthsGrid     matlab.ui.container.GridLayout
-        icmsMonth12        matlab.ui.control.Spinner
-        icmsMonth12Label   matlab.ui.control.Label
-        icmsMonth11        matlab.ui.control.Spinner
-        icmsMonth11Label   matlab.ui.control.Label
-        icmsMonth10        matlab.ui.control.Spinner
-        icmsMonth10Label   matlab.ui.control.Label
-        icmsMonth9         matlab.ui.control.Spinner
-        icmsMonth9Label    matlab.ui.control.Label
-        icmsMonth8         matlab.ui.control.Spinner
-        icmsMonth8Label    matlab.ui.control.Label
-        icmsMonth7         matlab.ui.control.Spinner
-        icmsMonth7Label    matlab.ui.control.Label
-        icmsMonth6         matlab.ui.control.Spinner
-        icmsMonth6Label    matlab.ui.control.Label
-        icmsMonth5         matlab.ui.control.Spinner
-        icmsMonth5Label    matlab.ui.control.Label
-        icmsMonth4         matlab.ui.control.Spinner
-        icmsMonth4Label    matlab.ui.control.Label
-        icmsMonth3         matlab.ui.control.Spinner
-        icmsMonth3Label    matlab.ui.control.Label
-        icmsMonth2         matlab.ui.control.Spinner
-        icmsMonth2Label    matlab.ui.control.Label
-        icmsMonth1         matlab.ui.control.Spinner
-        icmsMonth1Label    matlab.ui.control.Label
-        icmsType           matlab.ui.control.DropDown
-        icmsTypeLabel      matlab.ui.control.Label
-        taxType            matlab.ui.control.DropDown
-        taxTypeLabel       matlab.ui.control.Label
-        accountInfo        matlab.ui.control.Label
-        btnOK              matlab.ui.control.Button
-        btnClose           matlab.ui.control.Image
+        UIFigure            matlab.ui.Figure
+        GridLayout          matlab.ui.container.GridLayout
+        Document            matlab.ui.container.GridLayout
+        accountInfo         matlab.ui.control.Label
+        ContaDropDown       matlab.ui.control.DropDown
+        ContaDropDownLabel  matlab.ui.control.Label
+        NextSelection       matlab.ui.control.Image
+        PreviousSelection   matlab.ui.control.Image
+        freenote            matlab.ui.control.TextArea
+        freenoteLabel       matlab.ui.control.Label
+        icmsMonthsPanel     matlab.ui.container.Panel
+        icmsMonthsGrid      matlab.ui.container.GridLayout
+        icmsMonth12         matlab.ui.control.Spinner
+        icmsMonth12Label    matlab.ui.control.Label
+        icmsMonth11         matlab.ui.control.Spinner
+        icmsMonth11Label    matlab.ui.control.Label
+        icmsMonth10         matlab.ui.control.Spinner
+        icmsMonth10Label    matlab.ui.control.Label
+        icmsMonth9          matlab.ui.control.Spinner
+        icmsMonth9Label     matlab.ui.control.Label
+        icmsMonth8          matlab.ui.control.Spinner
+        icmsMonth8Label     matlab.ui.control.Label
+        icmsMonth7          matlab.ui.control.Spinner
+        icmsMonth7Label     matlab.ui.control.Label
+        icmsMonth6          matlab.ui.control.Spinner
+        icmsMonth6Label     matlab.ui.control.Label
+        icmsMonth5          matlab.ui.control.Spinner
+        icmsMonth5Label     matlab.ui.control.Label
+        icmsMonth4          matlab.ui.control.Spinner
+        icmsMonth4Label     matlab.ui.control.Label
+        icmsMonth3          matlab.ui.control.Spinner
+        icmsMonth3Label     matlab.ui.control.Label
+        icmsMonth2          matlab.ui.control.Spinner
+        icmsMonth2Label     matlab.ui.control.Label
+        icmsMonth1          matlab.ui.control.Spinner
+        icmsMonth1Label     matlab.ui.control.Label
+        icmsType            matlab.ui.control.DropDown
+        icmsTypeLabel       matlab.ui.control.Label
+        taxType             matlab.ui.control.DropDown
+        taxTypeLabel        matlab.ui.control.Label
+        btnOK               matlab.ui.control.Button
+        btnClose            matlab.ui.control.Image
     end
 
     
@@ -76,46 +76,48 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             if accountNameIndex
                 set(app.taxType,  'Enable', true, 'Value', char(selectedECD.Table.mCONTAS_ANOTACAO.('Apurado?  ✎')(accountNameIndex)))
                 set(app.freenote, 'Enable', true, 'Value', selectedECD.Table.mCONTAS_ANOTACAO.('Observação  ✎'){accountNameIndex})
-                parseICMS(app, selectedECD, accountNameIndex)
+                parseRateJsonInfo(app, selectedECD, accountNameIndex)
 
             else
                 set(app.taxType,  'Enable', false, 'Value', '-')
                 set(app.freenote, 'Enable', false, 'Value', '')
-                % ...
+                set(app.icmsType, 'Enable', false, 'Value', 'auto')
+                updateRatePanelStatus(app, 'off')
             end
         end
 
         %-----------------------------------------------------------------%
-        function parseICMS(app, selectedECD, accountNameIndex)
-            icms = jsondecode(selectedECD.Table.mCONTAS_ANOTACAO.('Alíquota ICMS  ✎'){accountNameIndex});
+        function parseRateJsonInfo(app, selectedECD, accountNameIndex)
+            icms = jsondecode(selectedECD.Table.mCONTAS_ANOTACAO.('Alíquota ICMS'){accountNameIndex});
             
             switch icms.type
-                case 'Manual - Anual'
-                    app.icmsType.Layout.Column = [1 4];
-                    app.icmsTypeLabel_2.Visible = "off";
-                    app.icmsType_2.Visible = "off";
-                    set(findobj(app.icmsMonthsGrid.Children, 'Type', 'uispinner'), 'Enable', 'off')
-                    set(setdiff(findobj(app.icmsMonthsGrid.Children, 'Type', 'uispinner'), app.icmsMonth1), 'Value', app.icmsMonth1.Value)
-                    app.icmsMonth1.Enable = "on";
+                case 'auto'
+                    updateRatePanelStatus(app, 'off')
+                case 'manual'
+                    updateRatePanelStatus(app, 'on')
+            end
 
-                case 'Manual - Mês a mês'
-                    app.icmsType.Layout.Column = [1 5];
-                    app.icmsTypeLabel_2.Visible = "on";
-                    app.icmsType_2.Visible = "on";
-                    set(findobj(app.icmsMonthsGrid.Children, 'Type', 'uispinner'), 'Enable', 'on')
+            updateRatePanelValue(app, icms.rate)
+        end
 
-                case 'Tabela histórica de referência do ICMS (por UF)'
-                    app.icmsType.Layout.Column = [1 5];
-                    app.icmsTypeLabel_2.Visible = "on";
-                    app.icmsType_2.Visible = "on";
-                    set(findobj(app.icmsMonthsGrid.Children, 'Type', 'uispinner'), 'Enable', 'off')
+        %-----------------------------------------------------------------%
+        function updateRatePanelStatus(app, status)
+            hSpinners = findobj(app.icmsMonthsGrid.Children, 'Type', 'uispinner');
+            set(hSpinners, 'Enable', status)
+        end
 
-                    state = selectedECD.State;
-                    for ii = 1:12
-                        period = datetime([year(selectedECD.Period(1)), ii, 1]);
-                        rateType = 'mean'; % 'mean' | 'eomonth'
-                        calculateINSSRate(app.projectData, state, period, rateType)
-                    end
+        %-----------------------------------------------------------------%
+        function updateRatePanelValue(app, value)
+            value = 100*value;
+            
+            if isscalar(value)
+                hSpinners = findobj(app.icmsMonthsGrid.Children, 'Type', 'uispinner');
+                set(hSpinners, 'Value', value)
+            else
+                for ii = 1:numel(value)
+                    hSpinner = findobj(app.icmsMonthsGrid.Children, 'Type', 'uispinner', 'Tag', num2str(ii));
+                    set(hSpinner, 'Value', value(ii))
+                end
             end
         end
     end
@@ -171,7 +173,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         end
 
         % Value changed function: freenote, icmsMonth1, icmsMonth10, 
-        % ...and 13 other components
+        % ...and 12 other components
         function freenoteValueChanged(app, event)
             value = app.freenote.Value;
             
@@ -233,7 +235,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             % Create Document
             app.Document = uigridlayout(app.GridLayout);
             app.Document.ColumnWidth = {22, 22, 54, '1x', 90};
-            app.Document.RowHeight = {'1x', 22, 22, 22, 22, 108, 22, 44, 1, 22};
+            app.Document.RowHeight = {17, 22, '1x', 22, 22, 22, 22, 108, 22, 44, 1, 22};
             app.Document.ColumnSpacing = 5;
             app.Document.RowSpacing = 5;
             app.Document.Layout.Row = 2;
@@ -246,25 +248,15 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.btnOK.Tag = 'OK';
             app.btnOK.IconAlignment = 'right';
             app.btnOK.BackgroundColor = [0.9804 0.9804 0.9804];
-            app.btnOK.Layout.Row = 10;
+            app.btnOK.Layout.Row = 12;
             app.btnOK.Layout.Column = 5;
             app.btnOK.Text = 'OK';
-
-            % Create accountInfo
-            app.accountInfo = uilabel(app.Document);
-            app.accountInfo.VerticalAlignment = 'top';
-            app.accountInfo.WordWrap = 'on';
-            app.accountInfo.FontSize = 11;
-            app.accountInfo.Layout.Row = 1;
-            app.accountInfo.Layout.Column = [1 5];
-            app.accountInfo.Interpreter = 'html';
-            app.accountInfo.Text = '';
 
             % Create taxTypeLabel
             app.taxTypeLabel = uilabel(app.Document);
             app.taxTypeLabel.VerticalAlignment = 'bottom';
             app.taxTypeLabel.FontSize = 11;
-            app.taxTypeLabel.Layout.Row = 2;
+            app.taxTypeLabel.Layout.Row = 4;
             app.taxTypeLabel.Layout.Column = [1 3];
             app.taxTypeLabel.Text = 'Apurado?';
 
@@ -274,7 +266,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.taxType.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.taxType.FontSize = 11;
             app.taxType.BackgroundColor = [1 1 1];
-            app.taxType.Layout.Row = 3;
+            app.taxType.Layout.Row = 5;
             app.taxType.Layout.Column = [1 3];
             app.taxType.Value = 'Sim - ICMS';
 
@@ -282,23 +274,23 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsTypeLabel = uilabel(app.Document);
             app.icmsTypeLabel.VerticalAlignment = 'bottom';
             app.icmsTypeLabel.FontSize = 11;
-            app.icmsTypeLabel.Layout.Row = 4;
+            app.icmsTypeLabel.Layout.Row = 6;
             app.icmsTypeLabel.Layout.Column = [1 3];
             app.icmsTypeLabel.Text = 'Alíquota ICMS:';
 
             % Create icmsType
             app.icmsType = uidropdown(app.Document);
-            app.icmsType.Items = {'Manual - Anual', 'Manual - Mês a mês', 'Tabela histórica de referência do ICMS (por UF)'};
+            app.icmsType.Items = {'auto', 'manual'};
             app.icmsType.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.icmsType.FontSize = 11;
             app.icmsType.BackgroundColor = [1 1 1];
-            app.icmsType.Layout.Row = 5;
-            app.icmsType.Layout.Column = [1 4];
-            app.icmsType.Value = 'Tabela histórica de referência do ICMS (por UF)';
+            app.icmsType.Layout.Row = 7;
+            app.icmsType.Layout.Column = [1 3];
+            app.icmsType.Value = 'auto';
 
             % Create icmsMonthsPanel
             app.icmsMonthsPanel = uipanel(app.Document);
-            app.icmsMonthsPanel.Layout.Row = 6;
+            app.icmsMonthsPanel.Layout.Row = 8;
             app.icmsMonthsPanel.Layout.Column = [1 5];
 
             % Create icmsMonthsGrid
@@ -320,6 +312,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth1.Limits = [0 100];
             app.icmsMonth1.ValueDisplayFormat = '%.1f';
             app.icmsMonth1.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
+            app.icmsMonth1.Tag = '1';
             app.icmsMonth1.FontSize = 11;
             app.icmsMonth1.Enable = 'off';
             app.icmsMonth1.Layout.Row = 1;
@@ -338,6 +331,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth2.Limits = [0 100];
             app.icmsMonth2.ValueDisplayFormat = '%.1f';
             app.icmsMonth2.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
+            app.icmsMonth2.Tag = '2';
             app.icmsMonth2.FontSize = 11;
             app.icmsMonth2.Enable = 'off';
             app.icmsMonth2.Layout.Row = 2;
@@ -356,6 +350,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth3.Limits = [0 100];
             app.icmsMonth3.ValueDisplayFormat = '%.1f';
             app.icmsMonth3.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
+            app.icmsMonth3.Tag = '3';
             app.icmsMonth3.FontSize = 11;
             app.icmsMonth3.Enable = 'off';
             app.icmsMonth3.Layout.Row = 3;
@@ -374,6 +369,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth4.Limits = [0 100];
             app.icmsMonth4.ValueDisplayFormat = '%.1f';
             app.icmsMonth4.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
+            app.icmsMonth4.Tag = '4';
             app.icmsMonth4.FontSize = 11;
             app.icmsMonth4.Enable = 'off';
             app.icmsMonth4.Layout.Row = 1;
@@ -392,6 +388,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth5.Limits = [0 100];
             app.icmsMonth5.ValueDisplayFormat = '%.1f';
             app.icmsMonth5.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
+            app.icmsMonth5.Tag = '5';
             app.icmsMonth5.FontSize = 11;
             app.icmsMonth5.Enable = 'off';
             app.icmsMonth5.Layout.Row = 2;
@@ -410,6 +407,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth6.Limits = [0 100];
             app.icmsMonth6.ValueDisplayFormat = '%.1f';
             app.icmsMonth6.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
+            app.icmsMonth6.Tag = '6';
             app.icmsMonth6.FontSize = 11;
             app.icmsMonth6.Enable = 'off';
             app.icmsMonth6.Layout.Row = 3;
@@ -428,6 +426,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth7.Limits = [0 100];
             app.icmsMonth7.ValueDisplayFormat = '%.1f';
             app.icmsMonth7.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
+            app.icmsMonth7.Tag = '7';
             app.icmsMonth7.FontSize = 11;
             app.icmsMonth7.Enable = 'off';
             app.icmsMonth7.Layout.Row = 1;
@@ -446,6 +445,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth8.Limits = [0 100];
             app.icmsMonth8.ValueDisplayFormat = '%.1f';
             app.icmsMonth8.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
+            app.icmsMonth8.Tag = '8';
             app.icmsMonth8.FontSize = 11;
             app.icmsMonth8.Enable = 'off';
             app.icmsMonth8.Layout.Row = 2;
@@ -464,6 +464,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth9.Limits = [0 100];
             app.icmsMonth9.ValueDisplayFormat = '%.1f';
             app.icmsMonth9.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
+            app.icmsMonth9.Tag = '9';
             app.icmsMonth9.FontSize = 11;
             app.icmsMonth9.Enable = 'off';
             app.icmsMonth9.Layout.Row = 3;
@@ -482,6 +483,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth10.Limits = [0 100];
             app.icmsMonth10.ValueDisplayFormat = '%.1f';
             app.icmsMonth10.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
+            app.icmsMonth10.Tag = '10';
             app.icmsMonth10.FontSize = 11;
             app.icmsMonth10.Enable = 'off';
             app.icmsMonth10.Layout.Row = 1;
@@ -500,6 +502,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth11.Limits = [0 100];
             app.icmsMonth11.ValueDisplayFormat = '%.1f';
             app.icmsMonth11.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
+            app.icmsMonth11.Tag = '11';
             app.icmsMonth11.FontSize = 11;
             app.icmsMonth11.Enable = 'off';
             app.icmsMonth11.Layout.Row = 2;
@@ -518,6 +521,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth12.Limits = [0 100];
             app.icmsMonth12.ValueDisplayFormat = '%.1f';
             app.icmsMonth12.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
+            app.icmsMonth12.Tag = '12';
             app.icmsMonth12.FontSize = 11;
             app.icmsMonth12.Enable = 'off';
             app.icmsMonth12.Layout.Row = 3;
@@ -527,7 +531,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.freenoteLabel = uilabel(app.Document);
             app.freenoteLabel.VerticalAlignment = 'bottom';
             app.freenoteLabel.FontSize = 11;
-            app.freenoteLabel.Layout.Row = 7;
+            app.freenoteLabel.Layout.Row = 9;
             app.freenoteLabel.Layout.Column = [1 4];
             app.freenoteLabel.Text = 'Observação:';
 
@@ -535,14 +539,14 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.freenote = uitextarea(app.Document);
             app.freenote.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
             app.freenote.FontSize = 11;
-            app.freenote.Layout.Row = 8;
+            app.freenote.Layout.Row = 10;
             app.freenote.Layout.Column = [1 5];
 
             % Create PreviousSelection
             app.PreviousSelection = uiimage(app.Document);
             app.PreviousSelection.ImageClickedFcn = createCallbackFcn(app, @PreviousSelectionImageClicked, true);
             app.PreviousSelection.Tooltip = {'Navega para a conta anterior'};
-            app.PreviousSelection.Layout.Row = 10;
+            app.PreviousSelection.Layout.Row = 12;
             app.PreviousSelection.Layout.Column = 1;
             app.PreviousSelection.ImageSource = 'Previous_32.png';
 
@@ -550,27 +554,35 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.NextSelection = uiimage(app.Document);
             app.NextSelection.ImageClickedFcn = createCallbackFcn(app, @PreviousSelectionImageClicked, true);
             app.NextSelection.Tooltip = {'Navega para a conta posterior'};
-            app.NextSelection.Layout.Row = 10;
+            app.NextSelection.Layout.Row = 12;
             app.NextSelection.Layout.Column = 2;
             app.NextSelection.ImageSource = 'After_32.png';
 
-            % Create icmsType_2
-            app.icmsType_2 = uidropdown(app.Document);
-            app.icmsType_2.Items = {};
-            app.icmsType_2.ValueChangedFcn = createCallbackFcn(app, @freenoteValueChanged, true);
-            app.icmsType_2.FontSize = 11;
-            app.icmsType_2.BackgroundColor = [1 1 1];
-            app.icmsType_2.Layout.Row = 5;
-            app.icmsType_2.Layout.Column = 5;
-            app.icmsType_2.Value = {};
+            % Create ContaDropDownLabel
+            app.ContaDropDownLabel = uilabel(app.Document);
+            app.ContaDropDownLabel.VerticalAlignment = 'bottom';
+            app.ContaDropDownLabel.FontSize = 11;
+            app.ContaDropDownLabel.Layout.Row = 1;
+            app.ContaDropDownLabel.Layout.Column = [1 5];
+            app.ContaDropDownLabel.Text = 'Conta:';
 
-            % Create icmsTypeLabel_2
-            app.icmsTypeLabel_2 = uilabel(app.Document);
-            app.icmsTypeLabel_2.VerticalAlignment = 'bottom';
-            app.icmsTypeLabel_2.FontSize = 11;
-            app.icmsTypeLabel_2.Layout.Row = 4;
-            app.icmsTypeLabel_2.Layout.Column = 5;
-            app.icmsTypeLabel_2.Text = 'UF:';
+            % Create ContaDropDown
+            app.ContaDropDown = uidropdown(app.Document);
+            app.ContaDropDown.Items = {};
+            app.ContaDropDown.FontSize = 11;
+            app.ContaDropDown.BackgroundColor = [1 1 1];
+            app.ContaDropDown.Layout.Row = 2;
+            app.ContaDropDown.Layout.Column = [1 5];
+            app.ContaDropDown.Value = {};
+
+            % Create accountInfo
+            app.accountInfo = uilabel(app.Document);
+            app.accountInfo.VerticalAlignment = 'top';
+            app.accountInfo.FontSize = 11;
+            app.accountInfo.Layout.Row = 3;
+            app.accountInfo.Layout.Column = [1 5];
+            app.accountInfo.Interpreter = 'html';
+            app.accountInfo.Text = {'ddede'; 'de'; 'de'; 'de'; 'de'; 'e'; 'de'; 'de'; 'de'};
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';
