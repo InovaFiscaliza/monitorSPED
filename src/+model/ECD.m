@@ -196,7 +196,7 @@ classdef ECD < model.ECDBase
                     % Leitura de outros registros essenciais de identificação
                     % ("0000" e "I030"), plano de contas ("I050") e fatos 
                     % contábeis ("I200_I250").
-                    parseTableAndAddToCache(obj(idx), {'0000', 'I030', 'I050', 'I200_I250'})
+                    parseTableAndAddToCache(obj(idx), {'0000', 'I030', 'I050', 'I050_I051_I052', 'I200_I250'})
 
                     if isfield(obj(idx).Table, 'x0000') && ~isempty(obj(idx).Table.x0000)
                         obj(idx).CompanyName    = obj(idx).Table.x0000.NOME{1};
@@ -212,7 +212,7 @@ classdef ECD < model.ECDBase
                         obj(idx).Period         = [min(obj(idx).Table.x0000.DT_INI), max(obj(idx).Table.x0000.DT_FIN)];
                         obj(idx).Period.Format  = 'dd/MM/yyyy';
 
-                        periodYear = year(obj(idx).Table.x0000.DT_INI);
+                        periodYear = year(obj(idx).Table.x0000.("DT_INI")(1));
                         periodRate = zeros(1, 12);
                         for periodMonth = 1:12
                             periodRate(periodMonth) = round(calculateINSSRate(projectData, obj(idx).CompanyInfo.UF, datetime([periodYear, periodMonth, 1]), 'mean'), 3);
@@ -825,10 +825,11 @@ classdef ECD < model.ECDBase
 
             % xAPURAÇÃO
             obj.Table.mTABELA_APURACAO  = table( ...
-                'Size', [0, 17], ...
-                'VariableNames', {'Tipo', 'COD_CTA', 'CTA', 'Alíquota ICMS', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
-                'VariableTypes', {'cell', 'cell', 'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'} ...
+                'Size', [7, 14], ...
+                'VariableNames', {'TIPO', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
+                'VariableTypes', {'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'} ...
             );
+            obj.Table.mTABELA_APURACAO.("TIPO") = {'ROB Telecom'; 'ICMS'; 'PIS'; 'CONFINS'; 'Base Cálculo'; 'Valor Apurado Fust'; 'Valor Apurado Funttel'};
         end
     end
 end
