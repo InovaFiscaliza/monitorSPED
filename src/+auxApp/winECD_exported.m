@@ -646,9 +646,9 @@ classdef winECD_exported < matlab.apps.AppBase
 
                 if isscalar(outputfiles)
                     [~, ~, fileExt] = fileparts(outputfiles{1});
-                    nameFormatMap = {sprintf('*.%s', fileExt), sprintf('(*%s)', fileExt)};
+                    nameFormatMap = {sprintf('*%s', fileExt), sprintf('(*%s)', fileExt)};
                 else
-                    nameFormatMap = {'*.zip', '(*.zip)'};
+                    nameFormatMap = {'*.zip', 'Zip (*.zip)'};
                 end
                 
                 fileFullPath = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', nameFormatMap, defaultBaseName);
@@ -656,7 +656,7 @@ classdef winECD_exported < matlab.apps.AppBase
                     return
                 end
 
-                if isscalar(outputfiles) && ~strcmp(app.mainApp.executionMode, 'webApp')
+                if isscalar(outputfiles)
                     copyfile(outputfiles{1}, fileFullPath, 'f')
 
                     if ~strcmp(app.mainApp.executionMode, 'webApp')
