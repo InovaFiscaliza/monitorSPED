@@ -4,8 +4,6 @@ function [content, encoding, encodingJson, hashHex] = fileread(fileFullName, enc
         encodingList (1,:) cell = {'ISO-8859-1', 'UTF-8', 'windows-1251', 'windows-1252'}
     end
 
-    varargout = {};
-
     fileID = fopen(fileFullName, 'r');
     if fileID == -1
         error('File not found.');
@@ -42,24 +40,9 @@ end
 
 %-------------------------------------------------------------------------%
 function hashHex = calculateSHA1Hash(byteArray)
-    import System.Security.Cryptography.*
-    sha1Provider  = SHA1Managed();
+    md = java.security.MessageDigest.getInstance('SHA-1');
+    md.update(uint8(byteArray));
     
-    bytes = numel(byteArray);
-    index = 0;
-    
-    while index < bytes
-        idx1 = index + 1;
-        idx2 = min(index + 65536, bytes);
-        
-        tempData = byteArray(idx1:idx2);
-        sha1Provider.TransformBlock(tempData, 0, numel(tempData), tempData, 0);
-        
-        index = idx2;
-    end
-    
-    sha1Provider.TransformFinalBlock(uint8([]), 0, 0);    
-    
-    hashBytes = uint8(sha1Provider.Hash);
+    hashBytes = typecast(md.digest(), 'uint8'); 
     hashHex   = lower(sprintf('%02x', hashBytes));
 end

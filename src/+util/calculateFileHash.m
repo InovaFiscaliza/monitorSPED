@@ -5,9 +5,6 @@ function hashHex = calculateFileHash(content, encoding, terminator)
         terminator (1,2) uint8 = [13, 10]
     end
 
-    import System.Security.Cryptography.*
-    sha1Provider  = SHA1Managed();
-
     splitContent  = splitlines(content);
     lastLineIndex = find(startsWith(splitContent, '|9999|'), 1);
     if isempty(lastLineIndex)
@@ -15,24 +12,12 @@ function hashHex = calculateFileHash(content, encoding, terminator)
     end
 
     splitContent = strjoin(splitContent(1:lastLineIndex), char(terminator));
-
     byteArray = [unicode2native(splitContent, encoding), terminator];
-    bytes = numel(byteArray);
-    index = 0;
+
+    md = java.security.MessageDigest.getInstance('SHA-1');
+    md.update(uint8(byteArray));
     
-    while index < bytes
-        idx1 = index + 1;
-        idx2 = min(index + 65536, bytes);
-        
-        tempData = byteArray(idx1:idx2);
-        sha1Provider.TransformBlock(tempData, 0, numel(tempData), tempData, 0);
-        
-        index = idx2;
-    end
-
-    sha1Provider.TransformFinalBlock(uint8([]), 0, 0);    
-
-    hashBytes = uint8(sha1Provider.Hash);
+    hashBytes = typecast(md.digest(), 'uint8'); 
     hashHex   = lower(sprintf('%02x', hashBytes));
 end
 
