@@ -9,8 +9,6 @@ classdef ECD < model.ECDBase
     %   │    └─ parseTable
     %   ├── mergeFiles
     %   │    └─ addFiles
-    %   ├── customMergedTablesKeyOriented
-    %   │    └─ isTableRead
     %   ├── customMergedTablesRowOriented
     %   │    ├─ isTableRead
     %   │    ├─ getColumnSpecifications
@@ -114,10 +112,11 @@ classdef ECD < model.ECDBase
         % MÉTODOS RELACIONADOS AO OBJETO VISTO COMO UM ARRAY
         % (ESCALAR, OU NÃO)
         %-----------------------------------------------------------------%
-        function [obj, msg] = addFiles(obj, projectData, fileNameList, mergedIndexes, receitaFederalObj)
+        function [obj, msg] = addFiles(obj, projectData, generalSettings, fileNameList, mergedIndexes, receitaFederalObj)
             arguments
                 obj
                 projectData
+                generalSettings
                 fileNameList
                 mergedIndexes     = []
                 receitaFederalObj = []
@@ -147,7 +146,7 @@ classdef ECD < model.ECDBase
                     [obj(idx).Content, ...
                      obj(idx).Encoding, ...
                      obj(idx).EncodingInfo, ...
-                     obj(idx).Hash] = util.fileread(fileFullName);
+                     obj(idx).Hash] = util.fileread(fileFullName, generalSettings.File.encodingList);
 
                     % Leitura do registro "I010", identificando o layout do
                     % arquivo. Como essa ficha não mudou ao longo do tempo, 
@@ -195,8 +194,8 @@ classdef ECD < model.ECDBase
 
                     % Leitura de outros registros essenciais de identificação
                     % ("0000" e "I030"), plano de contas ("I050") e fatos 
-                    % contábeis ("I200_I250").
-                    parseTableAndAddToCache(obj(idx), {'0000', 'I030', 'I050', 'I050_I051_I052', 'I200_I250'})
+                    % contábeis ("I200").
+                    parseTableAndAddToCache(obj(idx), [{'0000', 'I030', 'I050', 'I200'}, generalSettings.ECD.customTables.autoload'], generalSettings)
 
                     if isfield(obj(idx).Table, 'x0000') && ~isempty(obj(idx).Table.x0000)
                         obj(idx).CompanyName    = obj(idx).Table.x0000.NOME{1};
@@ -237,8 +236,6 @@ classdef ECD < model.ECDBase
                     obj(idx).GUI.hasValidPeriod  = checkIfValidPeriod(obj(idx));
                     obj(idx).GUI.hasValidStatus  = checkIfValidStatus(obj(idx));
 
-                    addCustomTables(obj(idx));
-
                 catch ME
                     delete(obj(idx))
                     obj(idx) = [];
@@ -250,10 +247,11 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function parseTableAndAddToCache(obj, tableIdList)
+        function parseTableAndAddToCache(obj, tableIdList, generalSettings)
             arguments
                 obj
                 tableIdList (1,:) cell {mustBeText} = {'all'}
+                generalSettings = []
             end
 
             if isequal(tableIdList, {'all'})
@@ -264,16 +262,13 @@ classdef ECD < model.ECDBase
             for ii = 1:numel(obj)
                 for jj = 1:numel(tableIdList)
                     tableId = tableIdList{jj};
-                    tableIdPreffix = 'x';
-                    if contains(tableId, '_')
-                        tableIdPreffix = 'm';
-                    end
-
-                    if isfield(obj(ii).Table, [tableIdPreffix, tableId])
+                    tableIdField = ['x' tableId];
+                    
+                    if isfield(obj(ii).Table, tableIdField)
                         continue
                     end
 
-                    obj(ii).Table.([tableIdPreffix, tableId]) = parseTable(obj(ii), tableId);
+                    parseTable(obj(ii), tableId, generalSettings);
 
                     % Valida se foi lido o número de linhas esperado...
                     if isfield(obj(ii).Table, 'x9900')
@@ -296,57 +291,16 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function [obj, msg] = mergeFiles(obj, projectData, indexes, tempPath)
+        function [obj, msg] = mergeFiles(obj, projectData, generalSettings, indexes, tempPath)
             try
                 content  = strjoin({obj(indexes).Content}, char(obj(indexes(1)).TERMINATOR));
                 tempFile = [appUtil.DefaultFileName(tempPath, 'monitorSPED') '.txt'];
                 writematrix(content, tempFile, "FileType", "text", "QuoteStrings", "none", "Encoding", obj(indexes(1)).Encoding);
     
-                [obj, msg] = addFiles(obj, projectData, tempFile, indexes);
+                [obj, msg] = addFiles(obj, projectData, generalSettings, tempFile, indexes);
             catch ME
                 msg = ME.message;
             end
-        end
-
-        %-----------------------------------------------------------------%
-        function customMergedTablesKeyOriented(obj, tableIdList, parameters)
-            arguments
-                obj
-                tableIdList (1,:) cell {mustBeText}
-                parameters struct
-            end
-
-            % - "key-oriented"
-            % parameters(1) = struct('fcn', 'outerjoin', 'leftId', 'I050', 'rightId', 'I155', 'args', {{'LeftKeys', 'COD_CTA', 'RightKeys', 'COD_CTA', 'MergeKeys', true, 'Type', 'full'}})
-            % parameters(2) = struct('fcn', 'innerjoin', 'leftId', '*',    'rightId', 'I165', 'args', {{'LeftKeys', 'COD_CTA', 'RightKeys', 'COD_CTA', 'MergeKeys', true, 'Type', 'full'}})
-
-            isTableRead(obj, tableIdList);
-
-            % Verifica se a tabela mesclada já foi criada.
-            mergedTableId = ['m' strjoin(tableIdList, '_')];
-            if isfield(obj.Table, mergedTableId)
-                mergedTable = obj.Table.(mergedTableId);
-                return
-            end
-
-            mergedTable = obj(ii).Table.(['x' parameters(1).leftId]);
-            for jj = 1:numel(parameters)
-                joinFcn   = str2func(parameters(jj).fcn);
-                joinArgs  = parameters(jj).args;
-                leftTable = mergedTable;                            
-
-                if isfield(parameters(jj), 'rightTable')
-                    rightTable = parameters(jj).rightTable;
-                elseif isfield(parameters(jj), 'rightId')
-                    rightTable = obj(ii).Table.(['x' parameters(jj).rightId]);
-                else
-                    error('UnexpectedField')
-                end
-
-                mergedTable = joinFcn(leftTable, rightTable, joinArgs{:});
-            end
-
-            obj(ii).Table.(mergedTableId) = mergedTable;
         end
 
         %-----------------------------------------------------------------%
@@ -388,39 +342,15 @@ classdef ECD < model.ECDBase
             mainTableHeight = height(mainTable);
             mainTable.("_TEMP_KEY") = (1:mainTableHeight)';
             
-            % Em relação às tabelas auxiliares:
-            secundaryTables = repmat({[]}, 1, numel(secundaryIds));
-            secundarySpec   = getColumnSpecifications(obj, secundaryIds, 'index');
-
-            for ii = 1:mainTableHeight
-                currentIdx  = fileIndexes{1}(ii);
-                if ii < mainTableHeight
-                    nextIdx = fileIndexes{1}(ii+1);
-                else
-                    nextIdx = currentIdx+1;
-                    while true
-                        if nextIdx < numel(splitContent) && any(cellfun(@(x) startsWith(splitContent{nextIdx}, x), strcat('|', {secundarySpec.id}, '|')))
-                            nextIdx = nextIdx+1;
-                        else
-                            break;
-                        end
-                    end
-                end
-
-                if nextIdx == currentIdx+1
-                    continue
-                end
-
-                for jj = 1:numel(secundaryIds)
-                    if isempty(secundaryTables{jj})
-                        secundaryTables{jj} = obj.Table.(['x' secundaryIds{jj}]);
-                    end
-
-                    secundaryTableIndexes = fileIndexes{jj+1} > currentIdx & fileIndexes{jj+1} < nextIdx;
-                    secundaryTables{jj}.("_TEMP_KEY")(secundaryTableIndexes) = ii;
-                end
+            % Em relação às tabelas auxiliares:            
+            edges = [fileIndexes{1}; inf];
+            tempIdColumn = {};            
+            for jj = 1:numel(secundaryIds)
+                tempIdColumn{jj} = discretize(fileIndexes{jj+1}, edges);
             end
+            secundaryTables = cellfun(@(x,y) addvars(x, y, 'NewVariableName', '_TEMP_KEY'), cellfun(@(x) obj.Table.(['x' x]), secundaryIds, "UniformOutput", false), tempIdColumn, 'UniformOutput', false);
 
+            secundarySpec = getColumnSpecifications(obj, secundaryIds, 'index');
             if isscalar(secundarySpec)
                 secundaryTable = secundaryTables{1};                
             else
@@ -447,10 +377,11 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function status = isTableRead(obj, tableIdList)
+        function status = isTableRead(obj, tableIdList, generalSettings)
             arguments
                 obj
                 tableIdList (1,:) cell {mustBeText}
+                generalSettings = []
             end
 
             status = false;
@@ -458,16 +389,12 @@ classdef ECD < model.ECDBase
                 for jj = 1:numel(tableIdList)
                     tableId = tableIdList{jj};
 
-                    if ismember(tableId, {'CONTAS_DESCRICAO', 'CONTAS_ANOTACAO', 'BALANCETE_GERAL', 'BALANCETE_RESULTADOS', 'TABELA_APURACAO'})
-                        continue
-                    end
-
                     tableIdFields = {['x' tableId], ['m', tableId]};
                     tableIdStatus = any(isfield(obj(ii).Table, tableIdFields));
 
                     if ~tableIdStatus
                         status = true;
-                        parseTableAndAddToCache(obj(ii), {tableId})
+                        parseTableAndAddToCache(obj(ii), {tableId}, generalSettings)
                     end
                 end
             end
@@ -608,29 +535,24 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function [ordinaryIds, customIds, readOrdinaryIds] = getTableIds(obj, nonemptyFlag)
-            arguments
-                obj 
-                nonemptyFlag = true
-            end
-
+        function [ordinaryIds, customIds, readIds] = getTableIds(obj)
             checkIfScalar(obj)
-
-            tableNames = sort(fieldnames(obj.Table));
-            customIds  = tableNames(startsWith(tableNames, 'm'));
-
-            if nonemptyFlag
-                tableNames(cellfun(@(x) isempty(obj.Table.(x)), tableNames)) = [];
-            end
-            
-            readOrdinaryIds = setdiff(tableNames, customIds);
-            readOrdinaryIds = extractAfter(sort(readOrdinaryIds), 'x');
 
             if isfield(obj.Table, 'x9900') && ~isempty(obj.Table.x9900)
                 ordinaryIds = unique(obj.Table.x9900.("REG_BLC")(obj.Table.x9900.("QTD_REG_BLC") > 0));
             else
                 ordinaryIds = {'-1'};
-            end            
+            end
+            
+            tableNames = sort(fieldnames(obj.Table));
+            customIds  = extractAfter(tableNames(contains(tableNames, '_')), 'x');
+
+            % A exclusão das tabelas vazias ocorre apenas após a obtenção
+            % da lista de tabelas customizadas - iniciadas por "m" - pois
+            % essas somente serão lidas sob demanda, mas devem consta na 
+            % lista de opções.
+            tableNames(cellfun(@(x) isempty(obj.Table.(x)), tableNames)) = [];
+            readIds    = cellfun(@(x) x(2:end), tableNames, 'UniformOutput', false);
         end
 
         %-----------------------------------------------------------------%
@@ -668,42 +590,116 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function tableOut = parseTable(obj, tableId)
+        function parseTable(obj, tableId, generalSettings)
             arguments
                 obj
                 tableId (1,:) char
+                generalSettings = []
             end
 
             checkIfScalar(obj)
+            ordinaryId = false;
 
             switch tableId
+                case '_BALANCETE_GERAL'
+                    obj.Table.x_BALANCETE_GERAL = model.TableGenerator.SummaryByAccount(obj);
+
+                case '_BALANCETE_RESULTADO'
+                    if ~isfield(obj.Table, 'x_BALANCETE_GERAL')
+                        parseTable(obj, '_BALANCETE_GERAL')
+                    end
+                    obj.Table.x_BALANCETE_RESULTADO = model.TableGenerator.SummaryByAccountType(obj, '04');
+
+                case '_CONTAS_ANOTACAO'
+                    if ~isfield(obj.Table, 'x_BALANCETE_RESULTADO')
+                        parseTable(obj, '_BALANCETE_RESULTADO')
+                    end                    
+                    update(obj, 'Table.x_CONTAS_ANOTACAO', 'startup', generalSettings)
+
+                case '_CONTAS_DESCRICAO'
+                    obj.Table.x_CONTAS_DESCRICAO = table( ...
+                        'Size', [0, 2], ...
+                        'VariableNames', {'COD_CTA', 'DESCRIÇÃO'}, ...
+                        'VariableTypes', {'cell', 'cell'} ...
+                    );
+        
+                    % Esse reordenamento é essencial quando se trata de registros
+                    % mesclados, tendo em vista que os planos de contas estão
+                    % replicados. Ao reordenar, registra-se o última estado de
+                    % cada conta.
+                    xI050 = flip(obj.Table.xI050);
+                    [accountUniqueIdList, accountUniqueIdFirstIndex] = unique(xI050.("COD_CTA"), "sorted");
+                    
+                    for ii = 1:numel(accountUniqueIdList)
+                        accountId = accountUniqueIdList{ii};
+                        accountDescription = strtrim(xI050.("CTA"){accountUniqueIdFirstIndex(ii)});
+                        accountNumLevel = str2double(xI050.("NIVEL"){accountUniqueIdFirstIndex(ii)});
+        
+                        description = {};
+                        currentId   = accountId;
+        
+                        for jj = 1:accountNumLevel
+                            currentIndex  = find(strcmp(xI050.("COD_CTA"), currentId),  1);
+                            currentId     = xI050.("COD_CTA_SUP"){currentIndex};
+                            superiorIndex = find(strcmp(xI050.("COD_CTA_SUP"), currentId), 1);
+        
+                            superiorDescription = '';
+                            if ~isempty(superiorIndex)
+                                superiorDescription = strtrim(xI050.("CTA"){superiorIndex});
+                            end
+        
+                            if jj == 1 && ~isempty(accountDescription) && ~isequal(accountDescription, superiorDescription)
+                                description{end+1}  = accountDescription;
+                            end
+                            
+                            if ~isempty(superiorDescription)
+                                description{end+1}  = superiorDescription;
+                            end
+                        end
+        
+                        description  = strjoin(flip(description), '  ↳  ');
+                        obj.Table.x_CONTAS_DESCRICAO(end+1, :) = {accountId, description};
+                    end
+
+                case '_TABELA_APURACAO'
+                    obj.Table.x_TABELA_APURACAO = table( ...
+                        'Size', [7, 14], ...
+                        'VariableNames', {'TIPO', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
+                        'VariableTypes', {'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'} ...
+                    );
+                    obj.Table.x_TABELA_APURACAO.("TIPO") = {'ROB Telecom'; 'ICMS'; 'PIS'; 'CONFINS'; 'Base Cálculo'; 'Valor Apurado Fust'; 'Valor Apurado Funttel'};
+
                 case {'C050_C051_C052', 'I050_I051_I052', 'I200_I250'}
                     switch tableId
                         case 'C050_C051_C052'
-                            tableOut = customMergedTablesRowOriented(obj, 'C050', {'C051', 'C052'});
+                            obj.Table.xC050_C051_C052 = customMergedTablesRowOriented(obj, 'C050', {'C051', 'C052'});
                         case 'I050_I051_I052'
-                            tableOut = customMergedTablesRowOriented(obj, 'I050', {'I051', 'I052'});
+                            obj.Table.xI050_I051_I052 = customMergedTablesRowOriented(obj, 'I050', {'I051', 'I052'});
                         case 'I200_I250'
-                            tableOut = customMergedTablesRowOriented(obj, 'I200', {'I250'});
+                            obj.Table.xI200_I250      = customMergedTablesRowOriented(obj, 'I200', {'I250'});
                     end
 
-                    return
-
                 case {'J800', 'J801'}
+                    ordinaryId   = true;
                     regexMatches = extractBetween(obj.Content, ['|' tableId '|'], ['|' tableId 'FIM|'], 'Boundaries', 'inclusive');
 
                 otherwise
+                    ordinaryId   = true;
                     regexPattern = ['^\|' tableId '\|[^\r\n]*'];
                     regexMatches = regexp(obj.Content, regexPattern, 'match', 'lineanchors')';
             end
 
-            columnsSpec = getColumnSpecifications(obj, {tableId});
+            if ordinaryId
+                columnsSpec = getColumnSpecifications(obj, {tableId});
+    
+                if isempty(regexMatches)
+                    columnTypes = cellfun(@(x) obj.(x).DataType, columnsSpec.complete, 'UniformOutput', false);
+                    tableOut = table('Size', [0, numel(columnsSpec.complete)], 'VariableNames', columnsSpec.complete, 'VariableTypes', columnTypes);
+                else
+                    tableOut = parseFileBlock(obj, regexMatches, columnsSpec, false);
+                end
 
-            if isempty(regexMatches)
-                columnTypes = cellfun(@(x) obj.(x).DataType, columnsSpec.complete, 'UniformOutput', false);
-                tableOut    = table('Size', [0, numel(columnsSpec.complete)], 'VariableNames', columnsSpec.complete, 'VariableTypes', columnTypes);
-            else
-                tableOut    = parseFileBlock(obj, regexMatches, columnsSpec, false);
+                obj.Table.(['x' tableId]) = tableOut;
             end
         end
 
@@ -761,75 +757,79 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function addCustomTables(obj)
-            checkIfScalar(obj)
-
-            % xDESCRIÇÃO
-            obj.Table.mCONTAS_DESCRICAO = table( ...
-                'Size', [0, 2], ...
-                'VariableNames', {'COD_CTA', 'DESCRIÇÃO'}, ...
-                'VariableTypes', {'cell', 'cell'} ...
-            );
-
-            % Esse ordenamento é essencial quando se trata de registros
-            % mesclados, tendo em vista que os planos de contas estão
-            % replicados. Ao ordenar, registra-se o última estado de
-            % cada conta.
-            xI050 = flip(obj.Table.xI050);
-            [accountUniqueIdList, accountUniqueIdFirstIndex] = unique(xI050.("COD_CTA"), "sorted");
-            
-            for ii = 1:numel(accountUniqueIdList)
-                accountId = accountUniqueIdList{ii};
-                accountDescription = strtrim(xI050.("CTA"){accountUniqueIdFirstIndex(ii)});
-                accountNumLevel = str2double(xI050.("NIVEL"){accountUniqueIdFirstIndex(ii)});
-
-                description = {};
-                currentId   = accountId;
-
-                for jj = 1:accountNumLevel
-                    currentIndex  = find(strcmp(xI050.("COD_CTA"), currentId),  1);
-                    currentId     = xI050.("COD_CTA_SUP"){currentIndex};
-                    superiorIndex = find(strcmp(xI050.("COD_CTA_SUP"), currentId), 1);
-
-                    superiorDescription = '';
-                    if ~isempty(superiorIndex)
-                        superiorDescription = strtrim(xI050.("CTA"){superiorIndex});
-                    end
-
-                    if jj == 1 && ~isempty(accountDescription) && ~isequal(accountDescription, superiorDescription)
-                        description{end+1} = accountDescription;
-                    end
-                    
-                    if ~isempty(superiorDescription)
-                        description{end+1} = superiorDescription;
-                    end
-                end
-
-                description  = strjoin(flip(description), '  ↳  ');
-                obj.Table.mCONTAS_DESCRICAO(end+1, :) = {accountId, description};
+        % ToDo: 
+        % - Migrar toda e qualquer atualização do objeto model.ECD para esse 
+        %   método.
+        %-----------------------------------------------------------------%
+        function update(obj, propertyName, updateType, varargin)
+            arguments
+                obj
+                propertyName char {mustBeMember(propertyName, {'Table.x_CONTAS_ANOTACAO'})}
+                updateType
             end
 
-            % xBALANCETE
-            obj.Table.mBALANCETE_GERAL = model.TableGenerator.SummaryByAccount(obj);
-            obj.Table.mBALANCETE_RESULTADO = model.TableGenerator.SummaryByAccountType(obj, '04');
+            arguments (Repeating)
+                varargin
+            end
 
-            % xCONTAS
-            numAccounts = height(obj.Table.mBALANCETE_RESULTADO);
-            obj.Table.mCONTAS_ANOTACAO = table( ...
-                obj.Table.mBALANCETE_RESULTADO.("COD_CTA"), ...
-                repmat(categorical("-", ["-", "Não", "Sim", "Sim - ICMS"]), numAccounts, 1), ...
-                repmat({jsonencode(obj.GUI.icmsDefaultRate)}, numAccounts, 1), ...
-                repmat({''}, numAccounts, 1), ...
-                'VariableNames', {'COD_CTA', 'Apurado?  ✎', 'Alíquota ICMS', 'Observação  ✎'} ...
-            );
+            checkIfScalar(obj)
 
-            % xAPURAÇÃO
-            obj.Table.mTABELA_APURACAO  = table( ...
-                'Size', [7, 14], ...
-                'VariableNames', {'TIPO', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
-                'VariableTypes', {'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'} ...
-            );
-            obj.Table.mTABELA_APURACAO.("TIPO") = {'ROB Telecom'; 'ICMS'; 'PIS'; 'CONFINS'; 'Base Cálculo'; 'Valor Apurado Fust'; 'Valor Apurado Funttel'};
+            switch propertyName
+                case 'Table.x_CONTAS_ANOTACAO'
+                    switch updateType
+                        case 'startup'
+                            generalSettings = varargin{1};
+                            numAccounts = height(obj.Table.x_BALANCETE_RESULTADO);
+
+                            obj.Table.x_CONTAS_ANOTACAO = table( ...
+                                obj.Table.x_BALANCETE_RESULTADO.("COD_CTA"), ...
+                                repmat(categorical("-", generalSettings.ECD.accountOptions), numAccounts, 1), ...
+                                repmat({'-'}, numAccounts, 1), ...
+                                repmat({''}, numAccounts, 1), ...
+                                'VariableNames', {'COD_CTA', 'Apurado?  ✎', 'Alíquota ICMS', 'Observação  ✎'} ...
+                            );
+
+                        case 'valueChanged'
+                            rowIndex = varargin{1};
+                            colIndex = varargin{2};
+                            colName  = varargin{3};
+                            newValue = varargin{4};
+
+                            obj.Table.x_CONTAS_ANOTACAO{rowIndex, colIndex} = newValue;
+                            if strcmp(colName, 'Apurado?  ✎')
+                                update(obj, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Apurado?', rowIndex, newValue)
+                            end
+
+                        case 'valueChanged:Apurado?'
+                            rowIndex = varargin{1};
+                            newValue = varargin{2};
+
+                            obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(rowIndex) = newValue;
+                            switch newValue
+                                case 'Sim'
+                                    obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){rowIndex} = jsonencode(obj.GUI.icmsDefaultRate);
+                                otherwise
+                                    obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){rowIndex} = '-';
+                            end
+
+                        case 'valueChanged:Alíquota ICMS'
+                            rowIndex = varargin{1};
+                            newValue = varargin{2};
+
+                            obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎'){rowIndex} = newValue;
+
+                        case 'valueChanged:Observação'
+                            rowIndex = varargin{1};
+                            newValue = varargin{2};
+
+                            obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){rowIndex} = newValue;
+
+                        otherwise
+                            error('UnexpectedCall')
+                    end
+                otherwise
+                    error('UnexpectedCall')
+            end
         end
     end
 end

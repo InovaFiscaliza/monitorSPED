@@ -19,11 +19,13 @@ classdef winConfig_exported < matlab.apps.AppBase
         Tab2Grid                   matlab.ui.container.GridLayout
         configAnalysisPanel2       matlab.ui.container.Panel
         configAnalysisGrid2        matlab.ui.container.GridLayout
+        Cofins                     matlab.ui.control.Spinner
+        CofinsLabel                matlab.ui.control.Label
+        PIS                        matlab.ui.control.Spinner
+        PISLabel                   matlab.ui.control.Label
         configAnalysisPanel2Label  matlab.ui.control.Label
         configAnalysisPanel1       matlab.ui.container.Panel
         configAnalysisGrid1        matlab.ui.container.GridLayout
-        Encoding                   matlab.ui.control.DropDown
-        EncodingLabel              matlab.ui.control.Label
         CheckStatus                matlab.ui.control.DropDown
         CheckStatusLabel           matlab.ui.control.Label
         SortMethod                 matlab.ui.control.DropDown
@@ -259,10 +261,10 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.InputType.Value   = app.mainApp.General.File.input;
             app.SortMethod.Value  = app.mainApp.General.File.sortMethod;
             app.CheckStatus.Value = app.mainApp.General.File.checkStatus;
-            app.Encoding.Items    = app.mainApp.General.File.encoding.options;
 
             % ECD
-            % ...
+            app.PIS.Value         = 100 * app.mainApp.General.ECD.taxConfig.PIS;
+            app.Cofins.Value      = 100 * app.mainApp.General.ECD.taxConfig.COFINS;
 
             if checkEdition(app, 'ANALYSIS')
                 app.configAnalysisRefresh.Visible = 1;
@@ -455,23 +457,28 @@ classdef winConfig_exported < matlab.apps.AppBase
 
         end
 
-        % Value changed function: CheckStatus, Encoding, InputType, 
+        % Value changed function: CheckStatus, Cofins, InputType, PIS, 
         % ...and 1 other component
         function Config_AnalysisParameterValueChanged(app, event)
             
             switch event.Source
                 case app.InputType
-                    app.mainApp.General.File.input          = app.InputType.Value;
+                    app.mainApp.General.File.input           = app.InputType.Value;
 
                 case app.SortMethod
-                    app.mainApp.General.File.sortMethod     = app.SortMethod.Value;
+                    app.mainApp.General.File.sortMethod      = app.SortMethod.Value;
                     ipcMainMatlabCallsHandler(app.mainApp, app, 'fileSortMethodChanged')
 
                 case app.CheckStatus
-                    app.mainApp.General.File.checkStatus    = app.CheckStatus.Value;
+                    app.mainApp.General.File.checkStatus     = app.CheckStatus.Value;
 
-                case app.Encoding
-                    app.mainApp.General.File.encoding.value = app.Encoding.Value;
+                case app.PIS
+                    app.mainApp.General.ECD.taxConfig.PIS    = app.PIS.Value / 100;
+                    ipcMainMatlabCallsHandler(app.mainApp, app, 'PISValueChanged')
+
+                case app.Cofins
+                    app.mainApp.General.ECD.taxConfig.COFINS = app.Cofins.Value / 100;
+                    ipcMainMatlabCallsHandler(app.mainApp, app, 'COFINSValueChanged')
             end
 
             app.mainApp.General_I.File = app.mainApp.General.File;
@@ -723,7 +730,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create Tab2Grid
             app.Tab2Grid = uigridlayout(app.Tab2);
             app.Tab2Grid.ColumnWidth = {'1x', 22};
-            app.Tab2Grid.RowHeight = {17, 126, 22, '1x'};
+            app.Tab2Grid.RowHeight = {17, 98, 22, '1x'};
             app.Tab2Grid.RowSpacing = 5;
             app.Tab2Grid.BackgroundColor = [1 1 1];
 
@@ -756,7 +763,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create configAnalysisGrid1
             app.configAnalysisGrid1 = uigridlayout(app.configAnalysisPanel1);
             app.configAnalysisGrid1.ColumnWidth = {350, 230};
-            app.configAnalysisGrid1.RowHeight = {22, 22, 22, 22};
+            app.configAnalysisGrid1.RowHeight = {22, 22, 22};
             app.configAnalysisGrid1.RowSpacing = 5;
             app.configAnalysisGrid1.BackgroundColor = [1 1 1];
 
@@ -811,24 +818,6 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.CheckStatus.Layout.Column = 2;
             app.CheckStatus.Value = 'Cache+RealTime';
 
-            % Create EncodingLabel
-            app.EncodingLabel = uilabel(app.configAnalysisGrid1);
-            app.EncodingLabel.FontSize = 11;
-            app.EncodingLabel.Layout.Row = 4;
-            app.EncodingLabel.Layout.Column = 1;
-            app.EncodingLabel.Text = 'Codificação de caractere:';
-
-            % Create Encoding
-            app.Encoding = uidropdown(app.configAnalysisGrid1);
-            app.Encoding.Items = {};
-            app.Encoding.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
-            app.Encoding.Enable = 'off';
-            app.Encoding.FontSize = 11;
-            app.Encoding.BackgroundColor = [1 1 1];
-            app.Encoding.Layout.Row = 4;
-            app.Encoding.Layout.Column = 2;
-            app.Encoding.Value = {};
-
             % Create configAnalysisPanel2Label
             app.configAnalysisPanel2Label = uilabel(app.Tab2Grid);
             app.configAnalysisPanel2Label.VerticalAlignment = 'bottom';
@@ -846,10 +835,46 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create configAnalysisGrid2
             app.configAnalysisGrid2 = uigridlayout(app.configAnalysisPanel2);
-            app.configAnalysisGrid2.ColumnWidth = {'1x'};
-            app.configAnalysisGrid2.RowHeight = {'1x'};
+            app.configAnalysisGrid2.ColumnWidth = {350, 110};
+            app.configAnalysisGrid2.RowHeight = {22, 22};
             app.configAnalysisGrid2.RowSpacing = 5;
             app.configAnalysisGrid2.BackgroundColor = [1 1 1];
+
+            % Create PISLabel
+            app.PISLabel = uilabel(app.configAnalysisGrid2);
+            app.PISLabel.FontSize = 11;
+            app.PISLabel.Layout.Row = 1;
+            app.PISLabel.Layout.Column = 1;
+            app.PISLabel.Text = 'Valor padrão PIS (%):';
+
+            % Create PIS
+            app.PIS = uispinner(app.configAnalysisGrid2);
+            app.PIS.Step = 0.1;
+            app.PIS.Limits = [0 Inf];
+            app.PIS.ValueDisplayFormat = '%.2f';
+            app.PIS.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
+            app.PIS.FontSize = 11;
+            app.PIS.Layout.Row = 1;
+            app.PIS.Layout.Column = 2;
+            app.PIS.Value = 0.65;
+
+            % Create CofinsLabel
+            app.CofinsLabel = uilabel(app.configAnalysisGrid2);
+            app.CofinsLabel.FontSize = 11;
+            app.CofinsLabel.Layout.Row = 2;
+            app.CofinsLabel.Layout.Column = 1;
+            app.CofinsLabel.Text = 'Valor padrão COFINS (%):';
+
+            % Create Cofins
+            app.Cofins = uispinner(app.configAnalysisGrid2);
+            app.Cofins.Step = 0.1;
+            app.Cofins.Limits = [0 Inf];
+            app.Cofins.ValueDisplayFormat = '%.2f';
+            app.Cofins.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
+            app.Cofins.FontSize = 11;
+            app.Cofins.Layout.Row = 2;
+            app.Cofins.Layout.Column = 2;
+            app.Cofins.Value = 3;
 
             % Create Tab3
             app.Tab3 = uitab(app.TabGroup);

@@ -2,46 +2,47 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure                       matlab.ui.Figure
-        GridLayout                     matlab.ui.container.GridLayout
-        popupContainerGrid             matlab.ui.container.GridLayout
-        SplashScreen                   matlab.ui.control.Image
-        menu_Grid                      matlab.ui.container.GridLayout
-        AppInfo                        matlab.ui.control.Image
-        FigurePosition                 matlab.ui.control.Image
-        DataHubLamp                    matlab.ui.control.Image
-        jsBackDoor                     matlab.ui.control.HTML
-        menu_Button3                   matlab.ui.control.StateButton
-        menu_Separator                 matlab.ui.control.Image
-        menu_Button2                   matlab.ui.control.StateButton
-        menu_Button1                   matlab.ui.control.StateButton
-        menu_AppName                   matlab.ui.control.Label
-        menu_AppIcon                   matlab.ui.control.Image
-        TabGroup                       matlab.ui.container.TabGroup
-        Tab1_File                      matlab.ui.container.Tab
-        file_Grid                      matlab.ui.container.GridLayout
-        file_Tree                      matlab.ui.container.Tree
-        file_Metadata                  matlab.ui.control.Label
-        TabGroup2                      matlab.ui.container.TabGroup
-        ARQUIVOSTab                    matlab.ui.container.Tab
-        GridLayout2                    matlab.ui.container.GridLayout
-        Image                          matlab.ui.control.Image
-        file_FileSortMethodIcon        matlab.ui.control.Image
-        file_FileSortMethod            matlab.ui.control.DropDown
-        file_ModuleIntro               matlab.ui.control.Label
-        file_toolGrid                  matlab.ui.container.GridLayout
-        tool_UploadFinalFile           matlab.ui.control.Image
-        tool_GenerateReport            matlab.ui.control.Image
-        tool_CheckRFB                  matlab.ui.control.Image
-        tool_Separator2                matlab.ui.control.Image
-        tool_MergeFiles                matlab.ui.control.Image
-        tool_ReadFiles                 matlab.ui.control.Image
-        tool_Separator1                matlab.ui.control.Image
-        tool_SelectFilesToRead         matlab.ui.control.Image
-        Tab2_Playback                  matlab.ui.container.Tab
-        Tab3_Config                    matlab.ui.container.Tab
-        file_ContextMenu_Tree          matlab.ui.container.ContextMenu
-        file_ContextMenu_delTree1Node  matlab.ui.container.Menu
+        UIFigure                 matlab.ui.Figure
+        GridLayout               matlab.ui.container.GridLayout
+        popupContainerGrid       matlab.ui.container.GridLayout
+        SplashScreen             matlab.ui.control.Image
+        menu_Grid                matlab.ui.container.GridLayout
+        AppInfo                  matlab.ui.control.Image
+        FigurePosition           matlab.ui.control.Image
+        DataHubLamp              matlab.ui.control.Image
+        jsBackDoor               matlab.ui.control.HTML
+        menu_Button3             matlab.ui.control.StateButton
+        menu_Separator           matlab.ui.control.Image
+        menu_Button2             matlab.ui.control.StateButton
+        menu_Button1             matlab.ui.control.StateButton
+        menu_AppName             matlab.ui.control.Label
+        menu_AppIcon             matlab.ui.control.Image
+        TabGroup                 matlab.ui.container.TabGroup
+        Tab1_File                matlab.ui.container.Tab
+        file_Grid                matlab.ui.container.GridLayout
+        file_Tree                matlab.ui.container.Tree
+        file_Metadata            matlab.ui.control.Label
+        TabGroup2                matlab.ui.container.TabGroup
+        ARQUIVOSTab              matlab.ui.container.Tab
+        GridLayout2              matlab.ui.container.GridLayout
+        Image                    matlab.ui.control.Image
+        file_FileSortMethodIcon  matlab.ui.control.Image
+        file_FileSortMethod      matlab.ui.control.DropDown
+        file_ModuleIntro         matlab.ui.control.Label
+        file_toolGrid            matlab.ui.container.GridLayout
+        tool_UploadFinalFile     matlab.ui.control.Image
+        tool_GenerateReport      matlab.ui.control.Image
+        tool_CheckRFB            matlab.ui.control.Image
+        tool_Separator2          matlab.ui.control.Image
+        tool_MergeFiles          matlab.ui.control.Image
+        tool_ReadFiles           matlab.ui.control.Image
+        tool_Separator1          matlab.ui.control.Image
+        tool_SelectFilesToRead   matlab.ui.control.Image
+        Tab2_Playback            matlab.ui.container.Tab
+        Tab3_Config              matlab.ui.container.Tab
+        file_ContextMenu_Tree    matlab.ui.container.ContextMenu
+        contextmenu_merge        matlab.ui.container.Menu
+        contextmenu_del          matlab.ui.container.Menu
     end
 
     
@@ -255,6 +256,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                     app.file_FileSortMethod.Value = app.General.File.sortMethod;
                                     file_FileSortMethodValueChanged(app)
                                 end
+
+                            case {'PISValueChanged', 'COFINSValueChanged'}
+                                error('Pendente de implementação! :(')
 
                             otherwise
                                 error('UnexpectedCall')
@@ -812,9 +816,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_ReadFiles.Enable       = nonEmptySelection;
             app.tool_MergeFiles.Enable      = nonEmptySelection && nonScalarSelection;
             app.tool_CheckRFB.Enable        = nonEmptySelection;
-            
             app.tool_GenerateReport.Enable  = nonEmptySelection;
             app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated;
+
+            app.contextmenu_merge.Enable    = app.tool_MergeFiles.Enable;
+            app.contextmenu_del.Enable      = nonEmptySelection;
         end
 
         %-----------------------------------------------------------------%
@@ -941,9 +947,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             try
                 % Inicialmente, faz-se a leitura dos registros ordinários
                 % de cada arquivo...
-                toolbar_ReadFilesImageClicked(app, struct('Source', app.tool_GenerateReport, 'Indexes', indexes))
+                % toolbar_ReadFilesImageClicked(app, struct('Source', app.tool_GenerateReport, 'Indexes', indexes))
 
-                % E depois a biblioteca reportLib por meio de chamada à 
+                % E depois a biblioteca reportLib é chamada por meio de
                 % reportLibConnection.Controller.
                 reportSettings = struct('system',        app.projectData.modules.(context).ui.system,      ...
                                         'unit',          app.projectData.modules.(context).ui.unit,        ...
@@ -1178,7 +1184,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 % Verifica se arquivo já foi lido, comparando o seu nome com 
                 % a variável app.ecdObj.
                 if ~ismember(fileName{ii}, {app.ecdObj.FileName})
-                    [app.ecdObj, msg] = addFiles(app.ecdObj, app.projectData, fileFullName{ii}, [], app.receitaFederalObj);
+                    [app.ecdObj, msg] = addFiles(app.ecdObj, app.projectData, app.General, fileFullName{ii}, [], app.receitaFederalObj);
 
                     if ~isempty(msg)
                         filesError(end+1) = struct('File', sprintf('"%s"', fileName{ii}), 'Error', msg);
@@ -1235,7 +1241,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         end
 
-        % Image clicked function: tool_MergeFiles
+        % Callback function: contextmenu_merge, tool_MergeFiles
         function toolbar_MergeFilesImageClicked(app, event)
 
             indexes = file_findSelectedNodeData(app);
@@ -1251,7 +1257,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 app.progressDialog.Visible = 'visible';
 
-                [app.ecdObj, msg] = mergeFiles(app.ecdObj, app.projectData, indexes, app.General.fileFolder.tempPath);
+                [app.ecdObj, msg] = mergeFiles(app.ecdObj, app.projectData, app.General, indexes, app.General.fileFolder.tempPath);
                 if isempty(msg)
                     file_ProjectRestart(app, indexes, 'FileListChanged:Merge')
                 else
@@ -1367,7 +1373,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         end
 
-        % Menu selected function: file_ContextMenu_delTree1Node
+        % Menu selected function: contextmenu_del
         function contextMenu_delTreeNodeSelected(app, event)
             
             indexes = file_findSelectedNodeData(app);
@@ -1471,12 +1477,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create tool_MergeFiles
             app.tool_MergeFiles = uiimage(app.file_toolGrid);
+            app.tool_MergeFiles.ScaleMethod = 'none';
             app.tool_MergeFiles.ImageClickedFcn = createCallbackFcn(app, @toolbar_MergeFilesImageClicked, true);
             app.tool_MergeFiles.Enable = 'off';
             app.tool_MergeFiles.Tooltip = {'Mescla informação contábil'};
             app.tool_MergeFiles.Layout.Row = [1 3];
             app.tool_MergeFiles.Layout.Column = 4;
-            app.tool_MergeFiles.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Merge_32.png');
+            app.tool_MergeFiles.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Merge_18.png');
 
             % Create tool_Separator2
             app.tool_Separator2 = uiimage(app.file_toolGrid);
@@ -1726,10 +1733,17 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.file_ContextMenu_Tree = uicontextmenu(app.UIFigure);
             app.file_ContextMenu_Tree.Tag = 'winMonitorSPED';
 
-            % Create file_ContextMenu_delTree1Node
-            app.file_ContextMenu_delTree1Node = uimenu(app.file_ContextMenu_Tree);
-            app.file_ContextMenu_delTree1Node.MenuSelectedFcn = createCallbackFcn(app, @contextMenu_delTreeNodeSelected, true);
-            app.file_ContextMenu_delTree1Node.Text = '❌ Excluir';
+            % Create contextmenu_merge
+            app.contextmenu_merge = uimenu(app.file_ContextMenu_Tree);
+            app.contextmenu_merge.MenuSelectedFcn = createCallbackFcn(app, @toolbar_MergeFilesImageClicked, true);
+            app.contextmenu_merge.Enable = 'off';
+            app.contextmenu_merge.Text = '🔀 Mesclar';
+
+            % Create contextmenu_del
+            app.contextmenu_del = uimenu(app.file_ContextMenu_Tree);
+            app.contextmenu_del.MenuSelectedFcn = createCallbackFcn(app, @contextMenu_delTreeNodeSelected, true);
+            app.contextmenu_del.Enable = 'off';
+            app.contextmenu_del.Text = '❌ Excluir';
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';

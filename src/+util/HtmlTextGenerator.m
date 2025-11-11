@@ -168,12 +168,12 @@ classdef (Abstract) HtmlTextGenerator
                 dataStruct(end+1) = struct('group', 'Encoding Test', 'value', ecdObj.EncodingInfo);                
                 dataStruct(end+1) = struct('group', 'Content',  'value', [strjoin(strtrim(splitlines(ecdObj.Content(1:min(500, numel(ecdObj.Content))))), '\n') '<br><font style="color: gray;">... [texto truncado]</font>']);
                 
-                [ordinaryIds, ~, readOrdinaryIds] = getTableIds(ecdObj, true);
+                [ordinaryIds, ~, readOrdinaryIds] = getTableIds(ecdObj);
                 if isequal(ordinaryIds, readOrdinaryIds)
-                    dataStruct(end+1) = struct('group', 'REGISTROS ORDINÁRIOS', 'value', strjoin(ordinaryIds,     ', '));
+                    dataStruct(end+1) = struct('group', 'REGISTROS ORDINÁRIOS', 'value', strjoin(ordinaryIds, ', '));
                 else
-                    dataStruct(end+1) = struct('group', 'REGISTROS ORDINÁRIOS',          'value', strjoin(ordinaryIds,     ', '));
-                    dataStruct(end+1) = struct('group', 'REGISTROS ORDINÁRIOS LIDOS', 'value', strjoin(readOrdinaryIds, ', '));
+                    dataStruct(end+1) = struct('group', 'REGISTROS ORDINÁRIOS', 'value', strjoin(ordinaryIds, ', '));
+                    dataStruct(end+1) = struct('group', 'REGISTROS LIDOS OU CRIADOS', 'value', strjoin(readOrdinaryIds, ', '));
                 end
 
                 if ~isempty(ecdObj.GUI.warnings)
@@ -249,22 +249,22 @@ classdef (Abstract) HtmlTextGenerator
         % AUXAPP.WINECD: WARNINGS
         %-----------------------------------------------------------------%
         function htmlContent = Warnings(ecdObj)
-            [ordinaryIds, createCustomIds, readOrdinaryIds] = getTableIds(ecdObj, true);
+            [ordinaryIds, customIds, readIds] = getTableIds(ecdObj);
 
-            if isempty(createCustomIds)
-                createCustomIds = {'-1'};
+            if isempty(customIds)
+                customIds = {'-1'};
             end
 
-            dataStruct(1) = struct('group', 'OrdinaryTable',     'value', strjoin(ordinaryIds,     ', '));
-            dataStruct(2) = struct('group', 'ReadOrdinaryTable', 'value', strjoin(readOrdinaryIds, ', '));
-            dataStruct(3) = struct('group', 'CreateCustomTable', 'value', strjoin(createCustomIds, ', '));
+            dataStruct(1) = struct('group', 'OrdinaryTable',     'value', strjoin(ordinaryIds, ', '));
+            dataStruct(2) = struct('group', 'ReadOrdinaryTable', 'value', strjoin(setdiff(readIds, customIds), ', '));
+            dataStruct(3) = struct('group', 'CreateCustomTable', 'value', strjoin(customIds, ', '));
 
             if isempty(ecdObj.GUI.warnings)
                 readWarnings = '-1';
             else
                 readWarnings = strjoin(ecdObj.GUI.warnings, '\n');
             end
-            dataStruct(4) = struct('group', 'Warnings',          'value', readWarnings);
+            dataStruct(4) = struct('group', 'Warnings', 'value', readWarnings);
 
             htmlContent = textFormatGUI.struct2PrettyPrintList(dataStruct, 'print -1', '', 'popup');
         end

@@ -64,6 +64,9 @@ classdef winECD_exported < matlab.apps.AppBase
         tool_UploadFinalFile   matlab.ui.control.Image
         tool_GenerateReport    matlab.ui.control.Image
         tool_CompanyInfo       matlab.ui.control.Label
+        ContextMenu            matlab.ui.container.ContextMenu
+        contextmenu_Copy       matlab.ui.container.Menu
+        contextmenu_Paste      matlab.ui.container.Menu
     end
 
     
@@ -156,13 +159,7 @@ classdef winECD_exported < matlab.apps.AppBase
                                 exportFiles(app, varargin{:})
 
                             case 'accountEdited'
-                                if strcmp(app.SheetList.Value, 'mCONTAS_ANOTACAO')
-                                    SheetViewFirstValueChanged(app, struct('Source', app.SheetList))
-                                end
-
-                                if strcmp(app.SheetView_Second.Value, 'mCONTAS_ANOTACAO')
-                                    SheetViewSecondValueChanged(app)
-                                end
+                                forceUpdateTable(app)
 
                             otherwise
                                 error('UnexpectedCall')
@@ -483,30 +480,91 @@ classdef winECD_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function updateSheetList(app)
             selectedECD = selectedECDObject(app);
+            ordinaryIds = getTableIds(selectedECD);
 
-            [ordinaryIds, customIds] = getTableIds(selectedECD);
-            sheetsSorted = [ordinaryIds; customIds];
+            % Algumas das tabelas customizadas existirão apenas se registros 
+            % ordinários estiverem presentes na escrituração. Por exemplo,
+            % "I200_I250" existe apenas se o registro "I200" existe.
+            customIds = app.mainApp.General.ECD.customTables.expected;
+            notappplicableIds = {};
+            if isfield(selectedECD.Table, 'x9900')
+                for ii = 1:numel(customIds)
+                    customId = customIds{ii};
+                    if startsWith(customId, '_')
+                        continue
+                    end
 
-            app.SheetList.Items        = sheetsSorted;
-            app.SheetView_First.Items  = sheetsSorted;
-            app.SheetView_Second.Items = sheetsSorted;
+                    mainMergedId = extractBefore(customId, '_');
+                    mainMergedIdIndex = find(strcmp(selectedECD.Table.x9900.("REG_BLC"), mainMergedId));
+
+                    if isempty(mainMergedIdIndex) || sum(selectedECD.Table.x9900.("QTD_REG_BLC")(mainMergedIdIndex)) <= 0
+                        notappplicableIds{end+1} = customId;
+                    end
+                end
+            end
+
+            % Posteriormente, define-se a lista de registros, mantendo a 
+            % seleção inicial, caso registro já parseado.
+            sheetsSorted = sort([ordinaryIds; setdiff(customIds, notappplicableIds)]);
+
+            selection1 = app.SheetView_First.Value;
+            if isempty(selection1) || ~ismember(selection1, sheetsSorted) || ~isfield(selectedECD, ['x' selection1])
+                selection1 = sheetsSorted{1};
+            end
+
+            selection2 = app.SheetView_First.Value;
+            if isempty(selection2) || ~ismember(selection2, sheetsSorted) || ~isfield(selectedECD, ['x' selection2])
+                selection2 = sheetsSorted{1};
+            end
+            
+            set(app.SheetList,        'Items', sheetsSorted, 'Value', selection1)
+            set(app.SheetView_First,  'Items', sheetsSorted, 'Value', selection1)
+            set(app.SheetView_Second, 'Items', sheetsSorted, 'Value', selection2)
+        end
+
+        %-----------------------------------------------------------------%
+        function forceUpdateTable(app)
+            if strcmp(app.SheetList.Value, '_CONTAS_ANOTACAO')
+                clickedTable = app.UITable1;
+                initialSelection = clickedTable.Selection;
+
+                SheetViewFirstValueChanged(app, struct('Source', app.SheetList))
+
+                clickedTable.Selection = initialSelection;
+                [tableCountText, tableSelectedAccount] = relatedTableComponents(app, clickedTable);
+                updateTableFootnote(app, clickedTable, tableCountText, tableSelectedAccount)
+            end
+    
+            if strcmp(app.SheetView_Second.Value, '_CONTAS_ANOTACAO')
+                clickedTable = app.UITable2;
+                initialSelection = clickedTable.Selection;
+
+                SheetViewSecondValueChanged(app)
+
+                clickedTable.Selection = initialSelection;
+                [tableCountText, tableSelectedAccount] = relatedTableComponents(app, clickedTable);
+                updateTableFootnote(app, clickedTable, tableCountText, tableSelectedAccount)
+            end
         end
 
         %-----------------------------------------------------------------%
         function updateTable(app, hTable, hTableAccountInfo, hTableCountText, hTableFilterText, tableId)
             [selectedECD, fileIndex] = selectedECDObject(app);
 
-            if ~startsWith(tableId, 'm')
-                tableIdField = ['x' tableId];
-                if isTableRead(selectedECD, {tableId})
-                    ipcMainMatlabCallsHandler(app.mainApp, app, 'updateTreeView', fileIndex);
-                end
-            else
-                tableIdField = tableId;
-            end            
-            tableIdData = selectedECD.Table.(tableIdField);
+            % Evita que a janela de progresso seja apresentada quando
+            % alterado algum parâmetro em outro módulo.
+            if isAppVisible(app)
+                app.progressDialog.Visible = 'visible';
+            end
+
+            if isTableRead(selectedECD, {tableId}, app.mainApp.General)
+                ipcMainMatlabCallsHandler(app.mainApp, app, 'updateTreeView', fileIndex);
+            end
+
+            tableIdField   = ['x' tableId];
+            tableIdData    = selectedECD.Table.(tableIdField);
             
-            columnName  = tableIdData.Properties.VariableNames;
+            columnName     = tableIdData.Properties.VariableNames;
             columnEditable = contains(columnName, '✎');
             
             set(hTable, 'ColumnWidth', 'auto', ...
@@ -519,13 +577,69 @@ classdef winECD_exported < matlab.apps.AppBase
             applyTableStyle(app, selectedECD, hTable, tableId)
 
             if height(hTable.Data) > 1
-                numberOfRowsText = sprintf('%d DE %d LINHAS ', height(hTable.Data), height(hTable.Data)); % PENDENTE FILTRAGEM
+                numberOfRowsText  = sprintf('%d DE %d LINHAS ', height(hTable.Data), height(hTable.Data)); % PENDENTE FILTRAGEM
             else
-                numberOfRowsText = sprintf('%d DE %d LINHA ',  height(hTable.Data), height(hTable.Data)); % PENDENTE FILTRAGEM
+                numberOfRowsText  = sprintf('%d DE %d LINHA ',  height(hTable.Data), height(hTable.Data)); % PENDENTE FILTRAGEM
             end
             hTableFilterText.Text = numberOfRowsText;
 
             updateFinanceFacts(app, selectedECD)
+
+            app.progressDialog.Visible = 'hidden';
+        end
+
+        %-----------------------------------------------------------------%
+        function updateTableFootnote(app, clickedTable, tableCountText, tableSelectedAccount)
+            clickedTable.UserData.Selection = clickedTable.Selection;
+
+            if isempty(clickedTable.Selection)
+                tableCountText.Text       = '  CONTAGEM: 0';
+                tableSelectedAccount.Text = '';                    
+            else
+                selectedCols = unique(clickedTable.Selection(:, 2));
+                selectedColsNames = clickedTable.Data.Properties.VariableNames(selectedCols);
+
+                isNumeric = true;
+                for ii = 1:numel(selectedColsNames)
+                    if ~isnumeric(clickedTable.Data.(selectedColsNames{ii}))
+                        isNumeric = false;
+                        break;
+                    end
+                end
+
+                cellsCount = height(clickedTable.Selection);
+                if isNumeric
+                    switch clickedTable.UserData.SelectionType
+                        case 'column'
+                            cellsSum = sum(double(clickedTable.Data{:, selectedCols}), 'all');
+                            cellsAverage = mean(double(clickedTable.Data{:, selectedCols}), 'all');
+
+                        otherwise
+                            cellsSum = 0;
+                            for kk = 1:cellsCount
+                                cellsSum = cellsSum + double(clickedTable.Data{clickedTable.Selection(kk, 1), clickedTable.Selection(kk, 2)});
+                            end
+                            cellsAverage = cellsSum/cellsCount;
+                    end    
+                    tableCountText.Text = sprintf('  CONTAGEM: %d     SOMA: %.2f     MÉDIA: %.2f', cellsCount, cellsSum, cellsAverage);
+                else
+                    tableCountText.Text = sprintf('  CONTAGEM: %d', cellsCount);
+                end
+
+                selectedRows = unique(clickedTable.Selection(:,1));
+                selectedAccountDescription = '';            
+                if isscalar(selectedRows) && ismember('COD_CTA', clickedTable.Data.Properties.VariableNames)
+                    selectedECD = selectedECDObject(app);
+
+                    selectedAccount = clickedTable.Data.("COD_CTA"){selectedRows};
+                    selectedAccountIndex = find(strcmp(selectedECD.Table.x_CONTAS_DESCRICAO.("COD_CTA"), selectedAccount), 1);
+        
+                    if ~isempty(selectedAccountIndex)
+                        selectedAccountDescription = sprintf('COD_CTA %s\n%s', selectedAccount, selectedECD.Table.x_CONTAS_DESCRICAO.("DESCRIÇÃO"){selectedAccountIndex});
+                    end
+                end                    
+                tableSelectedAccount.Text = selectedAccountDescription;
+            end
         end
 
         %-----------------------------------------------------------------%
@@ -558,21 +672,27 @@ classdef winECD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function updateFinanceFacts(app, selectedECD)
-            periodResult = sum(selectedECD.Table.mBALANCETE_RESULTADO.TOTAL);
-            if periodResult < 0
-                periodResult = sprintf('&thinsp;∑&thinsp;  <font style="color:red;">R$ %.2f</font>', periodResult);
-            else
-                periodResult = sprintf('&thinsp;∑&thinsp;  R$ %.2f', periodResult);
-            end
+            if isfield(selectedECD.Table, 'x_BALANCETE_RESULTADO')
+                periodResult = sum(selectedECD.Table.x_BALANCETE_RESULTADO.TOTAL);
+                if periodResult < 0
+                    periodResult = sprintf('&thinsp;∑&thinsp;  <font style="color:red;">R$ %.2f</font>', periodResult);
+                else
+                    periodResult = sprintf('&thinsp;∑&thinsp;  R$ %.2f', periodResult);
+                end
 
-            numAccounts = height(selectedECD.Table.mBALANCETE_RESULTADO);
-            switch numAccounts
-                case 0
-                    numAccounts = '💵 <font style="color:red;">Nenhuma</font> conta movimentada';
-                case 1
-                    numAccounts = '💵 Uma única conta movimentada';
-                otherwise
-                    numAccounts = sprintf('💵 %d contas movimentadas', numAccounts);
+                numAccounts = height(selectedECD.Table.x_BALANCETE_RESULTADO);
+                switch numAccounts
+                    case 0
+                        numAccounts = '💵 <font style="color:red;">Nenhuma</font> conta movimentada';
+                    case 1
+                        numAccounts = '💵 Uma única conta movimentada';
+                    otherwise
+                        numAccounts = sprintf('💵 %d contas movimentadas', numAccounts);
+                end
+
+                balanceteInfo = sprintf('%s\n%s', periodResult, numAccounts);            
+            else
+                balanceteInfo = '⚠️ Balancete <font style="color:red;">pendente</font> de geração';
             end
             
             numAttachedFiles = sum(selectedECD.Table.x9900.('QTD_REG_BLC')(contains(selectedECD.Table.x9900.('REG_BLC'), {'J800', 'J801'})));
@@ -585,7 +705,7 @@ classdef winECD_exported < matlab.apps.AppBase
                     numAttachedFiles = sprintf('🔗 Escrituração possui %d arquivos .rtf', numAttachedFiles);
             end
 
-            app.FinanceFacts.Text = sprintf('%s\n%s\n%s', periodResult, numAccounts, numAttachedFiles);
+            app.FinanceFacts.Text = sprintf('%s\n%s', balanceteInfo, numAttachedFiles);
         end
 
         %-----------------------------------------------------------------%
@@ -597,6 +717,25 @@ classdef winECD_exported < matlab.apps.AppBase
                 hTable     = app.UITable2;
                 hTableName = 'app.UITable2';
             end
+        end
+
+        %-----------------------------------------------------------------%
+        function [tableCountText, tableSelectedAccount, lampPositionRow] = relatedTableComponents(app, clickedTable)
+            switch clickedTable
+                case app.UITable1
+                    tableCountText       = app.UITable1_CountText;
+                    tableSelectedAccount = app.UITable1_AccountInfo;
+                    lampPositionRow      = 1;
+                case app.UITable2
+                    tableCountText       = app.UITable2_CountText;
+                    tableSelectedAccount = app.UITable2_AccountInfo;
+                    lampPositionRow      = 2;
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function status = isAppVisible(app)
+            status = ~app.isDocked || app.mainApp.menu_Button2.Value;
         end
 
         %-----------------------------------------------------------------%
@@ -781,7 +920,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             app.tool_CompanyInfo.Text = sprintf('<font style="font-size: 11px; font-weight: bold;">%s</font> CNPJ %s (%s) \n%s ', ...
                 upper(selectedECD.CompanyName), selectedECD.CompanyId, selectedECD.State, strjoin(string(selectedECD.Period), ' a '));
-            app.tool_GenerateReport_2.Enable = ~isempty(selectedECD.Table.mCONTAS_ANOTACAO);
+            app.tool_GenerateReport_2.Enable = isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);
 
             updateSheetList(app)
             SheetViewFirstValueChanged(app, struct('Source', app.SheetList))
@@ -869,16 +1008,7 @@ classdef winECD_exported < matlab.apps.AppBase
                     end
             end
 
-            switch clickedTable
-                case app.UITable1
-                    tableCountText       = app.UITable1_CountText;
-                    tableSelectedAccount = app.UITable1_AccountInfo;
-                    lampPositionRow      = 1;
-                case app.UITable2
-                    tableCountText       = app.UITable2_CountText;
-                    tableSelectedAccount = app.UITable2_AccountInfo;
-                    lampPositionRow      = 2;
-            end
+            [tableCountText, tableSelectedAccount, lampPositionRow] = relatedTableComponents(app, clickedTable);
 
             % Altera tabela em evidência (uilamp), além de definir o tipo
             % de seleção (no caso de clique fora da região de células,
@@ -904,56 +1034,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Altera informações no rodapé da tabela.
             if ~isequal(clickedTable.Selection, clickedTable.UserData.Selection)
-                clickedTable.UserData.Selection = clickedTable.Selection;
-
-                if isempty(clickedTable.Selection)
-                    tableCountText.Text       = '  CONTAGEM: 0';
-                    tableSelectedAccount.Text = '';                    
-                else
-                    selectedCols = unique(clickedTable.Selection(:, 2));
-                    selectedColsNames = clickedTable.Data.Properties.VariableNames(selectedCols);
-    
-                    isNumeric = true;
-                    for ii = 1:numel(selectedColsNames)
-                        if ~isnumeric(clickedTable.Data.(selectedColsNames{ii}))
-                            isNumeric = false;
-                            break;
-                        end
-                    end
-    
-                    cellsCount = height(clickedTable.Selection);
-                    if isNumeric
-                        switch clickedTable.UserData.SelectionType
-                            case 'column'
-                                cellsSum = sum(double(clickedTable.Data{:, selectedCols}), 'all');
-                                cellsAverage = mean(double(clickedTable.Data{:, selectedCols}), 'all');
-    
-                            otherwise
-                                cellsSum = 0;
-                                for kk = 1:cellsCount
-                                    cellsSum = cellsSum + double(clickedTable.Data{clickedTable.Selection(kk, 1), clickedTable.Selection(kk, 2)});
-                                end
-                                cellsAverage = cellsSum/cellsCount;
-                        end    
-                        tableCountText.Text = sprintf('  CONTAGEM: %d     SOMA: %.2f     MÉDIA: %.2f', cellsCount, cellsSum, cellsAverage);
-                    else
-                        tableCountText.Text = sprintf('  CONTAGEM: %d', cellsCount);
-                    end
-
-                    selectedRows = unique(clickedTable.Selection(:,1));
-                    selectedAccountDescription = '';            
-                    if isscalar(selectedRows) && ismember('COD_CTA', clickedTable.Data.Properties.VariableNames)
-                        selectedECD = selectedECDObject(app);
-    
-                        selectedAccount = clickedTable.Data.("COD_CTA"){selectedRows};
-                        selectedAccountIndex = find(strcmp(selectedECD.Table.mCONTAS_DESCRICAO.("COD_CTA"), selectedAccount), 1);
-            
-                        if ~isempty(selectedAccountIndex)
-                            selectedAccountDescription = sprintf('COD_CTA %s\n%s', selectedAccount, selectedECD.Table.mCONTAS_DESCRICAO.("DESCRIÇÃO"){selectedAccountIndex});
-                        end
-                    end                    
-                    tableSelectedAccount.Text = selectedAccountDescription;
-                end
+                updateTableFootnote(app, clickedTable, tableCountText, tableSelectedAccount)
             end
 
         end
@@ -983,17 +1064,17 @@ classdef winECD_exported < matlab.apps.AppBase
             
             % Para contornar regra de negócio esquisita do MATLAB, que possibilita
             % criação de nova categoria.
-            if strcmp(editedCellColumnName, 'Apurado?  ✎') && ~ismember(newData, app.mainApp.General.ECD.assessmentOptions)
-                clickedTable = event.Source;
-                clickedTable.Data.(editedCellColumnName)(rowIndex) = selectedECD.Table.mCONTAS_ANOTACAO.(editedCellColumnName)(rowIndex);
+            if strcmp(editedCellColumnName, 'Apurado?  ✎') && ~ismember(newData, app.mainApp.General.ECD.accountOptions)
+                forceUpdateTable(app)
                 return
             end
 
-            if iscell(selectedECD.Table.mCONTAS_ANOTACAO{rowIndex, colIndex})
+            if iscell(selectedECD.Table.x_CONTAS_ANOTACAO{rowIndex, colIndex})
                 newData = {strtrim(newData)};
             end
 
-            selectedECD.Table.mCONTAS_ANOTACAO{rowIndex, colIndex} = newData;
+            update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged', rowIndex, colIndex, editedCellColumnName, newData)
+            forceUpdateTable(app)
 
         end
 
@@ -1860,6 +1941,22 @@ classdef winECD_exported < matlab.apps.AppBase
             app.dockModule_Undock.Layout.Row = 1;
             app.dockModule_Undock.Layout.Column = 1;
             app.dockModule_Undock.ImageSource = 'Undock_18White.png';
+
+            % Create ContextMenu
+            app.ContextMenu = uicontextmenu(app.UIFigure);
+            app.ContextMenu.Tag = 'auxApp.winECD';
+
+            % Create contextmenu_Copy
+            app.contextmenu_Copy = uimenu(app.ContextMenu);
+            app.contextmenu_Copy.Text = ' 🗐 Copiar';
+
+            % Create contextmenu_Paste
+            app.contextmenu_Paste = uimenu(app.ContextMenu);
+            app.contextmenu_Paste.Text = '📋Colar';
+            
+            % Assign app.ContextMenu
+            app.UITable1.ContextMenu = app.ContextMenu;
+            app.UITable2.ContextMenu = app.ContextMenu;
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';

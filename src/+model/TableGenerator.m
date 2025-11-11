@@ -11,14 +11,14 @@ classdef (Abstract) TableGenerator
                 'VariableNames', {'COD_CTA', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'} ...
             );
 
-            parseTableAndAddToCache(ecdObj, {'I050', 'I200_I250'})
+            parseTableAndAddToCache(ecdObj, {'I200_I250'})
 
             if isfield(ecdObj.Table, 'xI200') && ~isempty(ecdObj.Table.xI200)
                 % Aplica filtros na tabela de fatos contábeis (I200_I250), de forma 
                 % que sejam considerados apenas os lançamentos "NORMAIS". Além
                 % disso, cria-se coluna "VL_DC_COM_SINAL".
 
-                mergedTable_I200_I250 = ecdObj.Table.mI200_I250;
+                mergedTable_I200_I250 = ecdObj.Table.xI200_I250;
                 mergedTable_I200_I250.("VL_DC_COM_SINAL") = mergedTable_I200_I250.("VL_DC");
                 negativeValueIndexes  = strcmp(mergedTable_I200_I250.("IND_DC"), 'D');
                 mergedTable_I200_I250.("VL_DC_COM_SINAL")(negativeValueIndexes) = -mergedTable_I200_I250.("VL_DC_COM_SINAL")(negativeValueIndexes);
@@ -90,7 +90,7 @@ classdef (Abstract) TableGenerator
 
             checkIfScalar(ecdObj)
 
-            accountMonthlySummary = ecdObj.Table.mBALANCETE_GERAL;
+            accountMonthlySummary = ecdObj.Table.x_BALANCETE_GERAL;
             indexes = strcmp(accountMonthlySummary.("COD_NAT"), accountType);
             accountMonthlySummary = removevars(accountMonthlySummary(indexes, :), 'COD_NAT');
         end

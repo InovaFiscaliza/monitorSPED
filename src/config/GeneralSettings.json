@@ -1,5 +1,5 @@
 {
-    "version": 0.40,
+    "version": 0.48,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -26,15 +26,10 @@
         "input": "file",
         "sortMethod": "CNPJ",
         "checkStatus": "Cache+RealTime",
-        "encoding": {
-            "options": [
-                "ISO-8859-1",
-                "UTF-8",
-                "windows-1251",
-                "windows-1252"
-                ],
-            "value": "ISO-8859-1"
-        },
+        "encodingList": [
+            "ISO-8859-1",
+            "UTF-8"
+        ],
         "terminator": {
             "options": [
                 "CRLF",
@@ -44,12 +39,33 @@
         }
     },
     "ECD": {
-        "assessmentOptions": [
+        "customTables": {
+            "expected": [
+                "_BALANCETE_GERAL",
+                "_BALANCETE_RESULTADO",
+                "_CONTAS_ANOTACAO",
+                "_CONTAS_DESCRICAO",
+                "_TABELA_APURACAO",
+                "C050_C051_C052",
+                "I050_I051_I052",
+                "I200_I250"
+            ],
+            "autoload": [
+                "_CONTAS_DESCRICAO"
+            ]
+        },
+        "accountOptions": [
             "-",
             "Não",
             "Sim",
-            "Sim - ICMS"
-        ]
+            "ICMS Telecom",
+            "PIS Telecom",
+            "COFINS Telecom"
+        ],
+        "taxConfig": {
+            "PIS": 0.0065,
+            "COFINS": 0.03
+        }
     },
     "Report": {
         "system": "eFiscaliza",

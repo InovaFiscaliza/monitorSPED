@@ -1,7 +1,7 @@
 function [content, encoding, encodingJson, hashHex] = fileread(fileFullName, encodingList)
     arguments
         fileFullName (1,:) char
-        encodingList (1,:) cell = {'ISO-8859-1', 'UTF-8', 'windows-1251', 'windows-1252'}
+        encodingList (1,:) cell = {'ISO-8859-1', 'UTF-8'}
     end
 
     varargout = {};
