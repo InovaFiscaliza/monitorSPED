@@ -613,7 +613,12 @@ classdef ECD < model.ECDBase
                 case '_CONTAS_ANOTACAO'
                     if ~isfield(obj.Table, 'x_BALANCETE_RESULTADO')
                         parseTable(obj, '_BALANCETE_RESULTADO')
-                    end                    
+                    end
+
+                    if ~isfield(obj.Table, '_TABELA_APURACAO')
+                        parseTable(obj, '_TABELA_APURACAO')
+                    end
+
                     update(obj, 'Table.x_CONTAS_ANOTACAO', 'startup', generalSettings)
 
                 case '_CONTAS_DESCRICAO'
@@ -662,12 +667,7 @@ classdef ECD < model.ECDBase
                     end
 
                 case '_TABELA_APURACAO'
-                    obj.Table.x_TABELA_APURACAO = table( ...
-                        'Size', [7, 14], ...
-                        'VariableNames', {'TIPO', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
-                        'VariableTypes', {'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'} ...
-                    );
-                    obj.Table.x_TABELA_APURACAO.("TIPO") = {'ROB Telecom'; 'ICMS'; 'PIS'; 'CONFINS'; 'Base Cálculo'; 'Valor Apurado Fust'; 'Valor Apurado Funttel'};
+                    update(obj, 'Table.x_TABELA_APURACAO', 'startup')
 
                 case {'C050_C051_C052', 'I050_I051_I052', 'I200_I250'}
                     switch tableId
@@ -764,7 +764,7 @@ classdef ECD < model.ECDBase
         function update(obj, propertyName, updateType, varargin)
             arguments
                 obj
-                propertyName char {mustBeMember(propertyName, {'Table.x_CONTAS_ANOTACAO'})}
+                propertyName char {mustBeMember(propertyName, {'Table.x_CONTAS_ANOTACAO', 'Table.x_TABELA_APURACAO'})}
                 updateType
             end
 
@@ -788,6 +788,7 @@ classdef ECD < model.ECDBase
                                 repmat({''}, numAccounts, 1), ...
                                 'VariableNames', {'COD_CTA', 'Apurado?  ✎', 'Alíquota ICMS', 'Observação  ✎'} ...
                             );
+                            return
 
                         case 'valueChanged'
                             rowIndex = varargin{1};
@@ -795,7 +796,22 @@ classdef ECD < model.ECDBase
                             colName  = varargin{3};
                             newValue = varargin{4};
 
+                            if isnumeric(obj.Table.x_CONTAS_ANOTACAO{rowIndex, colIndex})
+                                if ~isnumeric(newValue)
+                                    newValue = str2double(string(newValue));
+                                end
+                            elseif iscategorical(obj.Table.x_CONTAS_ANOTACAO{rowIndex, colIndex})
+                                if ~iscategorical(newValue)
+                                    newValue = categorical(string(newValue));
+                                end
+                            elseif iscellstr(obj.Table.x_CONTAS_ANOTACAO{rowIndex, colIndex})
+                                if ~iscellstr(newValue)
+                                    newValue = cellstr(string(newValue));
+                                end
+                            end
+
                             obj.Table.x_CONTAS_ANOTACAO{rowIndex, colIndex} = newValue;
+
                             if strcmp(colName, 'Apurado?  ✎')
                                 update(obj, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Apurado?', rowIndex, newValue)
                             end
@@ -816,7 +832,7 @@ classdef ECD < model.ECDBase
                             rowIndex = varargin{1};
                             newValue = varargin{2};
 
-                            obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎'){rowIndex} = newValue;
+                            obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){rowIndex} = newValue;
 
                         case 'valueChanged:Observação'
                             rowIndex = varargin{1};
@@ -827,6 +843,126 @@ classdef ECD < model.ECDBase
                         otherwise
                             error('UnexpectedCall')
                     end
+
+                    update(obj, 'Table.x_TABELA_APURACAO', 'accountValueChanged')
+
+                case 'Table.x_TABELA_APURACAO'
+                    switch updateType
+                        case 'startup'
+                            obj.Table.x_TABELA_APURACAO = table( ...
+                                'Size', [10, 14], ...
+                                'VariableNames', {'TIPO', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
+                                'VariableTypes', {'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'} ...
+                            );
+                            obj.Table.x_TABELA_APURACAO.("TIPO") = { ...
+                                'ROB Telecom'; ...
+                                'ICMS Telecom'; ...
+                                'ICMS Contábil'; ...
+                                'PIS Telecom'; ...
+                                'PIS Contábil'; ...
+                                'COFINS Telecom'; ...
+                                'COFINS Contábil'; ...
+                                'Base Cálculo'; ...
+                                'Valor Apurado Fust'; ...
+                                'Valor Apurado Funttel' ...
+                            };
+
+                        case 'accountValueChanged'
+                            % Passo 1: Calculo ROB Telecom
+                            % Passo 2: Estimativa ICMS (considerando alíquotas estado) e compara com uma eventual conta contábil do ICMS, escolhendo o MENOR absoluto. Total do ano. Não tendo conta contábil, considera-se zero.
+                            % Passo 3: Estimativa PIS: 0.65 (ROB Telecom - ICMS) compara com o contábil, escolhendo o MENOR.
+                            % Passo 4: Estimativa COFINS: mesma coisa. (3%)
+
+                            idxTelecom = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "Sim");
+                            idxICMS    = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "ICMS Telecom");
+                            idxPIS     = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "PIS Telecom");
+                            idxCOFINS  = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "COFINS Telecom");
+
+                            % ROB Telecom
+                            accountTables = innerjoin( ...
+                                obj.Table.x_CONTAS_ANOTACAO(idxTelecom, {'COD_CTA', 'Alíquota ICMS'}), ...
+                                obj.Table.x_BALANCETE_RESULTADO, ...
+                                "Keys", "COD_CTA", "RightVariables", {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'} ...
+                            );
+
+                            if ~isempty(accountTables)
+                                obj.Table.x_TABELA_APURACAO(1, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}) = num2cell(sum(accountTables{:, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}}));
+                            end
+
+                            % ICMS Telecom
+                            estimativaICMS = zeros(1, 12);
+                            for ii = 1:height(accountTables)
+                                icmsInfo = jsondecode(accountTables.('Alíquota ICMS'){ii});
+                                rate = icmsInfo.rate;
+                                if isscalar(rate)
+                                    rate = rate .* ones(1, 12);
+                                end
+                                estimativaICMS = estimativaICMS + rate .* accountTables{ii, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}};
+                            end
+                            obj.Table.x_TABELA_APURACAO(2, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}) = num2cell(estimativaICMS);
+
+                            % ICMS Contábil
+                            icmsTempTable = innerjoin( ...
+                                obj.Table.x_CONTAS_ANOTACAO(idxICMS, 'COD_CTA'), ...
+                                obj.Table.x_BALANCETE_RESULTADO, ...
+                                "Keys", "COD_CTA", "RightVariables", {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'} ...
+                            );
+
+                            if ~isempty(icmsTempTable)
+                                obj.Table.x_TABELA_APURACAO(3, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}) = num2cell(sum(icmsTempTable{:, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}}));
+                            end
+
+                            % PIS Telecom
+                            BASE_DE_CALCULO = obj.Table.x_TABELA_APURACAO{1, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}} - min(obj.Table.x_TABELA_APURACAO{2, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}}, obj.Table.x_TABELA_APURACAO{3, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}});
+                            defaultPis = 0.0065;
+                            defaultCofins = 0.03;
+                            defaultFust = 0.02;
+                            defaultFuntel = 0.01;
+
+                            obj.Table.x_TABELA_APURACAO(4, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}) = num2cell(BASE_DE_CALCULO .* defaultPis);
+
+                            % PIS Contábil
+                            pisTempTable = innerjoin( ...
+                                obj.Table.x_CONTAS_ANOTACAO(idxPIS, 'COD_CTA'), ...
+                                obj.Table.x_BALANCETE_RESULTADO, ...
+                                "Keys", "COD_CTA", "RightVariables", {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'} ...
+                            );
+
+                            if ~isempty(icmsTempTable)
+                                obj.Table.x_TABELA_APURACAO(5, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}) = num2cell(sum(pisTempTable{:, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}}));
+                            end
+
+                            % COFINS Telecom
+                            obj.Table.x_TABELA_APURACAO(6, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}) = num2cell(BASE_DE_CALCULO .* defaultCofins);
+
+                            % COFINS Contábil
+                            cofinsTempTable = innerjoin( ...
+                                obj.Table.x_CONTAS_ANOTACAO(idxCOFINS, 'COD_CTA'), ...
+                                obj.Table.x_BALANCETE_RESULTADO, ...
+                                "Keys", "COD_CTA", "RightVariables", {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'} ...
+                            );
+
+                            if ~isempty(icmsTempTable)
+                                obj.Table.x_TABELA_APURACAO(7, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}) = num2cell(sum(cofinsTempTable{:, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}}));
+                            end
+
+                            % 'Base Cálculo'
+                            obj.Table.x_TABELA_APURACAO(8, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}) = ...
+                                num2cell(obj.Table.x_TABELA_APURACAO{1, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}} - ...
+                                min(obj.Table.x_TABELA_APURACAO{2, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}}, obj.Table.x_TABELA_APURACAO{3, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}}) - ...
+                                min(obj.Table.x_TABELA_APURACAO{4, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}}, obj.Table.x_TABELA_APURACAO{5, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}}) - ...
+                                min(obj.Table.x_TABELA_APURACAO{6, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}}, obj.Table.x_TABELA_APURACAO{7, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}}));
+
+                            % 'Valor Apurado Fust'
+                            obj.Table.x_TABELA_APURACAO(9, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}) = num2cell(defaultFust .* obj.Table.x_TABELA_APURACAO{8, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}});
+
+                            % 'Valor Apurado Funttel'
+                            obj.Table.x_TABELA_APURACAO(10, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}) = num2cell(defaultFuntel .* obj.Table.x_TABELA_APURACAO{8, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}});
+
+                        otherwise
+                            error('UnexpectedCall')
+                    end
+
                 otherwise
                     error('UnexpectedCall')
             end

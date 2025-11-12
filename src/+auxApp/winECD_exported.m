@@ -2,71 +2,71 @@ classdef winECD_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure               matlab.ui.Figure
-        GridLayout             matlab.ui.container.GridLayout
-        dockModuleGrid         matlab.ui.container.GridLayout
-        dockModule_Undock      matlab.ui.control.Image
-        dockModule_Close       matlab.ui.control.Image
-        TabGroup               matlab.ui.container.TabGroup
-        Tab1                   matlab.ui.container.Tab
-        Tab1Grid               matlab.ui.container.GridLayout
-        FinanceFacts           matlab.ui.control.Label
-        Tab1Separator2         matlab.ui.control.Image
-        LogButton              matlab.ui.control.Button
-        ExportButton           matlab.ui.control.Button
-        Tab1Separator1         matlab.ui.control.Image
-        SheetList              matlab.ui.control.DropDown
-        SheetListLabel         matlab.ui.control.Label
-        TimePeriodList         matlab.ui.control.DropDown
-        TimePeriodListLabel    matlab.ui.control.Label
-        CompanyNameList        matlab.ui.control.DropDown
-        CompanyNameListLabel   matlab.ui.control.Label
-        Tab2                   matlab.ui.container.Tab
-        Tab2Grid               matlab.ui.container.GridLayout
-        StyleRefresh           matlab.ui.control.Image
-        StyleDelete            matlab.ui.control.Image
-        FontIconLabel          matlab.ui.control.Label
-        FontIcon               matlab.ui.control.DropDown
-        Tab2Separator3         matlab.ui.control.Image
-        FontColor              matlab.ui.control.ColorPicker
-        FontBackground         matlab.ui.control.ColorPicker
-        FontAlign3             matlab.ui.control.Image
-        FontAlign2             matlab.ui.control.Image
-        FontAlign1             matlab.ui.control.Image
-        FontStyle              matlab.ui.control.Button
-        FontWeight             matlab.ui.control.Button
-        FontFamily             matlab.ui.control.DropDown
-        Tab2Separator2         matlab.ui.control.Image
-        ColumnWidthLabel       matlab.ui.control.Label
-        ColumnWidth            matlab.ui.control.DropDown
-        RowHeightLabel         matlab.ui.control.Label
-        RowHeight              matlab.ui.control.Spinner
-        Tab2Separator1         matlab.ui.control.Image
-        SheetOnFocus           matlab.ui.control.Lamp
-        SheetHeight_Second     matlab.ui.control.Spinner
-        SheetView_Second       matlab.ui.control.DropDown
-        SheetHeight_First      matlab.ui.control.Spinner
-        SheetView_First        matlab.ui.control.DropDown
-        SheetViewStatus        matlab.ui.control.StateButton
-        UITable2_AccountInfo   matlab.ui.control.Label
-        UITable2_FilterText    matlab.ui.control.Label
-        UITable2_CountText     matlab.ui.control.Label
-        UITable2_CountIcon     matlab.ui.control.Image
-        UITable2               matlab.ui.control.Table
-        UITable1_AccountInfo   matlab.ui.control.Label
-        UITable1_FilterText    matlab.ui.control.Label
-        UITable1_CountText     matlab.ui.control.Label
-        UITable1_CountIcon     matlab.ui.control.Image
-        UITable1               matlab.ui.control.Table
-        toolGrid               matlab.ui.container.GridLayout
-        tool_Separator2        matlab.ui.control.Image
-        tool_GenerateReport_2  matlab.ui.control.Image
-        tool_UploadFinalFile   matlab.ui.control.Image
-        tool_GenerateReport    matlab.ui.control.Image
-        tool_CompanyInfo       matlab.ui.control.Label
-        ContextMenu            matlab.ui.container.ContextMenu
-        contextmenu_Copy       matlab.ui.container.Menu
-        contextmenu_Paste      matlab.ui.container.Menu
+        UIFigure              matlab.ui.Figure
+        GridLayout            matlab.ui.container.GridLayout
+        DockModule            matlab.ui.container.GridLayout
+        dockModule_Undock     matlab.ui.control.Image
+        dockModule_Close      matlab.ui.control.Image
+        Toolbar               matlab.ui.container.GridLayout
+        tool_UploadFinalFile  matlab.ui.control.Image
+        tool_GenerateReport   matlab.ui.control.Image
+        tool_Separator        matlab.ui.control.Image
+        tool_AccountEdition   matlab.ui.control.Image
+        tool_CompanyInfo      matlab.ui.control.Label
+        UITable2_AccountInfo  matlab.ui.control.Label
+        UITable2_FilterText   matlab.ui.control.Label
+        UITable2_CountText    matlab.ui.control.Label
+        UITable2_CountIcon    matlab.ui.control.Image
+        UITable2              matlab.ui.control.Table
+        UITable1_AccountInfo  matlab.ui.control.Label
+        UITable1_FilterText   matlab.ui.control.Label
+        UITable1_CountText    matlab.ui.control.Label
+        UITable1_CountIcon    matlab.ui.control.Image
+        UITable1              matlab.ui.control.Table
+        TabGroup              matlab.ui.container.TabGroup
+        Tab1                  matlab.ui.container.Tab
+        Tab1Grid              matlab.ui.container.GridLayout
+        FinanceFacts          matlab.ui.control.Label
+        Tab1Separator2        matlab.ui.control.Image
+        LogButton             matlab.ui.control.Button
+        ExportButton          matlab.ui.control.Button
+        Tab1Separator1        matlab.ui.control.Image
+        SheetList             matlab.ui.control.DropDown
+        SheetListLabel        matlab.ui.control.Label
+        TimePeriodList        matlab.ui.control.DropDown
+        TimePeriodListLabel   matlab.ui.control.Label
+        CompanyNameList       matlab.ui.control.DropDown
+        CompanyNameListLabel  matlab.ui.control.Label
+        Tab2                  matlab.ui.container.Tab
+        Tab2Grid              matlab.ui.container.GridLayout
+        StyleRefresh          matlab.ui.control.Image
+        StyleDelete           matlab.ui.control.Image
+        FontIconLabel         matlab.ui.control.Label
+        FontIcon              matlab.ui.control.DropDown
+        Tab2Separator3        matlab.ui.control.Image
+        FontColor             matlab.ui.control.ColorPicker
+        FontBackground        matlab.ui.control.ColorPicker
+        FontAlign3            matlab.ui.control.Image
+        FontAlign2            matlab.ui.control.Image
+        FontAlign1            matlab.ui.control.Image
+        FontStyle             matlab.ui.control.Button
+        FontWeight            matlab.ui.control.Button
+        FontFamily            matlab.ui.control.DropDown
+        Tab2Separator2        matlab.ui.control.Image
+        ColumnWidthLabel      matlab.ui.control.Label
+        ColumnWidth           matlab.ui.control.DropDown
+        RowHeightLabel        matlab.ui.control.Label
+        RowHeight             matlab.ui.control.Spinner
+        Tab2Separator1        matlab.ui.control.Image
+        SheetOnFocus          matlab.ui.control.Lamp
+        SheetHeight_Second    matlab.ui.control.Spinner
+        SheetView_Second      matlab.ui.control.DropDown
+        SheetHeight_First     matlab.ui.control.Spinner
+        SheetView_First       matlab.ui.control.DropDown
+        SheetViewStatus       matlab.ui.control.StateButton
+        ContextMenu           matlab.ui.container.ContextMenu
+        contextmenu_Copy      matlab.ui.container.Menu
+        contextmenu_Paste     matlab.ui.container.Menu
     end
 
     
@@ -213,7 +213,7 @@ classdef winECD_exported < matlab.apps.AppBase
                         case 1
                             % Grid botões "dock":
                             if app.isDocked
-                                elToModify = {app.dockModuleGrid};
+                                elToModify = {app.DockModule};
                                 elDataTag  = ui.CustomizationBase.getElementsDataTag(elToModify);
                                 if ~isempty(elDataTag)
                                     appName = class(app);                    
@@ -294,13 +294,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function startup_InitialLayout(app)
-            context = 'ECD';
-
-            nonEmptyECDObject                = ~isempty(app.ecdObj);
-            reportFinalVersionGenerated      = ~isempty(app.projectData.modules.(context).generatedFiles.lastHTMLDocFullPath);
-
-            app.tool_GenerateReport.Enable   = nonEmptyECDObject;
-            app.tool_UploadFinalFile.Enable  = reportFinalVersionGenerated;
+            nonEmptyECDObject = ~isempty(app.ecdObj);
             
             cellfun(@(x) set(x, 'Enable', nonEmptyECDObject), { ...
                 app.ExportButton, ...
@@ -388,9 +382,10 @@ classdef winECD_exported < matlab.apps.AppBase
                     app.UITable2_CountText.Text  = ' CONTAGEM : 0';
                     app.UITable2_FilterText.Text = '0 DE 0';
                 end
-
-                app.tool_GenerateReport_2.Enable = false;
             end
+
+            selectedECD = selectedECDObject(app);
+            updateToolbar(app, selectedECD)
         end
 
         %-----------------------------------------------------------------%
@@ -438,21 +433,27 @@ classdef winECD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function [selectedECD, fileIndex] = selectedECDObject(app)
-            companyIndexes  = selectedFileIndexByCompany(app);
-             [~, companySortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(companyIndexes)));
-             companyIndexes = companyIndexes(companySortedIndexes);
+            if isempty(app.ecdObj)
+                selectedECD = [];
+                fileIndex   = [];
 
-            if isnumeric(app.TimePeriodList.Value)
-                fileIndex = companyIndexes(app.TimePeriodList.Value);
             else
-                fileIndex = companyIndexes(strcmp(app.TimePeriodList.Items, app.TimePeriodList.Value));
+                companyIndexes  = selectedFileIndexByCompany(app);
+                 [~, companySortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(companyIndexes)));
+                 companyIndexes = companyIndexes(companySortedIndexes);
+    
+                if isnumeric(app.TimePeriodList.Value)
+                    fileIndex = companyIndexes(app.TimePeriodList.Value);
+                else
+                    fileIndex = companyIndexes(strcmp(app.TimePeriodList.Items, app.TimePeriodList.Value));
+                end
+    
+                if ~isscalar(fileIndex)
+                    fileIndex = fileIndex(1);
+                end
+    
+                selectedECD = app.ecdObj(fileIndex);
             end
-
-            if ~isscalar(fileIndex)
-                fileIndex = fileIndex(1);
-            end
-
-            selectedECD   = app.ecdObj(fileIndex);
         end
 
         %-----------------------------------------------------------------%
@@ -523,6 +524,18 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
+        function updateToolbar(app, selectedECD)
+            context = 'ECD';
+
+            nonEmptyECDObject               = ~isempty(selectedECD);
+            reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(context).generatedFiles.lastHTMLDocFullPath);
+
+            app.tool_GenerateReport.Enable  = nonEmptyECDObject;
+            app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated;
+            app.tool_AccountEdition.Enable  = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);
+        end
+
+        %-----------------------------------------------------------------%
         function forceUpdateTable(app)
             if strcmp(app.SheetList.Value, '_CONTAS_ANOTACAO')
                 clickedTable = app.UITable1;
@@ -548,6 +561,16 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
+        function checkIfTableRead(app, selectedECD, fileIndex, tableIdList)
+            if isTableRead(selectedECD, tableIdList, app.mainApp.General)
+                ipcMainMatlabCallsHandler(app.mainApp, app, 'updateTreeView', fileIndex);
+            end
+
+            updateFinanceFacts(app, selectedECD)
+            updateToolbar(app, selectedECD)
+        end
+
+        %-----------------------------------------------------------------%
         function updateTable(app, hTable, hTableAccountInfo, hTableCountText, hTableFilterText, tableId)
             [selectedECD, fileIndex] = selectedECDObject(app);
 
@@ -557,9 +580,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 app.progressDialog.Visible = 'visible';
             end
 
-            if isTableRead(selectedECD, {tableId}, app.mainApp.General)
-                ipcMainMatlabCallsHandler(app.mainApp, app, 'updateTreeView', fileIndex);
-            end
+            checkIfTableRead(app, selectedECD, fileIndex, {tableId})
 
             tableIdField   = ['x' tableId];
             tableIdData    = selectedECD.Table.(tableIdField);
@@ -571,7 +592,7 @@ classdef winECD_exported < matlab.apps.AppBase
                         'ColumnName', columnName, ...
                         'ColumnEditable', columnEditable, ...
                         'Data', tableIdData)
-            hTable.UserData.tableId = tableId;
+            hTable.UserData.TableId = tableId;
 
             restartTableSelectionControl(app, hTable, hTableAccountInfo, hTableCountText)
             applyTableStyle(app, selectedECD, hTable, tableId)
@@ -582,8 +603,6 @@ classdef winECD_exported < matlab.apps.AppBase
                 numberOfRowsText  = sprintf('%d DE %d LINHA ',  height(hTable.Data), height(hTable.Data)); % PENDENTE FILTRAGEM
             end
             hTableFilterText.Text = numberOfRowsText;
-
-            updateFinanceFacts(app, selectedECD)
 
             app.progressDialog.Visible = 'hidden';
         end
@@ -748,6 +767,12 @@ classdef winECD_exported < matlab.apps.AppBase
 
             app.progressDialog.Visible = 'visible';
 
+            % Inicialmente, checa se todos os registros foram efetivamente
+            % lidos.
+            tableIds = cellfun(@(x) strsplit(x, '|'), rawTableIdFields, 'UniformOutput', false);
+            tableIds = extractAfter(horzcat(tableIds{:}), 'x');
+            checkIfTableRead(app, selectedECD, fileIndex, tableIds)
+
             % EXCEL
             msgError = {};
             try
@@ -829,7 +854,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             if app.isDocked
                 app.GridLayout.Padding(4)  = 30;
-                app.dockModuleGrid.Visible = 1;
+                app.DockModule.Visible = 1;
                 app.jsBackDoor = mainApp.jsBackDoor;
                 startup_Controller(app)
             else
@@ -920,8 +945,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             app.tool_CompanyInfo.Text = sprintf('<font style="font-size: 11px; font-weight: bold;">%s</font> CNPJ %s (%s) \n%s ', ...
                 upper(selectedECD.CompanyName), selectedECD.CompanyId, selectedECD.State, strjoin(string(selectedECD.Period), ' a '));
-            app.tool_GenerateReport_2.Enable = isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);
-
+            
             updateSheetList(app)
             SheetViewFirstValueChanged(app, struct('Source', app.SheetList))
             SheetViewSecondValueChanged(app)
@@ -998,6 +1022,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 case 'Clicked'
                     clickedRow = event.InteractionInformation.DisplayRow;
                     clickedCol = event.InteractionInformation.DisplayColumn;
+
                 case 'KeyRelease'
                     if isempty(clickedTable.Selection)
                         clickedRow = [];
@@ -1316,7 +1341,7 @@ classdef winECD_exported < matlab.apps.AppBase
             
         end
 
-        % Image clicked function: tool_GenerateReport_2
+        % Image clicked function: tool_AccountEdition
         function ExportButton_2Pushed(app, event)
             
             clickedTable = onFocusTable(app);
@@ -1376,157 +1401,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.GridLayout.RowSpacing = 0;
             app.GridLayout.Padding = [0 0 0 0];
             app.GridLayout.BackgroundColor = [1 1 1];
-
-            % Create toolGrid
-            app.toolGrid = uigridlayout(app.GridLayout);
-            app.toolGrid.ColumnWidth = {'1x', 22, 5, 22, 22};
-            app.toolGrid.RowHeight = {4, 17, 2};
-            app.toolGrid.ColumnSpacing = 5;
-            app.toolGrid.RowSpacing = 0;
-            app.toolGrid.Padding = [10 5 10 5];
-            app.toolGrid.Layout.Row = 14;
-            app.toolGrid.Layout.Column = [1 8];
-            app.toolGrid.BackgroundColor = [0.9412 0.9412 0.9412];
-
-            % Create tool_CompanyInfo
-            app.tool_CompanyInfo = uilabel(app.toolGrid);
-            app.tool_CompanyInfo.VerticalAlignment = 'top';
-            app.tool_CompanyInfo.WordWrap = 'on';
-            app.tool_CompanyInfo.FontSize = 9;
-            app.tool_CompanyInfo.FontColor = [0.149 0.149 0.149];
-            app.tool_CompanyInfo.Layout.Row = [1 3];
-            app.tool_CompanyInfo.Layout.Column = 1;
-            app.tool_CompanyInfo.Interpreter = 'html';
-            app.tool_CompanyInfo.Text = '';
-
-            % Create tool_GenerateReport
-            app.tool_GenerateReport = uiimage(app.toolGrid);
-            app.tool_GenerateReport.ScaleMethod = 'none';
-            app.tool_GenerateReport.ImageClickedFcn = createCallbackFcn(app, @Toolbar_ReportImageClicked, true);
-            app.tool_GenerateReport.Enable = 'off';
-            app.tool_GenerateReport.Tooltip = {'Gera relatório análise'};
-            app.tool_GenerateReport.Layout.Row = 2;
-            app.tool_GenerateReport.Layout.Column = 4;
-            app.tool_GenerateReport.ImageSource = 'Publish_HTML_16.png';
-
-            % Create tool_UploadFinalFile
-            app.tool_UploadFinalFile = uiimage(app.toolGrid);
-            app.tool_UploadFinalFile.Enable = 'off';
-            app.tool_UploadFinalFile.Layout.Row = 2;
-            app.tool_UploadFinalFile.Layout.Column = 5;
-            app.tool_UploadFinalFile.ImageSource = 'Up_24.png';
-
-            % Create tool_GenerateReport_2
-            app.tool_GenerateReport_2 = uiimage(app.toolGrid);
-            app.tool_GenerateReport_2.ScaleMethod = 'none';
-            app.tool_GenerateReport_2.ImageClickedFcn = createCallbackFcn(app, @ExportButton_2Pushed, true);
-            app.tool_GenerateReport_2.Enable = 'off';
-            app.tool_GenerateReport_2.Tooltip = {'Edita informações das contas movimentadas'};
-            app.tool_GenerateReport_2.Layout.Row = 2;
-            app.tool_GenerateReport_2.Layout.Column = 2;
-            app.tool_GenerateReport_2.ImageSource = 'Variable_edit_16.png';
-
-            % Create tool_Separator2
-            app.tool_Separator2 = uiimage(app.toolGrid);
-            app.tool_Separator2.ScaleMethod = 'none';
-            app.tool_Separator2.Enable = 'off';
-            app.tool_Separator2.Layout.Row = [1 3];
-            app.tool_Separator2.Layout.Column = 3;
-            app.tool_Separator2.ImageSource = 'LineV.svg';
-
-            % Create UITable1
-            app.UITable1 = uitable(app.GridLayout);
-            app.UITable1.BackgroundColor = [1 1 1;0.9412 0.9412 0.9412];
-            app.UITable1.ColumnName = '';
-            app.UITable1.ColumnSortable = true;
-            app.UITable1.CellEditCallback = createCallbackFcn(app, @TableCellEdit, true);
-            app.UITable1.ClickedFcn = createCallbackFcn(app, @TableClicked, true);
-            app.UITable1.ForegroundColor = [0.149 0.149 0.149];
-            app.UITable1.KeyReleaseFcn = createCallbackFcn(app, @TableClicked, true);
-            app.UITable1.Layout.Row = 6;
-            app.UITable1.Layout.Column = [2 6];
-            app.UITable1.FontSize = 10.5;
-
-            % Create UITable1_CountIcon
-            app.UITable1_CountIcon = uiimage(app.GridLayout);
-            app.UITable1_CountIcon.ScaleMethod = 'none';
-            app.UITable1_CountIcon.Layout.Row = 8;
-            app.UITable1_CountIcon.Layout.Column = 2;
-            app.UITable1_CountIcon.ImageSource = 'selectColumn.png';
-
-            % Create UITable1_CountText
-            app.UITable1_CountText = uilabel(app.GridLayout);
-            app.UITable1_CountText.FontSize = 10;
-            app.UITable1_CountText.FontColor = [0.502 0.502 0.502];
-            app.UITable1_CountText.Layout.Row = 8;
-            app.UITable1_CountText.Layout.Column = 3;
-            app.UITable1_CountText.Text = ' CONTAGEM : 0';
-
-            % Create UITable1_FilterText
-            app.UITable1_FilterText = uilabel(app.GridLayout);
-            app.UITable1_FilterText.HorizontalAlignment = 'right';
-            app.UITable1_FilterText.FontSize = 10;
-            app.UITable1_FilterText.FontColor = [0.502 0.502 0.502];
-            app.UITable1_FilterText.Layout.Row = 8;
-            app.UITable1_FilterText.Layout.Column = [5 6];
-            app.UITable1_FilterText.Text = '0 DE 0';
-
-            % Create UITable1_AccountInfo
-            app.UITable1_AccountInfo = uilabel(app.GridLayout);
-            app.UITable1_AccountInfo.HorizontalAlignment = 'center';
-            app.UITable1_AccountInfo.FontSize = 10;
-            app.UITable1_AccountInfo.FontColor = [0.502 0.502 0.502];
-            app.UITable1_AccountInfo.Layout.Row = 8;
-            app.UITable1_AccountInfo.Layout.Column = [2 6];
-            app.UITable1_AccountInfo.Text = '';
-
-            % Create UITable2
-            app.UITable2 = uitable(app.GridLayout);
-            app.UITable2.BackgroundColor = [1 1 1;0.9412 0.9412 0.9412];
-            app.UITable2.ColumnName = '';
-            app.UITable2.RowName = {};
-            app.UITable2.ColumnSortable = true;
-            app.UITable2.CellEditCallback = createCallbackFcn(app, @TableCellEdit, true);
-            app.UITable2.ClickedFcn = createCallbackFcn(app, @TableClicked, true);
-            app.UITable2.ForegroundColor = [0.149 0.149 0.149];
-            app.UITable2.Visible = 'off';
-            app.UITable2.KeyReleaseFcn = createCallbackFcn(app, @TableClicked, true);
-            app.UITable2.Layout.Row = 10;
-            app.UITable2.Layout.Column = [2 6];
-            app.UITable2.FontSize = 10.5;
-
-            % Create UITable2_CountIcon
-            app.UITable2_CountIcon = uiimage(app.GridLayout);
-            app.UITable2_CountIcon.ScaleMethod = 'none';
-            app.UITable2_CountIcon.Layout.Row = 12;
-            app.UITable2_CountIcon.Layout.Column = 2;
-            app.UITable2_CountIcon.ImageSource = 'selectColumn.png';
-
-            % Create UITable2_CountText
-            app.UITable2_CountText = uilabel(app.GridLayout);
-            app.UITable2_CountText.FontSize = 10;
-            app.UITable2_CountText.FontColor = [0.502 0.502 0.502];
-            app.UITable2_CountText.Layout.Row = 12;
-            app.UITable2_CountText.Layout.Column = 3;
-            app.UITable2_CountText.Text = ' CONTAGEM: 0';
-
-            % Create UITable2_FilterText
-            app.UITable2_FilterText = uilabel(app.GridLayout);
-            app.UITable2_FilterText.HorizontalAlignment = 'right';
-            app.UITable2_FilterText.FontSize = 10;
-            app.UITable2_FilterText.FontColor = [0.502 0.502 0.502];
-            app.UITable2_FilterText.Layout.Row = 12;
-            app.UITable2_FilterText.Layout.Column = [5 6];
-            app.UITable2_FilterText.Text = '0 DE 0';
-
-            % Create UITable2_AccountInfo
-            app.UITable2_AccountInfo = uilabel(app.GridLayout);
-            app.UITable2_AccountInfo.HorizontalAlignment = 'center';
-            app.UITable2_AccountInfo.FontSize = 10;
-            app.UITable2_AccountInfo.FontColor = [0.502 0.502 0.502];
-            app.UITable2_AccountInfo.Layout.Row = 12;
-            app.UITable2_AccountInfo.Layout.Column = [2 6];
-            app.UITable2_AccountInfo.Text = '';
 
             % Create TabGroup
             app.TabGroup = uitabgroup(app.GridLayout);
@@ -1911,18 +1785,169 @@ classdef winECD_exported < matlab.apps.AppBase
             app.StyleRefresh.Layout.Column = 20;
             app.StyleRefresh.ImageSource = 'Refresh_18.png';
 
-            % Create dockModuleGrid
-            app.dockModuleGrid = uigridlayout(app.GridLayout);
-            app.dockModuleGrid.RowHeight = {'1x'};
-            app.dockModuleGrid.ColumnSpacing = 2;
-            app.dockModuleGrid.Padding = [5 2 5 2];
-            app.dockModuleGrid.Visible = 'off';
-            app.dockModuleGrid.Layout.Row = [2 3];
-            app.dockModuleGrid.Layout.Column = [6 7];
-            app.dockModuleGrid.BackgroundColor = [0.2 0.2 0.2];
+            % Create UITable1
+            app.UITable1 = uitable(app.GridLayout);
+            app.UITable1.BackgroundColor = [1 1 1;0.9412 0.9412 0.9412];
+            app.UITable1.ColumnName = '';
+            app.UITable1.ColumnSortable = true;
+            app.UITable1.CellEditCallback = createCallbackFcn(app, @TableCellEdit, true);
+            app.UITable1.ClickedFcn = createCallbackFcn(app, @TableClicked, true);
+            app.UITable1.ForegroundColor = [0.149 0.149 0.149];
+            app.UITable1.KeyReleaseFcn = createCallbackFcn(app, @TableClicked, true);
+            app.UITable1.Layout.Row = 6;
+            app.UITable1.Layout.Column = [2 6];
+            app.UITable1.FontSize = 10.5;
+
+            % Create UITable1_CountIcon
+            app.UITable1_CountIcon = uiimage(app.GridLayout);
+            app.UITable1_CountIcon.ScaleMethod = 'none';
+            app.UITable1_CountIcon.Layout.Row = 8;
+            app.UITable1_CountIcon.Layout.Column = 2;
+            app.UITable1_CountIcon.ImageSource = 'selectColumn.png';
+
+            % Create UITable1_CountText
+            app.UITable1_CountText = uilabel(app.GridLayout);
+            app.UITable1_CountText.FontSize = 10;
+            app.UITable1_CountText.FontColor = [0.502 0.502 0.502];
+            app.UITable1_CountText.Layout.Row = 8;
+            app.UITable1_CountText.Layout.Column = 3;
+            app.UITable1_CountText.Text = ' CONTAGEM : 0';
+
+            % Create UITable1_FilterText
+            app.UITable1_FilterText = uilabel(app.GridLayout);
+            app.UITable1_FilterText.HorizontalAlignment = 'right';
+            app.UITable1_FilterText.FontSize = 10;
+            app.UITable1_FilterText.FontColor = [0.502 0.502 0.502];
+            app.UITable1_FilterText.Layout.Row = 8;
+            app.UITable1_FilterText.Layout.Column = [5 6];
+            app.UITable1_FilterText.Text = '0 DE 0';
+
+            % Create UITable1_AccountInfo
+            app.UITable1_AccountInfo = uilabel(app.GridLayout);
+            app.UITable1_AccountInfo.HorizontalAlignment = 'center';
+            app.UITable1_AccountInfo.FontSize = 10;
+            app.UITable1_AccountInfo.FontColor = [0.502 0.502 0.502];
+            app.UITable1_AccountInfo.Layout.Row = 8;
+            app.UITable1_AccountInfo.Layout.Column = [2 6];
+            app.UITable1_AccountInfo.Text = '';
+
+            % Create UITable2
+            app.UITable2 = uitable(app.GridLayout);
+            app.UITable2.BackgroundColor = [1 1 1;0.9412 0.9412 0.9412];
+            app.UITable2.ColumnName = '';
+            app.UITable2.RowName = {};
+            app.UITable2.ColumnSortable = true;
+            app.UITable2.CellEditCallback = createCallbackFcn(app, @TableCellEdit, true);
+            app.UITable2.ClickedFcn = createCallbackFcn(app, @TableClicked, true);
+            app.UITable2.ForegroundColor = [0.149 0.149 0.149];
+            app.UITable2.Visible = 'off';
+            app.UITable2.KeyReleaseFcn = createCallbackFcn(app, @TableClicked, true);
+            app.UITable2.Layout.Row = 10;
+            app.UITable2.Layout.Column = [2 6];
+            app.UITable2.FontSize = 10.5;
+
+            % Create UITable2_CountIcon
+            app.UITable2_CountIcon = uiimage(app.GridLayout);
+            app.UITable2_CountIcon.ScaleMethod = 'none';
+            app.UITable2_CountIcon.Layout.Row = 12;
+            app.UITable2_CountIcon.Layout.Column = 2;
+            app.UITable2_CountIcon.ImageSource = 'selectColumn.png';
+
+            % Create UITable2_CountText
+            app.UITable2_CountText = uilabel(app.GridLayout);
+            app.UITable2_CountText.FontSize = 10;
+            app.UITable2_CountText.FontColor = [0.502 0.502 0.502];
+            app.UITable2_CountText.Layout.Row = 12;
+            app.UITable2_CountText.Layout.Column = 3;
+            app.UITable2_CountText.Text = ' CONTAGEM: 0';
+
+            % Create UITable2_FilterText
+            app.UITable2_FilterText = uilabel(app.GridLayout);
+            app.UITable2_FilterText.HorizontalAlignment = 'right';
+            app.UITable2_FilterText.FontSize = 10;
+            app.UITable2_FilterText.FontColor = [0.502 0.502 0.502];
+            app.UITable2_FilterText.Layout.Row = 12;
+            app.UITable2_FilterText.Layout.Column = [5 6];
+            app.UITable2_FilterText.Text = '0 DE 0';
+
+            % Create UITable2_AccountInfo
+            app.UITable2_AccountInfo = uilabel(app.GridLayout);
+            app.UITable2_AccountInfo.HorizontalAlignment = 'center';
+            app.UITable2_AccountInfo.FontSize = 10;
+            app.UITable2_AccountInfo.FontColor = [0.502 0.502 0.502];
+            app.UITable2_AccountInfo.Layout.Row = 12;
+            app.UITable2_AccountInfo.Layout.Column = [2 6];
+            app.UITable2_AccountInfo.Text = '';
+
+            % Create Toolbar
+            app.Toolbar = uigridlayout(app.GridLayout);
+            app.Toolbar.ColumnWidth = {'1x', 22, 5, 22, 22};
+            app.Toolbar.RowHeight = {4, 17, 2};
+            app.Toolbar.ColumnSpacing = 5;
+            app.Toolbar.RowSpacing = 0;
+            app.Toolbar.Padding = [10 5 10 5];
+            app.Toolbar.Layout.Row = 14;
+            app.Toolbar.Layout.Column = [1 8];
+            app.Toolbar.BackgroundColor = [0.9412 0.9412 0.9412];
+
+            % Create tool_CompanyInfo
+            app.tool_CompanyInfo = uilabel(app.Toolbar);
+            app.tool_CompanyInfo.VerticalAlignment = 'top';
+            app.tool_CompanyInfo.WordWrap = 'on';
+            app.tool_CompanyInfo.FontSize = 9;
+            app.tool_CompanyInfo.FontColor = [0.149 0.149 0.149];
+            app.tool_CompanyInfo.Layout.Row = [1 3];
+            app.tool_CompanyInfo.Layout.Column = 1;
+            app.tool_CompanyInfo.Interpreter = 'html';
+            app.tool_CompanyInfo.Text = '';
+
+            % Create tool_AccountEdition
+            app.tool_AccountEdition = uiimage(app.Toolbar);
+            app.tool_AccountEdition.ScaleMethod = 'none';
+            app.tool_AccountEdition.ImageClickedFcn = createCallbackFcn(app, @ExportButton_2Pushed, true);
+            app.tool_AccountEdition.Enable = 'off';
+            app.tool_AccountEdition.Tooltip = {'Edita informações das contas movimentadas'};
+            app.tool_AccountEdition.Layout.Row = 2;
+            app.tool_AccountEdition.Layout.Column = 2;
+            app.tool_AccountEdition.ImageSource = 'Variable_edit_16.png';
+
+            % Create tool_Separator
+            app.tool_Separator = uiimage(app.Toolbar);
+            app.tool_Separator.ScaleMethod = 'none';
+            app.tool_Separator.Enable = 'off';
+            app.tool_Separator.Layout.Row = [1 3];
+            app.tool_Separator.Layout.Column = 3;
+            app.tool_Separator.ImageSource = 'LineV.svg';
+
+            % Create tool_GenerateReport
+            app.tool_GenerateReport = uiimage(app.Toolbar);
+            app.tool_GenerateReport.ScaleMethod = 'none';
+            app.tool_GenerateReport.ImageClickedFcn = createCallbackFcn(app, @Toolbar_ReportImageClicked, true);
+            app.tool_GenerateReport.Enable = 'off';
+            app.tool_GenerateReport.Tooltip = {'Gera relatório análise'};
+            app.tool_GenerateReport.Layout.Row = 2;
+            app.tool_GenerateReport.Layout.Column = 4;
+            app.tool_GenerateReport.ImageSource = 'Publish_HTML_16.png';
+
+            % Create tool_UploadFinalFile
+            app.tool_UploadFinalFile = uiimage(app.Toolbar);
+            app.tool_UploadFinalFile.Enable = 'off';
+            app.tool_UploadFinalFile.Layout.Row = 2;
+            app.tool_UploadFinalFile.Layout.Column = 5;
+            app.tool_UploadFinalFile.ImageSource = 'Up_24.png';
+
+            % Create DockModule
+            app.DockModule = uigridlayout(app.GridLayout);
+            app.DockModule.RowHeight = {'1x'};
+            app.DockModule.ColumnSpacing = 2;
+            app.DockModule.Padding = [5 2 5 2];
+            app.DockModule.Visible = 'off';
+            app.DockModule.Layout.Row = [2 3];
+            app.DockModule.Layout.Column = [6 7];
+            app.DockModule.BackgroundColor = [0.2 0.2 0.2];
 
             % Create dockModule_Close
-            app.dockModule_Close = uiimage(app.dockModuleGrid);
+            app.dockModule_Close = uiimage(app.DockModule);
             app.dockModule_Close.ScaleMethod = 'none';
             app.dockModule_Close.ImageClickedFcn = createCallbackFcn(app, @DockModuleGroup_ButtonPushed, true);
             app.dockModule_Close.Tag = 'DRIVETEST';
@@ -1932,7 +1957,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.dockModule_Close.ImageSource = 'Delete_12SVG_white.svg';
 
             % Create dockModule_Undock
-            app.dockModule_Undock = uiimage(app.dockModuleGrid);
+            app.dockModule_Undock = uiimage(app.DockModule);
             app.dockModule_Undock.ScaleMethod = 'none';
             app.dockModule_Undock.ImageClickedFcn = createCallbackFcn(app, @DockModuleGroup_ButtonPushed, true);
             app.dockModule_Undock.Tag = 'DRIVETEST';

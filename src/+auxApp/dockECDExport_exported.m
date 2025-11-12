@@ -191,7 +191,7 @@ classdef dockECDExport_exported < matlab.apps.AppBase
 
             % Create AccountDescription
             app.AccountDescription = uitreenode(app.AccountBook);
-            app.AccountDescription.Tag = 'mCONTAS_DESCRICAO';
+            app.AccountDescription.Tag = 'x_CONTAS_DESCRICAO';
             app.AccountDescription.Text = 'Descrição completa';
 
             % Create AccountSummary
@@ -200,17 +200,17 @@ classdef dockECDExport_exported < matlab.apps.AppBase
 
             % Create xI200_I250
             app.xI200_I250 = uitreenode(app.AccountSummary);
-            app.xI200_I250.Tag = 'mI200_I250';
+            app.xI200_I250.Tag = 'xI200_I250';
             app.xI200_I250.Text = 'I200-I250';
 
             % Create SummaryGeneral
             app.SummaryGeneral = uitreenode(app.AccountSummary);
-            app.SummaryGeneral.Tag = 'mBALANCETE_GERAL';
+            app.SummaryGeneral.Tag = 'x_BALANCETE_GERAL';
             app.SummaryGeneral.Text = 'Geral';
 
             % Create SummaryResults
             app.SummaryResults = uitreenode(app.AccountSummary);
-            app.SummaryResults.Tag = 'mBALANCETE_RESULTADO';
+            app.SummaryResults.Tag = 'x_BALANCETE_RESULTADO';
             app.SummaryResults.Text = 'Resultados';
 
             % Create RTFFiles

@@ -2,46 +2,48 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure          matlab.ui.Figure
-        GridLayout        matlab.ui.container.GridLayout
-        Document          matlab.ui.container.GridLayout
-        btnOK             matlab.ui.control.Button
-        freenote          matlab.ui.control.TextArea
-        freenoteLabel     matlab.ui.control.Label
-        icmsMonthsPanel   matlab.ui.container.Panel
-        icmsMonthsGrid    matlab.ui.container.GridLayout
-        icmsMonth12       matlab.ui.control.Spinner
-        icmsMonth12Label  matlab.ui.control.Label
-        icmsMonth11       matlab.ui.control.Spinner
-        icmsMonth11Label  matlab.ui.control.Label
-        icmsMonth10       matlab.ui.control.Spinner
-        icmsMonth10Label  matlab.ui.control.Label
-        icmsMonth9        matlab.ui.control.Spinner
-        icmsMonth9Label   matlab.ui.control.Label
-        icmsMonth8        matlab.ui.control.Spinner
-        icmsMonth8Label   matlab.ui.control.Label
-        icmsMonth7        matlab.ui.control.Spinner
-        icmsMonth7Label   matlab.ui.control.Label
-        icmsMonth6        matlab.ui.control.Spinner
-        icmsMonth6Label   matlab.ui.control.Label
-        icmsMonth5        matlab.ui.control.Spinner
-        icmsMonth5Label   matlab.ui.control.Label
-        icmsMonth4        matlab.ui.control.Spinner
-        icmsMonth4Label   matlab.ui.control.Label
-        icmsMonth3        matlab.ui.control.Spinner
-        icmsMonth3Label   matlab.ui.control.Label
-        icmsMonth2        matlab.ui.control.Spinner
-        icmsMonth2Label   matlab.ui.control.Label
-        icmsMonth1        matlab.ui.control.Spinner
-        icmsMonth1Label   matlab.ui.control.Label
-        icmsType          matlab.ui.control.DropDown
-        icmsTypeLabel     matlab.ui.control.Label
-        taxType           matlab.ui.control.DropDown
-        taxTypeLabel      matlab.ui.control.Label
-        accountInfo       matlab.ui.control.Label
-        accountList       matlab.ui.control.DropDown
-        accountListLabel  matlab.ui.control.Label
-        btnClose          matlab.ui.control.Image
+        UIFigure           matlab.ui.Figure
+        GridLayout         matlab.ui.container.GridLayout
+        Document           matlab.ui.container.GridLayout
+        NextSelection      matlab.ui.control.Image
+        PreviousSelection  matlab.ui.control.Image
+        btnOK              matlab.ui.control.Button
+        freenote           matlab.ui.control.TextArea
+        freenoteLabel      matlab.ui.control.Label
+        icmsMonthsPanel    matlab.ui.container.Panel
+        icmsMonthsGrid     matlab.ui.container.GridLayout
+        icmsMonth12        matlab.ui.control.Spinner
+        icmsMonth12Label   matlab.ui.control.Label
+        icmsMonth11        matlab.ui.control.Spinner
+        icmsMonth11Label   matlab.ui.control.Label
+        icmsMonth10        matlab.ui.control.Spinner
+        icmsMonth10Label   matlab.ui.control.Label
+        icmsMonth9         matlab.ui.control.Spinner
+        icmsMonth9Label    matlab.ui.control.Label
+        icmsMonth8         matlab.ui.control.Spinner
+        icmsMonth8Label    matlab.ui.control.Label
+        icmsMonth7         matlab.ui.control.Spinner
+        icmsMonth7Label    matlab.ui.control.Label
+        icmsMonth6         matlab.ui.control.Spinner
+        icmsMonth6Label    matlab.ui.control.Label
+        icmsMonth5         matlab.ui.control.Spinner
+        icmsMonth5Label    matlab.ui.control.Label
+        icmsMonth4         matlab.ui.control.Spinner
+        icmsMonth4Label    matlab.ui.control.Label
+        icmsMonth3         matlab.ui.control.Spinner
+        icmsMonth3Label    matlab.ui.control.Label
+        icmsMonth2         matlab.ui.control.Spinner
+        icmsMonth2Label    matlab.ui.control.Label
+        icmsMonth1         matlab.ui.control.Spinner
+        icmsMonth1Label    matlab.ui.control.Label
+        icmsType           matlab.ui.control.DropDown
+        icmsTypeLabel      matlab.ui.control.Label
+        taxType            matlab.ui.control.DropDown
+        taxTypeLabel       matlab.ui.control.Label
+        accountInfo        matlab.ui.control.Label
+        accountList        matlab.ui.control.DropDown
+        accountListLabel   matlab.ui.control.Label
+        btnClose           matlab.ui.control.Image
     end
 
     
@@ -64,25 +66,32 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         function updateLayout(app, index, accountName)
             selectedECD    = app.mainApp.ecdObj(index);
 
-            [~, nameIndex] = ismember(accountName, selectedECD.Table.mCONTAS_ANOTACAO.("COD_CTA"));            
-            [~, noteIndex] = ismember(accountName, selectedECD.Table.mCONTAS_DESCRICAO.("COD_CTA"));
+            [~, nameIndex] = ismember(accountName, selectedECD.Table.x_CONTAS_ANOTACAO.("COD_CTA"));            
+            [~, noteIndex] = ismember(accountName, selectedECD.Table.x_CONTAS_DESCRICAO.("COD_CTA"));
 
             % O uilabel que apresenta a descrição completa da conta em forma 
             % de árvore terá a sua altura ajustada, de acordo com o número de 
             % linhas.
-            accountDescription = textFormatGUI.strToIndentedTree(selectedECD.Table.mCONTAS_DESCRICAO.('DESCRIÇÃO'){noteIndex});
+            accountDescription = textFormatGUI.strToIndentedTree(selectedECD.Table.x_CONTAS_DESCRICAO.('DESCRIÇÃO'){noteIndex});
             app.Document.RowHeight{3} = 18 * numel(strfind(accountDescription, '↳'))+1;
             app.accountInfo.Text = accountDescription;            
             
             % Valores iniciais dos campos passíveis de anotação...
-            app.taxType.Value    = char(selectedECD.Table.mCONTAS_ANOTACAO.('Apurado?  ✎')(nameIndex));
-            app.freenote.Value   = selectedECD.Table.mCONTAS_ANOTACAO.('Observação  ✎'){nameIndex};
-            
-            app.currentAccount   = jsondecode(selectedECD.Table.mCONTAS_ANOTACAO.('Alíquota ICMS'){nameIndex});
-            app.currentAccount.index = nameIndex;
+            app.taxType.Value  = char(selectedECD.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(nameIndex));
+            app.freenote.Value = selectedECD.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){nameIndex};
 
-            app.icmsType.Value   = app.currentAccount.type;
-            updateRatePanelStatus(app, app.currentAccount.type == "manual")
+            switch selectedECD.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){nameIndex}
+                case '-'
+                    app.currentAccount = struct('type', 'n/a', 'rate', 0, 'index', nameIndex);
+                    icmsTypeItems = {'n/a'};
+                otherwise
+                    app.currentAccount = jsondecode(selectedECD.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){nameIndex});
+                    app.currentAccount.index = nameIndex;
+                    icmsTypeItems = {'auto', 'manual'};
+            end
+            set(app.icmsType, 'Items', icmsTypeItems, 'Value', app.currentAccount.type)
+
+            updateRatePanelStatus(app, strcmp(app.currentAccount.type, 'manual'))
             updateRatePanelValue(app, app.currentAccount.rate)
         end
 
@@ -156,7 +165,8 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.inputArgs   = struct('context', context, 'index', index);
             app.projectData = mainApp.projectData;
 
-            app.accountList.Items = mainApp.ecdObj(index).Table.mCONTAS_ANOTACAO.("COD_CTA");
+            app.taxType.Items = mainApp.General.ECD.accountOptions;
+            app.accountList.Items = mainApp.ecdObj(index).Table.x_CONTAS_ANOTACAO.("COD_CTA");
             if ismember(accountName, app.accountList.Items)
                 app.accountList.Value = accountName;
             else
@@ -195,13 +205,13 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
 
             switch event.Source
                 case app.taxType
-                    selectedECD.Table.mCONTAS_ANOTACAO.('Apurado?  ✎')(accountIndex) = string(app.taxType.Value);
+                    update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Apurado?', accountIndex, app.taxType.Value)
                 
                 case app.icmsType
                     updateRatePanelStatus(app, strcmp(app.icmsType.Value, 'manual'))
 
-                    rateJsonInfo = createRateJsonInfo(app);                            
-                    selectedECD.Table.mCONTAS_ANOTACAO.('Alíquota ICMS'){accountIndex} = jsonencode(rateJsonInfo);
+                    rateJsonInfo = createRateJsonInfo(app);
+                    update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Alíquota ICMS', accountIndex, jsonencode(rateJsonInfo))
 
                 case {app.icmsMonth1, ...
                       app.icmsMonth2, ...
@@ -216,12 +226,12 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
                       app.icmsMonth11, ...
                       app.icmsMonth12}
 
-                    rateJsonInfo = createRateJsonInfo(app);                            
-                    selectedECD.Table.mCONTAS_ANOTACAO.('Alíquota ICMS'){accountIndex} = jsonencode(rateJsonInfo);
+                    rateJsonInfo = createRateJsonInfo(app);
+                    update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Alíquota ICMS', accountIndex, jsonencode(rateJsonInfo))
 
                 case app.freenote
                     newFreeNote = textFormatGUI.cellstr2TextField(app.freenote.Value);
-                    selectedECD.Table.mCONTAS_ANOTACAO.('Observação  ✎'){accountIndex} = newFreeNote;
+                    update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Observação', accountIndex, newFreeNote)
             end
 
             updateLayout(app, fileIndex, app.accountList.Value)
@@ -229,6 +239,30 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             context = app.inputArgs.context;
             ipcMainMatlabCallsHandler(app.mainApp, app, 'accountEdited', context)
             
+        end
+
+        % Image clicked function: NextSelection, PreviousSelection
+        function PreviousSelectionImageClicked(app, event)
+            
+            [~, currentAccountIndex] = ismember(app.accountList.Value, app.accountList.Items);
+            maxAccountIndex = numel(app.accountList.Items);
+
+            switch event.Source
+                case app.PreviousSelection
+                    newAccountIndex = currentAccountIndex - 1;
+                case app.NextSelection
+                    newAccountIndex = currentAccountIndex + 1;
+            end
+
+            if newAccountIndex < 1
+                newAccountIndex = maxAccountIndex;
+            elseif newAccountIndex > maxAccountIndex
+                newAccountIndex = 1;
+            end
+
+            app.accountList.Value = app.accountList.Items{newAccountIndex};
+            accountListValueChanged(app, event)
+
         end
     end
 
@@ -286,7 +320,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
 
             % Create Document
             app.Document = uigridlayout(app.GridLayout);
-            app.Document.ColumnWidth = {110, '1x', 90};
+            app.Document.ColumnWidth = {22, 22, 56, '1x', 90};
             app.Document.RowHeight = {17, 22, 70, 22, 22, 22, 22, 108, 22, '1x', 1, 22};
             app.Document.ColumnSpacing = 5;
             app.Document.RowSpacing = 5;
@@ -299,7 +333,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.accountListLabel.VerticalAlignment = 'bottom';
             app.accountListLabel.FontSize = 11;
             app.accountListLabel.Layout.Row = 1;
-            app.accountListLabel.Layout.Column = 1;
+            app.accountListLabel.Layout.Column = [1 3];
             app.accountListLabel.Text = 'Conta:';
 
             % Create accountList
@@ -309,7 +343,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.accountList.FontSize = 11;
             app.accountList.BackgroundColor = [1 1 1];
             app.accountList.Layout.Row = 2;
-            app.accountList.Layout.Column = [1 3];
+            app.accountList.Layout.Column = [1 5];
             app.accountList.Value = {};
 
             % Create accountInfo
@@ -317,7 +351,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.accountInfo.VerticalAlignment = 'top';
             app.accountInfo.FontSize = 11;
             app.accountInfo.Layout.Row = 3;
-            app.accountInfo.Layout.Column = [1 3];
+            app.accountInfo.Layout.Column = [1 5];
             app.accountInfo.Interpreter = 'html';
             app.accountInfo.Text = '';
 
@@ -326,25 +360,25 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.taxTypeLabel.VerticalAlignment = 'bottom';
             app.taxTypeLabel.FontSize = 11;
             app.taxTypeLabel.Layout.Row = 4;
-            app.taxTypeLabel.Layout.Column = 1;
+            app.taxTypeLabel.Layout.Column = [1 3];
             app.taxTypeLabel.Text = 'Apurado?';
 
             % Create taxType
             app.taxType = uidropdown(app.Document);
-            app.taxType.Items = {'-', 'Não', 'Sim', 'Sim - ICMS'};
+            app.taxType.Items = {'-', 'Não', 'Sim', 'ICMS Telecom', 'PIS Telecom', 'COFINS Telecom'};
             app.taxType.ValueChangedFcn = createCallbackFcn(app, @parameterValueChanged, true);
             app.taxType.FontSize = 11;
             app.taxType.BackgroundColor = [1 1 1];
             app.taxType.Layout.Row = 5;
-            app.taxType.Layout.Column = 1;
-            app.taxType.Value = 'Sim - ICMS';
+            app.taxType.Layout.Column = [1 3];
+            app.taxType.Value = '-';
 
             % Create icmsTypeLabel
             app.icmsTypeLabel = uilabel(app.Document);
             app.icmsTypeLabel.VerticalAlignment = 'bottom';
             app.icmsTypeLabel.FontSize = 11;
             app.icmsTypeLabel.Layout.Row = 6;
-            app.icmsTypeLabel.Layout.Column = 1;
+            app.icmsTypeLabel.Layout.Column = [1 3];
             app.icmsTypeLabel.Text = 'Alíquota ICMS:';
 
             % Create icmsType
@@ -354,13 +388,13 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsType.FontSize = 11;
             app.icmsType.BackgroundColor = [1 1 1];
             app.icmsType.Layout.Row = 7;
-            app.icmsType.Layout.Column = 1;
+            app.icmsType.Layout.Column = [1 3];
             app.icmsType.Value = 'auto';
 
             % Create icmsMonthsPanel
             app.icmsMonthsPanel = uipanel(app.Document);
             app.icmsMonthsPanel.Layout.Row = 8;
-            app.icmsMonthsPanel.Layout.Column = [1 3];
+            app.icmsMonthsPanel.Layout.Column = [1 5];
 
             % Create icmsMonthsGrid
             app.icmsMonthsGrid = uigridlayout(app.icmsMonthsPanel);
@@ -601,7 +635,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.freenoteLabel.VerticalAlignment = 'bottom';
             app.freenoteLabel.FontSize = 11;
             app.freenoteLabel.Layout.Row = 9;
-            app.freenoteLabel.Layout.Column = 1;
+            app.freenoteLabel.Layout.Column = [1 3];
             app.freenoteLabel.Text = 'Observação:';
 
             % Create freenote
@@ -609,7 +643,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.freenote.ValueChangedFcn = createCallbackFcn(app, @parameterValueChanged, true);
             app.freenote.FontSize = 11;
             app.freenote.Layout.Row = 10;
-            app.freenote.Layout.Column = [1 3];
+            app.freenote.Layout.Column = [1 5];
 
             % Create btnOK
             app.btnOK = uibutton(app.Document, 'push');
@@ -618,8 +652,24 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.btnOK.IconAlignment = 'right';
             app.btnOK.BackgroundColor = [0.9804 0.9804 0.9804];
             app.btnOK.Layout.Row = 12;
-            app.btnOK.Layout.Column = 3;
+            app.btnOK.Layout.Column = 5;
             app.btnOK.Text = 'OK';
+
+            % Create PreviousSelection
+            app.PreviousSelection = uiimage(app.Document);
+            app.PreviousSelection.ImageClickedFcn = createCallbackFcn(app, @PreviousSelectionImageClicked, true);
+            app.PreviousSelection.Tooltip = {'Navega para a conta anterior'};
+            app.PreviousSelection.Layout.Row = 12;
+            app.PreviousSelection.Layout.Column = 1;
+            app.PreviousSelection.ImageSource = 'Previous_32.png';
+
+            % Create NextSelection
+            app.NextSelection = uiimage(app.Document);
+            app.NextSelection.ImageClickedFcn = createCallbackFcn(app, @PreviousSelectionImageClicked, true);
+            app.NextSelection.Tooltip = {'Navega para a conta posterior'};
+            app.NextSelection.Layout.Row = 12;
+            app.NextSelection.Layout.Column = 2;
+            app.NextSelection.ImageSource = 'After_32.png';
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';
