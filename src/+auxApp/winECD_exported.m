@@ -537,26 +537,21 @@ classdef winECD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function forceUpdateTable(app)
-            if strcmp(app.SheetList.Value, '_CONTAS_ANOTACAO')
-                clickedTable = app.UITable1;
-                initialSelection = clickedTable.Selection;
+            refTable    = struct('handle', app.UITable1, 'controller', app.SheetList);
+            refTable(2) = struct('handle', app.UITable2, 'controller', app.SheetView_Second);
 
-                SheetViewFirstValueChanged(app, struct('Source', app.SheetList))
+            for ii = 1:numel(refTable)
+                tableHandle = refTable(ii).handle;
+                controller  = refTable(ii).controller;
+                
+                if ismember(controller.Value, {'_CONTAS_ANOTACAO', '_TABELA_APURACAO'})
+                    initialSelection = tableHandle.Selection;
+                    controller.ValueChangedFcn(controller, struct('Source', controller))
 
-                clickedTable.Selection = initialSelection;
-                [tableCountText, tableSelectedAccount] = relatedTableComponents(app, clickedTable);
-                updateTableFootnote(app, clickedTable, tableCountText, tableSelectedAccount)
-            end
-    
-            if strcmp(app.SheetView_Second.Value, '_CONTAS_ANOTACAO')
-                clickedTable = app.UITable2;
-                initialSelection = clickedTable.Selection;
-
-                SheetViewSecondValueChanged(app)
-
-                clickedTable.Selection = initialSelection;
-                [tableCountText, tableSelectedAccount] = relatedTableComponents(app, clickedTable);
-                updateTableFootnote(app, clickedTable, tableCountText, tableSelectedAccount)
+                    tableHandle.Selection = initialSelection;
+                    [tableCountText, tableSelectedAccount] = relatedTableComponents(app, tableHandle);
+                    updateTableFootnote(app, tableHandle, tableCountText, tableSelectedAccount)
+                end
             end
         end
 
@@ -585,12 +580,14 @@ classdef winECD_exported < matlab.apps.AppBase
             tableIdField   = ['x' tableId];
             tableIdData    = selectedECD.Table.(tableIdField);
             
-            columnName     = tableIdData.Properties.VariableNames;
-            columnEditable = contains(columnName, '✎');
+            columnNames    = tableIdData.Properties.VariableNames;
+            columnEditable = contains(columnNames, '✎');
+            rowNames       = tableIdData.Properties.RowNames;
             
             set(hTable, 'ColumnWidth', 'auto', ...
-                        'ColumnName', columnName, ...
+                        'ColumnName', columnNames, ...
                         'ColumnEditable', columnEditable, ...
+                        'RowName', rowNames, ...
                         'Data', tableIdData)
             hTable.UserData.TableId = tableId;
 
