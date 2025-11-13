@@ -11,6 +11,7 @@ classdef winECD_exported < matlab.apps.AppBase
         tool_UploadFinalFile  matlab.ui.control.Image
         tool_GenerateReport   matlab.ui.control.Image
         tool_Separator        matlab.ui.control.Image
+        tool_AutoFill         matlab.ui.control.Image
         tool_AccountEdition   matlab.ui.control.Image
         tool_CompanyInfo      matlab.ui.control.Label
         UITable2_AccountInfo  matlab.ui.control.Label
@@ -528,11 +529,13 @@ classdef winECD_exported < matlab.apps.AppBase
             context = 'ECD';
 
             nonEmptyECDObject               = ~isempty(selectedECD);
+            hasSpecificNonEmptyTable        = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);
             reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(context).generatedFiles.lastHTMLDocFullPath);
 
+            app.tool_AccountEdition.Enable  = hasSpecificNonEmptyTable;
+            app.tool_AutoFill.Enable        = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', {app.SheetView_First.Value, app.SheetView_Second.Value});
             app.tool_GenerateReport.Enable  = nonEmptyECDObject;
             app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated;
-            app.tool_AccountEdition.Enable  = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);
         end
 
         %-----------------------------------------------------------------%
@@ -1358,6 +1361,19 @@ classdef winECD_exported < matlab.apps.AppBase
             ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDAccount', 'ECD', fileIndex, accountName)
 
         end
+
+        % Image clicked function: tool_AutoFill
+        function tool_AutoFillImageClicked(app, event)
+            
+            selectedECD = selectedECDObject(app);
+            if ~isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO')
+                return
+            end
+
+            update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'autoFill')
+            forceUpdateTable(app)
+
+        end
     end
 
     % Component initialization
@@ -1882,7 +1898,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create Toolbar
             app.Toolbar = uigridlayout(app.GridLayout);
-            app.Toolbar.ColumnWidth = {'1x', 22, 5, 22, 22};
+            app.Toolbar.ColumnWidth = {'1x', 22, 22, 5, 22, 22};
             app.Toolbar.RowHeight = {4, 17, 2};
             app.Toolbar.ColumnSpacing = 5;
             app.Toolbar.RowSpacing = 0;
@@ -1912,12 +1928,21 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_AccountEdition.Layout.Column = 2;
             app.tool_AccountEdition.ImageSource = 'Variable_edit_16.png';
 
+            % Create tool_AutoFill
+            app.tool_AutoFill = uiimage(app.Toolbar);
+            app.tool_AutoFill.ImageClickedFcn = createCallbackFcn(app, @tool_AutoFillImageClicked, true);
+            app.tool_AutoFill.Enable = 'off';
+            app.tool_AutoFill.Tooltip = {'Sugere anotação das contas movimentadas'};
+            app.tool_AutoFill.Layout.Row = 2;
+            app.tool_AutoFill.Layout.Column = 3;
+            app.tool_AutoFill.ImageSource = 'AutoFill_36Blue.png';
+
             % Create tool_Separator
             app.tool_Separator = uiimage(app.Toolbar);
             app.tool_Separator.ScaleMethod = 'none';
             app.tool_Separator.Enable = 'off';
             app.tool_Separator.Layout.Row = [1 3];
-            app.tool_Separator.Layout.Column = 3;
+            app.tool_Separator.Layout.Column = 4;
             app.tool_Separator.ImageSource = 'LineV.svg';
 
             % Create tool_GenerateReport
@@ -1927,14 +1952,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_GenerateReport.Enable = 'off';
             app.tool_GenerateReport.Tooltip = {'Gera relatório análise'};
             app.tool_GenerateReport.Layout.Row = 2;
-            app.tool_GenerateReport.Layout.Column = 4;
+            app.tool_GenerateReport.Layout.Column = 5;
             app.tool_GenerateReport.ImageSource = 'Publish_HTML_16.png';
 
             % Create tool_UploadFinalFile
             app.tool_UploadFinalFile = uiimage(app.Toolbar);
             app.tool_UploadFinalFile.Enable = 'off';
             app.tool_UploadFinalFile.Layout.Row = 2;
-            app.tool_UploadFinalFile.Layout.Column = 5;
+            app.tool_UploadFinalFile.Layout.Column = 6;
             app.tool_UploadFinalFile.ImageSource = 'Up_24.png';
 
             % Create DockModule

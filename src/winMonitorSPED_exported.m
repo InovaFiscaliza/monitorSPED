@@ -402,8 +402,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     screenWidth  = 460;
                     screenHeight = 404;
                 case 'ECDAccount'
-                    screenWidth  = 460;
-                    screenHeight = 540;
+                    screenWidth  = 720;
+                    screenHeight = 488;
             end
 
             ui.PopUpContainer(callingApp, class.Constants.appName, screenWidth, screenHeight)

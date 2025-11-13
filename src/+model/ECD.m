@@ -840,6 +840,40 @@ classdef ECD < model.ECDBase
 
                             obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){rowIndex} = newValue;
 
+                        case 'autoFill'
+                            % Edição automática limita aos registros que ainda 
+                            % não foram editados e, por isso, possuem valor '-'.
+
+                            accountTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO, obj.Table.x_BALANCETE_RESULTADO, 'Keys', 'COD_CTA', 'RightVariables', 'TOTAL');
+                            accountTable = innerjoin(accountTable,                obj.Table.x_CONTAS_DESCRICAO,    'Keys', 'COD_CTA', 'RightVariables', 'DESCRIÇÃO');
+
+                            for ii = 1:height(accountTable)
+                                if accountTable.('Apurado?  ✎')(ii) ~= "-"
+                                    continue
+                                end
+
+                                accountDescription = accountTable.('DESCRIÇÃO'){ii};
+                                accountTotal       = accountTable.('TOTAL')(ii);
+
+                                if     contains(accountDescription, 'ICMS',   'IgnoreCase', true)
+                                    obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "ICMS Telecom";
+                                    obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Descrição inclui termo "ICMS"';
+
+                                elseif contains(accountDescription, 'PIS',    'IgnoreCase', true)
+                                    obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "PIS Telecom";
+                                    obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Descrição inclui termo "PIS"';
+
+                                elseif contains(accountDescription, 'COFINS', 'IgnoreCase', true)
+                                    obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "COFINS Telecom";
+                                    obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Descrição inclui termo "COFINS"';
+
+                                elseif accountTotal > 0
+                                    obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "Sim";
+                                    obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){ii}  = jsonencode(obj.GUI.icmsDefaultRate);
+                                    obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Saldo anual positivo';
+                                end
+                            end
+
                         otherwise
                             error('UnexpectedCall')
                     end
@@ -852,103 +886,104 @@ classdef ECD < model.ECDBase
                     switch updateType
                         case 'startup'
                             obj.Table.x_TABELA_APURACAO = table( ...
-                                'Size', [10, 13], ...
+                                'Size', [11, 13], ...
                                 'VariableNames', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
                                 'VariableTypes', {'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'}, ...
-                                'RowNames', {'ROB TELECOM', 'ICMS TELECOM', 'ICMS CONTÁBIL', 'PIS TELECOM', 'PIS CONTÁBIL', 'COFINS TELECOM', 'COFINS CONTÁBIL', 'BÁSE DE CÁLCULO', 'VALOR APURADO FUST', 'VALOR APURADO FUNTTEL'} ...
+                                'RowNames', {'ROB TELECOM', 'ICMS TELECOM', 'ICMS CONTÁBIL', 'BÁSE DE CÁLCULO (PIS/COFINS)', 'PIS TELECOM', 'PIS CONTÁBIL', 'COFINS TELECOM', 'COFINS CONTÁBIL', 'BÁSE DE CÁLCULO (FUST/FUNTTEL)', 'VALOR APURADO FUST', 'VALOR APURADO FUNTTEL'} ...
                             );
 
                         case 'accountValueChanged'
-                            % Passo 1: Calculo ROB Telecom
-                            % Passo 2: Estimativa ICMS (considerando alíquotas estado) e compara com uma eventual conta contábil do ICMS, escolhendo o MENOR absoluto. Total do ano. Não tendo conta contábil, considera-se zero.
-                            % Passo 3: Estimativa PIS: 0.65 (ROB Telecom - ICMS) compara com o contábil, escolhendo o MENOR.
-                            % Passo 4: Estimativa COFINS: mesma coisa. (3%)
+                            pisDefaultTax     = 0.0065;
+                            cofinsDefaultTax  = 0.03;
+                            fustDefaultTax    = 0.01;
+                            funttelDefaultTax = 0.005;
 
-                            idxTelecom = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "Sim");
-                            idxICMS    = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "ICMS Telecom");
-                            idxPIS     = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "PIS Telecom");
-                            idxCOFINS  = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "COFINS Telecom");
+                            robContabilIdx    = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "Sim");
+                            icmsContabilIdx   = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "ICMS Telecom");
+                            pisContabilIdx    = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "PIS Telecom");
+                            cofinsContabilIdx = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "COFINS Telecom");
 
-                            % ROB Telecom
-                            accountTables = innerjoin( ...
-                                obj.Table.x_CONTAS_ANOTACAO(idxTelecom, {'COD_CTA', 'Alíquota ICMS'}), ...
-                                obj.Table.x_BALANCETE_RESULTADO, ...
-                                "Keys", "COD_CTA", "RightVariables", monthIds ...
-                            );
 
-                            if ~isempty(accountTables)
-                                obj.Table.x_TABELA_APURACAO('ROB TELECOM', monthIds) = num2cell(sum(accountTables{:, monthIds}, 1));
+                            % ## ROB / ICMS ##
+                            robContabil       = zeros(1, 12);
+                            robContabilTable  = innerjoin(obj.Table.x_CONTAS_ANOTACAO(robContabilIdx, {'COD_CTA', 'Alíquota ICMS'}), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
+                            if ~isempty(robContabilTable)
+                                robContabil   = sum(robContabilTable{:, monthIds}, 1);
                             end
+                            
+                            icmsEstimado       = zeros(1, 12);
+                            for ii = 1:height(robContabilTable)
+                                icmsInfo       = jsondecode(robContabilTable.('Alíquota ICMS'){ii});
+                                icmsRate       = icmsInfo.rate';
 
-                            % ICMS Telecom
-                            estimativaICMS = zeros(1, 12);
-                            for ii = 1:height(accountTables)
-                                icmsInfo = jsondecode(accountTables.('Alíquota ICMS'){ii});
-                                rate = icmsInfo.rate';
-                                if isscalar(rate)
-                                    rate = rate .* ones(1, 12);
+                                if isscalar(icmsRate)
+                                    icmsRate   = icmsRate .* ones(1, 12);
                                 end
-                                estimativaICMS = estimativaICMS + rate .* accountTables{ii, monthIds};
+
+                                icmsEstimado  = icmsEstimado - icmsRate .* robContabilTable{ii, monthIds};
                             end
-                            obj.Table.x_TABELA_APURACAO('ICMS TELECOM', monthIds) = num2cell(estimativaICMS);
-
-                            % ICMS Contábil
-                            icmsTempTable = innerjoin( ...
-                                obj.Table.x_CONTAS_ANOTACAO(idxICMS, 'COD_CTA'), ...
-                                obj.Table.x_BALANCETE_RESULTADO, ...
-                                "Keys", "COD_CTA", "RightVariables", monthIds ...
-                            );
-
-                            if ~isempty(icmsTempTable)
-                                obj.Table.x_TABELA_APURACAO('ICMS CONTÁBIL', monthIds) = num2cell(sum(icmsTempTable{:, monthIds}, 1));
+                            
+                            icmsContabil      = zeros(1, 12);
+                            icmsContabilTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO(icmsContabilIdx, 'COD_CTA'), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);                            
+                            if ~isempty(icmsContabilTable)
+                                icmsContabil  = sum(icmsContabilTable{:, monthIds}, 1);
                             end
 
-                            % PIS Telecom
-                            BASE_DE_CALCULO = obj.Table.x_TABELA_APURACAO{'ROB TELECOM', monthIds} - min(obj.Table.x_TABELA_APURACAO{'ICMS TELECOM', monthIds}, obj.Table.x_TABELA_APURACAO{'ICMS CONTÁBIL', monthIds});
-                            defaultPis = 0.0065;
-                            defaultCofins = 0.03;
-                            defaultFust = 0.02;
-                            defaultFuntel = 0.01;
-
-                            obj.Table.x_TABELA_APURACAO('PIS TELECOM', monthIds) = num2cell(BASE_DE_CALCULO .* defaultPis);
-
-                            % PIS Contábil
-                            pisTempTable = innerjoin( ...
-                                obj.Table.x_CONTAS_ANOTACAO(idxPIS, 'COD_CTA'), ...
-                                obj.Table.x_BALANCETE_RESULTADO, ...
-                                "Keys", "COD_CTA", "RightVariables", monthIds ...
-                            );
-
-                            if ~isempty(icmsTempTable)
-                                obj.Table.x_TABELA_APURACAO('PIS CONTÁBIL', monthIds) = num2cell(sum(pisTempTable{:, monthIds}, 1));
+                            if abs(sum(icmsEstimado)) < abs(sum(icmsContabil))
+                                icmsEscolhido = icmsEstimado;
+                            else
+                                icmsEscolhido = icmsContabil;
                             end
 
-                            % COFINS Telecom
-                            obj.Table.x_TABELA_APURACAO('COFINS TELECOM', monthIds) = num2cell(BASE_DE_CALCULO .* defaultCofins);
 
-                            % COFINS Contábil
-                            cofinsTempTable = innerjoin( ...
-                                obj.Table.x_CONTAS_ANOTACAO(idxCOFINS, 'COD_CTA'), ...
-                                obj.Table.x_BALANCETE_RESULTADO, ...
-                                "Keys", "COD_CTA", "RightVariables", monthIds ...
-                            );
-
-                            if ~isempty(icmsTempTable)
-                                obj.Table.x_TABELA_APURACAO('COFINS CONTÁBIL', monthIds) = num2cell(sum(cofinsTempTable{:, monthIds}, 1));
+                            % ## PIS/COFINS ##
+                            baseCalculoPisCofins = robContabil + icmsEscolhido;                            
+                            
+                            pisEstimado          = - pisDefaultTax    .* baseCalculoPisCofins;
+                            pisContabil          = zeros(1, 12);
+                            pisContabilTable     = innerjoin(obj.Table.x_CONTAS_ANOTACAO(pisContabilIdx,    'COD_CTA'), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
+                            if ~isempty(pisContabilTable)
+                                pisContabil      = sum(pisContabilTable{:, monthIds}, 1);
+                            end
+                            
+                            cofinsEstimado       = - cofinsDefaultTax .* baseCalculoPisCofins;
+                            cofinsContabil       = zeros(1, 12);
+                            cofinsContabilTable  = innerjoin(obj.Table.x_CONTAS_ANOTACAO(cofinsContabilIdx, 'COD_CTA'), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
+                            if ~isempty(cofinsContabilTable)
+                                cofinsContabil   = sum(cofinsContabilTable{:, monthIds}, 1);
+                            end
+                            
+                            if abs(sum(pisEstimado)) < abs(sum(pisContabil))
+                                pisEscolhido     = pisEstimado;
+                            else
+                                pisEscolhido     = pisContabil;
                             end
 
-                            % 'Base Cálculo'
-                            obj.Table.x_TABELA_APURACAO('BÁSE DE CÁLCULO', monthIds) = ...
-                                num2cell(obj.Table.x_TABELA_APURACAO{'ROB TELECOM', monthIds} - ...
-                                min(obj.Table.x_TABELA_APURACAO{'ICMS TELECOM', monthIds}, obj.Table.x_TABELA_APURACAO{'ICMS CONTÁBIL', monthIds}) - ...
-                                min(obj.Table.x_TABELA_APURACAO{'PIS TELECOM', monthIds}, obj.Table.x_TABELA_APURACAO{'PIS CONTÁBIL', monthIds}) - ...
-                                min(obj.Table.x_TABELA_APURACAO{'COFINS TELECOM', monthIds}, obj.Table.x_TABELA_APURACAO{'COFINS CONTÁBIL', monthIds}));
+                            if abs(sum(cofinsEstimado)) < abs(sum(cofinsContabil))
+                                cofinsEscolhido  = cofinsEstimado;
+                            else
+                                cofinsEscolhido  = cofinsContabil;
+                            end
 
-                            % 'Valor Apurado Fust'
-                            obj.Table.x_TABELA_APURACAO('VALOR APURADO FUST', monthIds) = num2cell(defaultFust .* obj.Table.x_TABELA_APURACAO{'BÁSE DE CÁLCULO', monthIds});
 
-                            % 'Valor Apurado Funttel'
-                            obj.Table.x_TABELA_APURACAO('VALOR APURADO FUNTTEL', monthIds) = num2cell(defaultFuntel .* obj.Table.x_TABELA_APURACAO{'BÁSE DE CÁLCULO', monthIds});
+                            % ## FUST/FUNTTEL ##
+                            baseCalculoFustFunttel = baseCalculoPisCofins + pisEscolhido + cofinsEscolhido;
+                            fustApurado            = - fustDefaultTax    .* baseCalculoFustFunttel;
+                            funttelApurado         = - funttelDefaultTax .* baseCalculoFustFunttel;
+
+
+                            % ## ATUALIZA TABELA ##                            
+                            obj.Table.x_TABELA_APURACAO('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell([robContabil,            sum(robContabil)]);
+                            obj.Table.x_TABELA_APURACAO('ICMS TELECOM',                   [monthIds, {'TOTAL'}]) = num2cell([icmsEstimado,           sum(icmsEstimado)]);
+                            obj.Table.x_TABELA_APURACAO('ICMS CONTÁBIL',                  [monthIds, {'TOTAL'}]) = num2cell([icmsContabil,           sum(icmsContabil)]);
+                            obj.Table.x_TABELA_APURACAO('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell([baseCalculoPisCofins,   sum(baseCalculoPisCofins)]);
+                            obj.Table.x_TABELA_APURACAO('PIS TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell([pisEstimado,            sum(pisEstimado)]);
+                            obj.Table.x_TABELA_APURACAO('PIS CONTÁBIL',                   [monthIds, {'TOTAL'}]) = num2cell([pisContabil,            sum(pisContabil)]);
+                            obj.Table.x_TABELA_APURACAO('COFINS TELECOM',                 [monthIds, {'TOTAL'}]) = num2cell([cofinsEstimado,         sum(cofinsEstimado)]);
+                            obj.Table.x_TABELA_APURACAO('COFINS CONTÁBIL',                [monthIds, {'TOTAL'}]) = num2cell([cofinsContabil,         sum(cofinsContabil)]);
+                            obj.Table.x_TABELA_APURACAO('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell([baseCalculoFustFunttel, sum(baseCalculoFustFunttel)]);
+                            obj.Table.x_TABELA_APURACAO('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell([fustApurado,            sum(fustApurado)]);                            
+                            obj.Table.x_TABELA_APURACAO('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell([funttelApurado,         sum(funttelApurado)]);
 
                         otherwise
                             error('UnexpectedCall')
