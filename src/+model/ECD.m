@@ -884,7 +884,7 @@ classdef ECD < model.ECDBase
                             estimativaICMS = zeros(1, 12);
                             for ii = 1:height(accountTables)
                                 icmsInfo = jsondecode(accountTables.('Alíquota ICMS'){ii});
-                                rate = icmsInfo.rate;
+                                rate = icmsInfo.rate';
                                 if isscalar(rate)
                                     rate = rate .* ones(1, 12);
                                 end

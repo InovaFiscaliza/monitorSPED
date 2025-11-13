@@ -582,7 +582,11 @@ classdef winECD_exported < matlab.apps.AppBase
             
             columnNames    = tableIdData.Properties.VariableNames;
             columnEditable = contains(columnNames, '✎');
+            
             rowNames       = tableIdData.Properties.RowNames;
+            if isempty(rowNames)
+                rowNames   = 'numbered';
+            end
             
             set(hTable, 'ColumnWidth', 'auto', ...
                         'ColumnName', columnNames, ...
