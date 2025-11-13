@@ -86,6 +86,11 @@ classdef (Abstract) HtmlTextGenerator
                         preffixText = sprintf('%s     ', strjoin(string(ecdObj.Period), ' a '));
                     end
 
+                    hasWarnings = '';
+                    if ~isempty(ecdObj.GUI.warnings)
+                        hasWarnings = '❗';
+                    end
+
                     hasTransactions = '';
                     if ~ecdObj.GUI.hasTransactions
                         hasTransactions = '🚫';
@@ -112,10 +117,15 @@ classdef (Abstract) HtmlTextGenerator
                         mergeStatusIcon = '➕';
                     end
 
-                    textId = sprintf('%s%s%s%s%s', preffixText, hasTransactions, receitaFederalStatusIcon, periodStatusIcon, mergeStatusIcon);
+                    textId = sprintf('%s%s%s%s%s%s', preffixText, hasWarnings, hasTransactions, receitaFederalStatusIcon, periodStatusIcon, mergeStatusIcon);
 
                 case 'scalar-period-oriented'
                     sourceIndex = varargin{1};
+
+                    hasWarnings = '';
+                    if ~isempty(ecdObj.GUI.warnings)
+                        hasWarnings = '❗';
+                    end
 
                     hasTransactions = '';
                     if ~ecdObj.GUI.hasTransactions
@@ -145,7 +155,7 @@ classdef (Abstract) HtmlTextGenerator
                         mergeStatusIcon = '➕';
                     end
 
-                    textId = sprintf('%s%s%s%s', hasTransactions, receitaFederalStatusIcon, periodStatusIcon, mergeStatusIcon);
+                    textId = sprintf('%s%s%s%s%s', hasWarnings, hasTransactions, receitaFederalStatusIcon, periodStatusIcon, mergeStatusIcon);
             end
         end
         
@@ -177,7 +187,7 @@ classdef (Abstract) HtmlTextGenerator
                 end
 
                 if ~isempty(ecdObj.GUI.warnings)
-                    dataStruct(end+1) = struct('group', 'ALERTAS ❌', 'value', ['<font style="color: red;">' strjoin(ecdObj.GUI.warnings, '<br>') '</font>']);
+                    dataStruct(end+1) = struct('group', 'ALERTAS ❗', 'value', ['<font style="color: red;">' strjoin(ecdObj.GUI.warnings, '<br>') '</font>']);
                 end
                 
                 if ~ecdObj.GUI.hasTransactions

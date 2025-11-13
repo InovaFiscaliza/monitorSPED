@@ -105,12 +105,13 @@ classdef projectLib < handle
 
     methods
         %-----------------------------------------------------------------%
-        function rate = calculateINSSRate(obj, state, period, rateType)
+        function [rate, msgError] = calculateINSSRate(obj, state, period, rateType, numDecimals)
             arguments
                 obj
                 state    char {mustBeMember(state, {'AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO'})}
                 period   datetime
                 rateType char {mustBeMember(rateType, {'mean', 'eomonth'})} = 'mean'
+                numDecimals double = 3
             end
             
             Year = year(period);
@@ -121,30 +122,40 @@ classdef projectLib < handle
             beginOfPeriod = datetime([Year, Month, 1]);
             endOfPeriod   = datetime([Year, Month, endOfMonthDay]);
 
-            % Identifica registros relacionados à UF indicada:
-            indexes = find(strcmp(obj.INSS.("UF"), state) & obj.INSS.("Vigência") <= endOfPeriod);
-            if isempty(indexes)
-                error('Não identificado registro que possibilite calcular a alíquota de INSS vigente de %s no período %s', state, endOfPeriod)
-            end
-
-            refINSSTable = obj.INSS(indexes, :);
-            switch rateType
-                case 'mean'
-                    refNumDays = endOfMonthDay;            
-                    rate = 0;
-                    for ii = height(refINSSTable):-1:1
-                        numDays    = refNumDays - day(max(refINSSTable.("Vigência")(ii), beginOfPeriod)) + 1;
-                        rate   = rate + numDays * refINSSTable.("Alíquota máxima")(ii);
-                        refNumDays = refNumDays - numDays;
-                        if refNumDays <= 0
-                            break
+            try    
+                % Identifica registros relacionados à UF indicada:
+                indexes = find(strcmp(obj.INSS.("UF"), state) & obj.INSS.("Vigência") <= endOfPeriod);            
+                if isempty(indexes)
+                    error('Não identificado registro que possibilite calcular a alíquota vigente de INSS')
+                end
+    
+                refINSSTable = obj.INSS(indexes, :);
+                switch rateType
+                    case 'mean'
+                        refNumDays = endOfMonthDay;            
+                        rate = 0;
+                        for ii = height(refINSSTable):-1:1
+                            numDays    = refNumDays - day(max(refINSSTable.("Vigência")(ii), beginOfPeriod)) + 1;
+                            rate   = rate + numDays * refINSSTable.("Alíquota máxima")(ii);
+                            refNumDays = refNumDays - numDays;
+                            if refNumDays <= 0
+                                break
+                            end
                         end
-                    end
-                    rate = rate/endOfMonthDay;
+                        rate = rate/endOfMonthDay;
+    
+                    case 'eomonth'
+                        rate = refINSSTable.("Alíquota máxima")(end);
+                end
+                msgError = '';
 
-                case 'eomonth'
-                    rate = refINSSTable.("Alíquota máxima")(end);
+            catch ME
+                index = find(strcmp(obj.INSS.("UF"), state), 1);
+                rate = obj.INSS.("Alíquota máxima")(index);
+                msgError = sprintf('[INSS Fallback] ∄ alíquota no domínio (%s, %s) ⇒ %.1f%%', state, endOfPeriod, 100 * rate);
             end
+
+            rate = round(rate, numDecimals);
         end
 
         %-----------------------------------------------------------------%

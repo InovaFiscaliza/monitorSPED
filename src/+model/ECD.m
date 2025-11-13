@@ -213,12 +213,20 @@ classdef ECD < model.ECDBase
 
                         periodYear = year(obj(idx).Table.x0000.("DT_INI")(1));
                         periodRate = zeros(1, 12);
+                        rateErrorMsg = {};
                         for periodMonth = 1:12
-                            periodRate(periodMonth) = round(calculateINSSRate(projectData, obj(idx).CompanyInfo.UF, datetime([periodYear, periodMonth, 1]), 'mean'), 3);
+                            [periodRate(periodMonth), msgError] = calculateINSSRate(projectData, obj(idx).CompanyInfo.UF, datetime([periodYear, periodMonth, 1]), 'mean', 3);
+                            if ~isempty(msgError)
+                                rateErrorMsg{end+1} = msgError;
+                            end
                         end
 
                         if isscalar(unique(periodRate))
                             periodRate = periodRate(1);
+                        end
+
+                        if ~isempty(rateErrorMsg)
+                            obj(idx).GUI.warnings{end+1} = jsonencode(strjoin(rateErrorMsg, '<br>'));
                         end
 
                         obj(idx).GUI.icmsDefaultRate.rate = periodRate;
@@ -852,22 +860,31 @@ classdef ECD < model.ECDBase
                                     continue
                                 end
 
-                                accountDescription = accountTable.('DESCRIÇÃO'){ii};
+                                accountDescription = lower(replace(accountTable.('DESCRIÇÃO'){ii}, textAnalysis.specialPont, ''));
                                 accountTotal       = accountTable.('TOTAL')(ii);
 
-                                if     contains(accountDescription, 'ICMS',   'IgnoreCase', true)
-                                    obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "ICMS Telecom";
-                                    obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Descrição inclui termo "ICMS"';
+                                % Identifica qual das descrições possuem as palavras 
+                                % "ICMS", "PIS" ou "COFINS", e qual delas aparece no 
+                                % final da descrição (e mais próxima da descrição da 
+                                % conta analítica sob análise).
+                                taxValidation = cellfun(@(x) strfind(accountDescription, x), {'icms', 'pis', 'cofins'}, 'UniformOutput', false);
+                                
+                                if ~isempty(cell2mat(taxValidation))
+                                    taxValidationMax = max(cell2mat(taxValidation));
+                                    taxValidationMaxIndex = find(cellfun(@(x) isequal(taxValidationMax, x), taxValidation), 1);
+                                    switch taxValidationMaxIndex
+                                        case 1 % ICMS
+                                            obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "ICMS Telecom";
+                                            obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Descrição inclui termo "ICMS"';
+                                        case 2 % PIS
+                                            obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "PIS Telecom";
+                                            obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Descrição inclui termo "PIS"';
+                                        case 3 % COFINS
+                                            obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "COFINS Telecom";
+                                            obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Descrição inclui termo "COFINS"';
+                                    end
 
-                                elseif contains(accountDescription, 'PIS',    'IgnoreCase', true)
-                                    obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "PIS Telecom";
-                                    obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Descrição inclui termo "PIS"';
-
-                                elseif contains(accountDescription, 'COFINS', 'IgnoreCase', true)
-                                    obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "COFINS Telecom";
-                                    obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Descrição inclui termo "COFINS"';
-
-                                elseif accountTotal > 0
+                                elseif accountTotal > 0                                    
                                     obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "Sim";
                                     obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){ii}  = jsonencode(obj.GUI.icmsDefaultRate);
                                     obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Saldo anual positivo';
