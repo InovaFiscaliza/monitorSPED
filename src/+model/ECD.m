@@ -867,11 +867,20 @@ classdef ECD < model.ECDBase
                                 % "ICMS", "PIS" ou "COFINS", e qual delas aparece no 
                                 % final da descrição (e mais próxima da descrição da 
                                 % conta analítica sob análise).
-                                taxValidation = cellfun(@(x) strfind(accountDescription, x), {'icms', 'pis', 'cofins'}, 'UniformOutput', false);
+                                taxOptions    = {'icms', 'pis', 'cofins'};
+                                taxValidation = repmat({[]}, 1, 3);
+                                
+                                for jj = 1:numel(taxOptions)
+                                    taxTempValidation = strfind(accountDescription, taxOptions{jj});
+                                    if ~isempty(taxTempValidation)
+                                        taxValidation{jj} = taxTempValidation(end);
+                                    end
+                                end
                                 
                                 if ~isempty(cell2mat(taxValidation))
                                     taxValidationMax = max(cell2mat(taxValidation));
                                     taxValidationMaxIndex = find(cellfun(@(x) isequal(taxValidationMax, x), taxValidation), 1);
+
                                     switch taxValidationMaxIndex
                                         case 1 % ICMS
                                             obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "ICMS Telecom";
