@@ -306,8 +306,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 indexes = varargin{2};
 
                                 delete(callingApp)
-                                app.popupContainer.Parent.Visible = 0;
-
+                                ipcMainMatlabCallsHandler(app, callingApp, 'closeFcn', varargin{:});
                                 reportGeneratorCall(app, context, indexes)
 
                             otherwise
@@ -1179,7 +1178,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             filesError = struct('File', {}, 'Error', {});
 
             for ii = 1:numel(fileFullName)
-                d.Message = sprintf('Em andamento a leitura do arquivo %d de %d:<br>• <b>%s</b>', ii, numel(fileFullName), fileName{ii});
+                d.Message = textFormatGUI.HTMLParagraph(sprintf('Em andamento a leitura do arquivo %d de %d:<br>• <b>%s</b>', ii, numel(fileFullName), fileName{ii}));
 
                 % Verifica se arquivo já foi lido, comparando o seu nome com 
                 % a variável app.ecdObj.
