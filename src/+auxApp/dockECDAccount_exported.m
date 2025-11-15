@@ -93,7 +93,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             [~, index]   = ismember(accountName, accountTable.("COD_CTA"));
             
             % Árvore de descrição da conta:
-            app.accountInfo.Text = textFormatGUI.strToIndentedTree(accountTable.('DESCRIÇÃO'){index});
+            app.accountInfo.Text = sprintf('<font style="line-height: 17px;">%s</font>', textFormatGUI.strToIndentedTree(accountTable.('DESCRIÇÃO'){index}));
             
             % Valores iniciais dos campos passíveis de anotação:
             app.taxType.Value  = char(accountTable.('Apurado?  ✎')(index));
@@ -680,10 +680,10 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             % Create totalValue
             app.totalValue = uilabel(app.Document);
             app.totalValue.HorizontalAlignment = 'right';
-            app.totalValue.VerticalAlignment = 'bottom';
+            app.totalValue.VerticalAlignment = 'top';
             app.totalValue.FontSize = 11;
             app.totalValue.FontWeight = 'bold';
-            app.totalValue.Layout.Row = 6;
+            app.totalValue.Layout.Row = [10 11];
             app.totalValue.Layout.Column = 5;
             app.totalValue.Text = '';
 

@@ -14,11 +14,22 @@
         "Name": "Análise contábil",
         "File": "Análise contábil.json",
         "Module": "ECD",
-        "DocumentType": "Relatório de Fiscalização",
+        "DocumentType": "Relatório de Atividades",
         "Description": "Relatório de análise de arquivos contábeis para fins de apuração dos valores devidos de FUST e FUNTTEL.",
         "Author": "Eric Magalhães Delgado",
         "Version": "1.00",
         "Release": "23/09/2025",
+        "UserData": ""
+    },
+    {
+        "Name": "Análise contábil (RelatórioFiscalização)",
+        "File": "Análise contábil (RelatórioFiscalização).json",
+        "Module": "ECD",
+        "DocumentType": "Relatório de Fiscalização",
+        "Description": "Relatório de análise de arquivos contábeis para fins de apuração dos valores devidos de FUST e FUNTTEL.",
+        "Author": "Eric Magalhães Delgado",
+        "Version": "1.00",
+        "Release": "14/11/2025",
         "UserData": ""
     }
 ]

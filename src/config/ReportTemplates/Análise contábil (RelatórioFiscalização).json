@@ -1,0 +1,619 @@
+[
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "DESCRIÇÃO DA AÇÃO DE FISCALIZAÇÃO",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<b>Objetivo:</b>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<font style=\"padding-left: 96px;\">Assegurar o correto recolhimento das contribuições ao Fundo de Universalização dos Serviços de Telecomunicações (FUST), conforme legislação vigente.</font>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<b>Resultado Esperado:</b>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<font style=\"padding-left: 96px;\">Realizar diligências para apuração do FUST referente ao exercício 2021, em razão de impugnação interposta pela prestadora (SEI nº 12462395).</font>",
+                        "Variable": []
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "IDENTIFICAÇÃO DO OBJETO DA FISCALIZAÇÃO",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<b>Tipo:</b>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<font style=\"padding-left: 96px;\">Entidade outorgada a prestação do Serviço de Comunicação Multimídia (SCM) e do Serviço Telefônico Fixo Comutado (STFC).</font>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<b>Razão Social / Nome / Objeto:</b>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<font style=\"padding-left: 96px;\">CIRION TECHNOLOGIES DO BRASIL LTDA.</font>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<b>CNPJ/CPF:</b>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<font style=\"padding-left: 96px;\">72.843.212/0001-41</font>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<b>Fistel:</b>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<font style=\"padding-left: 96px;\">50012611719, 50004957806, 50001834959, 50415429293 e 50400000571.</font>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<b>Serviço:</b>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<font style=\"padding-left: 96px;\">045 – (SCM) - Serviço de Comunicação Multimídia e 171 – (STFC) – Serviço Telefônico Fixo Comutado.</font>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<b>Endereço da Sede:</b>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<font style=\"padding-left: 96px;\">Avenida Eid Mansur, nº 666, Térreo, Parque São George – Cotia / SP, CEP 06708-070.</font>",
+                        "Variable": []
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "LOCAL E PERÍODO DA FISCALIZAÇÃO",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Belo Horizonte/MG (GR04FI1), de 31/03/2025 à 04/11/2025.",
+                        "Variable": []
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "REFERÊNCIA",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Fiscalização realizada no âmbito da Ação de inspeção nº ACAO_GR04_2024_0334, disponível no Fiscaliza - Sistema de Gestão da Fiscalização da Anatel.",
+                        "Variable": []
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "DEMANDANTE",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<b>Gerência/Superintendência/Órgão Externo:</b>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<font style=\"padding-left: 96px;\">AFFO - Gerência de Finanças, Orçamento e Arrecadação.</font>",
+                        "Variable": []
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "UNIDADE(S) EXECUTANTE(S) DA AÇÃO DE FISCALIZAÇÃO",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<b>Responsáveis pela Ação de Fiscalização:</b>",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<font style=\"padding-left: 96px;\">Ivan Dias Maciel - Credencial nº 01262-1.</font>",
+                        "Variable": []
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "DISPOSITIVOS LEGAIS E REGULAMENTARES",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<a href=\"https://www.planalto.gov.br/ccivil_03/leis/L5172.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Lei nº 5.172, de 25 de outubro de 1966</a>, que dispõe sobre o Sistema Tributário Nacional e ins􀁎tui normas gerais de direito tributário aplicáveis à União, Estados e Municípios;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<a href=\"https://www.planalto.gov.br/ccivil_03/leis/L6404consol.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Lei nº 6.404, de 15 de dezembro de 1976</a>, que dispõe sobre as Sociedades por Ações;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Lei nº 9.472, de 16 de julho de 1997 , que dispõe sobre a organização dos serviços de telecomunicações, a criação e funcionamento de um órgão regulador e outros aspectos institucionais, nos termos da Emenda Constitucional nº 8, de 1995;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Lei nº 9.998, de 17 de agosto de 2000 , que institui o Fundo de Universalização dos Serviços de Telecomunicações (Fust);",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Lei nº 10.052, de 28 de novembro de 2000 , que ins􀁎tui o Fundo para o Desenvolvimento Tecnológico das Telecomunicações (Fun􀁐el), e dá outras providências;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Lei nº 10.406, 10 de janeiro de 2002 , que institui o Código Civil Brasileiro (CCB);",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Lei nº 10.637 de 30 de dezembro de 2002 , que dispõe sobre a não-cumula􀁎vidade na cobrança da contribuição para os Programas de Integração Social (PIS), e dá outras providências;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Lei nº 10.833, de 29 de dezembro de 2003 , que altera a Legislação Tributária Federal, e dá outras providências;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Lei nº 10.871, de 20 de maio de 2004 , dispõe sobre a criação de carreiras e organização de cargos efe􀁎vos das autarquias especiais denominadas Agências Reguladoras, e dá outras providências;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Lei nº 11.638, de 28 de dezembro de 2007 , que altera e revoga disposi􀁎vos da Lei nº 6.404 e estende às sociedades de grande porte disposições rela􀁎vas à elaboração e divulgação de demonstrações financeiras;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Decreto nº 11.004, de 21 de março de 2022 , que dispõe sobre a regulamentação do Fundo de Universalização dos Serviços de Telecomunicações (Fust);",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Decreto nº 3.737, de 30 de janeiro de 2001 , dispõe sobre a regulamentação do Fundo para o Desenvolvimento Tecnológico das Telecomunicações - FUNTTEL, e dá outras providências;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Decreto nº 9.580, de 22 de novembro de 2018 , que regulamenta a tributação, a fiscalização, a arrecadação e a administração do Imposto sobre a Renda e Proventos de Qualquer Natureza.",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Resolução Anatel nº 73, de 25 de novembro de 1998 , que aprova o Regulamento dos Serviços de Telecomunicações, alterado pelas Resoluções nº 234/2000 e nº 343/2003;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Resolução Anatel nº 612, de 29 de abril de 2013 , que aprova o Regimento Interno da Anatel;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Resolução Anatel nº 729, de 19 de junho de 2020 , que aprova o Regulamento de Arrecadação de Receitas Tributárias, e dá outras providências;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Resolução Anatel nº 746, de 22 de junho de 2021 , que aprova o Regulamento de Fiscalização Regulatória (RFR);",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Resolução nº 95 do Conselho Gestor do Fun􀁐el, de 20 de março de 2013 , que aprova o Regulamento da Arrecadação da Contribuição das Prestadoras de Serviços de Telecomunicações ao Fundo para o Desenvolvimento Tecnológico das Telecomunicações (Funttel);",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Portaria nº 2817, de 06 de maio de 2024, que aprova o Procedimento de Fiscalização para verificação do cumprimento das obrigações rela􀁎vas ao recolhimento das contribuições ao Fust e ao Funttel;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Portaria nº 2106, de 15 de novembro de 2021 , que aprova a Instrução de Fiscalização sobre Preparação, Execução e Conclusão de Inspeções no âmbito da Atividade de Fiscalização Regulatória;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Súmula nº 7, de 15 de dezembro de 2005 , que trata do recolhimento do Fust sobre serviços de telecomunicações a 􀁔tulo de remuneração de interconexão e pelo uso de recursos integrantes de redes;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Súmula Administra􀁎va CGF nº 1, de 2 de outubro de 2024 , que trata do recolhimento do Fun􀁐el sobre serviços de telecomunicações a 􀁔tulo de remuneração de interconexão e pelo uso de recursos integrantes de redes.",
+                        "Variable": []
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 1,
+        "Data": {
+            "Editable": "false",
+            "Text": "DESCRIÇÃO DA EXECUÇÃO",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<b>Arquivo %.0f: %s</b>",
+                        "Variable": [
+                            "var_Index",
+                            "var_CompanyName"
+                        ]
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "A empresa <b>%s</b>, inscrita no CNPJ sob o nº <b>%s</b>, apresentou... <i>placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder</i>, conforme pode ser observado a seguir, com uma amostra do arquivo.",
+                        "Variable": [
+                            "var_CompanyName",
+                            "var_CompanyId"
+                        ]
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<span style=\"display: block; padding-left: 92px; font-size:11px;\">%s</span>",
+                        "Variable": [
+                            "var_ContentSample"
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "CONCLUSÃO",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "Diante das razões expostas acima, conclui-se pela revisão dos valores apurados pelo Relatório de Fiscalização nº 17/2024/UO092/GR09/SFI, conforme memória de cálculo em anexo (Anexo 07 - SEI nº 14719429).",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "Com base nas informações apresentadas pela prestadora CIRION TECHNOLOGIES DO BRASIL LTDA., CNPJ 72.843.212/0001-41, à Anatel, os valores apurados para contribuição ao FUST, totalizam, durante o exercício financeiro de 2021, R$ 8.382.866,76 (oito milhões trezentos e oitenta e dois mil oitocentos e sessenta e seis reais e setenta e seis centavos).",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "Com base nas informações apresentadas pela prestadora CIRION TECHNOLOGIES DO BRASIL LTDA., CNPJ 72.843.212/0001-41, à Anatel, os valores apurados para contribuição ao FUST, totalizam, durante o exercício financeiro de 2021, R$ 8.382.866,76 (oito milhões trezentos e oitenta e dois mil oitocentos e sessenta e seis reais e setenta e seis centavos).",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "Não foram identificadas receitas auferidas referentes à Interconexão (ITX) ou à Exploração Industrial de Linha Dedicada (EILD).",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "Devido à nova parametrização de arredondamento no sistema de gestão da Fiscalização ( i.e., Sistema Fiscaliza), pode ocorrer diferença de centavos em relação à apuração original, sendo tal diferença imaterial para maiores análises.",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "A tabela a seguir apresenta os valores mensais apurados, referentes ao exercício fiscalizado:",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Table",
+                    "Data": {
+                        "Origin": "FunctionEvaluation",
+                        "Source": "tbl_Raw+0000",
+                        "Columns": [
+                            "REG", 
+                            "DT_INI", 
+                            "DT_FIN", 
+                            "NOME", 
+                            "CNPJ", 
+                            "UF", 
+                            "IE", 
+                            "COD_MUN", 
+                            "IM"
+                        ],
+                        "Caption": "Tabela ordinária criada em função...",
+                        "Settings": [
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Registro",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Data inicial",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Data final",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Razão social",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "CNPJ",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "UF",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Inscrição<br>estadual",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Código<br>município",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Inscrição<br>municipal",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            }
+                        ],
+                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A tabela a seguir apresenta os valores mensais apurados, referentes ao exercício fiscalizado Na tabela apresentada a seguir constam informações acerca do processo de validação de arquivos contábeis.\"}",
+                        "Error": [],
+                        "LineBreak": 0
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "É o relatório. Submeta-se a revisão e aprovação pelas autoridades competentes.",
+                        "Variable": []
+                    }
+                }
+            ]
+        }
+    }
+]

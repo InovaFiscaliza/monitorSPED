@@ -55,63 +55,6 @@
                     ]
                 },
                 {
-                    "Type": "Table",
-                    "Data": {
-                        "Origin": "FunctionEvaluation",
-                        "Source": "table_FileStatus",
-                        "Columns": [
-                            1,
-                            2,
-                            3,
-                            4,
-                            5,
-                            6
-                        ],
-                        "Caption": "Tabela ordinária criada em função...",
-                        "Settings": [
-                            {
-                                "Editable": "false",
-                                "ColumnName": "#",
-                                "Precision": "%.0f",
-                                "Width": "40px"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Arquivo",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Codificação",
-                                "Precision": "%s",
-                                "Width": "90px"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Hash",
-                                "Precision": "%s",
-                                "Width": "250px"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Resposta webservice",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Situação",
-                                "Precision": "%s",
-                                "Width": "70px"
-                            }
-                        ],
-                        "Intro": "{\"Type\":\"ItemN2\",\"Text\":\"Na tabela apresentada a seguir constam informações acerca do processo de validação de arquivos contábeis.\"}",
-                        "Error": [],
-                        "LineBreak": 0
-                    }
-                },
-                {
                     "Type": "Footnote",
                     "Data": {
                         "Editable": "false",
@@ -167,49 +110,6 @@
                         "Intro": [],
                         "Error": [],
                         "LineBreak": 1
-                    }
-                },
-                {
-                    "Type": "Table",
-                    "Data": {
-                        "Origin": "FunctionEvaluation",
-                        "Source": "table_PeriodByCompany",
-                        "Columns": [
-                            1,
-                            2,
-                            3,
-                            4
-                        ],
-                        "Caption": "Tabela ordinária criada em função...",
-                        "Settings": [
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Empresa",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "CNPJ",
-                                "Precision": "%s",
-                                "Width": "120px"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Período fiscal",
-                                "Precision": "%s",
-                                "Width": "140px"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Registros",
-                                "Precision": "%s",
-                                "Width": "70px"
-                            }
-                        ],
-                        "Intro": [],
-                        "Error": [],
-                        "LineBreak": 0
                     }
                 }
             ]
