@@ -148,5 +148,35 @@ classdef (Abstract) Table
             isTableRead(ecdObj, {tableId})
             Table = ecdObj.Table.(['x' tableId]);
         end
+
+        %-----------------------------------------------------------------%
+        function Table = TabelaApuracao(analyzedData)
+            ecdObj = analyzedData.InfoSet.ecdObj;
+
+            checkIfScalar(ecdObj)
+
+            rawTable = ecdObj.Table.x_TABELA_APURACAO;
+            Table = [table(rawTable.Properties.RowNames, 'VariableName', {'TIPO'}), rawTable];
+        end
+
+        %-----------------------------------------------------------------%
+        function Table = TabelaAnotacao(analyzedData, status)
+            arguments
+                analyzedData
+                status {mustBeMember(status, {'all', 'on'})}
+            end
+
+            ecdObj = analyzedData.InfoSet.ecdObj;
+
+            checkIfScalar(ecdObj)
+
+            rawTable = ecdObj.Table.x_CONTAS_ANOTACAO;
+            if strcmp(status, 'on')
+                rawTable = rawTable(rawTable.('Apurado?  ✎') ~= "-", :);
+            end
+
+            Table = innerjoin(rawTable, ecdObj.Table.x_BALANCETE_RESULTADO, 'Keys', 'COD_CTA', 'RightVariables', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'});
+            Table = innerjoin(Table,    ecdObj.Table.x_CONTAS_DESCRICAO,    'Keys', 'COD_CTA', 'RightVariables', 'DESCRIÇÃO');
+        end
     end
 end

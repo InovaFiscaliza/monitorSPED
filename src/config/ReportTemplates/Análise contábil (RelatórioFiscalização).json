@@ -467,6 +467,197 @@
                             "var_ContentSample"
                         ]
                     }
+                },
+                {
+                    "Type": "Table",
+                    "Data": {
+                        "Origin": "FunctionEvaluation",
+                        "Source": "tbl_TabelaAnotacao_On",
+                        "Columns": [
+                            "COD_CTA", 
+                            "DESCRIÇÃO", 
+                            "Apurado?  ✎", 
+                            "Alíquota ICMS", 
+                            "Observação  ✎"
+                        ],
+                        "Caption": "Tabela ordinária criada em função...",
+                        "Settings": [
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Conta",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Descrição",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Apurado?",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Alíquota ICMS",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Observação",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            }
+                        ],
+                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A tabela a seguir apresenta os valores mensais apurados, referentes ao exercício fiscalizado Na tabela apresentada a seguir constam informações acerca do processo de validação de arquivos contábeis.\"}",
+                        "Error": [],
+                        "LineBreak": 0
+                    }
+                },
+                {
+                    "Type": "Table",
+                    "Data": {
+                        "Origin": "FunctionEvaluation",
+                        "Source": "tbl_TabelaApuracao",
+                        "Columns": [
+                            "TIPO",
+                            "01", 
+                            "02", 
+                            "03", 
+                            "04", 
+                            "05", 
+                            "06", 
+                            "07", 
+                            "08", 
+                            "09", 
+                            "10", 
+                            "11",
+                            "12",
+                            "TOTAL"
+                        ],
+                        "Caption": "Tabela ordinária criada em função...",
+                        "Settings": [
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Tipo",
+                                "Precision": "%s",
+                                "Width": "auto",
+                                "ContainerStyle": " style=\"background: #e6e6e6;\"",
+                                "TextStyle": " style=\"font-weight: bold;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Janeiro",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Fevereiro",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Março",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Abril",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Maio",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Junho",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Julho",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Agosto",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Setembro",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Outubro",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Novembro",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Dezembro",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Total",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right; font-weight: bold;\""
+                            }
+                        ],
+                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A tabela a seguir apresenta os valores mensais apurados, referentes ao exercício fiscalizado Na tabela apresentada a seguir constam informações acerca do processo de validação de arquivos contábeis.\"}",
+                        "Error": [],
+                        "LineBreak": 0
+                    }
                 }
             ]
         }
@@ -525,84 +716,6 @@
                         "Editable": "true",
                         "Text": "A tabela a seguir apresenta os valores mensais apurados, referentes ao exercício fiscalizado:",
                         "Variable": []
-                    }
-                },
-                {
-                    "Type": "Table",
-                    "Data": {
-                        "Origin": "FunctionEvaluation",
-                        "Source": "tbl_Raw+0000",
-                        "Columns": [
-                            "REG", 
-                            "DT_INI", 
-                            "DT_FIN", 
-                            "NOME", 
-                            "CNPJ", 
-                            "UF", 
-                            "IE", 
-                            "COD_MUN", 
-                            "IM"
-                        ],
-                        "Caption": "Tabela ordinária criada em função...",
-                        "Settings": [
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Registro",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Data inicial",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Data final",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Razão social",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "CNPJ",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "UF",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Inscrição<br>estadual",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Código<br>município",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Inscrição<br>municipal",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            }
-                        ],
-                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A tabela a seguir apresenta os valores mensais apurados, referentes ao exercício fiscalizado Na tabela apresentada a seguir constam informações acerca do processo de validação de arquivos contábeis.\"}",
-                        "Error": [],
-                        "LineBreak": 0
                     }
                 },
                 {

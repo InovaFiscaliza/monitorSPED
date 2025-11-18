@@ -30,7 +30,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "false",
-                        "Text": "A fiscalização tributária tem início com a coleta, junto à empresa fiscalizada, dos arquivos contábeis necessários à apuração dos valores devidos ao FUST e ao FUNTTEL. Para cada arquivo, procede-se ao cálculo do respectivo <i>hash</i> e à validação por meio de <i>webservice</i> disponibilizado pela Receita Federal, de modo a verificar se o arquivo coincide com o registrado em sua base de dados.",
+                        "Text": "A fiscalização tributária tem início com a coleta, junto à empresa fiscalizada, dos arquivos contábeis necessários à apuração dos valores devidos ao FUST e ao FUNTTEL.",
                         "Variable": []
                     }
                 },
@@ -39,26 +39,32 @@
                     "Data": [
                         {
                             "Editable": "false",
-                            "Text": "O primeiro elemento da lista...",
+                            "Text": "Para cada arquivo, procede-se ao cálculo do respectivo <i>hash</i> e à validação por meio de <i>webservice</i> disponibilizado pela Receita Federal, de modo a verificar se o arquivo coincide com o registrado em sua base de dados.",
                             "Variable": []
                         },
                         {
                             "Editable": "false",
-                            "Text": "O segundo elemento da lista...",
-                            "Variable": []
-                        },
-                        {
-                            "Editable": "false",
-                            "Text": "A validação aqui apresentada corresponde a uma fotografia no tempo. A empresa fiscalizada pode, a qualquer momento, retificar suas declarações contábeis. Uma nova validação pode ser realizada por meio da inserção do <i>hash</i> do arquivo <a href=\"http://www.sped.fazenda.gov.br/appConsultaSituacaoContabil/\" target=\"_blank\" rel=\"noopener noreferrer\">aqui</a>.",
+                            "Text": "A validação apresentada neste relatório corresponde a uma fotografia no tempo. Cabe destacar que a empresa pode, a qualquer momento, retificar suas declarações contábeis, hipótese em que uma nova validação poderá ser realizada mediante a inserção do <i>hash</i> atualizado do arquivo <a href=\"http://www.sped.fazenda.gov.br/appConsultaSituacaoContabil/\" target=\"_blank\" rel=\"noopener noreferrer\">aqui</a>.",
                             "Variable": []
                         }
                     ]
-                },
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "METODOLOGIA",
+            "Variable": [],
+            "Component": [
                 {
-                    "Type": "Footnote",
+                    "Type": "ItemN2",
                     "Data": {
                         "Editable": "false",
-                        "Text": "<span style=\"display: block; margin: 10px; margin-bottom: 20px;\">&#x1F7E2; Registro encontrado na base da Receita Federal<br>&#x1F534; Registro não encontrado na base da Receita Federal<br>⚪ Situação indeterminada<br>➕ Registro mesclado<br>⌛ Período fiscal não anual</span>",
+                        "Text": "Na tabela apresentada a seguir consta o sumário da informação agrupada por CNPJ, incluindo a unidade da federação e o período contábil de cada arquivo.",
                         "Variable": []
                     }
                 },
@@ -66,7 +72,178 @@
                     "Type": "Table",
                     "Data": {
                         "Origin": "FunctionEvaluation",
-                        "Source": "table_FileByCompany",
+                        "Source": "tbl_FileByCompany",
+                        "Columns": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6,
+                            7
+                        ],
+                        "Caption": "Tabela ordinária criada em função...",
+                        "Settings": [
+                            {
+                                "Editable": "false",
+                                "ColumnName": "#",
+                                "Precision": "%.0f",
+                                "Width": "50px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "CNPJ",
+                                "Precision": "%s",
+                                "Width": "120px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "NIRE",
+                                "Precision": "%s",
+                                "Width": "90px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Razão Social",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "UF",
+                                "Precision": "%s",
+                                "Width": "40px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Qtd. arquivos",
+                                "Precision": "%.0f",
+                                "Width": "60px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Período contábil – Arquivo",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            }
+                        ],
+                        "Intro": [],
+                        "Error": [],
+                        "LineBreak": 0
+                    }
+                },
+                {
+                    "Type": "Footnote",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "<span style=\"display: block; margin: 10px; margin-bottom: 20px; text-align: justify; word-break: break-all;\">CONFIGURAÇÕES:<br>•&thinsp;Módulo \"File\": %s<br>•&thinsp;Modelo do relatório: %s<br><br>SÍMBOLOS:<br>•&thinsp;&#x1F6AB; (escrituração não possui lançamentos contábeis)<br>•&thinsp;&#x1F7E2; (registro encontrado na base da Receita Federal), &#x1F534; (não encontrado na base da Receita Federal) e ⚪ (situação indeterminada)<br>•&thinsp;➕ (registro mesclado) e ⌛ (período fiscal não anual)</span>",
+                        "Variable": [
+                            "cfg_File",
+                            "cfg_ReportTemplate"
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "RESULTADOS",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Análise orientada a %.0f arquivo(s) relacionado(s) à empresa %s, inscrita no CNPJ sob o nº %s, contendo informações do período %s.",
+                        "Variable": [
+                            "var_NumFilesGlobal",
+                            "var_CompanyName",
+                            "var_CompanyId",                            
+                            "var_Period"
+                        ]
+                    }
+                },
+                {
+                    "Type": "Table",
+                    "Data": {
+                        "Origin": "FunctionEvaluation",
+                        "Source": "tbl_SourceFileStatus",
+                        "Columns": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6,
+                            7
+                        ],
+                        "Caption": "Tabela ordinária criada em função...",
+                        "Settings": [
+                            {
+                                "Editable": "false",
+                                "ColumnName": "#",
+                                "Precision": "%.0f",
+                                "Width": "50px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Período contábil",
+                                "Precision": "%s",
+                                "Width": "140px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Arquivo",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Codificação",
+                                "Precision": "%s",
+                                "Width": "80px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Hash",
+                                "Precision": "%s",
+                                "Width": "230px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Resposta webservice",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Situação",
+                                "Precision": "%s",
+                                "Width": "70px"
+                            }
+                        ],
+                        "Intro": [],
+                        "Error": [],
+                        "LineBreak": 1
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Apresentam-se, a seguir, informações complementares contidas no(s) arquivo(s) sob análise.",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Table",
+                    "Data": {
+                        "Origin": "FunctionEvaluation",
+                        "Source": "tbl_FileMetadata",
                         "Columns": [
                             1,
                             2,
@@ -80,19 +257,7 @@
                                 "Editable": "false",
                                 "ColumnName": "#",
                                 "Precision": "%.0f",
-                                "Width": "40px"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Empresa",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "CNPJ",
-                                "Precision": "%s",
-                                "Width": "120px"
+                                "Width": "50px"
                             },
                             {
                                 "Editable": "false",
@@ -102,54 +267,41 @@
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Período fiscal",
+                                "ColumnName": "Registros",
                                 "Precision": "%s",
-                                "Width": "140px"
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Qtd. arquivos anexos (J800 e J801)",
+                                "Precision": "%.0f",
+                                "Width": "110px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "LOG",
+                                "Precision": "%s",
+                                "Width": "auto"
                             }
                         ],
                         "Intro": [],
                         "Error": [],
                         "LineBreak": 1
                     }
-                }
-            ]
-        }
-    },
-    {
-        "Type": "ItemN1",
-        "Recurrence": 1,
-        "Data": {
-            "Editable": "false",
-            "Text": "RESULTADOS",
-            "Variable": [],
-            "Component": [
+                },
                 {
-                    "Type": "ItemN2",
+                    "Type": "Paragraph",
                     "Data": {
                         "Editable": "false",
-                        "Text": "<b>Arquivo %.0f: %s</b>",
-                        "Variable": [
-                            "var_Index",
-                            "var_CompanyName"
-                        ]
+                        "Text": "Por fim, apresenta(m)-se recorte(s) do conteúdo textual do(s) arquivo(s) sob análise.",
+                        "Variable": []
                     }
                 },
                 {
                     "Type": "Paragraph",
                     "Data": {
                         "Editable": "false",
-                        "Text": "A empresa <b>%s</b>, inscrita no CNPJ sob o nº <b>%s</b>, apresentou... <i>placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder</i>, conforme pode ser observado a seguir, com uma amostra do arquivo.",
-                        "Variable": [
-                            "var_CompanyName",
-                            "var_CompanyId"
-                        ]
-                    }
-                },
-                {
-                    "Type": "Paragraph",
-                    "Data": {
-                        "Editable": "false",
-                        "Text": "<span style=\"display: block; padding-left: 92px; font-size:11px;\">%s</span>",
+                        "Text": "<span style=\"display: block; line-height: 12px; font-size:11px;\">%s</span>",
                         "Variable": [
                             "var_ContentSample"
                         ]
@@ -159,76 +311,189 @@
                     "Type": "Table",
                     "Data": {
                         "Origin": "FunctionEvaluation",
-                        "Source": "table_Raw+0000",
+                        "Source": "tbl_TabelaAnotacao_On",
                         "Columns": [
-                            "REG", 
-                            "DT_INI", 
-                            "DT_FIN", 
-                            "NOME", 
-                            "CNPJ", 
-                            "UF", 
-                            "IE", 
-                            "COD_MUN", 
-                            "IM"
+                            "COD_CTA", 
+                            "DESCRIÇÃO", 
+                            "Apurado?  ✎", 
+                            "Alíquota ICMS", 
+                            "Observação  ✎"
                         ],
                         "Caption": "Tabela ordinária criada em função...",
                         "Settings": [
                             {
                                 "Editable": "false",
-                                "ColumnName": "Registro",
+                                "ColumnName": "Conta",
                                 "Precision": "%s",
                                 "Width": "auto"
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Data inicial",
+                                "ColumnName": "Descrição",
                                 "Precision": "%s",
                                 "Width": "auto"
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Data final",
+                                "ColumnName": "Apurado?",
                                 "Precision": "%s",
                                 "Width": "auto"
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Razão social",
+                                "ColumnName": "Alíquota ICMS",
                                 "Precision": "%s",
                                 "Width": "auto"
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "CNPJ",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "UF",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Inscrição<br>estadual",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Código<br>município",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Inscrição<br>municipal",
+                                "ColumnName": "Observação",
                                 "Precision": "%s",
                                 "Width": "auto"
                             }
                         ],
-                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"Na tabela apresentada a seguir constam informações acerca do processo de validação de arquivos contábeis.\"}",
+                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A tabela a seguir apresenta os valores mensais apurados, referentes ao exercício fiscalizado Na tabela apresentada a seguir constam informações acerca do processo de validação de arquivos contábeis.\"}",
+                        "Error": [],
+                        "LineBreak": 0
+                    }
+                },
+                {
+                    "Type": "Table",
+                    "Data": {
+                        "Origin": "FunctionEvaluation",
+                        "Source": "tbl_TabelaApuracao",
+                        "Columns": [
+                            "TIPO",
+                            "01", 
+                            "02", 
+                            "03", 
+                            "04", 
+                            "05", 
+                            "06", 
+                            "07", 
+                            "08", 
+                            "09", 
+                            "10", 
+                            "11",
+                            "12",
+                            "TOTAL"
+                        ],
+                        "Caption": "Tabela ordinária criada em função...",
+                        "Settings": [
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Tipo",
+                                "Precision": "%s",
+                                "Width": "auto",
+                                "ContainerStyle": " style=\"background: #e6e6e6;\"",
+                                "TextStyle": " style=\"font-weight: bold;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Janeiro",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Fevereiro",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Março",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Abril",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Maio",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Junho",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Julho",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Agosto",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Setembro",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Outubro",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Novembro",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Dezembro",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Total",
+                                "Precision": "%.2f",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right; font-weight: bold;\""
+                            }
+                        ],
+                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A tabela a seguir apresenta os valores mensais apurados, referentes ao exercício fiscalizado Na tabela apresentada a seguir constam informações acerca do processo de validação de arquivos contábeis.\"}",
                         "Error": [],
                         "LineBreak": 0
                     }
@@ -246,7 +511,7 @@
             "Component": {
                 "Type": "ItemN2",
                 "Data": {
-                    "Editable": "true",
+                    "Editable": "false",
                     "Text": "Ante o exposto, conclui-se este relatório de atividades.",
                     "Variable": []
                 }
