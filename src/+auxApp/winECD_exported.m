@@ -65,9 +65,6 @@ classdef winECD_exported < matlab.apps.AppBase
         SheetHeight_First     matlab.ui.control.Spinner
         SheetView_First       matlab.ui.control.DropDown
         SheetViewStatus       matlab.ui.control.StateButton
-        ContextMenu           matlab.ui.container.ContextMenu
-        contextmenu_Copy      matlab.ui.container.Menu
-        contextmenu_Paste     matlab.ui.container.Menu
     end
 
     
@@ -1992,22 +1989,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.dockModule_Undock.Layout.Row = 1;
             app.dockModule_Undock.Layout.Column = 1;
             app.dockModule_Undock.ImageSource = 'Undock_18White.png';
-
-            % Create ContextMenu
-            app.ContextMenu = uicontextmenu(app.UIFigure);
-            app.ContextMenu.Tag = 'auxApp.winECD';
-
-            % Create contextmenu_Copy
-            app.contextmenu_Copy = uimenu(app.ContextMenu);
-            app.contextmenu_Copy.Text = ' 🗐 Copiar';
-
-            % Create contextmenu_Paste
-            app.contextmenu_Paste = uimenu(app.ContextMenu);
-            app.contextmenu_Paste.Text = '📋Colar';
-            
-            % Assign app.ContextMenu
-            app.UITable1.ContextMenu = app.ContextMenu;
-            app.UITable2.ContextMenu = app.ContextMenu;
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';
