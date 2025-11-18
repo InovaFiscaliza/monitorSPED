@@ -50,7 +50,7 @@ classdef (Abstract) Variable
                             fieldValue = strjoin(strcat('"', fileList, '"'), ', ');
                     end
 
-                case {'CompanyName', 'CompanyId'}
+                case {'CompanyName', 'CompanyId', 'State'}
                     fieldValue = strjoin(unique({ecdObj.(fieldName)}), ', ');
 
                 case 'Period'
@@ -96,6 +96,25 @@ classdef (Abstract) Variable
 
                 case 'Layout'
                     fieldValue = strjoin(string(unique([ecdObj.Layout])));
+                    
+                case 'NumAccount'
+                    fieldValue = height(ecdObj.Table.x_BALANCETE_RESULTADO);
+                    switch fieldValue
+                        case 0
+                            fieldValue = '<font style="color:red;">nenhuma</font> conta';
+                        case 1
+                            fieldValue = 'uma única conta';
+                        otherwise
+                            fieldValue = sprintf('%d contas', fieldValue);
+                    end
+
+                case 'TotalValue'
+                    fieldValue = sum(ecdObj.Table.x_BALANCETE_RESULTADO.TOTAL);
+                    if fieldValue < 0
+                        fieldValue = sprintf('<font style="color:red;">R$ %.2f</font>', fieldValue);
+                    else
+                        fieldValue = sprintf('R$ %.2f', fieldValue);
+                    end
 
                 otherwise
                     error('UnexpectedFieldName')

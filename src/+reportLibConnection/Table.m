@@ -85,7 +85,7 @@ classdef (Abstract) Table
 
                     Table(end+1,:) = { ...
                         sprintf('%d.%d%s', ecdIdx, kk, zz), ...
-                        sprintf('%s a %s', ecdObj(ii).Period(:)), ...
+                        sprintf('%s a %s', ecdObj(ii).Sources(jj).period(:)), ...
                         ecdObj(ii).Sources(jj).file, ...
                         ecdObj(ii).Sources(jj).encoding, ...
                         ecdObj(ii).Sources(jj).hash, ...
@@ -145,7 +145,7 @@ classdef (Abstract) Table
 
             checkIfScalar(ecdObj)
 
-            isTableRead(ecdObj, {tableId})
+            isTableRead(ecdObj, {tableId});
             Table = ecdObj.Table.(['x' tableId]);
         end
 
@@ -172,7 +172,7 @@ classdef (Abstract) Table
 
             rawTable = ecdObj.Table.x_CONTAS_ANOTACAO;
             if strcmp(status, 'on')
-                rawTable = rawTable(rawTable.('Apurado?  ✎') ~= "-", :);
+                rawTable = rawTable(~ismember(rawTable.('Apurado?  ✎'), ["-", "Não"]), :);
             end
 
             Table = innerjoin(rawTable, ecdObj.Table.x_BALANCETE_RESULTADO, 'Keys', 'COD_CTA', 'RightVariables', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'});

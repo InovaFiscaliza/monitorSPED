@@ -30,24 +30,9 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "false",
-                        "Text": "A fiscalização tributária tem início com a coleta, junto à empresa fiscalizada, dos arquivos contábeis necessários à apuração dos valores devidos ao FUST e ao FUNTTEL.",
+                        "Text": "A Anatel detém a competência de fiscalização para apuração dos valores de contribuições devidas ao Fundo de Universalização dos Serviços de Telecomunicações (FUST) e ao Fundo para o Desenvolvimento Tecnológico das Telecomunicações (FUNTTEL), bem como da apuração do ônus contratual decorrente da prorrogação de outorgas do setor de telecomunicações (ÔNUS).",
                         "Variable": []
                     }
-                },
-                {
-                    "Type": "List",
-                    "Data": [
-                        {
-                            "Editable": "false",
-                            "Text": "Para cada arquivo, procede-se ao cálculo do respectivo <i>hash</i> e à validação por meio de <i>webservice</i> disponibilizado pela Receita Federal, de modo a verificar se o arquivo coincide com o registrado em sua base de dados.",
-                            "Variable": []
-                        },
-                        {
-                            "Editable": "false",
-                            "Text": "A validação apresentada neste relatório corresponde a uma fotografia no tempo. Cabe destacar que a empresa pode, a qualquer momento, retificar suas declarações contábeis, hipótese em que uma nova validação poderá ser realizada mediante a inserção do <i>hash</i> atualizado do arquivo <a href=\"http://www.sped.fazenda.gov.br/appConsultaSituacaoContabil/\" target=\"_blank\" rel=\"noopener noreferrer\">aqui</a>.",
-                            "Variable": []
-                        }
-                    ]
                 }
             ]
         }
@@ -64,103 +49,62 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "false",
-                        "Text": "Na tabela apresentada a seguir consta o sumário da informação agrupada por CNPJ, incluindo a unidade da federação e o período contábil de cada arquivo.",
+                        "Text": "A fiscalização tributária tem início com a coleta, junto à empresa fiscalizada, dos arquivos contábeis necessários à apuração dos valores devidos ao FUST e ao FUNTTEL.",
                         "Variable": []
                     }
                 },
                 {
-                    "Type": "Table",
+                    "Type": "ItemN2",
                     "Data": {
-                        "Origin": "FunctionEvaluation",
-                        "Source": "tbl_FileByCompany",
-                        "Columns": [
-                            1,
-                            2,
-                            3,
-                            4,
-                            5,
-                            6,
-                            7
-                        ],
-                        "Caption": "Tabela ordinária criada em função...",
-                        "Settings": [
-                            {
-                                "Editable": "false",
-                                "ColumnName": "#",
-                                "Precision": "%.0f",
-                                "Width": "50px"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "CNPJ",
-                                "Precision": "%s",
-                                "Width": "120px"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "NIRE",
-                                "Precision": "%s",
-                                "Width": "90px"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Razão Social",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "UF",
-                                "Precision": "%s",
-                                "Width": "40px"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Qtd. arquivos",
-                                "Precision": "%.0f",
-                                "Width": "60px"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Período contábil – Arquivo",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            }
-                        ],
-                        "Intro": [],
-                        "Error": [],
-                        "LineBreak": 0
+                        "Editable": "false",
+                        "Text": "Em seguida, verifica-se a integridade e a autenticidade de cada arquivo. Para isso, calcula-se o respectivo <i>hash</i> e realiza-se a validação por meio do <i>webservice</i> disponibilizado pela Receita Federal, a fim de confirmar sua correspondência com o arquivo registrado na base de dados do órgão. Por se tratar de uma fotografia no tempo, poderá ser feita nova verificação mediante a inserção do <i>hash</i> do arquivo <a href=\"http://www.sped.fazenda.gov.br/appConsultaSituacaoContabil/\" target=\"_blank\" rel=\"noopener noreferrer\">aqui</a>.",
+                        "Variable": []
                     }
                 },
                 {
-                    "Type": "Footnote",
+                    "Type": "ItemN2",
                     "Data": {
                         "Editable": "false",
-                        "Text": "<span style=\"display: block; margin: 10px; margin-bottom: 20px; text-align: justify; word-break: break-all;\">CONFIGURAÇÕES:<br>•&thinsp;Módulo \"File\": %s<br>•&thinsp;Modelo do relatório: %s<br><br>SÍMBOLOS:<br>•&thinsp;&#x1F6AB; (escrituração não possui lançamentos contábeis)<br>•&thinsp;&#x1F7E2; (registro encontrado na base da Receita Federal), &#x1F534; (não encontrado na base da Receita Federal) e ⚪ (situação indeterminada)<br>•&thinsp;➕ (registro mesclado) e ⌛ (período fiscal não anual)</span>",
-                        "Variable": [
-                            "cfg_File",
-                            "cfg_ReportTemplate"
-                        ]
+                        "Text": "Após confirmada a validade, passa-se à análise do conteúdo de cada arquivo, conforme os procedimentos descritos a seguir:",
+                        "Variable": []
                     }
-                }
-            ]
-        }
-    },
-    {
-        "Type": "ItemN1",
-        "Recurrence": 0,
-        "Data": {
-            "Editable": "false",
-            "Text": "RESULTADOS",
-            "Variable": [],
-            "Component": [
+                },
                 {
-                    "Type": "Paragraph",
+                    "Type": "List",
+                    "Data": [
+                        {
+                            "Editable": "false",
+                            "Text": "Os fatos contábeis são identificados nos registros I200 e I250. Após a consolidação desses registros, procede-se ao agrupamento por contas contábeis, resultando em um balancete validado no qual o somatório mensal de todos os lançamentos é igual a zero. A partir desse balancete, filtram-se apenas as contas analíticas cuja natureza é igual a 4 - as \"contas de resultado\" -, formando o balancete de resultados.",
+                            "Variable": []
+                        },
+                        {
+                            "Editable": "false",
+                            "Text": "Cada conta de resultado é então classificada nas categorias: \"Sim\", \"Não\", \"ICMS Telecom\", \"PIS Telecom\" ou \"COFINS Telecom\". As contas classificadas como \"Sim\" representam receitas diretamente vinculadas à prestação de serviços de telecomunicações. Com base nelas, estima-se a Receita Operacional Bruta (ROB) e, assim, estima-se o ICMS. A alíquota aplicada observa a legislação vigente em cada Estado e no Distrito Federal, podendo também ser ajustada por conta e por mês, conforme necessário.",
+                            "Variable": []
+                        },
+                        {
+                            "Editable": "false",
+                            "Text": "O ICMS estimado é comparado ao ICMS contabilizado - identificado nas contas classificadas como \"ICMS Telecom\". Para fins de determinação da Base de Cálculo do PIS/COFINS, adota-se o menor valor anual entre o ICMS estimado e o contabilizado.",
+                            "Variable": []
+                        },
+                        {
+                            "Editable": "false",
+                            "Text": "Na sequência, estima-se o valor devido de PIS e COFINS, comparando-o aos montantes registrados contabilmente - contas classificadas como \"PIS Telecom\" e \"COFINS Telecom\". Para fins de definição da Base de Cálculo do FUST/FUNTTEL, também se seleciona o menor valor anual entre os tributos estimados e os contabilizados.",
+                            "Variable": []
+                        },
+                        {
+                            "Editable": "false",
+                            "Text": "Por fim, com base nas etapas anteriores, procede-se à apuração dos valores de FUST e FUNTTEL.",
+                            "Variable": []
+                        }
+                    ]
+                },
+                {
+                    "Type": "ItemN2",
                     "Data": {
                         "Editable": "false",
-                        "Text": "Análise orientada a %.0f arquivo(s) relacionado(s) à empresa %s, inscrita no CNPJ sob o nº %s, contendo informações do período %s.",
+                        "Text": "Na tabela apresentada a seguir consta detalhes do(s) arquivo(s) sob análise relacionado(s) à empresa <b>%s</b>, inscrita no CNPJ sob o nº %s, contendo informações do período %s.",
                         "Variable": [
-                            "var_NumFilesGlobal",
                             "var_CompanyName",
                             "var_CompanyId",                            
                             "var_Period"
@@ -173,7 +117,6 @@
                         "Origin": "FunctionEvaluation",
                         "Source": "tbl_SourceFileStatus",
                         "Columns": [
-                            1,
                             2,
                             3,
                             4,
@@ -183,12 +126,6 @@
                         ],
                         "Caption": "Tabela ordinária criada em função...",
                         "Settings": [
-                            {
-                                "Editable": "false",
-                                "ColumnName": "#",
-                                "Precision": "%.0f",
-                                "Width": "50px"
-                            },
                             {
                                 "Editable": "false",
                                 "ColumnName": "Período contábil",
@@ -228,58 +165,113 @@
                         ],
                         "Intro": [],
                         "Error": [],
-                        "LineBreak": 1
+                        "LineBreak": 0
                     }
                 },
                 {
-                    "Type": "Paragraph",
+                    "Type": "Footnote",
                     "Data": {
                         "Editable": "false",
-                        "Text": "Apresentam-se, a seguir, informações complementares contidas no(s) arquivo(s) sob análise.",
-                        "Variable": []
+                        "Text": "<span style=\"display: block; margin: 10px; margin-bottom: 20px; text-align: justify; word-break: break-all;\">CONFIGURAÇÕES:<br>•&thinsp;Módulo \"File\": %s<br>•&thinsp;Modelo do relatório: %s<br><br>SÍMBOLOS:<br>•&thinsp;&#x1F6AB; (escrituração não possui lançamentos contábeis)<br>•&thinsp;&#x1F7E2; (registro encontrado na base da Receita Federal), &#x1F534; (não encontrado na base da Receita Federal) e ⚪ (situação indeterminada)<br>•&thinsp;➕ (registro mesclado) e ⌛ (período fiscal não anual)</span>",
+                        "Variable": [
+                            "cfg_File",
+                            "cfg_ReportTemplate"
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "RESULTADOS",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "A empresa <b>%s</b>, inscrita no CNPJ sob o nº %s, movimentou %s. O resultado deste período foi igual a %s.",
+                        "Variable": [
+                            "var_CompanyName",
+                            "var_CompanyId",
+                            "var_NumAccount",
+                            "var_TotalValue"
+                        ]
                     }
                 },
                 {
                     "Type": "Table",
                     "Data": {
                         "Origin": "FunctionEvaluation",
-                        "Source": "tbl_FileMetadata",
+                        "Source": "tbl_Raw+0000",
                         "Columns": [
-                            1,
-                            2,
-                            3,
-                            4,
-                            5
+                            "REG", 
+                            "DT_INI", 
+                            "DT_FIN", 
+                            "NOME", 
+                            "CNPJ", 
+                            "UF", 
+                            "IE", 
+                            "COD_MUN", 
+                            "IM"
                         ],
-                        "Caption": "Tabela ordinária criada em função...",
+                        "Caption": "Registro \"0000\".",
                         "Settings": [
                             {
                                 "Editable": "false",
-                                "ColumnName": "#",
-                                "Precision": "%.0f",
-                                "Width": "50px"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "Arquivo",
+                                "ColumnName": "REG",
                                 "Precision": "%s",
                                 "Width": "auto"
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Registros",
+                                "ColumnName": "DT_INI",
                                 "Precision": "%s",
                                 "Width": "auto"
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Qtd. arquivos anexos (J800 e J801)",
-                                "Precision": "%.0f",
-                                "Width": "110px"
+                                "ColumnName": "DT_FIN",
+                                "Precision": "%s",
+                                "Width": "auto"
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "LOG",
+                                "ColumnName": "NOME",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "CNPJ",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "UF",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "IE",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "COD_MUN",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "IM",
                                 "Precision": "%s",
                                 "Width": "auto"
                             }
@@ -287,24 +279,6 @@
                         "Intro": [],
                         "Error": [],
                         "LineBreak": 1
-                    }
-                },
-                {
-                    "Type": "Paragraph",
-                    "Data": {
-                        "Editable": "false",
-                        "Text": "Por fim, apresenta(m)-se recorte(s) do conteúdo textual do(s) arquivo(s) sob análise.",
-                        "Variable": []
-                    }
-                },
-                {
-                    "Type": "Paragraph",
-                    "Data": {
-                        "Editable": "false",
-                        "Text": "<span style=\"display: block; line-height: 12px; font-size:11px;\">%s</span>",
-                        "Variable": [
-                            "var_ContentSample"
-                        ]
                     }
                 },
                 {
@@ -319,7 +293,7 @@
                             "Alíquota ICMS", 
                             "Observação  ✎"
                         ],
-                        "Caption": "Tabela ordinária criada em função...",
+                        "Caption": "Contas de resultado classificadas como \"Sim\", \"ICMS Telecom\", \"PIS Telecom\" ou \"COFINS Telecom\".",
                         "Settings": [
                             {
                                 "Editable": "false",
@@ -352,9 +326,9 @@
                                 "Width": "auto"
                             }
                         ],
-                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A tabela a seguir apresenta os valores mensais apurados, referentes ao exercício fiscalizado Na tabela apresentada a seguir constam informações acerca do processo de validação de arquivos contábeis.\"}",
+                        "Intro": "{\"Type\":\"ItemN2\",\"Text\":\"A tabela a seguir apresenta as contas de resultado que foram classificadas como \\\"Sim\\\", \\\"ICMS Telecom\\\", \\\"PIS Telecom\\\" ou \\\"COFINS Telecom\\\" com a sua descrição completa, incluindo a descrição das contas sintéticas superiores, além da alíquota aplicável do ICMS e uma observação livre, eventualmente inserida pelo fiscal.\"}",
                         "Error": [],
-                        "LineBreak": 0
+                        "LineBreak": 1
                     }
                 },
                 {
@@ -378,7 +352,7 @@
                             "12",
                             "TOTAL"
                         ],
-                        "Caption": "Tabela ordinária criada em função...",
+                        "Caption": "Planilha de apuração.",
                         "Settings": [
                             {
                                 "Editable": "false",
@@ -493,7 +467,7 @@
                                 "TextStyle": " style=\"text-align: right; font-weight: bold;\""
                             }
                         ],
-                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A tabela a seguir apresenta os valores mensais apurados, referentes ao exercício fiscalizado Na tabela apresentada a seguir constam informações acerca do processo de validação de arquivos contábeis.\"}",
+                        "Intro": "{\"Type\":\"ItemN2\",\"Text\":\"A planilha de apuração, apresentada a seguir, registra a ROB, o ICMS, PIS e COFINS, além dos valores apurados de FUST e FUNTTEL.\"}",
                         "Error": [],
                         "LineBreak": 0
                     }

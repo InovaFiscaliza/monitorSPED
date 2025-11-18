@@ -30,6 +30,25 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "false",
+                        "Text": "A Anatel detém a competência de fiscalização para apuração dos valores de contribuições devidas ao Fundo de Universalização dos Serviços de Telecomunicações (FUST) e ao Fundo para o Desenvolvimento Tecnológico das Telecomunicações (FUNTTEL), bem como da apuração do ônus contratual decorrente da prorrogação de outorgas do setor de telecomunicações (ÔNUS).",
+                        "Variable": []
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "METODOLOGIA",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
                         "Text": "A fiscalização tributária tem início com a coleta, junto à empresa fiscalizada, dos arquivos contábeis necessários à apuração dos valores devidos ao FUST e ao FUNTTEL.",
                         "Variable": []
                     }
@@ -44,22 +63,11 @@
                         },
                         {
                             "Editable": "false",
-                            "Text": "A validação apresentada neste relatório corresponde a uma fotografia no tempo. Cabe destacar que a empresa pode, a qualquer momento, retificar suas declarações contábeis, hipótese em que uma nova validação poderá ser realizada mediante a inserção do <i>hash</i> atualizado do arquivo <a href=\"http://www.sped.fazenda.gov.br/appConsultaSituacaoContabil/\" target=\"_blank\" rel=\"noopener noreferrer\">aqui</a>.",
+                            "Text": "A validação apresentada neste relatório corresponde a uma fotografia no tempo. Cabe destacar que a empresa pode, a qualquer momento, retificar suas declarações contábeis, hipótese em que uma nova validação poderá ser realizada mediante a inserção do <i>hash</i> do arquivo <a href=\"http://www.sped.fazenda.gov.br/appConsultaSituacaoContabil/\" target=\"_blank\" rel=\"noopener noreferrer\">aqui</a>.",
                             "Variable": []
                         }
                     ]
-                }
-            ]
-        }
-    },
-    {
-        "Type": "ItemN1",
-        "Recurrence": 0,
-        "Data": {
-            "Editable": "false",
-            "Text": "METODOLOGIA",
-            "Variable": [],
-            "Component": [
+                },
                 {
                     "Type": "ItemN2",
                     "Data": {
