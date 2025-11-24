@@ -1,7 +1,7 @@
-function [content, encoding, encodingJson, hashHex] = fileread(fileFullName, encodingList)
+function [content, encoding, encodingJson, hashHex, bigFileWarning] = fileread(fileFullName, encodingList)
     arguments
         fileFullName (1,:) char
-        encodingList (1,:) cell = {'ISO-8859-1', 'UTF-8'}
+        encodingList (1,:) cell = {'UTF-8', 'ISO-8859-1'}
     end
 
     fileID = fopen(fileFullName, 'r');
@@ -12,11 +12,11 @@ function [content, encoding, encodingJson, hashHex] = fileread(fileFullName, enc
     fclose(fileID);
 
     % HASH
-    hashEndMarker = regexp(char(byteArray), '\|9999\|[^\r\n]*(?:\r?\n)?', 'match');    
+    hashEndMarker = regexp(char(byteArray), '\|9999\|[^\r\n]*(?:\r?\n)?', 'match');
     if ~isempty(hashEndMarker)
         hashEndMarkerPosition = strfind(byteArray, hashEndMarker{end}) + numel(hashEndMarker{end}) - 1;
         byteArray = byteArray(1:hashEndMarkerPosition);
-    end    
+    end
     hashHex = calculateSHA1Hash(byteArray);
 
     % Encoding detection
@@ -26,16 +26,38 @@ function [content, encoding, encodingJson, hashHex] = fileread(fileFullName, enc
         'VariableNames', {'encoding', 'numSpecialCharsType', 'numSpecialChars'} ...
     );
 
+    % A função native2unicode é limitada em 2^30-1 elementos.
+    bigFileWarning = '';
+    if numel(byteArray) > 2^30-1
+        bigFileWarning = sprintf('[native2unicode] Error using native2unicode. Input must contain fewer than 2^30 elements. %.0f elements ⇒ %.0f', numel(byteArray), 2^30-1);
+    end
+
     for ii = 1:numel(encodingList)
-        rawDecoded = native2unicode(byteArray, encodingList{ii});
-        numSpecialChars = cellfun(@(x) numel(strfind(rawDecoded, x)), textAnalysis.specialChars);
+        rawDecoded = native2unicode(byteArray(1:min(numel(byteArray), 2^30-1)), encodingList{ii});
+        numSpecialChars = cellfun(@(x) numel(strfind(rawDecoded, x)), textAnalysis.specialMain);
         encodingInfo(end+1, :) = {encodingList{ii}, sum(numSpecialChars > 0), sum(numSpecialChars)};
     end
     encodingInfo = sortrows(encodingInfo, {'numSpecialCharsType', 'numSpecialChars'}, 'descend');
     
     encoding = encodingInfo.encoding{1};
-    content  = native2unicode(byteArray, encoding);
     encodingJson = jsonencode(encodingInfo);
+
+    if isempty(bigFileWarning)
+        if strcmp(encoding, encodingList{end})
+            content = rawDecoded;
+        else
+            content = native2unicode(byteArray, encoding);
+        end
+
+    else
+        byteArray = [];
+        content = fileread(fileFullName, 'Encoding', encoding);
+        hashEndMarker = regexp(content, '\|9999\|[^\r\n]*(?:\r?\n)?', 'match');
+        if ~isempty(hashEndMarker)
+            hashEndMarkerPosition = strfind(content, hashEndMarker{end}) + numel(hashEndMarker{end}) - 1;
+            content = content(1:hashEndMarkerPosition);
+        end
+    end
 end
 
 %-------------------------------------------------------------------------%

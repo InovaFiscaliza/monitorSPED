@@ -146,7 +146,11 @@ classdef ECD < model.ECDBase
                     [obj(idx).Content, ...
                      obj(idx).Encoding, ...
                      obj(idx).EncodingInfo, ...
-                     obj(idx).Hash] = util.fileread(fileFullName, generalSettings.File.encodingList);
+                     obj(idx).Hash, bigFileWarning] = util.fileread(fileFullName, generalSettings.File.encodingList);
+
+                    if ~isempty(bigFileWarning)
+                        obj(idx).GUI.warnings{end+1} = jsonencode(bigFileWarning);
+                    end
 
                     % Leitura do registro "I010", identificando o layout do
                     % arquivo. Como essa ficha não mudou ao longo do tempo, 
@@ -237,7 +241,7 @@ classdef ECD < model.ECDBase
                     end
 
                     if ~isempty(receitaFederalObj)
-                        checkFileStatus(obj(idx), receitaFederalObj);
+                        checkFileStatus(obj(idx), receitaFederalObj, generalSettings.File.encodingList);
                     end
 
                     obj(idx).GUI.hasTransactions = checkIfHasTransactions(obj(idx));
@@ -409,12 +413,12 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function checkFileFlag = checkFileStatus(obj, receitaFederalObj, checkType, encodingList)
+        function checkFileFlag = checkFileStatus(obj, receitaFederalObj, encodingList, checkType)
             arguments
                 obj
                 receitaFederalObj ws.ReceitaFederal
-                checkType char {mustBeMember(checkType, {'OnlyCache', 'Cache+RealTime', 'RealTime'})} = 'Cache+RealTime'
-                encodingList cell = {'ISO-8859-1', 'UTF-8', 'windows-1251', 'windows-1252'}
+                encodingList
+                checkType char {mustBeMember(checkType, {'OnlyCache', 'Cache+RealTime', 'RealTime'})} = 'Cache+RealTime'                
             end
 
             % O argumento de saída "checkFileFlag" possibilita que a GUI
@@ -433,6 +437,7 @@ classdef ECD < model.ECDBase
                     continue
                 end
 
+                encodingList = union(obj(ii).Encoding, setdiff(encodingList, obj(ii).Encoding, 'stable'));
                 for jj = 1:numel(encodingList) 
                     encoding = encodingList{jj};
                     index = find(strcmp({obj(ii).Sources.encoding}, encoding), 1);
@@ -440,20 +445,20 @@ classdef ECD < model.ECDBase
                     if ~isempty(index)
                         fileHash = obj(ii).Sources(index).hash;
                     else
-                        switch encoding
-                            case obj(ii).Encoding
-                                fileContent = obj(ii).Content;
-                            otherwise
-                                fileContent = fileread(obj(ii).FileFullName, 'Encoding', encoding);
-                        end
-
                         index = numel(obj(ii).Sources)+1;
                         obj(ii).Sources(index).file       = obj(ii).FileName;
                         obj(ii).Sources(index).period     = obj(ii).Period;
                         obj(ii).Sources(index).encoding   = encoding;
                         obj(ii).Sources(index).terminator = obj(ii).TERMINATOR;
-                        
-                        fileHash = util.calculateFileHash(fileContent, encoding, obj(ii).TERMINATOR);
+
+                        fileHash = obj(ii).Hash;
+                        if ~strcmp(encoding, obj(ii).Encoding)
+                            try
+                                fileContent = fileread(obj(ii).FileFullName, 'Encoding', encoding);
+                                fileHash = util.calculateFileHash(fileContent, encoding, obj(ii).TERMINATOR);
+                            catch
+                            end
+                        end
                         obj(ii).Sources(index).hash = fileHash;
                     end
 
@@ -549,7 +554,8 @@ classdef ECD < model.ECDBase
             if isfield(obj.Table, 'x9900') && ~isempty(obj.Table.x9900)
                 ordinaryIds = unique(obj.Table.x9900.("REG_BLC")(obj.Table.x9900.("QTD_REG_BLC") > 0));
             else
-                ordinaryIds = {'-1'};
+                ordinaryIds = extractAfter(fieldnames(obj.Table), 'x');
+                ordinaryIds(startsWith(ordinaryIds, '_')) = [];
             end
             
             tableNames = sort(fieldnames(obj.Table));
@@ -693,8 +699,9 @@ classdef ECD < model.ECDBase
 
                 otherwise
                     ordinaryId   = true;
-                    regexPattern = ['^\|' tableId '\|[^\r\n]*'];
-                    regexMatches = regexp(obj.Content, regexPattern, 'match', 'lineanchors')';
+                    regexPattern = ['^\|' tableId '\|.*'];
+                    regexMatches = regexp(obj.Content, regexPattern, 'match', 'lineanchors', 'dotexceptnewline')';
+                    regexMatches = strrep(regexMatches, sprintf('\r'), '');
             end
 
             if ordinaryId
@@ -730,7 +737,12 @@ classdef ECD < model.ECDBase
                 end
             end
 
-            mergedFileBlock = split(cellfun(@(x) x(2:end-1), fileBlock, 'UniformOutput', false), '|', 2);
+            fileBlock = extractBetween(fileBlock, 2, strlength(fileBlock) - 1);
+            try
+                mergedFileBlock = split(fileBlock, '|', 2);
+            catch ME
+                ME
+            end
 
             switch width(mergedFileBlock)
                 case numel(columnsSpec.required)

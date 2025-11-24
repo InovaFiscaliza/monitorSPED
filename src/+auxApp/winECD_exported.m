@@ -486,7 +486,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % "I200_I250" existe apenas se o registro "I200" existe.
             customIds = app.mainApp.General.ECD.customTables.expected;
             notappplicableIds = {};
-            if isfield(selectedECD.Table, 'x9900')
+            if isfield(selectedECD.Table, 'x9900') && ~isempty(selectedECD.Table.x9900)
                 for ii = 1:numel(customIds)
                     customId = customIds{ii};
                     if startsWith(customId, '_')

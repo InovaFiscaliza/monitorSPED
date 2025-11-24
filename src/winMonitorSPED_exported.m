@@ -433,13 +433,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         function jsBackDoor_AppCustomizations(app, tabIndex)
             persistent customizationStatus
             if isempty(customizationStatus)
-                customizationStatus = [false, false, false, false];
+                customizationStatus = [false, false, false];
             end
 
             switch tabIndex
                 case 0
                     sendEventToHTMLSource(app.jsBackDoor, 'startup', app.executionMode);
-                    customizationStatus = [false, false, false, false];
+                    customizationStatus = [false, false, false];
 
                 otherwise
                     if customizationStatus(tabIndex)
@@ -1281,7 +1281,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 app.progressDialog.Visible = 'visible';
 
-                checkFileFlag = checkFileStatus(app.ecdObj(indexes), app.receitaFederalObj, app.General.File.checkStatus);
+                checkFileFlag = checkFileStatus(app.ecdObj(indexes), app.receitaFederalObj, app.General.File.encodingList, app.General.File.checkStatus);
                 if checkFileFlag
                     file_ProjectRestart(app, indexes, 'FileStatusChecked')
                 end

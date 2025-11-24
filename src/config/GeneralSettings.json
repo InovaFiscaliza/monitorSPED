@@ -1,5 +1,5 @@
 {
-    "version": 0.50,
+    "version": 0.51,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -27,8 +27,8 @@
         "sortMethod": "CNPJ",
         "checkStatus": "Cache+RealTime",
         "encodingList": [
-            "ISO-8859-1",
-            "UTF-8"
+            "UTF-8",
+            "ISO-8859-1"            
         ],
         "terminator": {
             "options": [
