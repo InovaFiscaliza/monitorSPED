@@ -42,7 +42,7 @@ classdef projectLib < handle
 
     methods
         %-----------------------------------------------------------------%
-        function obj = projectLib(mainApp, rootFolder)            
+        function obj = projectLib(mainApp, rootFolder)
             obj.mainApp    = mainApp;
             obj.rootFolder = rootFolder;
 

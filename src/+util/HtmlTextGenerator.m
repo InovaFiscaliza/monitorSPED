@@ -173,6 +173,7 @@ classdef (Abstract) HtmlTextGenerator
                     dataStruct(end+1) = struct('group', 'Origin', 'value', textFormatGUI.cellstr2Bullets(cellfun(@(x) sprintf('"%s"', x), {ecdObj.Sources.file}, 'UniformOutput', false)));
                 end
 
+                dataStruct(end+1) = struct('group', 'Size',     'value', textFormatGUI.bytes2human(ecdObj.Size));
                 dataStruct(end+1) = struct('group', 'Hash',     'value', ecdObj.Hash);
                 dataStruct(end+1) = struct('group', 'Encoding', 'value', ecdObj.Encoding);
                 dataStruct(end+1) = struct('group', 'Encoding Test', 'value', ecdObj.EncodingInfo);                

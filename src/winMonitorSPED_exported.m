@@ -1378,7 +1378,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             indexes = file_findSelectedNodeData(app);
 
             if ~isempty(indexes)
+                delete(app.ecdObj(indexes))
                 app.ecdObj(indexes) = [];
+                
                 file_ProjectRestart(app, [], 'FileListChanged:Del')
             end
 

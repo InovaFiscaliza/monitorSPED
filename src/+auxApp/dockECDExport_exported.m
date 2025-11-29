@@ -12,12 +12,13 @@ classdef dockECDExport_exported < matlab.apps.AppBase
         xI030               matlab.ui.container.TreeNode
         x9900               matlab.ui.container.TreeNode
         AccountBook         matlab.ui.container.TreeNode
-        xI050               matlab.ui.container.TreeNode
+        xI050_I051_I052     matlab.ui.container.TreeNode
         AccountDescription  matlab.ui.container.TreeNode
         AccountSummary      matlab.ui.container.TreeNode
         xI200_I250          matlab.ui.container.TreeNode
         SummaryGeneral      matlab.ui.container.TreeNode
         SummaryResults      matlab.ui.container.TreeNode
+        PlanilhaApuracao    matlab.ui.container.TreeNode
         RTFFiles            matlab.ui.container.TreeNode
         eFiscalizaLabel     matlab.ui.control.Label
         btnClose            matlab.ui.control.Image
@@ -184,10 +185,10 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             app.AccountBook = uitreenode(app.Tree);
             app.AccountBook.Text = 'Plano de contas';
 
-            % Create xI050
-            app.xI050 = uitreenode(app.AccountBook);
-            app.xI050.Tag = 'xI050';
-            app.xI050.Text = 'I050';
+            % Create xI050_I051_I052
+            app.xI050_I051_I052 = uitreenode(app.AccountBook);
+            app.xI050_I051_I052.Tag = 'xI050_I051_I052';
+            app.xI050_I051_I052.Text = 'I050_I051_I052';
 
             % Create AccountDescription
             app.AccountDescription = uitreenode(app.AccountBook);
@@ -196,22 +197,27 @@ classdef dockECDExport_exported < matlab.apps.AppBase
 
             % Create AccountSummary
             app.AccountSummary = uitreenode(app.Tree);
-            app.AccountSummary.Text = 'Balancetes';
+            app.AccountSummary.Text = 'Balancetes e tabela de apuração';
 
             % Create xI200_I250
             app.xI200_I250 = uitreenode(app.AccountSummary);
             app.xI200_I250.Tag = 'xI200_I250';
-            app.xI200_I250.Text = 'I200-I250';
+            app.xI200_I250.Text = 'I200_I250';
 
             % Create SummaryGeneral
             app.SummaryGeneral = uitreenode(app.AccountSummary);
             app.SummaryGeneral.Tag = 'x_BALANCETE_GERAL';
-            app.SummaryGeneral.Text = 'Geral';
+            app.SummaryGeneral.Text = 'Balancete Geral';
 
             % Create SummaryResults
             app.SummaryResults = uitreenode(app.AccountSummary);
             app.SummaryResults.Tag = 'x_BALANCETE_RESULTADO';
-            app.SummaryResults.Text = 'Resultados';
+            app.SummaryResults.Text = 'Balancete Resultado';
+
+            % Create PlanilhaApuracao
+            app.PlanilhaApuracao = uitreenode(app.AccountSummary);
+            app.PlanilhaApuracao.Tag = 'x_TABELA_APURACAO';
+            app.PlanilhaApuracao.Text = 'Tabela Apuração';
 
             % Create RTFFiles
             app.RTFFiles = uitreenode(app.Tree);
@@ -219,7 +225,7 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             app.RTFFiles.Text = 'Arquivos anexos .rtf (J800 e J801)';
 
             % Assign Checked Nodes
-            app.Tree.CheckedNodes = [app.x0000, app.xI030, app.xI050, app.AccountDescription, app.SummaryResults, app.AccountBook];
+            app.Tree.CheckedNodes = [app.x0000, app.xI030, app.x9900, app.AccountDescription, app.GeneralAspects];
             % Assign Checked Nodes
             app.Tree.CheckedNodesChangedFcn = createCallbackFcn(app, @TreeCheckedNodesChanged, true);
 

@@ -39,7 +39,8 @@ classdef ECD < model.ECDBase
         FileName
         FileFullName
 
-        Hash        
+        Size
+        Hash
         Encoding
         EncodingInfo
 
@@ -144,6 +145,7 @@ classdef ECD < model.ECDBase
                     obj(idx).FileFullName = fileFullName;
                     
                     [obj(idx).Content, ...
+                     obj(idx).Size, ...
                      obj(idx).Encoding, ...
                      obj(idx).EncodingInfo, ...
                      obj(idx).Hash, bigFileWarning] = util.fileread(fileFullName, generalSettings.File.encodingList);
@@ -197,9 +199,8 @@ classdef ECD < model.ECDBase
                     end
 
                     % Leitura de outros registros essenciais de identificação
-                    % ("0000" e "I030"), plano de contas ("I050") e fatos 
-                    % contábeis ("I200").
-                    parseTableAndAddToCache(obj(idx), [{'0000', 'I030', 'I050', 'I200'}, generalSettings.ECD.customTables.autoload'], generalSettings)
+                    % ("0000" e "I030") e plano de contas ("I050").
+                    parseTableAndAddToCache(obj(idx), [{'0000', 'I030', 'I050'}, generalSettings.ECD.customTables.autoload'], generalSettings)
 
                     if isfield(obj(idx).Table, 'x0000') && ~isempty(obj(idx).Table.x0000)
                         obj(idx).CompanyName    = obj(idx).Table.x0000.NOME{1};
@@ -283,21 +284,31 @@ classdef ECD < model.ECDBase
                     parseTable(obj(ii), tableId, generalSettings);
 
                     % Valida se foi lido o número de linhas esperado...
-                    if isfield(obj(ii).Table, 'x9900')
-                        tableIdIndex = find(strcmp(obj(ii).Table.x9900.("REG_BLC"), tableId));
-
-                        if ~isempty(tableIdIndex)
-                            expectedRows = sum(obj(ii).Table.x9900.("QTD_REG_BLC")(tableIdIndex));
-                            readRows     = height(obj(ii).Table.(['x' tableId]));                            
-                            if expectedRows ~= readRows
-                                obj(ii).GUI.warnings{end+1} = jsonencode(struct('id', tableId, 'expectedRows', expectedRows, 'readRows', readRows));
-                            end
+                    expectedRows = expectedRowsByTableId(obj, tableId);
+                    if ~isempty(expectedRows) && expectedRows > 0
+                        readRows = height(obj(ii).Table.(['x' tableId]));                            
+                        if expectedRows ~= readRows
+                            obj(ii).GUI.warnings{end+1} = jsonencode(struct('id', tableId, 'expectedRows', expectedRows, 'readRows', readRows));
                         end
                     end
                 end
 
                 if exist('isRead', 'var')
                     obj(ii).GUI.isRead = isRead;
+                end
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function expectedRows = expectedRowsByTableId(obj, tableId)
+            checkIfScalar(obj)
+            
+            expectedRows = [];
+            if isfield(obj.Table, 'x9900') && ~isempty(obj.Table.x9900)
+                tableIdIndex = find(strcmp(obj.Table.x9900.("REG_BLC"), tableId));
+
+                if ~isempty(tableIdIndex)
+                    expectedRows = sum(obj.Table.x9900.("QTD_REG_BLC")(tableIdIndex));
                 end
             end
         end
@@ -316,31 +327,28 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function mergedTable = customMergedTablesRowOriented(obj, mainId, secundaryIds)
+        function mergedTable = customMergedTablesRowOriented(obj, mainId, secundaryIds, mainTableColumns, secundaryTableColumns)
             arguments
                 obj
                 mainId          (1,:) char {mustBeMember(mainId, {'I050', 'I200', 'C050'})}
-                secundaryIds    (1,:) cell % {'I051', 'I052'} | {'I250'} | {'C051', 'C052'}
+                secundaryIds    (1,:) cell                                  % {'I051', 'I052'} | {'I250'} | {'C051', 'C052'}
+                mainTableColumns      cell = {}
+                secundaryTableColumns cell = {}
             end
 
             checkIfScalar(obj)
 
             % Verifica se os registros ordinários foram lidos.
             tableIdList = [mainId, secundaryIds];
-            isTableRead(obj, tableIdList);
-
+            
             % Verifica se a tabela mesclada já foi criada.
-            mergedTableId = ['m' strjoin(tableIdList, '_')];
+            mergedTableId = ['x' strjoin(tableIdList, '_')];
             if isfield(obj.Table, mergedTableId)
                 mergedTable = obj.Table.(mergedTableId);
                 return
             end
 
-            % Converte conteúdo de arquivo em lista de células, orientada à
-            % quebra de linha. Identifica o número da linha de cada um dos
-            % registros sob análise - "mainId" e "secundaryIds".
-            splitContent = splitlines(obj.Content);
-            fileIndexes  = cellfun(@(x) find(startsWith(splitContent, x)), strcat('|', tableIdList, '|'), 'UniformOutput', false);
+            isTableRead(obj, tableIdList);
 
             % Cria coluna que servirá como "chave", relacionando as tabelas
             % que são apresentadas em sequência no arquivo. Nome da coluna
@@ -351,19 +359,24 @@ classdef ECD < model.ECDBase
                 return
             end
 
+            % Converte conteúdo de arquivo em lista de células, orientada à
+            % quebra de linha. Identifica o número da linha de cada um dos
+            % registros sob análise - "mainId" e "secundaryIds".
+            splitContent = splitlines(obj.Content);
+            fileIndexes  = cellfun(@(x) find(startsWith(splitContent, x)), strcat('|', tableIdList, '|'), 'UniformOutput', false);
+
             mainTableHeight = height(mainTable);
             mainTable.("_TEMP_KEY") = (1:mainTableHeight)';
             
             % Em relação às tabelas auxiliares:            
             edges = [fileIndexes{1}; inf];
             tempIdColumn = {};            
-            for jj = 1:numel(secundaryIds)
-                tempIdColumn{jj} = discretize(fileIndexes{jj+1}, edges);
+            for ii = 1:numel(secundaryIds)
+                tempIdColumn{ii} = discretize(fileIndexes{ii+1}, edges);
             end
             secundaryTables = cellfun(@(x,y) addvars(x, y, 'NewVariableName', '_TEMP_KEY'), cellfun(@(x) obj.Table.(['x' x]), secundaryIds, "UniformOutput", false), tempIdColumn, 'UniformOutput', false);
 
-            secundarySpec = getColumnSpecifications(obj, secundaryIds, 'index');
-            if isscalar(secundarySpec)
+            if isscalar(secundaryTables)
                 secundaryTable = secundaryTables{1};                
             else
                 secundaryTable = outerjoin( ...
@@ -375,16 +388,29 @@ classdef ECD < model.ECDBase
                 );
             end
 
+            % Abrindo caminho p/ diminuir informação resultado da mesclagem
+            % de tabelas, deixando apenas o essencial.
+            if isempty(mainTableColumns)
+                mainTableColumns = mainTable.Properties.VariableNames;
+            end
+
+            if isempty(secundaryTableColumns)
+                secundaryTableColumns = setdiff(secundaryTable.Properties.VariableNames, mainTable.Properties.VariableNames);
+            end
+
             mergedTable = outerjoin( ...
                 mainTable, ...
                 secundaryTable, ...
                 'Keys', '_TEMP_KEY', ...
                 'MergeKeys', true, ...
                 'Type', 'left', ...
-                'RightVariables', setdiff(secundaryTable.Properties.VariableNames, mainTable.Properties.VariableNames) ...
+                'LeftVariables', mainTableColumns, ...
+                'RightVariables', secundaryTableColumns ...
             );
             
-            mergedTable = removevars(mergedTable, '_TEMP_KEY');
+            if ismember('_TEMP_KEY', mergedTable.Properties.VariableNames)
+                mergedTable = removevars(mergedTable, '_TEMP_KEY');
+            end
             mergedTable.("REG")(:) = {strjoin(tableIdList, '_')};
         end
 
@@ -498,8 +524,10 @@ classdef ECD < model.ECDBase
         function hasTransactions = checkIfHasTransactions(obj)
             checkIfScalar(obj)
 
+            expectedI200Rows = expectedRowsByTableId(obj, 'I200');
             hasTransactions = false;
-            if isfield(obj.Table, 'xI050') && any(strcmp(obj.Table.xI050.('COD_NAT'), '04')) && isfield(obj.Table, 'xI200') && ~isempty(obj.Table.xI200)
+
+            if ~isempty(expectedI200Rows) && expectedI200Rows > 0 && isfield(obj.Table, 'xI050') && any(strcmp(obj.Table.xI050.('COD_NAT'), '04'))
                 hasTransactions = true;
             end
         end
@@ -570,11 +598,10 @@ classdef ECD < model.ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function columnsSpec = getColumnSpecifications(obj, tableIdList, preffixType)
+        function columnsSpec = getColumnSpecifications(obj, tableIdList)
             arguments
                 obj
                 tableIdList (1,:) cell {mustBeText}
-                preffixType = 'none'
             end
 
             checkIfScalar(obj)
@@ -588,18 +615,10 @@ classdef ECD < model.ECDBase
                 optional   = obj.(tableIdObj){layoutIdx, 3};
                 complete   = [required, optional];
 
-                switch preffixType
-                    case 'none'
-                        preffix = '';
-                    otherwise
-                        preffix = repmat('_', 1, ii);
-                end
-
                 columnsSpec(ii) = struct('id',       tableId,    ...
                                          'required', {required}, ...
                                          'optional', {optional}, ...
-                                         'complete', {complete}, ... 
-                                         'preffix',  preffix);
+                                         'complete', {complete});
             end
         end
 
@@ -687,10 +706,20 @@ classdef ECD < model.ECDBase
                     switch tableId
                         case 'C050_C051_C052'
                             obj.Table.xC050_C051_C052 = customMergedTablesRowOriented(obj, 'C050', {'C051', 'C052'});
+                        
                         case 'I050_I051_I052'
                             obj.Table.xI050_I051_I052 = customMergedTablesRowOriented(obj, 'I050', {'I051', 'I052'});
+
                         case 'I200_I250'
-                            obj.Table.xI200_I250      = customMergedTablesRowOriented(obj, 'I200', {'I250'});
+                            mainTableColumns      = {}; 
+                            secundaryTableColumns = {};
+                            
+                            expectedI250Rows = expectedRowsByTableId(obj, 'I250');
+                            if ~isempty(expectedI250Rows) && expectedI250Rows > 100000
+                                mainTableColumns      = {'REG', 'DT_LCTO', 'IND_LCTO'};
+                                secundaryTableColumns = {'COD_CTA', 'VL_DC', 'IND_DC'};
+                            end
+                            obj.Table.xI200_I250      = customMergedTablesRowOriented(obj, 'I200', {'I250'}, mainTableColumns, secundaryTableColumns);
                     end
 
                 case {'J800', 'J801'}
@@ -723,7 +752,7 @@ classdef ECD < model.ECDBase
             arguments
                 obj
                 fileBlock
-                columnsSpec % struct('id', {}, 'preffix', {}, 'requiredCol', {}, 'optionalCol', {}, 'completeCol', {})
+                columnsSpec % struct('id', {}, 'requiredCol', {}, 'optionalCol', {}, 'completeCol', {})
                 regexpFlag = false
             end           
 
@@ -737,42 +766,88 @@ classdef ECD < model.ECDBase
                 end
             end
 
-            fileBlock = extractBetween(fileBlock, 2, strlength(fileBlock) - 1);
-            try
-                mergedFileBlock = split(fileBlock, '|', 2);
-            catch ME
-                ME
+            % Parseamento... em tendo mais de 100 mil linhas, a leitura é
+            % realizada em passos de até 100 mil linhas, mantendo apenas a
+            % informação essencial das tabelas "I200" e "I250", caso sejam 
+            % lidas.
+            expectedRows = expectedRowsByTableId(obj, columnsSpec.id);
+            if ~isempty(expectedRows) && expectedRows > 100000
+                switch columnsSpec.id
+                    case 'I200'
+                        variableNames = {'REG', 'DT_LCTO', 'IND_LCTO'};
+                    case 'I250'
+                        variableNames = {'REG', 'COD_CTA', 'VL_DC', 'IND_DC'};
+                    otherwise
+                        variableNames = columnsSpec.complete;
+                end
+                numVariableNames = numel(variableNames);
+
+                tableTemplate      = cell(expectedRows, numVariableNames);
+                tableTemplate(:,1) = {columnsSpec.id};
+                if numVariableNames > 1
+                    tableTemplate(:, 2:end) = {''};
+                end
+                tableOut = cell2table(tableTemplate, 'VariableNames', variableNames);
+    
+                fileBlockLengths = strlength(fileBlock) - 1;
+                numLoops = 0;
+
+                while ~isempty(fileBlock)
+                    numLoops = numLoops + 1;
+                    numRows  = min(height(fileBlock), 100000); % 100 mil linhas
+                    mergedFileBlock = split(extractBetween(fileBlock(1:numRows), 2, fileBlockLengths(1:numRows)), '|', 2);
+                    tableTempOut = cell2table(obj, mergedFileBlock, columnsSpec);
+
+                    fileBlock(1:numRows) = [];
+                    fileBlockLengths(1:numRows) = [];
+
+                    tableStartIndex = (numLoops-1)*100000 + 1;
+                    tableEndIndex   = tableStartIndex + numRows - 1;
+                    tableOut(tableStartIndex:tableEndIndex, :) = tableTempOut(:, variableNames);
+                end
+
+            else
+                mergedFileBlock = split(extractBetween(fileBlock, 2, strlength(fileBlock) - 1), '|', 2);
+                tableOut = cell2table(obj, mergedFileBlock, columnsSpec);
             end
 
-            switch width(mergedFileBlock)
-                case numel(columnsSpec.required)
-                    tableOut = cell2table(mergedFileBlock, 'VariableNames', strcat(columnsSpec.preffix, columnsSpec.required));
+            % Conversão de unidades...
+            for kk = 1:numel(columnsSpec.complete)
+                columnName = columnsSpec.complete{kk};
 
-                    for ii = 1:numel(columnsSpec.optional)
-                        columnName = columnsSpec.optional{ii};
-                        tableOut.([columnsSpec.preffix columnName]) = repmat(model.ECDBase.defaultValue(obj.(columnName).DataType), height(tableOut), 1);
-                    end
-    
-                case numel(columnsSpec.complete)
-                    tableOut = cell2table(mergedFileBlock, 'VariableNames', strcat(columnsSpec.preffixs, columnsSpec.complete));
-    
-                otherwise
-                    error('UnexpectedTableWidth')
-            end
-
-            for ii = 1:numel(columnsSpec.complete)
-                columnName = columnsSpec.complete{ii};
+                if ~ismember(columnName, tableOut.Properties.VariableNames)
+                    continue
+                end
 
                 switch obj.(columnName).DataType
                     case 'double'
-                        if ~isa(tableOut.([columnsSpec.preffix columnName]), 'double')
-                            tableOut.([columnsSpec.preffix columnName]) = str2double(replace(tableOut.([columnsSpec.preffix columnName]), ',', '.'));
+                        if ~isa(tableOut.(columnName), 'double')
+                            tableOut.(columnName) = sscanf(strjoin(strrep(tableOut.(columnName), ',', '.')), '%f');
                         end
                     case 'datetime'
-                        if ~isa(tableOut.([columnsSpec.preffix columnName]), 'datetime')
-                            tableOut.([columnsSpec.preffix columnName]) = datetime(tableOut.([columnsSpec.preffix columnName]), 'InputFormat', 'ddMMyyyy');
+                        if ~isa(tableOut.(columnName), 'datetime')
+                            tableOut.(columnName) = datetime(tableOut.(columnName), 'InputFormat', 'ddMMyyyy');
                         end
                 end
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function tableOut = cell2table(obj, mergedFileBlock, columnsSpec)
+            switch width(mergedFileBlock)
+                case numel(columnsSpec.required)
+                    tableOut = cell2table(mergedFileBlock, 'VariableNames', columnsSpec.required);
+    
+                    for ii = 1:numel(columnsSpec.optional)
+                        columnName = columnsSpec.optional{ii};
+                        tableOut.(columnName) = repmat(model.ECDBase.defaultValue(obj.(columnName).DataType), height(tableOut), 1);
+                    end
+    
+                case numel(columnsSpec.complete)
+                    tableOut = cell2table(mergedFileBlock, 'VariableNames', columnsSpec.complete);
+    
+                otherwise
+                    error('UnexpectedTableWidth')
             end
         end
 

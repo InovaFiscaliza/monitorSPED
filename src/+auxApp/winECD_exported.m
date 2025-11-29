@@ -507,12 +507,12 @@ classdef winECD_exported < matlab.apps.AppBase
             sheetsSorted = sort([ordinaryIds; setdiff(customIds, notappplicableIds)]);
 
             selection1 = app.SheetView_First.Value;
-            if isempty(selection1) || ~ismember(selection1, sheetsSorted) || ~isfield(selectedECD, ['x' selection1])
+            if isempty(selection1) || ~ismember(selection1, sheetsSorted) || ~isfield(selectedECD.Table, ['x' selection1])
                 selection1 = sheetsSorted{1};
             end
 
             selection2 = app.SheetView_First.Value;
-            if isempty(selection2) || ~ismember(selection2, sheetsSorted) || ~isfield(selectedECD, ['x' selection2])
+            if isempty(selection2) || ~ismember(selection2, sheetsSorted) || ~isfield(selectedECD.Table, ['x' selection2])
                 selection2 = sheetsSorted{1};
             end
             
@@ -712,7 +712,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
                 balanceteInfo = sprintf('%s\n%s', periodResult, numAccounts);            
             else
-                balanceteInfo = '⚠️ Balancete <font style="color:red;">pendente</font> de geração';
+                balanceteInfo = '⚠️ Balancete de resultado <font style="color:red;">pendente</font> de geração';
             end
             
             numAttachedFiles = sum(selectedECD.Table.x9900.('QTD_REG_BLC')(contains(selectedECD.Table.x9900.('REG_BLC'), {'J800', 'J801'})));
@@ -781,11 +781,20 @@ classdef winECD_exported < matlab.apps.AppBase
                 tableIdFields    = horzcat(excelTableIdList{:});
                 
                 if ~isempty(tableIdFields)
-                    writetable(selectedECD.Table.(tableIdFields{1}), excelTempName, "Sheet", tableIdFields{1}(2:end), "WriteMode", "replacefile")
-
-                    for ii = 2:numel(tableIdFields)
+                    for ii = 1:numel(tableIdFields)
                         tableId = tableIdFields{ii};
-                        writetable(selectedECD.Table.(tableId), excelTempName, "Sheet", tableId(2:end), "WriteMode", "append")
+
+                        tableData = selectedECD.Table.(tableId);
+                        if ~isempty(tableData.Properties.RowNames)
+                            tableData = [table(tableData.Properties.RowNames, 'VariableName', {'TIPO'}), tableData];
+                        end
+
+                        if ii == 1
+                            writeMode = 'replacefile';
+                        else
+                            writeMode = 'append';
+                        end
+                        writetable(tableData, excelTempName, "Sheet", tableId(2:end), "WriteMode", writeMode)
                     end
                 end
             catch ME

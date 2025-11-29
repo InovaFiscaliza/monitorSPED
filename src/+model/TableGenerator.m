@@ -4,51 +4,60 @@ classdef (Abstract) TableGenerator
         %-----------------------------------------------------------------%
         function accountMonthlySummary = SummaryByAccount(ecdObj)
             checkIfScalar(ecdObj)
+            parseTableAndAddToCache(ecdObj, {'I200_I250'})
+
+            if ~isfield(ecdObj.Table, 'xI200') || isempty(ecdObj.Table.xI200)
+                error('Empresa provavelmente está inativa, sem movimentação fiscal.')
+            end
+
+            % Aplica filtros na tabela de fatos contábeis (I200_I250), de forma 
+            % que sejam considerados apenas os lançamentos "NORMAIS". Além
+            % disso, cria-se coluna "VL_DC_COM_SINAL".
+
+            mergedTable_I200_I250 = ecdObj.Table.xI200_I250;
+            mergedTable_I200_I250.("VL_DC_COM_SINAL") = mergedTable_I200_I250.("VL_DC");
+            negativeValueIndexes  = strcmp(mergedTable_I200_I250.("IND_DC"), 'D');
+            mergedTable_I200_I250.("VL_DC_COM_SINAL")(negativeValueIndexes) = -mergedTable_I200_I250.("VL_DC_COM_SINAL")(negativeValueIndexes);
+
+            unnormalEntryIndexes  = ~strcmp(mergedTable_I200_I250.("IND_LCTO"), 'N');
+            mergedTable_I200_I250(unnormalEntryIndexes, :) = [];
+
+            % Deixando apenas o essencial porque essa tabela poderá ser
+            % passada para cada um dos núcleos de processamento, caso 
+            % habilitado o processamento em paralelo.
+            mergedTable_I200_I250 = mergedTable_I200_I250(:, {'COD_CTA', 'DT_LCTO', 'VL_DC_COM_SINAL'});
+            
+            accountUniqueIdList = unique(ecdObj.Table.xI250.("COD_CTA"));
+            numAccounts = numel(accountUniqueIdList);
 
             accountMonthlySummary = table( ...
-                'Size', [0, 14], ...
+                'Size', [numAccounts, 14], ...
                 'VariableTypes', {'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'}, ...
                 'VariableNames', {'COD_CTA', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'} ...
             );
 
-            parseTableAndAddToCache(ecdObj, {'I200_I250'})
-
-            if isfield(ecdObj.Table, 'xI200') && ~isempty(ecdObj.Table.xI200)
-                % Aplica filtros na tabela de fatos contábeis (I200_I250), de forma 
-                % que sejam considerados apenas os lançamentos "NORMAIS". Além
-                % disso, cria-se coluna "VL_DC_COM_SINAL".
-
-                mergedTable_I200_I250 = ecdObj.Table.xI200_I250;
-                mergedTable_I200_I250.("VL_DC_COM_SINAL") = mergedTable_I200_I250.("VL_DC");
-                negativeValueIndexes  = strcmp(mergedTable_I200_I250.("IND_DC"), 'D');
-                mergedTable_I200_I250.("VL_DC_COM_SINAL")(negativeValueIndexes) = -mergedTable_I200_I250.("VL_DC_COM_SINAL")(negativeValueIndexes);
-
-                unnormalEntryIndexes  = ~strcmp(mergedTable_I200_I250.("IND_LCTO"), 'N');
-                mergedTable_I200_I250(unnormalEntryIndexes, :) = [];
+           %parpoolCheck()
+           %parfor ii = 1:numAccounts
+            for ii = 1:numAccounts
+                accountId      = accountUniqueIdList{ii};
+                accountIndexes = strcmp(mergedTable_I200_I250.("COD_CTA"), accountId);
+                accountTable   = mergedTable_I200_I250(accountIndexes, :);
                 
-                accountUniqueIdList = unique(ecdObj.Table.xI250.("COD_CTA"));
-    
-                for ii = 1: 1:numel(accountUniqueIdList)
-                    accountId      = accountUniqueIdList{ii};
-                    accountIndexes = strcmp(mergedTable_I200_I250.("COD_CTA"), accountId);
-                    accountTable   = mergedTable_I200_I250(accountIndexes, :);
-                    
-                    % Sumariza-se mensalmente os fatos contábeis para cada conta.
-                    accountBalanceByMonth = zeros(1, 12);
-                    for jj = 1:12
-                        monthIndexes = month(accountTable.("DT_LCTO")) == jj;
-                        accountBalanceByMonth(jj) = sum(accountTable.("VL_DC_COM_SINAL")(monthIndexes));
-                    end
-    
-                    accountMonthlySummary(end+1, :) = [{accountId}, num2cell([accountBalanceByMonth, sum(accountBalanceByMonth)])];
+                % Sumariza-se mensalmente os fatos contábeis para cada conta.
+                accountBalanceByMonth = zeros(1, 12);
+                for jj = 1:12
+                    monthIndexes = month(accountTable.("DT_LCTO")) == jj;
+                    accountBalanceByMonth(jj) = sum(accountTable.("VL_DC_COM_SINAL")(monthIndexes));
                 end
-    
-                % Valida-se se o valor total de transações entre as contas por 
-                % mês é igual a zero.
-                floatDiffTolerance = 1e-5;
-                if any(cellfun(@(x) sum(accountMonthlySummary.(x)) > floatDiffTolerance, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}))
-                    ecdObj.GUI.warnings{end+1} = jsonencode(struct('id', 'mBALANCETE_GERAL', 'message', 'Ao menos um dos meses apresentou um balanço diferente de zero, o que evidencia erro no arquivo contábil ou na análise dos seus dados.'));
-                end
+
+                accountMonthlySummary(ii, :) = [{accountId}, num2cell([accountBalanceByMonth, sum(accountBalanceByMonth)])];
+            end
+
+            % Valida-se se o valor total de transações entre as contas por 
+            % mês é igual a zero.
+            floatDiffTolerance = 1e-5;
+            if any(cellfun(@(x) sum(accountMonthlySummary.(x)) > floatDiffTolerance, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}))
+                ecdObj.GUI.warnings{end+1} = jsonencode(struct('id', 'mBALANCETE_GERAL', 'message', 'Ao menos um dos meses apresentou um balanço diferente de zero, o que evidencia erro no arquivo contábil ou na análise dos seus dados.'));
             end
             
             accountMonthlySummary = model.TableGenerator.AddAccountGeneralInfo(ecdObj, accountMonthlySummary);

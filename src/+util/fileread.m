@@ -1,4 +1,4 @@
-function [content, encoding, encodingJson, hashHex, bigFileWarning] = fileread(fileFullName, encodingList)
+function [content, filesize, encoding, encodingJson, hashHex, bigFileWarning] = fileread(fileFullName, encodingList)
     arguments
         fileFullName (1,:) char
         encodingList (1,:) cell = {'UTF-8', 'ISO-8859-1'}
@@ -27,13 +27,14 @@ function [content, encoding, encodingJson, hashHex, bigFileWarning] = fileread(f
     );
 
     % A função native2unicode é limitada em 2^30-1 elementos.
+    filesize = numel(byteArray);
     bigFileWarning = '';
-    if numel(byteArray) > 2^30-1
+    if filesize > 2^30-1
         bigFileWarning = sprintf('[native2unicode] Error using native2unicode. Input must contain fewer than 2^30 elements. %.0f elements ⇒ %.0f', numel(byteArray), 2^30-1);
     end
 
     for ii = 1:numel(encodingList)
-        rawDecoded = native2unicode(byteArray(1:min(numel(byteArray), 2^30-1)), encodingList{ii});
+        rawDecoded = native2unicode(byteArray(1:min(filesize, 2^30-1)), encodingList{ii});
         numSpecialChars = cellfun(@(x) numel(strfind(rawDecoded, x)), textAnalysis.specialMain);
         encodingInfo(end+1, :) = {encodingList{ii}, sum(numSpecialChars > 0), sum(numSpecialChars)};
     end
