@@ -177,7 +177,7 @@ classdef (Abstract) HtmlTextGenerator
                 dataStruct(end+1) = struct('group', 'Hash',     'value', ecdObj.Hash);
                 dataStruct(end+1) = struct('group', 'Encoding', 'value', ecdObj.Encoding);
                 dataStruct(end+1) = struct('group', 'Encoding Test', 'value', ecdObj.EncodingInfo);                
-                dataStruct(end+1) = struct('group', 'Content',  'value', [strjoin(strtrim(splitlines(ecdObj.Content(1:min(500, numel(ecdObj.Content))))), '\n') '<br><font style="color: gray;">... [texto truncado]</font>']);
+                dataStruct(end+1) = struct('group', 'Content',  'value', [strtrim(strjoin((splitlines(ecdObj.Content(1:min(500, numel(ecdObj.Content))))), '\n')) '<br><font style="color: gray;">... [texto truncado]</font>']);
                 
                 [ordinaryIds, ~, readOrdinaryIds] = getTableIds(ecdObj);
                 if isequal(ordinaryIds, readOrdinaryIds)

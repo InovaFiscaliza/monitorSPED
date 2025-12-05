@@ -90,7 +90,7 @@
                             6,
                             7
                         ],
-                        "Caption": "Tabela ordinária criada em função...",
+                        "Caption": "Sumário da informação agrupada por CNPJ.",
                         "Settings": [
                             {
                                 "Editable": "false",
@@ -200,7 +200,7 @@
                             6,
                             7
                         ],
-                        "Caption": "Tabela ordinária criada em função...",
+                        "Caption": "Arquivo(s) sob análise.",
                         "Settings": [
                             {
                                 "Editable": "false",
@@ -270,7 +270,7 @@
                             4,
                             5
                         ],
-                        "Caption": "Tabela ordinária criada em função...",
+                        "Caption": "Informações complementares contidas no(s) arquivo(s) sob análise.",
                         "Settings": [
                             {
                                 "Editable": "false",

@@ -11,9 +11,9 @@ function preCompile(showDiffApp)
     %   do GitHub Desktop (ao invés de executar a comparação linha a linha 
     %   no próprio Matlab).
     %
-    % - "winConfig" etc
+    % - "auxApp.winConfig", "auxApp.winECD" etc
     %   A versão .M  traz manipulações que possibilitam que esses módulos do 
-    %   rfPreview possam ser renderizados na figura de "winRFPreview".
+    %   app possam ser renderizados na sua figura principal.
 
     initFolder = fileparts(mfilename('fullpath'));
 

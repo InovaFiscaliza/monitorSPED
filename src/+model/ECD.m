@@ -463,7 +463,7 @@ classdef ECD < model.ECDBase
                     continue
                 end
 
-                encodingList = union(obj(ii).Encoding, setdiff(encodingList, obj(ii).Encoding, 'stable'));
+                encodingList = union(obj(ii).Encoding, setdiff(encodingList, obj(ii).Encoding, 'stable'), 'stable');
                 for jj = 1:numel(encodingList) 
                     encoding = encodingList{jj};
                     index = find(strcmp({obj(ii).Sources.encoding}, encoding), 1);
@@ -654,21 +654,24 @@ classdef ECD < model.ECDBase
 
                     update(obj, 'Table.x_CONTAS_ANOTACAO', 'startup', generalSettings)
 
-                case '_CONTAS_DESCRICAO'
-                    obj.Table.x_CONTAS_DESCRICAO = table( ...
-                        'Size', [0, 2], ...
-                        'VariableNames', {'COD_CTA', 'DESCRIÇÃO'}, ...
-                        'VariableTypes', {'cell', 'cell'} ...
-                    );
-        
+                case '_CONTAS_DESCRICAO'        
                     % Esse reordenamento é essencial quando se trata de registros
                     % mesclados, tendo em vista que os planos de contas estão
                     % replicados. Ao reordenar, registra-se o última estado de
                     % cada conta.
-                    xI050 = flip(obj.Table.xI050);
+                    xI050 = flip(obj.Table.xI050(:, {'NIVEL', 'COD_CTA', 'COD_CTA_SUP', 'CTA'}));
                     [accountUniqueIdList, accountUniqueIdFirstIndex] = unique(xI050.("COD_CTA"), "sorted");
-                    
-                    for ii = 1:numel(accountUniqueIdList)
+                    accountUniqueCount = numel(accountUniqueIdList);
+
+                    % Prealoca, viabilizando operação em modo paralelo...
+                    x_CONTAS_DESCRICAO = table( ...
+                        'Size', [accountUniqueCount, 2], ...
+                        'VariableNames', {'COD_CTA', 'DESCRIÇÃO'}, ...
+                        'VariableTypes', {'cell', 'cell'} ...
+                    );
+
+                    parpoolCheck()
+                    parfor ii = 1:accountUniqueCount
                         accountId = accountUniqueIdList{ii};
                         accountDescription = strtrim(xI050.("CTA"){accountUniqueIdFirstIndex(ii)});
                         accountNumLevel = str2double(xI050.("NIVEL"){accountUniqueIdFirstIndex(ii)});
@@ -679,11 +682,13 @@ classdef ECD < model.ECDBase
                         for jj = 1:accountNumLevel
                             currentIndex  = find(strcmp(xI050.("COD_CTA"), currentId),  1);
                             currentId     = xI050.("COD_CTA_SUP"){currentIndex};
-                            superiorIndex = find(strcmp(xI050.("COD_CTA_SUP"), currentId), 1);
-        
+                            
                             superiorDescription = '';
-                            if ~isempty(superiorIndex)
-                                superiorDescription = strtrim(xI050.("CTA"){superiorIndex});
+                            if ~isempty(currentId)
+                                superiorIndex = find(strcmp(xI050.("COD_CTA"), currentId), 1);
+                                if ~isempty(superiorIndex)
+                                    superiorDescription = strtrim(xI050.("CTA"){superiorIndex});
+                                end
                             end
         
                             if jj == 1 && ~isempty(accountDescription) && ~isequal(accountDescription, superiorDescription)
@@ -696,8 +701,10 @@ classdef ECD < model.ECDBase
                         end
         
                         description  = strjoin(flip(description), '  ↳  ');
-                        obj.Table.x_CONTAS_DESCRICAO(end+1, :) = {accountId, description};
+                        x_CONTAS_DESCRICAO(ii, :) = {accountId, description};
                     end
+
+                    obj.Table.x_CONTAS_DESCRICAO = x_CONTAS_DESCRICAO;
 
                 case '_TABELA_APURACAO'
                     update(obj, 'Table.x_TABELA_APURACAO', 'startup')
@@ -876,12 +883,21 @@ classdef ECD < model.ECDBase
                             generalSettings = varargin{1};
                             numAccounts = height(obj.Table.x_BALANCETE_RESULTADO);
 
+                            x_CONTAS = innerjoin( ...
+                                obj.Table.x_BALANCETE_RESULTADO, ...
+                                obj.Table.xI050, ...
+                                "Keys", 'COD_CTA', ...
+                                'LeftVariables', 'COD_CTA', ...
+                                'RightVariables', 'CTA' ...
+                            );
+
                             obj.Table.x_CONTAS_ANOTACAO = table( ...
-                                obj.Table.x_BALANCETE_RESULTADO.("COD_CTA"), ...
+                                x_CONTAS.("COD_CTA"), ...
+                                x_CONTAS.("CTA"), ...
                                 repmat(categorical("-", generalSettings.ECD.accountOptions), numAccounts, 1), ...
                                 repmat({'-'}, numAccounts, 1), ...
                                 repmat({''}, numAccounts, 1), ...
-                                'VariableNames', {'COD_CTA', 'Apurado?  ✎', 'Alíquota ICMS', 'Observação  ✎'} ...
+                                'VariableNames', {'COD_CTA', 'CTA', 'Apurado?  ✎', 'Alíquota ICMS', 'Observação  ✎'} ...
                             );
                             return
 
