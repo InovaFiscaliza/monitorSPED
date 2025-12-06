@@ -27,6 +27,7 @@ classdef winECD_exported < matlab.apps.AppBase
         TabGroup              matlab.ui.container.TabGroup
         Tab1                  matlab.ui.container.Tab
         Tab1Grid              matlab.ui.container.GridLayout
+        OpenFilterModule      matlab.ui.control.Button
         FinanceFacts          matlab.ui.control.Label
         Tab1Separator2        matlab.ui.control.Image
         LogButton             matlab.ui.control.Button
@@ -94,6 +95,7 @@ classdef winECD_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         projectData
         ecdObj
+        filteringObj
     end
 
 
@@ -158,6 +160,17 @@ classdef winECD_exported < matlab.apps.AppBase
 
                             case 'accountEdited'
                                 forceUpdateTable(app)
+
+                            case 'changeFilter'
+                                'changeFilter'
+
+                            case 'tableNotRead'
+                                [selectedECD, fileIndex] = selectedECDObject(app);
+                                tableId = varargin{1};
+                    
+                                app.progressDialog.Visible = 'visible';                    
+                                checkIfTableRead(app, selectedECD, fileIndex, {tableId})
+                                app.progressDialog.Visible = 'hidden';
 
                             otherwise
                                 error('UnexpectedCall')
@@ -1380,6 +1393,18 @@ classdef winECD_exported < matlab.apps.AppBase
             forceUpdateTable(app)
 
         end
+
+        % Button pushed function: OpenFilterModule
+        function OpenFilterModuleButtonPushed(app, event)
+            
+            [~, fileIndex]  = selectedECDObject(app);
+            tableIdList     = app.SheetList.Items;
+            selectedTableId = app.SheetList.Value;
+
+            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDFilter', 'ECD', fileIndex, tableIdList, selectedTableId)
+            app.TabGroup.SelectedTab = app.Tab1;
+
+        end
     end
 
     % Component initialization
@@ -1440,7 +1465,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create Tab1Grid
             app.Tab1Grid = uigridlayout(app.Tab1);
-            app.Tab1Grid.ColumnWidth = {90, 230, 60, 229, 3, 44, 44, 3, '1x'};
+            app.Tab1Grid.ColumnWidth = {90, 220, 60, 220, 3, 44, 44, 44, 3, '1x'};
             app.Tab1Grid.RowHeight = {22, 22};
             app.Tab1Grid.RowSpacing = 5;
             app.Tab1Grid.BackgroundColor = [0.9804 0.9804 0.9804];
@@ -1518,7 +1543,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ExportButton.FontSize = 10;
             app.ExportButton.Enable = 'off';
             app.ExportButton.Layout.Row = [1 2];
-            app.ExportButton.Layout.Column = 6;
+            app.ExportButton.Layout.Column = 7;
             app.ExportButton.Text = {'.xlsx'; '.rtf'};
 
             % Create LogButton
@@ -1529,23 +1554,34 @@ classdef winECD_exported < matlab.apps.AppBase
             app.LogButton.FontSize = 10;
             app.LogButton.Enable = 'off';
             app.LogButton.Layout.Row = [1 2];
-            app.LogButton.Layout.Column = 7;
+            app.LogButton.Layout.Column = 8;
             app.LogButton.Text = 'Leitura';
 
             % Create Tab1Separator2
             app.Tab1Separator2 = uiimage(app.Tab1Grid);
             app.Tab1Separator2.Enable = 'off';
             app.Tab1Separator2.Layout.Row = [1 2];
-            app.Tab1Separator2.Layout.Column = 8;
+            app.Tab1Separator2.Layout.Column = 9;
             app.Tab1Separator2.ImageSource = 'LineV.svg';
 
             % Create FinanceFacts
             app.FinanceFacts = uilabel(app.Tab1Grid);
             app.FinanceFacts.FontSize = 11;
             app.FinanceFacts.Layout.Row = [1 2];
-            app.FinanceFacts.Layout.Column = 9;
+            app.FinanceFacts.Layout.Column = 10;
             app.FinanceFacts.Interpreter = 'html';
             app.FinanceFacts.Text = '⚠️ Pendente leitura de informação contábil';
+
+            % Create OpenFilterModule
+            app.OpenFilterModule = uibutton(app.Tab1Grid, 'push');
+            app.OpenFilterModule.ButtonPushedFcn = createCallbackFcn(app, @OpenFilterModuleButtonPushed, true);
+            app.OpenFilterModule.Icon = 'Filter_18.png';
+            app.OpenFilterModule.IconAlignment = 'top';
+            app.OpenFilterModule.BackgroundColor = [0.9608 0.9608 0.9608];
+            app.OpenFilterModule.FontSize = 10;
+            app.OpenFilterModule.Layout.Row = [1 2];
+            app.OpenFilterModule.Layout.Column = 6;
+            app.OpenFilterModule.Text = 'FILTRO';
 
             % Create Tab2
             app.Tab2 = uitab(app.TabGroup);
@@ -1555,7 +1591,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create Tab2Grid
             app.Tab2Grid = uigridlayout(app.Tab2);
-            app.Tab2Grid.ColumnWidth = {44, 226, 40, 10, 3, 90, 90, 3, 22, 22, 22, 22, 22, 44, 44, 3, 90, '1x', 18, 18};
+            app.Tab2Grid.ColumnWidth = {44, 220, 40, 10, 3, 90, 90, 3, 22, 22, 22, 22, 22, 44, 44, 3, 90, '1x', 18, 18};
             app.Tab2Grid.RowHeight = {22, 22};
             app.Tab2Grid.RowSpacing = 5;
             app.Tab2Grid.BackgroundColor = [0.9804 0.9804 0.9804];

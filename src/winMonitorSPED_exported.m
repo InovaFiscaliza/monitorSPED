@@ -80,10 +80,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         eFiscalizaObj
 
         %-----------------------------------------------------------------%
-        % PROPRIEDADES ESPECÍFICAS
+        % ESPECIFICIDADES MAINAPP
         %-----------------------------------------------------------------%
         projectData
         ecdObj = model.ECD.empty
+        filteringObj = tableFiltering
         receitaFederalObj
     end
 
@@ -349,6 +350,24 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             otherwise
                                 error('UnexpectedCall')
                         end
+
+                    % auxApp.dockECDFilter
+                    case {'auxApp.dockECDFilter', 'auxApp.dockECDFilter_exported'}
+                        switch operationType
+                            case 'closeFcn'
+                                context  = varargin{1};
+                                varargin = [{'closeFcnCallFromDockModule'}, varargin(2:end)];
+                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
+
+                            case {'changeFilter', 'tableNotRead'}
+                                context  = varargin{1};
+                                varargin = [{operationType}, varargin(2:end)];
+                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
+                                return
+
+                            otherwise
+                                error('UnexpectedCall')
+                        end
     
                     otherwise
                         error('UnexpectedCaller')
@@ -386,7 +405,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             arguments
                 app
                 callingApp
-                auxAppName char {mustBeMember(auxAppName, {'ReportLib', 'ECDExport', 'ECDAccount'})}
+                auxAppName char {mustBeMember(auxAppName, {'ReportLib', 'ECDExport', 'ECDAccount', 'ECDFilter'})}
             end
 
             arguments (Repeating)
@@ -403,6 +422,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 case 'ECDAccount'
                     screenWidth  = 720;
                     screenHeight = 488;
+                case 'ECDFilter'
+                    screenWidth  = 412;
+                    screenHeight = 464;
             end
 
             ui.PopUpContainer(callingApp, class.Constants.appName, screenWidth, screenHeight)
