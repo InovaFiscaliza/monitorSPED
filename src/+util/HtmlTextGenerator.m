@@ -257,7 +257,20 @@ classdef (Abstract) HtmlTextGenerator
 
 
         %-----------------------------------------------------------------%
-        % AUXAPP.WINECD: WARNINGS
+        % AUXAPP.WINECD
+        %-----------------------------------------------------------------%
+        function [accountTable, index, htmlContent] = AccountInfo(ecdObj, accountName)
+            accountTable  = innerjoin(ecdObj.Table.x_CONTAS_ANOTACAO, ecdObj.Table.x_BALANCETE_RESULTADO, 'Keys', 'COD_CTA', 'RightVariables', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'});
+            accountTable  = innerjoin(accountTable,                   ecdObj.Table.x_CONTAS_DESCRICAO,    'Keys', 'COD_CTA', 'RightVariables', 'DESCRIÇÃO');
+
+            [~, index]    = ismember(accountName, accountTable.("COD_CTA"));
+            accountHist   = getAccountHistoric(ecdObj, accountName);
+
+            dataStruct(1) = struct('group', 'FullDescription', 'value', ['•&thinsp;' accountTable.('DESCRIÇÃO'){index}]);
+            dataStruct(2) = struct('group', 'AccountHistoric', 'value', textFormatGUI.cellstr2Bullets(accountHist));
+            htmlContent   = textFormatGUI.struct2PrettyPrintList(dataStruct, 'delete', '');
+        end
+
         %-----------------------------------------------------------------%
         function htmlContent = Warnings(ecdObj)
             [ordinaryIds, customIds, readIds] = getTableIds(ecdObj);
@@ -279,7 +292,7 @@ classdef (Abstract) HtmlTextGenerator
 
             htmlContent = textFormatGUI.struct2PrettyPrintList(dataStruct, 'print -1', '', 'popup');
         end
-        
+
         
         %-----------------------------------------------------------------%
         % AUXAPP.WINCONFIG: CHECKUPDATE

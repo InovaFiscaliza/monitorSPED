@@ -5,6 +5,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         UIFigure           matlab.ui.Figure
         GridLayout         matlab.ui.container.GridLayout
         Document           matlab.ui.container.GridLayout
+        accountInfo        matlab.ui.control.Label
         NextSelection      matlab.ui.control.Image
         PreviousSelection  matlab.ui.control.Image
         plotPanel          matlab.ui.container.Panel
@@ -37,8 +38,6 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         icmsMonth2Label    matlab.ui.control.Label
         icmsMonth1         matlab.ui.control.Spinner
         icmsMonth1Label    matlab.ui.control.Label
-        accountInfo        matlab.ui.control.Label
-        accountInfoLabel   matlab.ui.control.Label
         icmsType           matlab.ui.control.DropDown
         icmsTypeLabel      matlab.ui.control.Label
         taxType            matlab.ui.control.DropDown
@@ -55,7 +54,8 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         isDocked = true
 
         mainApp
-        callingApp        
+        callingApp
+        jsBackDoor
         projectData
         
         inputArgs
@@ -66,6 +66,19 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
     
 
     methods (Access = private)
+        %-----------------------------------------------------------------%
+        function jsBackDoor_Customizations(app)
+            drawnow
+
+            elToModify = {app.accountInfo};
+            elDataTag  = ui.CustomizationBase.getElementsDataTag(elToModify);
+    
+            if ~isempty(elDataTag)
+                appName = class.Constants.appName;
+                ui.TextView.startup(app.jsBackDoor, elToModify{1}, appName);
+            end
+        end
+
         %-----------------------------------------------------------------%
         function accountName = startupLayout(app, index, accountName)
             % Cria o eixo geográfico:
@@ -86,14 +99,10 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function updateLayout(app, index, accountName)
             selectedECD  = app.mainApp.ecdObj(index);
-
-            accountTable = innerjoin(selectedECD.Table.x_CONTAS_ANOTACAO, selectedECD.Table.x_BALANCETE_RESULTADO, 'Keys', 'COD_CTA', 'RightVariables', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'});
-            accountTable = innerjoin(accountTable,                        selectedECD.Table.x_CONTAS_DESCRICAO,    'Keys', 'COD_CTA', 'RightVariables', 'DESCRIÇÃO');
-
-            [~, index]   = ismember(accountName, accountTable.("COD_CTA"));
+            [accountTable, index, htmlContent] = util.HtmlTextGenerator.AccountInfo(selectedECD, accountName);
             
             % Árvore de descrição da conta:
-            app.accountInfo.Text = sprintf('<font style="line-height: 17px;">%s</font>', textFormatGUI.strToIndentedTree(accountTable.('DESCRIÇÃO'){index}));
+            app.accountInfo.Text = htmlContent;
             
             % Valores iniciais dos campos passíveis de anotação:
             app.taxType.Value  = char(accountTable.('Apurado?  ✎')(index));
@@ -195,6 +204,9 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.callingApp  = callingApp;            
             app.inputArgs   = struct('context', context, 'index', index);
             app.projectData = mainApp.projectData;
+
+            app.jsBackDoor  = callingApp.jsBackDoor;
+            jsBackDoor_Customizations(app)
 
             accountName = startupLayout(app, index, accountName);
             updateLayout(app, index, accountName)
@@ -303,7 +315,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             if isempty(Container)
                 app.UIFigure = uifigure('Visible', 'off');
                 app.UIFigure.AutoResizeChildren = 'off';
-                app.UIFigure.Position = [92 92 720 488];
+                app.UIFigure.Position = [92 92 720 580];
                 app.UIFigure.Name = 'monitorSPED';
                 app.UIFigure.Icon = 'icon_16.png';
                 app.UIFigure.CloseRequestFcn = createCallbackFcn(app, @closeFcn, true);
@@ -344,8 +356,8 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
 
             % Create Document
             app.Document = uigridlayout(app.GridLayout);
-            app.Document.ColumnWidth = {22, 22, 86, 266, '1x'};
-            app.Document.RowHeight = {17, 22, 22, 22, 22, 22, 108, 22, 108, 1, 22};
+            app.Document.ColumnWidth = {22, 22, 144, 208, '1x'};
+            app.Document.RowHeight = {17, 22, '1x', 22, 22, 108, 22, 44, 1, 22};
             app.Document.RowSpacing = 5;
             app.Document.Layout.Row = 2;
             app.Document.Layout.Column = [1 2];
@@ -373,9 +385,9 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.taxTypeLabel = uilabel(app.Document);
             app.taxTypeLabel.VerticalAlignment = 'bottom';
             app.taxTypeLabel.FontSize = 11;
-            app.taxTypeLabel.Layout.Row = 3;
+            app.taxTypeLabel.Layout.Row = 4;
             app.taxTypeLabel.Layout.Column = [1 3];
-            app.taxTypeLabel.Text = 'Apurado?';
+            app.taxTypeLabel.Text = 'Apurado? ✎';
 
             % Create taxType
             app.taxType = uidropdown(app.Document);
@@ -383,7 +395,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.taxType.ValueChangedFcn = createCallbackFcn(app, @parameterValueChanged, true);
             app.taxType.FontSize = 11;
             app.taxType.BackgroundColor = [1 1 1];
-            app.taxType.Layout.Row = 4;
+            app.taxType.Layout.Row = 5;
             app.taxType.Layout.Column = [1 3];
             app.taxType.Value = '-';
 
@@ -391,9 +403,9 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsTypeLabel = uilabel(app.Document);
             app.icmsTypeLabel.VerticalAlignment = 'bottom';
             app.icmsTypeLabel.FontSize = 11;
-            app.icmsTypeLabel.Layout.Row = 5;
-            app.icmsTypeLabel.Layout.Column = [1 3];
-            app.icmsTypeLabel.Text = 'Alíquota ICMS:';
+            app.icmsTypeLabel.Layout.Row = 4;
+            app.icmsTypeLabel.Layout.Column = 4;
+            app.icmsTypeLabel.Text = 'Alíquota ICMS ✎';
 
             % Create icmsType
             app.icmsType = uidropdown(app.Document);
@@ -401,30 +413,13 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsType.ValueChangedFcn = createCallbackFcn(app, @parameterValueChanged, true);
             app.icmsType.FontSize = 11;
             app.icmsType.BackgroundColor = [1 1 1];
-            app.icmsType.Layout.Row = 6;
-            app.icmsType.Layout.Column = [1 3];
+            app.icmsType.Layout.Row = 5;
+            app.icmsType.Layout.Column = 4;
             app.icmsType.Value = 'auto';
-
-            % Create accountInfoLabel
-            app.accountInfoLabel = uilabel(app.Document);
-            app.accountInfoLabel.VerticalAlignment = 'bottom';
-            app.accountInfoLabel.FontSize = 11;
-            app.accountInfoLabel.Layout.Row = 1;
-            app.accountInfoLabel.Layout.Column = 4;
-            app.accountInfoLabel.Text = 'Árvore de descrição da conta:';
-
-            % Create accountInfo
-            app.accountInfo = uilabel(app.Document);
-            app.accountInfo.VerticalAlignment = 'top';
-            app.accountInfo.FontSize = 11;
-            app.accountInfo.Layout.Row = [2 6];
-            app.accountInfo.Layout.Column = [4 5];
-            app.accountInfo.Interpreter = 'html';
-            app.accountInfo.Text = '';
 
             % Create icmsMonthsPanel
             app.icmsMonthsPanel = uipanel(app.Document);
-            app.icmsMonthsPanel.Layout.Row = 7;
+            app.icmsMonthsPanel.Layout.Row = 6;
             app.icmsMonthsPanel.Layout.Column = [1 4];
 
             % Create icmsMonthsGrid
@@ -666,15 +661,15 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.freenoteLabel = uilabel(app.Document);
             app.freenoteLabel.VerticalAlignment = 'bottom';
             app.freenoteLabel.FontSize = 11;
-            app.freenoteLabel.Layout.Row = 8;
+            app.freenoteLabel.Layout.Row = 7;
             app.freenoteLabel.Layout.Column = [1 3];
-            app.freenoteLabel.Text = 'Observação:';
+            app.freenoteLabel.Text = 'Observação ✎';
 
             % Create freenote
             app.freenote = uitextarea(app.Document);
             app.freenote.ValueChangedFcn = createCallbackFcn(app, @parameterValueChanged, true);
             app.freenote.FontSize = 11;
-            app.freenote.Layout.Row = 9;
+            app.freenote.Layout.Row = 8;
             app.freenote.Layout.Column = [1 4];
 
             % Create totalValue
@@ -683,7 +678,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.totalValue.VerticalAlignment = 'top';
             app.totalValue.FontSize = 11;
             app.totalValue.FontWeight = 'bold';
-            app.totalValue.Layout.Row = [10 11];
+            app.totalValue.Layout.Row = [9 10];
             app.totalValue.Layout.Column = 5;
             app.totalValue.Text = '';
 
@@ -692,14 +687,14 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.plotPanel.AutoResizeChildren = 'off';
             app.plotPanel.BorderType = 'none';
             app.plotPanel.BackgroundColor = [0 0 0];
-            app.plotPanel.Layout.Row = [7 9];
+            app.plotPanel.Layout.Row = [5 8];
             app.plotPanel.Layout.Column = 5;
 
             % Create PreviousSelection
             app.PreviousSelection = uiimage(app.Document);
             app.PreviousSelection.ImageClickedFcn = createCallbackFcn(app, @arrowButtonClicked, true);
             app.PreviousSelection.Tooltip = {'Navega para a conta anterior'};
-            app.PreviousSelection.Layout.Row = 11;
+            app.PreviousSelection.Layout.Row = 10;
             app.PreviousSelection.Layout.Column = 1;
             app.PreviousSelection.ImageSource = 'Previous_32.png';
 
@@ -707,9 +702,19 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.NextSelection = uiimage(app.Document);
             app.NextSelection.ImageClickedFcn = createCallbackFcn(app, @arrowButtonClicked, true);
             app.NextSelection.Tooltip = {'Navega para a conta posterior'};
-            app.NextSelection.Layout.Row = 11;
+            app.NextSelection.Layout.Row = 10;
             app.NextSelection.Layout.Column = 2;
             app.NextSelection.ImageSource = 'After_32.png';
+
+            % Create accountInfo
+            app.accountInfo = uilabel(app.Document);
+            app.accountInfo.VerticalAlignment = 'top';
+            app.accountInfo.WordWrap = 'on';
+            app.accountInfo.FontSize = 11;
+            app.accountInfo.Layout.Row = 3;
+            app.accountInfo.Layout.Column = [1 5];
+            app.accountInfo.Interpreter = 'html';
+            app.accountInfo.Text = '';
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';

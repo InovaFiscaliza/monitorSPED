@@ -84,7 +84,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         projectData
         ecdObj = model.ECD.empty
-        filteringObj = tableFiltering
         receitaFederalObj
     end
 
@@ -421,10 +420,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     screenHeight = 404;
                 case 'ECDAccount'
                     screenWidth  = 720;
-                    screenHeight = 488;
+                    screenHeight = 580;
                 case 'ECDFilter'
-                    screenWidth  = 412;
-                    screenHeight = 464;
+                    screenWidth  = 640;
+                    screenHeight = 376;
             end
 
             ui.PopUpContainer(callingApp, class.Constants.appName, screenWidth, screenHeight)

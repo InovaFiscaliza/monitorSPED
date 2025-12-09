@@ -15,11 +15,13 @@ classdef winECD_exported < matlab.apps.AppBase
         tool_AccountEdition   matlab.ui.control.Image
         tool_CompanyInfo      matlab.ui.control.Label
         UITable2_AccountInfo  matlab.ui.control.Label
+        UITable2_FilterIcon   matlab.ui.control.Image
         UITable2_FilterText   matlab.ui.control.Label
         UITable2_CountText    matlab.ui.control.Label
         UITable2_CountIcon    matlab.ui.control.Image
         UITable2              matlab.ui.control.Table
         UITable1_AccountInfo  matlab.ui.control.Label
+        UITable1_FilterIcon   matlab.ui.control.Image
         UITable1_FilterText   matlab.ui.control.Label
         UITable1_CountText    matlab.ui.control.Label
         UITable1_CountIcon    matlab.ui.control.Image
@@ -27,7 +29,6 @@ classdef winECD_exported < matlab.apps.AppBase
         TabGroup              matlab.ui.container.TabGroup
         Tab1                  matlab.ui.container.Tab
         Tab1Grid              matlab.ui.container.GridLayout
-        OpenFilterModule      matlab.ui.control.Button
         FinanceFacts          matlab.ui.control.Label
         Tab1Separator2        matlab.ui.control.Image
         LogButton             matlab.ui.control.Button
@@ -41,6 +42,8 @@ classdef winECD_exported < matlab.apps.AppBase
         CompanyNameListLabel  matlab.ui.control.Label
         Tab2                  matlab.ui.container.Tab
         Tab2Grid              matlab.ui.container.GridLayout
+        Tab2Separator1_2      matlab.ui.control.Image
+        LogButton_2           matlab.ui.control.Button
         StyleRefresh          matlab.ui.control.Image
         StyleDelete           matlab.ui.control.Image
         FontIconLabel         matlab.ui.control.Label
@@ -95,7 +98,6 @@ classdef winECD_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         projectData
         ecdObj
-        filteringObj
     end
 
 
@@ -162,7 +164,14 @@ classdef winECD_exported < matlab.apps.AppBase
                                 forceUpdateTable(app)
 
                             case 'changeFilter'
-                                'changeFilter'
+                                tableId = varargin{1};
+                                if strcmp(app.SheetView_First.Value, tableId)
+                                    SheetViewFirstValueChanged(app, struct('Source', app.SheetView_First))
+                                end
+
+                                if strcmp(app.SheetView_Second.Value, tableId)
+                                    SheetViewSecondValueChanged(app)
+                                end
 
                             case 'tableNotRead'
                                 [selectedECD, fileIndex] = selectedECDObject(app);
@@ -222,12 +231,13 @@ classdef winECD_exported < matlab.apps.AppBase
                     customizationStatus(tabIndex) = true;
                     switch tabIndex
                         case 1
+                            appName = class(app);
+
                             % Grid botões "dock":
                             if app.isDocked
                                 elToModify = {app.DockModule};
                                 elDataTag  = ui.CustomizationBase.getElementsDataTag(elToModify);
                                 if ~isempty(elDataTag)
-                                    appName = class(app);                    
                                     sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
                                         struct('appName', appName, 'dataTag', elDataTag{1}, 'style', struct('transition', 'opacity 2s ease', 'opacity', '0.5')) ...
                                     });
@@ -382,7 +392,7 @@ classdef winECD_exported < matlab.apps.AppBase
                                       'ColumnEditable', false, ...
                                       'Data', [])
                     app.UITable1_CountText.Text  = ' CONTAGEM : 0';
-                    app.UITable1_FilterText.Text = '0 DE 0';
+                    app.UITable1_FilterText.Text = '0 DE 0 ';
                 end
 
                 if ~isempty(app.UITable2.Data)
@@ -391,7 +401,7 @@ classdef winECD_exported < matlab.apps.AppBase
                                       'ColumnEditable', false, ...
                                       'Data', [])
                     app.UITable2_CountText.Text  = ' CONTAGEM : 0';
-                    app.UITable2_FilterText.Text = '0 DE 0';
+                    app.UITable2_FilterText.Text = '0 DE 0 ';
                 end
             end
 
@@ -579,7 +589,7 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function updateTable(app, hTable, hTableAccountInfo, hTableCountText, hTableFilterText, tableId)
+        function updateTable(app, hTable, hTableAccountInfo, hTableCountText, hTableFilterText, hTableFilterIcon, tableId)
             [selectedECD, fileIndex] = selectedECDObject(app);
 
             % Evita que a janela de progresso seja apresentada quando
@@ -592,31 +602,57 @@ classdef winECD_exported < matlab.apps.AppBase
 
             tableIdField   = ['x' tableId];
             tableIdData    = selectedECD.Table.(tableIdField);
-            
+
+            % Filtra, caso aplicável.
+            tableIdIndex   = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
+            if ~isempty(tableIdIndex) && ~isempty(selectedECD.GUI.tableView(tableIdIndex).filter) && ~isempty(selectedECD.GUI.tableView(tableIdIndex).filter.filterRules(selectedECD.GUI.tableView(tableIdIndex).filter.filterRules.Enable, :))
+                filterObj   = selectedECD.GUI.tableView(tableIdIndex).filter;
+                visibleRows = find(run(filterObj, 'filterRules', tableIdData));                
+                filterIconTooltip = strjoin(getFilterList(filterObj, ['ECD.x' tableId], 'on'), '\n');
+            else
+                visibleRows = (1:height(tableIdData))';                
+                filterIconTooltip = '';
+            end
+
+            % Renderiza...            
             columnNames    = tableIdData.Properties.VariableNames;
-            columnEditable = contains(columnNames, '✎');
-            
+            columnEditable = contains(columnNames, '✎');            
             rowNames       = tableIdData.Properties.RowNames;
             if isempty(rowNames)
-                rowNames   = 'numbered';
+                rowNames = string(visibleRows);
             end
             
             set(hTable, 'ColumnWidth', 'auto', ...
                         'ColumnName', columnNames, ...
                         'ColumnEditable', columnEditable, ...
                         'RowName', rowNames, ...
-                        'Data', tableIdData)
+                        'Data', tableIdData(visibleRows, :))
+            
             hTable.UserData.TableId = tableId;
+            hTable.UserData.visibleRows = visibleRows;
 
+            % Atualiza elementos que suportam a tabela...
             restartTableSelectionControl(app, hTable, hTableAccountInfo, hTableCountText)
-            applyTableStyle(app, selectedECD, hTable, tableId)
-
-            if height(hTable.Data) > 1
-                numberOfRowsText  = sprintf('%d DE %d LINHAS ', height(hTable.Data), height(hTable.Data)); % PENDENTE FILTRAGEM
+            if height(tableIdData) > 1
+                numberOfRowsText = sprintf('%d DE %d LINHAS ', height(hTable.Data), height(tableIdData));
             else
-                numberOfRowsText  = sprintf('%d DE %d LINHA ',  height(hTable.Data), height(hTable.Data)); % PENDENTE FILTRAGEM
+                numberOfRowsText = sprintf('%d DE %d LINHA ',  height(hTable.Data), height(tableIdData));
             end
-            hTableFilterText.Text = numberOfRowsText;
+            set(hTableFilterText, 'Text', numberOfRowsText)
+
+            if height(hTable.Data) == height(tableIdData)
+                if isempty(filterIconTooltip)
+                    filterIconImageSource = 'FilterGray_18.png';
+                else
+                    filterIconImageSource = 'Filter_18.png';
+                end
+            else
+                filterIconImageSource = 'FilterFilled_18.png';
+            end
+            set(hTableFilterIcon, 'ImageSource', filterIconImageSource, 'Tooltip', filterIconTooltip)
+
+            % Aplica estilo, normalizando-o p/ contemplar uma eventual filtragem.
+            % applyTableStyle(app, selectedECD, hTable, tableId)
 
             app.progressDialog.Visible = 'hidden';
         end
@@ -695,7 +731,8 @@ classdef winECD_exported < matlab.apps.AppBase
             end
             
             tableIdIndex = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
-            if ~isempty(tableIdIndex)
+
+            if ~isempty(tableIdIndex) && ~isempty(selectedECD.GUI.tableView(tableIdIndex).style)
                 styleConfigTable = selectedECD.GUI.tableView(tableIdIndex).style;
                 for ii = 1:height(styleConfigTable)
                     addStyle(hTable, styleConfigTable.Style(ii), styleConfigTable.Target(ii), styleConfigTable.TargetIndex{ii})
@@ -985,14 +1022,14 @@ classdef winECD_exported < matlab.apps.AppBase
                     app.SheetList.Value = app.SheetView_First.Value;
             end
 
-            updateTable(app, app.UITable1, app.UITable1_AccountInfo, app.UITable1_CountText, app.UITable1_FilterText, app.SheetList.Value)
+            updateTable(app, app.UITable1, app.UITable1_AccountInfo, app.UITable1_CountText, app.UITable1_FilterText, app.UITable1_FilterIcon, app.SheetList.Value)
 
         end
 
         % Value changed function: SheetView_Second
         function SheetViewSecondValueChanged(app, event)
             
-            updateTable(app, app.UITable2, app.UITable2_AccountInfo, app.UITable2_CountText, app.UITable2_FilterText, app.SheetView_Second.Value)
+            updateTable(app, app.UITable2, app.UITable2_AccountInfo, app.UITable2_CountText, app.UITable2_FilterText, app.UITable2_FilterIcon, app.SheetView_Second.Value)
             
         end
 
@@ -1135,14 +1172,13 @@ classdef winECD_exported < matlab.apps.AppBase
                 return
             end
 
-            selectedECD = selectedECDObject(app);
-            
             switch clickedTable
                 case app.UITable1; tableId = app.SheetView_First.Value;
                 case app.UITable2; tableId = app.SheetView_Second.Value;
             end
 
             % Lista atual de estilos:
+            selectedECD = selectedECDObject(app);
             renderedTableIDStyleIndex = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
             if isempty(renderedTableIDStyleIndex)
                 renderedTableIDStyleIndex = numel(selectedECD.GUI.tableView)+1;
@@ -1219,14 +1255,33 @@ classdef winECD_exported < matlab.apps.AppBase
                 s.(fieldName) = fieldValue{1};
             end
 
-            addStyle(clickedTable, s, "cell", clickedTable.Selection)
+            addStyle(clickedTable, s, "cell", clickedTable.Selection)            
+            filterStyleIndex1 = find(clickedTable.StyleConfigurations.Target == "row");
+            if ~isempty(filterStyleIndex1)
+                filterStyle = clickedTable.StyleConfigurations(filterStyleIndex1(end), :);
+
+                removeStyle(clickedTable, filterStyleIndex1)
+                addStyle(clickedTable, filterStyle.Style(1), "row", filterStyle.TargetIndex{1})
+            end
+
             if strcmp(app.SheetView_First.Value, app.SheetView_Second.Value)
                 otherTable = setdiff([app.UITable1, app.UITable2], clickedTable);
                 addStyle(otherTable, s, "cell", clickedTable.Selection)
-            end
 
+                filterStyleIndex2 = find(otherTable.StyleConfigurations.Target == "row");
+                if ~isempty(filterStyleIndex2)
+                    filterStyle = otherTable.StyleConfigurations(filterStyleIndex2(end), :);
+    
+                    removeStyle(otherTable, filterStyleIndex2)
+                    addStyle(otherTable, filterStyle.Style(1), "row", filterStyle.TargetIndex{1})
+                end
+            end
+            
             selectedECD.GUI.tableView(renderedTableIDStyleIndex).id = tableId;
-            selectedECD.GUI.tableView(renderedTableIDStyleIndex).style = clickedTable.StyleConfigurations;
+            selectedECD.GUI.tableView(renderedTableIDStyleIndex).style = clickedTable.StyleConfigurations(clickedTable.StyleConfigurations.Target == "cell", :);
+
+            clickedTable.StyleConfigurations.Style(end)
+            selectedECD.GUI.tableView(renderedTableIDStyleIndex).style
             
         end
 
@@ -1394,15 +1449,14 @@ classdef winECD_exported < matlab.apps.AppBase
 
         end
 
-        % Button pushed function: OpenFilterModule
+        % Button pushed function: LogButton_2
         function OpenFilterModuleButtonPushed(app, event)
-            
+
             [~, fileIndex]  = selectedECDObject(app);
             tableIdList     = app.SheetList.Items;
             selectedTableId = app.SheetList.Value;
 
             ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDFilter', 'ECD', fileIndex, tableIdList, selectedTableId)
-            app.TabGroup.SelectedTab = app.Tab1;
 
         end
     end
@@ -1443,7 +1497,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create GridLayout
             app.GridLayout = uigridlayout(app.Container);
-            app.GridLayout.ColumnWidth = {10, 18, 320, '1x', 300, 48, 8, 2};
+            app.GridLayout.ColumnWidth = {10, 18, 320, '1x', 290, 30, 18, 8, 2};
             app.GridLayout.RowHeight = {2, 8, 24, 70, 10, '1x', 2, 22, 0, 0, 0, 0, 10, 34};
             app.GridLayout.ColumnSpacing = 0;
             app.GridLayout.RowSpacing = 0;
@@ -1455,7 +1509,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.TabGroup.AutoResizeChildren = 'off';
             app.TabGroup.SelectionChangedFcn = createCallbackFcn(app, @TabGroupSelectionChanged, true);
             app.TabGroup.Layout.Row = [3 4];
-            app.TabGroup.Layout.Column = [2 6];
+            app.TabGroup.Layout.Column = [2 7];
 
             % Create Tab1
             app.Tab1 = uitab(app.TabGroup);
@@ -1465,7 +1519,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create Tab1Grid
             app.Tab1Grid = uigridlayout(app.Tab1);
-            app.Tab1Grid.ColumnWidth = {90, 220, 60, 220, 3, 44, 44, 44, 3, '1x'};
+            app.Tab1Grid.ColumnWidth = {90, 220, 60, 220, 3, 44, 44, 3, '1x'};
             app.Tab1Grid.RowHeight = {22, 22};
             app.Tab1Grid.RowSpacing = 5;
             app.Tab1Grid.BackgroundColor = [0.9804 0.9804 0.9804];
@@ -1540,10 +1594,11 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ExportButton.ButtonPushedFcn = createCallbackFcn(app, @Toolbar_ExportExportExcelClicked, true);
             app.ExportButton.Icon = 'Export_16.png';
             app.ExportButton.IconAlignment = 'top';
+            app.ExportButton.BackgroundColor = [0.9608 0.9608 0.9608];
             app.ExportButton.FontSize = 10;
             app.ExportButton.Enable = 'off';
             app.ExportButton.Layout.Row = [1 2];
-            app.ExportButton.Layout.Column = 7;
+            app.ExportButton.Layout.Column = 6;
             app.ExportButton.Text = {'.xlsx'; '.rtf'};
 
             % Create LogButton
@@ -1554,34 +1609,23 @@ classdef winECD_exported < matlab.apps.AppBase
             app.LogButton.FontSize = 10;
             app.LogButton.Enable = 'off';
             app.LogButton.Layout.Row = [1 2];
-            app.LogButton.Layout.Column = 8;
+            app.LogButton.Layout.Column = 7;
             app.LogButton.Text = 'Leitura';
 
             % Create Tab1Separator2
             app.Tab1Separator2 = uiimage(app.Tab1Grid);
             app.Tab1Separator2.Enable = 'off';
             app.Tab1Separator2.Layout.Row = [1 2];
-            app.Tab1Separator2.Layout.Column = 9;
+            app.Tab1Separator2.Layout.Column = 8;
             app.Tab1Separator2.ImageSource = 'LineV.svg';
 
             % Create FinanceFacts
             app.FinanceFacts = uilabel(app.Tab1Grid);
             app.FinanceFacts.FontSize = 11;
             app.FinanceFacts.Layout.Row = [1 2];
-            app.FinanceFacts.Layout.Column = 10;
+            app.FinanceFacts.Layout.Column = 9;
             app.FinanceFacts.Interpreter = 'html';
             app.FinanceFacts.Text = '⚠️ Pendente leitura de informação contábil';
-
-            % Create OpenFilterModule
-            app.OpenFilterModule = uibutton(app.Tab1Grid, 'push');
-            app.OpenFilterModule.ButtonPushedFcn = createCallbackFcn(app, @OpenFilterModuleButtonPushed, true);
-            app.OpenFilterModule.Icon = 'Filter_18.png';
-            app.OpenFilterModule.IconAlignment = 'top';
-            app.OpenFilterModule.BackgroundColor = [0.9608 0.9608 0.9608];
-            app.OpenFilterModule.FontSize = 10;
-            app.OpenFilterModule.Layout.Row = [1 2];
-            app.OpenFilterModule.Layout.Column = 6;
-            app.OpenFilterModule.Text = 'FILTRO';
 
             % Create Tab2
             app.Tab2 = uitab(app.TabGroup);
@@ -1591,7 +1635,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create Tab2Grid
             app.Tab2Grid = uigridlayout(app.Tab2);
-            app.Tab2Grid.ColumnWidth = {44, 220, 40, 10, 3, 90, 90, 3, 22, 22, 22, 22, 22, 44, 44, 3, 90, '1x', 18, 18};
+            app.Tab2Grid.ColumnWidth = {44, 220, 40, 10, 3, 44, 3, 90, 90, 3, 22, 22, 22, 22, 22, 44, 44, 3, 90, '1x', 18, 18};
             app.Tab2Grid.RowHeight = {22, 22};
             app.Tab2Grid.RowSpacing = 5;
             app.Tab2Grid.BackgroundColor = [0.9804 0.9804 0.9804];
@@ -1601,7 +1645,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetViewStatus.ValueChangedFcn = createCallbackFcn(app, @SheetViewStatusValueChanged, true);
             app.SheetViewStatus.Icon = 'split_top_bottom_ts_24-a602190eb092f2373c13f20ec5875137.png';
             app.SheetViewStatus.IconAlignment = 'top';
-            app.SheetViewStatus.Text = 'TELA';
+            app.SheetViewStatus.Text = 'Tela';
             app.SheetViewStatus.BackgroundColor = [0.9608 0.9608 0.9608];
             app.SheetViewStatus.FontSize = 10;
             app.SheetViewStatus.Layout.Row = [1 2];
@@ -1675,7 +1719,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.RowHeight.FontSize = 11;
             app.RowHeight.Enable = 'off';
             app.RowHeight.Layout.Row = 1;
-            app.RowHeight.Layout.Column = 6;
+            app.RowHeight.Layout.Column = 8;
 
             % Create RowHeightLabel
             app.RowHeightLabel = uilabel(app.Tab2Grid);
@@ -1683,7 +1727,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.RowHeightLabel.WordWrap = 'on';
             app.RowHeightLabel.FontSize = 10;
             app.RowHeightLabel.Layout.Row = 2;
-            app.RowHeightLabel.Layout.Column = 6;
+            app.RowHeightLabel.Layout.Column = 8;
             app.RowHeightLabel.Text = {'ALTURA LINHA'; '(offset)'};
 
             % Create ColumnWidth
@@ -1694,7 +1738,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ColumnWidth.FontSize = 11;
             app.ColumnWidth.BackgroundColor = [1 1 1];
             app.ColumnWidth.Layout.Row = 1;
-            app.ColumnWidth.Layout.Column = 7;
+            app.ColumnWidth.Layout.Column = 9;
             app.ColumnWidth.Value = '';
 
             % Create ColumnWidthLabel
@@ -1703,14 +1747,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ColumnWidthLabel.WordWrap = 'on';
             app.ColumnWidthLabel.FontSize = 10;
             app.ColumnWidthLabel.Layout.Row = 2;
-            app.ColumnWidthLabel.Layout.Column = 7;
+            app.ColumnWidthLabel.Layout.Column = 9;
             app.ColumnWidthLabel.Text = {'LARGURA'; 'COLUNA'};
 
             % Create Tab2Separator2
             app.Tab2Separator2 = uiimage(app.Tab2Grid);
             app.Tab2Separator2.Enable = 'off';
             app.Tab2Separator2.Layout.Row = [1 2];
-            app.Tab2Separator2.Layout.Column = 8;
+            app.Tab2Separator2.Layout.Column = 10;
             app.Tab2Separator2.ImageSource = 'LineV.svg';
 
             % Create FontFamily
@@ -1722,7 +1766,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontFamily.FontSize = 11;
             app.FontFamily.BackgroundColor = [1 1 1];
             app.FontFamily.Layout.Row = 1;
-            app.FontFamily.Layout.Column = [9 15];
+            app.FontFamily.Layout.Column = [11 17];
             app.FontFamily.Value = {};
 
             % Create FontWeight
@@ -1733,7 +1777,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontWeight.FontWeight = 'bold';
             app.FontWeight.Enable = 'off';
             app.FontWeight.Layout.Row = 2;
-            app.FontWeight.Layout.Column = 9;
+            app.FontWeight.Layout.Column = 11;
             app.FontWeight.Text = 'B';
 
             % Create FontStyle
@@ -1744,7 +1788,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontStyle.FontAngle = 'italic';
             app.FontStyle.Enable = 'off';
             app.FontStyle.Layout.Row = 2;
-            app.FontStyle.Layout.Column = 10;
+            app.FontStyle.Layout.Column = 12;
             app.FontStyle.Text = 'I ';
 
             % Create FontAlign1
@@ -1754,7 +1798,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign1.Enable = 'off';
             app.FontAlign1.Tooltip = {'Sublinhado'};
             app.FontAlign1.Layout.Row = 2;
-            app.FontAlign1.Layout.Column = 11;
+            app.FontAlign1.Layout.Column = 13;
             app.FontAlign1.ImageSource = 'AlignedLeft_16-7f46662cd6fd7221119660e14bdcea56.png';
 
             % Create FontAlign2
@@ -1764,7 +1808,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign2.Enable = 'off';
             app.FontAlign2.Tooltip = {'Sublinhado'};
             app.FontAlign2.Layout.Row = 2;
-            app.FontAlign2.Layout.Column = 12;
+            app.FontAlign2.Layout.Column = 14;
             app.FontAlign2.ImageSource = 'AlignedCenter_16-b91485db227234029c43b7823c09ebff.png';
 
             % Create FontAlign3
@@ -1774,7 +1818,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign3.Enable = 'off';
             app.FontAlign3.Tooltip = {'Sublinhado'};
             app.FontAlign3.Layout.Row = 2;
-            app.FontAlign3.Layout.Column = 13;
+            app.FontAlign3.Layout.Column = 15;
             app.FontAlign3.ImageSource = 'AlignedRight_16-7827788943408c9bac98181b7ad0efb5.png';
 
             % Create FontBackground
@@ -1784,7 +1828,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontBackground.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontBackground.Enable = 'off';
             app.FontBackground.Layout.Row = 2;
-            app.FontBackground.Layout.Column = 14;
+            app.FontBackground.Layout.Column = 16;
             app.FontBackground.BackgroundColor = [1 1 1];
 
             % Create FontColor
@@ -1794,14 +1838,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontColor.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontColor.Enable = 'off';
             app.FontColor.Layout.Row = 2;
-            app.FontColor.Layout.Column = 15;
+            app.FontColor.Layout.Column = 17;
             app.FontColor.BackgroundColor = [1 1 1];
 
             % Create Tab2Separator3
             app.Tab2Separator3 = uiimage(app.Tab2Grid);
             app.Tab2Separator3.Enable = 'off';
             app.Tab2Separator3.Layout.Row = [1 2];
-            app.Tab2Separator3.Layout.Column = 16;
+            app.Tab2Separator3.Layout.Column = 18;
             app.Tab2Separator3.ImageSource = 'LineV.svg';
 
             % Create FontIcon
@@ -1812,7 +1856,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontIcon.FontSize = 11;
             app.FontIcon.BackgroundColor = [1 1 1];
             app.FontIcon.Layout.Row = 1;
-            app.FontIcon.Layout.Column = 17;
+            app.FontIcon.Layout.Column = 19;
             app.FontIcon.Value = '';
 
             % Create FontIconLabel
@@ -1821,7 +1865,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontIconLabel.WordWrap = 'on';
             app.FontIconLabel.FontSize = 10;
             app.FontIconLabel.Layout.Row = 2;
-            app.FontIconLabel.Layout.Column = 17;
+            app.FontIconLabel.Layout.Column = 19;
             app.FontIconLabel.Text = 'ÍCONE';
 
             % Create StyleDelete
@@ -1831,7 +1875,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.StyleDelete.Enable = 'off';
             app.StyleDelete.Tooltip = {'Exclui estilo relacionado às células selecionadas'};
             app.StyleDelete.Layout.Row = 2;
-            app.StyleDelete.Layout.Column = 19;
+            app.StyleDelete.Layout.Column = 21;
             app.StyleDelete.ImageSource = 'clear_all_outputs_16-3d3c482971dfdb6852db717989f585fa.png';
 
             % Create StyleRefresh
@@ -1841,8 +1885,25 @@ classdef winECD_exported < matlab.apps.AppBase
             app.StyleRefresh.Enable = 'off';
             app.StyleRefresh.Tooltip = {'Retorna às configurações iniciais de estilo'};
             app.StyleRefresh.Layout.Row = 2;
-            app.StyleRefresh.Layout.Column = 20;
+            app.StyleRefresh.Layout.Column = 22;
             app.StyleRefresh.ImageSource = 'Refresh_18.png';
+
+            % Create LogButton_2
+            app.LogButton_2 = uibutton(app.Tab2Grid, 'push');
+            app.LogButton_2.ButtonPushedFcn = createCallbackFcn(app, @OpenFilterModuleButtonPushed, true);
+            app.LogButton_2.Icon = 'Filter_32.png';
+            app.LogButton_2.IconAlignment = 'top';
+            app.LogButton_2.FontSize = 10;
+            app.LogButton_2.Layout.Row = [1 2];
+            app.LogButton_2.Layout.Column = 6;
+            app.LogButton_2.Text = 'Filtro';
+
+            % Create Tab2Separator1_2
+            app.Tab2Separator1_2 = uiimage(app.Tab2Grid);
+            app.Tab2Separator1_2.Enable = 'off';
+            app.Tab2Separator1_2.Layout.Row = [1 2];
+            app.Tab2Separator1_2.Layout.Column = 7;
+            app.Tab2Separator1_2.ImageSource = 'LineV.svg';
 
             % Create UITable1
             app.UITable1 = uitable(app.GridLayout);
@@ -1854,7 +1915,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable1.ForegroundColor = [0.149 0.149 0.149];
             app.UITable1.KeyReleaseFcn = createCallbackFcn(app, @TableClicked, true);
             app.UITable1.Layout.Row = 6;
-            app.UITable1.Layout.Column = [2 6];
+            app.UITable1.Layout.Column = [2 7];
             app.UITable1.FontSize = 10.5;
 
             % Create UITable1_CountIcon
@@ -1867,7 +1928,6 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create UITable1_CountText
             app.UITable1_CountText = uilabel(app.GridLayout);
             app.UITable1_CountText.FontSize = 10;
-            app.UITable1_CountText.FontColor = [0.502 0.502 0.502];
             app.UITable1_CountText.Layout.Row = 8;
             app.UITable1_CountText.Layout.Column = 3;
             app.UITable1_CountText.Text = ' CONTAGEM : 0';
@@ -1876,10 +1936,16 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable1_FilterText = uilabel(app.GridLayout);
             app.UITable1_FilterText.HorizontalAlignment = 'right';
             app.UITable1_FilterText.FontSize = 10;
-            app.UITable1_FilterText.FontColor = [0.502 0.502 0.502];
             app.UITable1_FilterText.Layout.Row = 8;
             app.UITable1_FilterText.Layout.Column = [5 6];
-            app.UITable1_FilterText.Text = '0 DE 0';
+            app.UITable1_FilterText.Text = '0 DE 0 ';
+
+            % Create UITable1_FilterIcon
+            app.UITable1_FilterIcon = uiimage(app.GridLayout);
+            app.UITable1_FilterIcon.ScaleMethod = 'none';
+            app.UITable1_FilterIcon.Layout.Row = 8;
+            app.UITable1_FilterIcon.Layout.Column = 7;
+            app.UITable1_FilterIcon.ImageSource = 'Filter_18.png';
 
             % Create UITable1_AccountInfo
             app.UITable1_AccountInfo = uilabel(app.GridLayout);
@@ -1887,7 +1953,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable1_AccountInfo.FontSize = 10;
             app.UITable1_AccountInfo.FontColor = [0.502 0.502 0.502];
             app.UITable1_AccountInfo.Layout.Row = 8;
-            app.UITable1_AccountInfo.Layout.Column = [2 6];
+            app.UITable1_AccountInfo.Layout.Column = [3 6];
             app.UITable1_AccountInfo.Text = '';
 
             % Create UITable2
@@ -1902,7 +1968,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable2.Visible = 'off';
             app.UITable2.KeyReleaseFcn = createCallbackFcn(app, @TableClicked, true);
             app.UITable2.Layout.Row = 10;
-            app.UITable2.Layout.Column = [2 6];
+            app.UITable2.Layout.Column = [2 7];
             app.UITable2.FontSize = 10.5;
 
             % Create UITable2_CountIcon
@@ -1915,7 +1981,6 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create UITable2_CountText
             app.UITable2_CountText = uilabel(app.GridLayout);
             app.UITable2_CountText.FontSize = 10;
-            app.UITable2_CountText.FontColor = [0.502 0.502 0.502];
             app.UITable2_CountText.Layout.Row = 12;
             app.UITable2_CountText.Layout.Column = 3;
             app.UITable2_CountText.Text = ' CONTAGEM: 0';
@@ -1924,10 +1989,16 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable2_FilterText = uilabel(app.GridLayout);
             app.UITable2_FilterText.HorizontalAlignment = 'right';
             app.UITable2_FilterText.FontSize = 10;
-            app.UITable2_FilterText.FontColor = [0.502 0.502 0.502];
             app.UITable2_FilterText.Layout.Row = 12;
             app.UITable2_FilterText.Layout.Column = [5 6];
-            app.UITable2_FilterText.Text = '0 DE 0';
+            app.UITable2_FilterText.Text = '0 DE 0 ';
+
+            % Create UITable2_FilterIcon
+            app.UITable2_FilterIcon = uiimage(app.GridLayout);
+            app.UITable2_FilterIcon.ScaleMethod = 'none';
+            app.UITable2_FilterIcon.Layout.Row = 12;
+            app.UITable2_FilterIcon.Layout.Column = 7;
+            app.UITable2_FilterIcon.ImageSource = 'Filter_18.png';
 
             % Create UITable2_AccountInfo
             app.UITable2_AccountInfo = uilabel(app.GridLayout);
@@ -1935,7 +2006,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable2_AccountInfo.FontSize = 10;
             app.UITable2_AccountInfo.FontColor = [0.502 0.502 0.502];
             app.UITable2_AccountInfo.Layout.Row = 12;
-            app.UITable2_AccountInfo.Layout.Column = [2 6];
+            app.UITable2_AccountInfo.Layout.Column = [3 6];
             app.UITable2_AccountInfo.Text = '';
 
             % Create Toolbar
@@ -1946,7 +2017,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.Toolbar.RowSpacing = 0;
             app.Toolbar.Padding = [10 5 10 5];
             app.Toolbar.Layout.Row = 14;
-            app.Toolbar.Layout.Column = [1 8];
+            app.Toolbar.Layout.Column = [1 9];
             app.Toolbar.BackgroundColor = [0.9412 0.9412 0.9412];
 
             % Create tool_CompanyInfo
@@ -2011,7 +2082,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.DockModule.Padding = [5 2 5 2];
             app.DockModule.Visible = 'off';
             app.DockModule.Layout.Row = [2 3];
-            app.DockModule.Layout.Column = [6 7];
+            app.DockModule.Layout.Column = [6 8];
             app.DockModule.BackgroundColor = [0.2 0.2 0.2];
 
             % Create dockModule_Close
