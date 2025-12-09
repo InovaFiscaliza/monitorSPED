@@ -602,7 +602,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             tableIdField   = ['x' tableId];
             tableIdData    = selectedECD.Table.(tableIdField);
-
+            
             % Filtra, caso aplicável.
             tableIdIndex   = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
             if ~isempty(tableIdIndex) && ~isempty(selectedECD.GUI.tableView(tableIdIndex).filter) && ~isempty(selectedECD.GUI.tableView(tableIdIndex).filter.filterRules(selectedECD.GUI.tableView(tableIdIndex).filter.filterRules.Enable, :))
@@ -613,34 +613,42 @@ classdef winECD_exported < matlab.apps.AppBase
                 visibleRows = (1:height(tableIdData))';                
                 filterIconTooltip = '';
             end
+            
+            numRows        = height(tableIdData);
+            numVisibleRows = numel(visibleRows);
 
-            % Renderiza...            
+            % Renderiza...    
+            columnWidth    = 'auto';
             columnNames    = tableIdData.Properties.VariableNames;
-            columnEditable = contains(columnNames, '✎');            
-            rowNames       = tableIdData.Properties.RowNames;
-            if isempty(rowNames)
+            columnEditable = contains(columnNames, '✎');
+
+            if ~isempty(tableIdData.Properties.RowNames)
+                rowNames = tableIdData.Properties.RowNames;
+            elseif numVisibleRows == numRows
+                rowNames = 'numbered';
+            else
+                columnWidth = '1x';
                 rowNames = string(visibleRows);
             end
             
-            set(hTable, 'ColumnWidth', 'auto', ...
+            set(hTable, 'ColumnWidth', columnWidth, ...
                         'ColumnName', columnNames, ...
                         'ColumnEditable', columnEditable, ...
                         'RowName', rowNames, ...
                         'Data', tableIdData(visibleRows, :))
-            
+            drawnow
             hTable.UserData.TableId = tableId;
             hTable.UserData.visibleRows = visibleRows;
 
             % Atualiza elementos que suportam a tabela...
             restartTableSelectionControl(app, hTable, hTableAccountInfo, hTableCountText)
-            if height(tableIdData) > 1
-                numberOfRowsText = sprintf('%d DE %d LINHAS ', height(hTable.Data), height(tableIdData));
-            else
-                numberOfRowsText = sprintf('%d DE %d LINHA ',  height(hTable.Data), height(tableIdData));
+            numberOfRowsText = sprintf('%d DE %d LINHAS ', numVisibleRows, numRows);
+            if numRows == 1
+                numberOfRowsText = replace(numberOfRowsText, 'LINHAS', 'LINHA');                
             end
             set(hTableFilterText, 'Text', numberOfRowsText)
 
-            if height(hTable.Data) == height(tableIdData)
+            if numVisibleRows == numRows
                 if isempty(filterIconTooltip)
                     filterIconImageSource = 'FilterGray_18.png';
                 else
@@ -652,7 +660,13 @@ classdef winECD_exported < matlab.apps.AppBase
             set(hTableFilterIcon, 'ImageSource', filterIconImageSource, 'Tooltip', filterIconTooltip)
 
             % Aplica estilo, normalizando-o p/ contemplar uma eventual filtragem.
-            % applyTableStyle(app, selectedECD, hTable, tableId)
+            applyTableStyle(app, selectedECD, hTable, tableId)
+
+            % Ajusta-se largura das colunas...
+            if strcmp(columnWidth, '1x')
+                pause(1)
+                hTable.ColumnWidth = 'auto';
+            end
 
             app.progressDialog.Visible = 'hidden';
         end
@@ -733,9 +747,17 @@ classdef winECD_exported < matlab.apps.AppBase
             tableIdIndex = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
 
             if ~isempty(tableIdIndex) && ~isempty(selectedECD.GUI.tableView(tableIdIndex).style)
-                styleConfigTable = selectedECD.GUI.tableView(tableIdIndex).style;
-                for ii = 1:height(styleConfigTable)
-                    addStyle(hTable, styleConfigTable.Style(ii), styleConfigTable.Target(ii), styleConfigTable.TargetIndex{ii})
+                styleConfigurations = selectedECD.GUI.tableView(tableIdIndex).style;
+                d = dictionary(hTable.UserData.visibleRows, (1:height(hTable.Data))');
+                for ii = 1:height(styleConfigurations)
+                    targetIndexes = styleConfigurations.TargetIndex{ii};
+                    targetVisibleIndexes = isKey(d, targetIndexes(:, 1));
+                    
+                    if any(targetVisibleIndexes)
+                        targetIndexes = targetIndexes(targetVisibleIndexes, :);
+                        targetIndexes(:, 1) = d(targetIndexes(:, 1));
+                        addStyle(hTable, styleConfigurations.Style(ii), styleConfigurations.Target(ii), targetIndexes)
+                    end
                 end
             end
         end
@@ -1178,10 +1200,10 @@ classdef winECD_exported < matlab.apps.AppBase
             end
 
             % Lista atual de estilos:
-            selectedECD = selectedECDObject(app);
-            renderedTableIDStyleIndex = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
-            if isempty(renderedTableIDStyleIndex)
-                renderedTableIDStyleIndex = numel(selectedECD.GUI.tableView)+1;
+            selectedECD  = selectedECDObject(app);
+            tableIDIndex = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
+            if isempty(tableIDIndex)
+                tableIDIndex = numel(selectedECD.GUI.tableView)+1;
             end
             
             % Estilo novo:
@@ -1255,33 +1277,24 @@ classdef winECD_exported < matlab.apps.AppBase
                 s.(fieldName) = fieldValue{1};
             end
 
-            addStyle(clickedTable, s, "cell", clickedTable.Selection)            
-            filterStyleIndex1 = find(clickedTable.StyleConfigurations.Target == "row");
-            if ~isempty(filterStyleIndex1)
-                filterStyle = clickedTable.StyleConfigurations(filterStyleIndex1(end), :);
-
-                removeStyle(clickedTable, filterStyleIndex1)
-                addStyle(clickedTable, filterStyle.Style(1), "row", filterStyle.TargetIndex{1})
+            if event.Source == app.FontIcon
+                s.("IconAlignment") = 'leftmargin';
             end
 
+            addStyle(clickedTable, s, "cell", clickedTable.Selection)
             if strcmp(app.SheetView_First.Value, app.SheetView_Second.Value)
                 otherTable = setdiff([app.UITable1, app.UITable2], clickedTable);
                 addStyle(otherTable, s, "cell", clickedTable.Selection)
-
-                filterStyleIndex2 = find(otherTable.StyleConfigurations.Target == "row");
-                if ~isempty(filterStyleIndex2)
-                    filterStyle = otherTable.StyleConfigurations(filterStyleIndex2(end), :);
-    
-                    removeStyle(otherTable, filterStyleIndex2)
-                    addStyle(otherTable, filterStyle.Style(1), "row", filterStyle.TargetIndex{1})
-                end
             end
-            
-            selectedECD.GUI.tableView(renderedTableIDStyleIndex).id = tableId;
-            selectedECD.GUI.tableView(renderedTableIDStyleIndex).style = clickedTable.StyleConfigurations(clickedTable.StyleConfigurations.Target == "cell", :);
 
-            clickedTable.StyleConfigurations.Style(end)
-            selectedECD.GUI.tableView(renderedTableIDStyleIndex).style
+            styleConfigurations = clickedTable.StyleConfigurations;
+            d = dictionary((1:height(clickedTable.Data))', clickedTable.UserData.visibleRows);
+            for ii = 1:height(styleConfigurations)
+                styleConfigurations.TargetIndex{ii}(:, 1) = d(styleConfigurations.TargetIndex{ii}(:, 1));
+            end
+
+            selectedECD.GUI.tableView(tableIDIndex).id = tableId;
+            selectedECD.GUI.tableView(tableIDIndex).style = styleConfigurations;         
             
         end
 
@@ -1404,16 +1417,20 @@ classdef winECD_exported < matlab.apps.AppBase
         % Value changed function: ColumnWidth
         function TableColumnWidthChanged(app, event)
             
-            if ~isempty(app.ColumnWidth.Value)
-                hTable = onFocusTable(app);
+            if ~isempty(event.Source.Value)
+                if isfield(event, 'TableHandle')
+                    hTable = event.TableHandle;
+                else
+                    hTable = onFocusTable(app);
+                end
 
-                if isequal(hTable.ColumnWidth, app.ColumnWidth.Value)
-                    widthOptions = setdiff(app.ColumnWidth.Items, {'', app.ColumnWidth.Value});
+                if isequal(hTable.ColumnWidth, event.Source.Value)
+                    widthOptions = setdiff(event.Source.Items, {'', event.Source.Value});
                     hTable.ColumnWidth = widthOptions{1};
                     drawnow
                 end
 
-                hTable.ColumnWidth = app.ColumnWidth.Value;
+                hTable.ColumnWidth = event.Source.Value;
                 app.ColumnWidth.Value = '';
             end
             
