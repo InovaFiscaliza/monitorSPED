@@ -51,6 +51,52 @@ classdef projectLib < handle
         end
 
         %-----------------------------------------------------------------%
+        function Save(obj, fileName, projectName, ecdObj)
+            version = 1;
+            projectData = obj;
+            save(fileName, 'version', 'projectData', 'ecdObj', '-mat', '-v7', '-nocompression')
+
+            obj.name = projectName;
+            obj.file = fileName;
+        end
+
+        %-----------------------------------------------------------------%
+        function ecdObj = Load(obj, fileName)
+            % Em 10/12/2025, a versão 1 do projeto contempla instâncias das 
+            % classes model.ECD e model.projectLib. Ao ler um arquivo .mat, 
+            % usando função "load", o MATLAB realiza validações simples, como
+            % adicionar novas propriedades (com valores padrão) ou remover 
+            % outras que não existem mais (independentemente do seu conteúdo). 
+
+            % A seguir lista com principais propriedades de cada classe.
+            % • model.ECD
+            %   "FileName", "FileFullName", "Size", "Hash", "Encoding", "EncodingInfo", 
+            %   "Content", "Layout", "Table", "CompanyName", "CompanyId", "CompanyInfo", 
+            %   "State", "Period", "PeriodMerged", "Sources" e "GUI".            
+            % • model.projectLib
+            %   "name", "file", "report", "modules" e "INSS".
+
+            % A alteração da forma de organização da informação no app pode 
+            % demandar a criação de outras versões (2, 3...) do arquivo de 
+            % projeto (.monitorSPED), o que deve vir acompanhado de parsers 
+            % para manter compatibilidade, caso viável.
+
+            load(fileName, '-mat', 'version', 'projectData', 'ecdObj')
+            switch version
+                case 1
+                    props = properties(projectData);
+                    for ii = 1:numel(props)
+                        if isprop(obj, props) && isequal(class(projectData.(props{ii})), class(obj.(props{ii})))
+                            obj.(props{ii}) = projectData.(props{ii});
+                        end
+                    end
+
+                otherwise
+                    error('UnexpectedVersion')
+            end
+        end
+
+        %-----------------------------------------------------------------%
         function Restart(obj)
             % ...
 

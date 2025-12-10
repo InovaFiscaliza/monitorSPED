@@ -10,7 +10,9 @@ classdef winECD_exported < matlab.apps.AppBase
         Toolbar               matlab.ui.container.GridLayout
         tool_UploadFinalFile  matlab.ui.control.Image
         tool_GenerateReport   matlab.ui.control.Image
-        tool_Separator        matlab.ui.control.Image
+        tool_Separator2       matlab.ui.control.Image
+        tool_SaveProject      matlab.ui.control.Image
+        tool_Separator1       matlab.ui.control.Image
         tool_AutoFill         matlab.ui.control.Image
         tool_AccountEdition   matlab.ui.control.Image
         tool_CompanyInfo      matlab.ui.control.Label
@@ -108,6 +110,16 @@ classdef winECD_exported < matlab.apps.AppBase
                 switch event.HTMLEventName
                     case 'renderer'
                         startup_Controller(app)
+
+                    case 'customForm'
+                        switch event.HTMLEventData.uuid
+                            case 'eFiscalizaSignInPage'
+                                context = event.HTMLEventData.context;
+                                report_uploadInfoController(app.mainApp, event.HTMLEventData, 'uploadDocument', context)
+
+                            case 'onProjectSave'
+                                report_saveProject(app.mainApp, event.HTMLEventData.projectName)
+                        end
 
                     case 'getCssPropertyValue'
                         if ~isempty(event.HTMLEventData.componentName)
@@ -1531,6 +1543,15 @@ classdef winECD_exported < matlab.apps.AppBase
             ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDFilter', 'ECD', fileIndex, tableIdList, selectedTableId)
 
         end
+
+        % Image clicked function: tool_SaveProject
+        function tool_SaveProjectImageClicked(app, event)
+            
+            context = 'ECD';
+            dialogBox = struct('id', 'projectName', 'label', 'Nome do projeto:', 'type', 'text');            
+            sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'onProjectSave', 'Fields', dialogBox, 'Context', context))
+
+        end
     end
 
     % Component initialization
@@ -2083,7 +2104,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create Toolbar
             app.Toolbar = uigridlayout(app.GridLayout);
-            app.Toolbar.ColumnWidth = {'1x', 22, 22, 5, 22, 22};
+            app.Toolbar.ColumnWidth = {'1x', 22, 22, 5, 22, 5, 22, 22};
             app.Toolbar.RowHeight = {4, 17, 2};
             app.Toolbar.ColumnSpacing = 5;
             app.Toolbar.RowSpacing = 0;
@@ -2122,13 +2143,31 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_AutoFill.Layout.Column = 3;
             app.tool_AutoFill.ImageSource = 'AutoFill_36Blue.png';
 
-            % Create tool_Separator
-            app.tool_Separator = uiimage(app.Toolbar);
-            app.tool_Separator.ScaleMethod = 'none';
-            app.tool_Separator.Enable = 'off';
-            app.tool_Separator.Layout.Row = [1 3];
-            app.tool_Separator.Layout.Column = 4;
-            app.tool_Separator.ImageSource = 'LineV.svg';
+            % Create tool_Separator1
+            app.tool_Separator1 = uiimage(app.Toolbar);
+            app.tool_Separator1.ScaleMethod = 'none';
+            app.tool_Separator1.Enable = 'off';
+            app.tool_Separator1.Layout.Row = [1 3];
+            app.tool_Separator1.Layout.Column = 4;
+            app.tool_Separator1.ImageSource = 'LineV.svg';
+
+            % Create tool_SaveProject
+            app.tool_SaveProject = uiimage(app.Toolbar);
+            app.tool_SaveProject.ScaleMethod = 'none';
+            app.tool_SaveProject.ImageClickedFcn = createCallbackFcn(app, @tool_SaveProjectImageClicked, true);
+            app.tool_SaveProject.Enable = 'off';
+            app.tool_SaveProject.Tooltip = {'Salvo projeto'};
+            app.tool_SaveProject.Layout.Row = 2;
+            app.tool_SaveProject.Layout.Column = 5;
+            app.tool_SaveProject.ImageSource = 'saveFile_18.png';
+
+            % Create tool_Separator2
+            app.tool_Separator2 = uiimage(app.Toolbar);
+            app.tool_Separator2.ScaleMethod = 'none';
+            app.tool_Separator2.Enable = 'off';
+            app.tool_Separator2.Layout.Row = [1 3];
+            app.tool_Separator2.Layout.Column = 6;
+            app.tool_Separator2.ImageSource = 'LineV.svg';
 
             % Create tool_GenerateReport
             app.tool_GenerateReport = uiimage(app.Toolbar);
@@ -2137,14 +2176,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_GenerateReport.Enable = 'off';
             app.tool_GenerateReport.Tooltip = {'Gera relatório análise'};
             app.tool_GenerateReport.Layout.Row = 2;
-            app.tool_GenerateReport.Layout.Column = 5;
+            app.tool_GenerateReport.Layout.Column = 7;
             app.tool_GenerateReport.ImageSource = 'Publish_HTML_16.png';
 
             % Create tool_UploadFinalFile
             app.tool_UploadFinalFile = uiimage(app.Toolbar);
             app.tool_UploadFinalFile.Enable = 'off';
             app.tool_UploadFinalFile.Layout.Row = 2;
-            app.tool_UploadFinalFile.Layout.Column = 6;
+            app.tool_UploadFinalFile.Layout.Column = 8;
             app.tool_UploadFinalFile.ImageSource = 'Up_24.png';
 
             % Create DockModule

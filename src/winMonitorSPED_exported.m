@@ -174,6 +174,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                     webWin = struct(struct(struct(app.UIFigure).Controller).PlatformHost).CEF;
                                     webWin.openDevTools();
                                 end
+
+                            case 'onProjectSave'
+                                report_saveProject(app, event.HTMLEventData.projectName)
                         end
 
                     case 'getNavigatorBasicInformation'
@@ -856,7 +859,24 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
     methods
         %-----------------------------------------------------------------%
         % SISTEMA DE GESTÃO DA FISCALIZAÇÃO (eFiscaliza/SEI)
-        %-----------------------------------------------------------------%                
+        %-----------------------------------------------------------------%
+        function report_saveProject(app, projectName)
+            nameFormatMap = {'*.monitorSPED', '(*.monitorSPED)'};
+            defaultName   = class.Constants.DefaultFileName(app.General.fileFolder.userPath, 'ProjectData', -1);
+            fileFullPath  = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', nameFormatMap, defaultName);
+
+            if isempty(fileFullPath)
+                return
+            end
+
+            try
+                Save(app.projectData, fileFullPath, projectName, app.ecdObj)
+            catch ME
+                appUtil.modalWindow(app.UIFigure, 'error', ME.message);
+            end
+        end
+
+        %-----------------------------------------------------------------%
         function status = report_checkEFiscalizaIssueId(app, issue)
             status = (issue > 0) && (issue < inf);
         end
