@@ -112,14 +112,7 @@ classdef winECD_exported < matlab.apps.AppBase
                         startup_Controller(app)
 
                     case 'customForm'
-                        switch event.HTMLEventData.uuid
-                            case 'eFiscalizaSignInPage'
-                                context = event.HTMLEventData.context;
-                                report_uploadInfoController(app.mainApp, event.HTMLEventData, 'uploadDocument', context)
-
-                            case 'onProjectSave'
-                                report_saveProject(app.mainApp, event.HTMLEventData.projectName)
-                        end
+                        ipcMainJSEventsHandler(app.mainApp, event)
 
                     case 'getCssPropertyValue'
                         if ~isempty(event.HTMLEventData.componentName)
@@ -405,6 +398,7 @@ classdef winECD_exported < matlab.apps.AppBase
                                       'Data', [])
                     app.UITable1_CountText.Text  = ' CONTAGEM : 0';
                     app.UITable1_FilterText.Text = '0 DE 0 ';
+                    set(app.UITable1_FilterIcon, 'ImageSource', 'FilterGray_18.png', 'Tooltip', '')
                 end
 
                 if ~isempty(app.UITable2.Data)
@@ -414,6 +408,7 @@ classdef winECD_exported < matlab.apps.AppBase
                                       'Data', [])
                     app.UITable2_CountText.Text  = ' CONTAGEM : 0';
                     app.UITable2_FilterText.Text = '0 DE 0 ';
+                    set(app.UITable2_FilterIcon, 'ImageSource', 'FilterGray_18.png', 'Tooltip', '')
                 end
             end
 
@@ -574,6 +569,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             app.tool_AccountEdition.Enable  = hasSpecificNonEmptyTable;
             app.tool_AutoFill.Enable        = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', {app.SheetView_First.Value, app.SheetView_Second.Value});
+            app.tool_SaveProject.Enable     = nonEmptyECDObject;
             app.tool_GenerateReport.Enable  = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO');
             app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated;
         end
@@ -657,7 +653,7 @@ classdef winECD_exported < matlab.apps.AppBase
                         'ColumnEditable', columnEditable, ...
                         'RowName', rowNames, ...
                         'Data', tableIdData(visibleRows, :))
-            drawnow
+            pause(.250) % drawnow
             hTable.UserData.TableId = tableId;
             hTable.UserData.visibleRows = visibleRows;
 
@@ -1548,7 +1544,7 @@ classdef winECD_exported < matlab.apps.AppBase
         function tool_SaveProjectImageClicked(app, event)
             
             context = 'ECD';
-            dialogBox = struct('id', 'projectName', 'label', 'Nome do projeto:', 'type', 'text');            
+            dialogBox = struct('id', 'projectName', 'label', 'Nome do projeto:', 'type', 'text', 'defaultValue', app.projectData.name);            
             sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'onProjectSave', 'Fields', dialogBox, 'Context', context))
 
         end
@@ -1685,14 +1681,14 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create ExportButton
             app.ExportButton = uibutton(app.Tab1Grid, 'push');
             app.ExportButton.ButtonPushedFcn = createCallbackFcn(app, @Toolbar_ExportExportExcelClicked, true);
-            app.ExportButton.Icon = 'Export_16.png';
+            app.ExportButton.Icon = 'Export_24.png';
             app.ExportButton.IconAlignment = 'top';
             app.ExportButton.BackgroundColor = [0.9608 0.9608 0.9608];
             app.ExportButton.FontSize = 10;
             app.ExportButton.Enable = 'off';
             app.ExportButton.Layout.Row = [1 2];
             app.ExportButton.Layout.Column = 6;
-            app.ExportButton.Text = {'.xlsx'; '.rtf'};
+            app.ExportButton.Text = '.xlsx .rtf';
 
             % Create LogButton
             app.LogButton = uibutton(app.Tab1Grid, 'push');
@@ -2156,7 +2152,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_SaveProject.ScaleMethod = 'none';
             app.tool_SaveProject.ImageClickedFcn = createCallbackFcn(app, @tool_SaveProjectImageClicked, true);
             app.tool_SaveProject.Enable = 'off';
-            app.tool_SaveProject.Tooltip = {'Salvo projeto'};
+            app.tool_SaveProject.Tooltip = {'Salva o projeto'};
             app.tool_SaveProject.Layout.Row = 2;
             app.tool_SaveProject.Layout.Column = 5;
             app.tool_SaveProject.ImageSource = 'saveFile_18.png';
@@ -2182,6 +2178,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create tool_UploadFinalFile
             app.tool_UploadFinalFile = uiimage(app.Toolbar);
             app.tool_UploadFinalFile.Enable = 'off';
+            app.tool_UploadFinalFile.Tooltip = {'Upload relatório'};
             app.tool_UploadFinalFile.Layout.Row = 2;
             app.tool_UploadFinalFile.Layout.Column = 8;
             app.tool_UploadFinalFile.ImageSource = 'Up_24.png';

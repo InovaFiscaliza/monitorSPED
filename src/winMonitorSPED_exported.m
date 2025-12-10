@@ -176,7 +176,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 end
 
                             case 'onProjectSave'
-                                report_saveProject(app, event.HTMLEventData.projectName)
+                                context = event.HTMLEventData.context;
+                                prjName = event.HTMLEventData.projectName;
+                                report_saveProject(app, context, prjName)
                         end
 
                     case 'getNavigatorBasicInformation'
@@ -860,20 +862,28 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         % SISTEMA DE GESTÃO DA FISCALIZAÇÃO (eFiscaliza/SEI)
         %-----------------------------------------------------------------%
-        function report_saveProject(app, projectName)
-            nameFormatMap = {'*.monitorSPED', '(*.monitorSPED)'};
-            defaultName   = class.Constants.DefaultFileName(app.General.fileFolder.userPath, 'ProjectData', -1);
-            fileFullPath  = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', nameFormatMap, defaultName);
-
-            if isempty(fileFullPath)
+        function report_saveProject(app, context, prjName)
+            if isfile(app.projectData.file)
+                [defaultPath, defaultFile] = fileparts(app.projectData.file);
+                defaultName = fullfile(defaultPath, defaultFile);
+            else
+                defaultName = class.Constants.DefaultFileName(app.General.fileFolder.userPath, 'ProjectData', -1);
+            end
+            
+            prjFile = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', {'*.mat', 'monitorSPED (*.mat)'}, defaultName);
+            if isempty(prjFile)
                 return
             end
 
+            app.progressDialog.Visible = 'visible';
+
             try
-                Save(app.projectData, fileFullPath, projectName, app.ecdObj)
+                Save(app.projectData, app.ecdObj, context, prjName, prjFile)
             catch ME
                 appUtil.modalWindow(app.UIFigure, 'error', ME.message);
             end
+
+            app.progressDialog.Visible = 'hidden';
         end
 
         %-----------------------------------------------------------------%
@@ -1078,8 +1088,21 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 return
             end
 
-            if ~strcmp(app.executionMode, 'webApp') && ~isempty(app.ecdObj)
-                msgQuestion   = 'Deseja fechar o aplicativo?';
+            msgQuestion = '';
+            if CheckIfUpdateNeeded(app.projectData, app.ecdObj)
+                msgQuestion = sprintf([ ...
+                    'O projeto "%s" foi modificado (nome, arquivo de saída, ' ...
+                    'lista de arquivos de entrada ou tabelas de anotação das ' ...
+                    'contas de resultado). Caso o aplicativo seja encerrado ' ...
+                    'agora, todas as alterações serão descartadas.\n\n' ...
+                    'Deseja realmente fechar o aplicativo?' ...
+                    ], app.projectData.name);
+            
+            elseif ~strcmp(app.executionMode, 'webApp') && ~isempty(app.ecdObj)
+                msgQuestion = 'Deseja fechar o aplicativo?';
+            end
+
+            if ~isempty(msgQuestion)                
                 userSelection = appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
                 if userSelection == "Não"
                     return
@@ -1187,15 +1210,21 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             else
                 switch app.General.File.input
                     case 'file'
-                        [fileName, filePath] = uigetfile({'*.txt;*.sped', '(.txt, .sped)'; '*.mat', '(.mat)'}, ...
-                                                          '', app.General.fileFolder.lastVisited, 'MultiSelect', 'on');
-                        figure(app.UIFigure)
+                        [~, filePath, ~, fileName] = appUtil.modalWindow( ...
+                            app.UIFigure, ...
+                            'uigetfile', ...
+                            '', ...
+                            {'*.txt;*.sped', 'Raw files (.txt, .sped)'; '*.mat', 'Project files (.mat)'}, ...
+                            app.General.fileFolder.lastVisited, ...
+                            {'MultiSelect', 'on'} ...
+                        );
             
-                        if isequal(fileName, 0)
+                        if isempty(fileName)
                             return
-                        elseif ~iscellstr(fileName)
-                            fileName = cellstr(fileName);
+                        elseif ~iscell(fileName)
+                            fileName = {fileName};
                         end
+
                         fileFullName = util.getFilesFromCompressedFile(fullfile(filePath, fileName), app.General.fileFolder.tempPath);
     
                     case 'folder'
@@ -1224,7 +1253,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 % Verifica se arquivo já foi lido, comparando o seu nome com 
                 % a variável app.ecdObj.
                 if ~ismember(fileName{ii}, {app.ecdObj.FileName})
-                    [app.ecdObj, msg] = addFiles(app.ecdObj, app.projectData, app.General, fileFullName{ii}, [], app.receitaFederalObj);
+                    [~, ~, fileExt] = fileparts(fileFullName{ii});
+                    switch fileExt
+                        case {'.txt', '.sped'}
+                            [app.ecdObj, msg] = addFiles(app.ecdObj, app.projectData, app.General, fileFullName{ii}, [], app.receitaFederalObj);
+                        
+                        case '.mat'
+                            [app.ecdObj, msg] = Load(app.projectData, app.ecdObj, fileFullName{ii});
+                    end
 
                     if ~isempty(msg)
                         filesError(end+1) = struct('File', sprintf('"%s"', fileName{ii}), 'Error', msg);
