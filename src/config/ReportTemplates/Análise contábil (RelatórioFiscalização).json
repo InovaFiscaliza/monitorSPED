@@ -598,7 +598,7 @@
                                 "Width": "auto"
                             }
                         ],
-                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A tabela a seguir apresenta as contas de resultado que foram classificadas como \\\"Sim\\\", \\\"ICMS Telecom\\\", \\\"PIS Telecom\\\" ou \\\"COFINS Telecom\\\" com a sua descrição completa, incluindo a descrição das contas sintéticas superiores, além da alíquota aplicável do ICMS e uma observação livre, eventualmente inserida pelo fiscal.\"}",
+                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A tabela a seguir apresenta as contas de resultado classificadas como \\\"Sim\\\", \\\"ICMS Telecom\\\", \\\"PIS Telecom\\\" ou \\\"COFINS Telecom\\\", acompanhadas de sua descrição completa, incluindo as descrições das contas sintéticas superiores, a alíquota aplicável do ICMS e uma observação livre, eventualmente inserida pelo fiscal.\"}",
                         "Error": [],
                         "LineBreak": 1
                     }

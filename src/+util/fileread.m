@@ -1,7 +1,7 @@
 function [content, filesize, encoding, encodingJson, hashHex, bigFileWarning] = fileread(fileFullName, encodingList)
     arguments
         fileFullName (1,:) char
-        encodingList (1,:) cell = {'UTF-8', 'ISO-8859-1'}
+        encodingList (1,:) cell = {'ISO-8859-1', 'UTF-8'}
     end
 
     fileID = fopen(fileFullName, 'r');
@@ -34,7 +34,7 @@ function [content, filesize, encoding, encodingJson, hashHex, bigFileWarning] = 
     end
 
     for ii = 1:numel(encodingList)
-        rawDecoded = native2unicode(byteArray(1:min(filesize, 2^30-1)), encodingList{ii});
+        rawDecoded = lower(native2unicode(byteArray(1:min(filesize, 2^30-1)), encodingList{ii}));
         numSpecialChars = cellfun(@(x) numel(strfind(rawDecoded, x)), textAnalysis.specialMain);
         encodingInfo(end+1, :) = {encodingList{ii}, sum(numSpecialChars > 0), sum(numSpecialChars)};
     end
@@ -44,12 +44,7 @@ function [content, filesize, encoding, encodingJson, hashHex, bigFileWarning] = 
     encodingJson = jsonencode(encodingInfo);
 
     if isempty(bigFileWarning)
-        if strcmp(encoding, encodingList{end})
-            content = rawDecoded;
-        else
-            content = native2unicode(byteArray, encoding);
-        end
-
+        content = native2unicode(byteArray, encoding);
     else
         byteArray = [];
         content = fileread(fileFullName, 'Encoding', encoding);

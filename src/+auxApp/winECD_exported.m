@@ -548,13 +548,21 @@ classdef winECD_exported < matlab.apps.AppBase
         function updateToolbar(app, selectedECD)
             context = 'ECD';
 
+            % A tabela "x_CONTAS_ANOTACAO" é composta pelas contas analíticas
+            % de resultado que compõem "_BALANCETE_RESULTADO". Por essa razão, 
+            % caso essa tabela não seja vazia, infere-se que é possível
+            % classificar as contas, gerar relatório etc.
+
+            % Por outro lado, caso não tenha sido registrado fato contábil,
+            % essa tabela será vazia.
+
             nonEmptyECDObject               = ~isempty(selectedECD);
             hasSpecificNonEmptyTable        = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);
             reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(context).generatedFiles.lastHTMLDocFullPath);
 
             app.tool_AccountEdition.Enable  = hasSpecificNonEmptyTable;
             app.tool_AutoFill.Enable        = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', {app.SheetView_First.Value, app.SheetView_Second.Value});
-            app.tool_GenerateReport.Enable  = nonEmptyECDObject;
+            app.tool_GenerateReport.Enable  = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO');
             app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated;
         end
 
