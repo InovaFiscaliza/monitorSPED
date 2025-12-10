@@ -170,11 +170,14 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
         function CheckAndAddFilter(app)
             selectedECD  = app.ecdObj(app.inputArgs.index);
             tableId      = app.TableIdList.Value;
-            filterIndex  = checkTableCustomFilter(app, selectedECD, tableId, 'basic');
+            
+            [filterIndex, filterStatus] = checkTableCustomFilter(app, selectedECD, tableId, 'basic');
 
             if isempty(filterIndex)
                 filterIndex = numel(selectedECD.GUI.tableView) + 1;
+            end
 
+            if ~filterStatus
                 selectedECD.GUI.tableView(filterIndex).id     = tableId;
                 selectedECD.GUI.tableView(filterIndex).filter = tableFiltering;
             end
