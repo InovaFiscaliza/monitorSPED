@@ -604,9 +604,10 @@ classdef winECD_exported < matlab.apps.AppBase
             tableIdData    = selectedECD.Table.(tableIdField);
             
             % Filtra, caso aplicável.
-            tableIdIndex   = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
-            if ~isempty(tableIdIndex) && ~isempty(selectedECD.GUI.tableView(tableIdIndex).filter) && ~isempty(selectedECD.GUI.tableView(tableIdIndex).filter.filterRules(selectedECD.GUI.tableView(tableIdIndex).filter.filterRules.Enable, :))
-                filterObj   = selectedECD.GUI.tableView(tableIdIndex).filter;
+            [filterIndex, filterStatus] = checkTableCustomFilter(app, selectedECD, tableId, 'active');
+
+            if filterStatus
+                filterObj   = selectedECD.GUI.tableView(filterIndex).filter;
                 visibleRows = find(run(filterObj, 'filterRules', tableIdData));                
                 filterIconTooltip = strjoin(getFilterList(filterObj, ['ECD.x' tableId], 'on'), '\n');
             else
@@ -739,24 +740,63 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
+        function d = getRowIndexMapping(app, direction, hTable)
+            arguments
+                app
+                direction char {mustBeMember(direction, {'guiToModel', 'modelToGui'})}
+                hTable
+            end
+
+            switch direction
+                case 'guiToModel'
+                    d = dictionary((1:height(hTable.Data))', hTable.UserData.visibleRows);
+                case 'modelToGui'
+                    d = dictionary(hTable.UserData.visibleRows, (1:height(hTable.Data))');                    
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function [index, status] = checkTableCustomStyle(app, selectedECD, tableId)
+            index  = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
+            status = ~isempty(index) && ~isempty(selectedECD.GUI.tableView(index).style);
+        end
+
+        %-----------------------------------------------------------------%
+        function [index, status] = checkTableCustomFilter(app, selectedECD, tableId, statusType)
+            arguments
+                app
+                selectedECD
+                tableId
+                statusType char {mustBeMember(statusType, {'basic', 'active'})}
+            end
+
+            index  = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
+            status = ~isempty(index) && ~isempty(selectedECD.GUI.tableView(index).filter);
+            if strcmp(statusType, 'active')
+                status = status && ~isempty(selectedECD.GUI.tableView(index).filter.filterRules(selectedECD.GUI.tableView(index).filter.filterRules.Enable, :));
+            end
+        end
+
+        %-----------------------------------------------------------------%
         function applyTableStyle(app, selectedECD, hTable, tableId)
             if ~isempty(hTable.StyleConfigurations)
                 removeStyle(hTable)
             end
-            
-            tableIdIndex = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
 
-            if ~isempty(tableIdIndex) && ~isempty(selectedECD.GUI.tableView(tableIdIndex).style)
-                styleConfigurations = selectedECD.GUI.tableView(tableIdIndex).style;
-                d = dictionary(hTable.UserData.visibleRows, (1:height(hTable.Data))');
-                for ii = 1:height(styleConfigurations)
-                    targetIndexes = styleConfigurations.TargetIndex{ii};
+            [styleIndex, styleStatus] = checkTableCustomStyle(app, selectedECD, tableId);
+
+            if styleStatus
+                d = getRowIndexMapping(app, 'modelToGui', hTable);
+                
+                styleConfig = selectedECD.GUI.tableView(styleIndex).style;                
+                for ii = 1:height(styleConfig)
+                    targetIndexes = styleConfig.TargetIndex{ii};
                     targetVisibleIndexes = isKey(d, targetIndexes(:, 1));
                     
                     if any(targetVisibleIndexes)
                         targetIndexes = targetIndexes(targetVisibleIndexes, :);
                         targetIndexes(:, 1) = d(targetIndexes(:, 1));
-                        addStyle(hTable, styleConfigurations.Style(ii), styleConfigurations.Target(ii), targetIndexes)
+                        addStyle(hTable, styleConfig.Style(ii), styleConfig.Target(ii), targetIndexes)
                     end
                 end
             end
@@ -1201,9 +1241,9 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Lista atual de estilos:
             selectedECD  = selectedECDObject(app);
-            tableIDIndex = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
-            if isempty(tableIDIndex)
-                tableIDIndex = numel(selectedECD.GUI.tableView)+1;
+            styleIndex = checkTableCustomStyle(app, selectedECD, tableId);
+            if isempty(styleIndex)
+                styleIndex = numel(selectedECD.GUI.tableView)+1;
             end
             
             % Estilo novo:
@@ -1260,11 +1300,11 @@ classdef winECD_exported < matlab.apps.AppBase
             end
 
             % Verifica se já existe estilo aplicado às células selecionadas:
-            styleIndex = find(cellfun(@(x) isequal(clickedTable.Selection, x), clickedTable.StyleConfigurations.TargetIndex));
-            if ~isempty(styleIndex)
-                styleIndex = styleIndex(end);
-                s = clickedTable.StyleConfigurations.Style(styleIndex);                
-                removeStyle(clickedTable, styleIndex)
+            previousStyleIndex = find(cellfun(@(x) isequal(clickedTable.Selection, x), clickedTable.StyleConfigurations.TargetIndex));
+            if ~isempty(previousStyleIndex)
+                previousStyleIndex = previousStyleIndex(end);
+                s = clickedTable.StyleConfigurations.Style(previousStyleIndex);                
+                removeStyle(clickedTable, previousStyleIndex)
             else
                 s = uistyle();
             end
@@ -1287,39 +1327,46 @@ classdef winECD_exported < matlab.apps.AppBase
                 addStyle(otherTable, s, "cell", clickedTable.Selection)
             end
 
-            styleConfigurations = clickedTable.StyleConfigurations;
-            d = dictionary((1:height(clickedTable.Data))', clickedTable.UserData.visibleRows);
-            for ii = 1:height(styleConfigurations)
-                styleConfigurations.TargetIndex{ii}(:, 1) = d(styleConfigurations.TargetIndex{ii}(:, 1));
+            d = getRowIndexMapping(app, 'guiToModel', clickedTable);
+
+            styleConfig = clickedTable.StyleConfigurations;
+            for ii = 1:height(styleConfig)
+                styleConfig.TargetIndex{ii}(:, 1) = d(styleConfig.TargetIndex{ii}(:, 1));
             end
 
-            selectedECD.GUI.tableView(tableIDIndex).id = tableId;
-            selectedECD.GUI.tableView(tableIDIndex).style = styleConfigurations;         
+            selectedECD.GUI.tableView(styleIndex).id = tableId;
+            selectedECD.GUI.tableView(styleIndex).style = styleConfig;         
             
         end
 
         % Image clicked function: StyleDelete, StyleRefresh
         function TableStyleDeleteOrRefresh(app, event)
             
+            selectedECD  = selectedECDObject(app);            
             clickedTable = onFocusTable(app);
-            if isempty(clickedTable.Selection)
-                return
-            end
-
-            selectedECD = selectedECDObject(app);
-            
             switch clickedTable
-                case app.UITable1; tableId = app.SheetView_First.Value;
-                case app.UITable2; tableId = app.SheetView_Second.Value;
+                case app.UITable1
+                    tableId = app.SheetView_First.Value;
+                case app.UITable2
+                    tableId = app.SheetView_Second.Value;
             end
 
             % Lista atual de estilos:
-            renderedTableIDStyleIndex = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
-            if ~isempty(renderedTableIDStyleIndex)
+            [styleIndex, styleStatus] = checkTableCustomStyle(app, selectedECD, tableId);
+
+            if styleStatus
                 switch event.Source
                     case app.StyleDelete
-                        currentStyleTable   = selectedECD.GUI.tableView(renderedTableIDStyleIndex).style;
-                        userCellSelection   = clickedTable.Selection;
+                        if isempty(clickedTable.Selection)
+                            return
+                        end
+
+                        d = getRowIndexMapping(app, 'guiToModel', clickedTable);
+
+                        currentStyleTable = selectedECD.GUI.tableView(styleIndex).style;
+                        userCellSelection = clickedTable.Selection;
+                        userCellSelection(:, 1) = d(userCellSelection(:, 1));
+
                         rerenderizationFlag = false;
 
                         for ii = 1:height(userCellSelection)
@@ -1342,7 +1389,7 @@ classdef winECD_exported < matlab.apps.AppBase
                         end
 
                         if rerenderizationFlag
-                            selectedECD.GUI.tableView(renderedTableIDStyleIndex).style = currentStyleTable;
+                            selectedECD.GUI.tableView(styleIndex).style = currentStyleTable;
                             applyTableStyle(app, selectedECD, clickedTable, tableId)
 
                             if strcmp(app.SheetView_First.Value, app.SheetView_Second.Value)
@@ -1353,7 +1400,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
                     case app.StyleRefresh
                         removeStyle(clickedTable)
-                        selectedECD.GUI.tableView(renderedTableIDStyleIndex) = [];
+                        selectedECD.GUI.tableView(styleIndex).style = {};
 
                         if strcmp(app.SheetView_First.Value, app.SheetView_Second.Value)
                             otherTable = setdiff([app.UITable1, app.UITable2], clickedTable);

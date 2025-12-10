@@ -130,10 +130,11 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
 
             selectedECD  = app.ecdObj(app.inputArgs.index);
             tableId      = app.TableIdList.Value;
-            tableIdIndex = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
 
-            if ~isempty(tableIdIndex) && ~isempty(selectedECD.GUI.tableView(tableIdIndex).filter)
-                filterObj    = selectedECD.GUI.tableView(tableIdIndex).filter;
+            [filterIndex, filterStatus] = checkTableCustomFilter(app, selectedECD, tableId, 'basic');
+
+            if filterStatus
+                filterObj    = selectedECD.GUI.tableView(filterIndex).filter;
                 filterList   = getFilterList(filterObj, ['ECD.x' tableId]);
                 checkedNodes = [];
 
@@ -150,16 +151,32 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
+        function [index, status] = checkTableCustomFilter(app, selectedECD, tableId, statusType)
+            arguments
+                app
+                selectedECD
+                tableId
+                statusType char {mustBeMember(statusType, {'basic', 'active'})}
+            end
+
+            index  = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
+            status = ~isempty(index) && ~isempty(selectedECD.GUI.tableView(index).filter);
+            if strcmp(statusType, 'active')
+                status = status && ~isempty(selectedECD.GUI.tableView(index).filter.filterRules(selectedECD.GUI.tableView(index).filter.filterRules.Enable, :));
+            end
+        end
+
+        %-----------------------------------------------------------------%
         function CheckAndAddFilter(app)
             selectedECD  = app.ecdObj(app.inputArgs.index);
             tableId      = app.TableIdList.Value;
-            tableIdIndex = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
+            filterIndex  = checkTableCustomFilter(app, selectedECD, tableId, 'basic');
 
-            if isempty(tableIdIndex)
-                tableIdIndex = numel(selectedECD.GUI.tableView) + 1;
+            if isempty(filterIndex)
+                filterIndex = numel(selectedECD.GUI.tableView) + 1;
 
-                selectedECD.GUI.tableView(tableIdIndex).id     = tableId;
-                selectedECD.GUI.tableView(tableIdIndex).filter = tableFiltering;
+                selectedECD.GUI.tableView(filterIndex).id     = tableId;
+                selectedECD.GUI.tableView(filterIndex).filter = tableFiltering;
             end
 
             fieldName = app.ColumnList.Value;            
@@ -172,7 +189,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
                 values    = [values, {app.operation2_List.UserData.inputHandle.Value}];
             end
 
-            addFilterRule(selectedECD.GUI.tableView(tableIdIndex).filter, fieldName, operators, values, connector)
+            addFilterRule(selectedECD.GUI.tableView(filterIndex).filter, fieldName, operators, values, connector)
         end
     end
     
@@ -288,13 +305,15 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
         function ExcluirMenuSelected(app, event)
             
             selectedNodes = app.Tree.SelectedNodes;
+
             if ~isempty(selectedNodes)
-                selectedECD  = app.ecdObj(app.inputArgs.index);
-                tableId      = app.TableIdList.Value;
-                tableIdIndex = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
+                selectedECD = app.ecdObj(app.inputArgs.index);
+                tableId     = app.TableIdList.Value;
+
+                [filterIndex, filterStatus] = checkTableCustomFilter(app, selectedECD, tableId, 'basic');
     
-                if ~isempty(tableIdIndex) && ~isempty(selectedECD.GUI.tableView(tableIdIndex).filter)
-                    filterObj = selectedECD.GUI.tableView(tableIdIndex).filter;
+                if filterStatus
+                    filterObj = selectedECD.GUI.tableView(filterIndex).filter;
                     removeFilterRule(filterObj, [selectedNodes.NodeData])
                     TreeUpdate(app)
 
@@ -361,12 +380,13 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
         % Callback function: Tree
         function TreeCheckedNodesChanged(app, event)
             
-            selectedECD  = app.ecdObj(app.inputArgs.index);
-            tableId      = app.TableIdList.Value;
-            tableIdIndex = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
+            selectedECD = app.ecdObj(app.inputArgs.index);
+            tableId     = app.TableIdList.Value;
+
+            [filterIndex, filterStatus] = checkTableCustomFilter(app, selectedECD, tableId, 'basic');
     
-            if ~isempty(tableIdIndex) && ~isempty(selectedECD.GUI.tableView(tableIdIndex).filter) && ~isempty(selectedECD.GUI.tableView(tableIdIndex).filter.filterRules)
-                filterObj = selectedECD.GUI.tableView(tableIdIndex).filter;
+            if filterStatus
+                filterObj = selectedECD.GUI.tableView(filterIndex).filter;
 
                 checkedNodes = [];            
                 if ~isempty(app.Tree.CheckedNodes)

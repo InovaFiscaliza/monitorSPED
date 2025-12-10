@@ -69,13 +69,5 @@ classdef (Abstract) Constants
             
             d = dictionary(names, values);
         end
-
-        %-----------------------------------------------------------------%
-        function winMinSize = WindowMinSize(auxiliarApp)
-            switch auxiliarApp
-                case 'CONFIG'
-                    winMinSize = [760, 588];
-            end
-        end
     end
 end
