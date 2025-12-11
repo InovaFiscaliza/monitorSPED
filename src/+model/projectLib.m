@@ -129,6 +129,7 @@ classdef projectLib < handle
                     case 1
                         obj.name = prjData.name;
                         obj.file = fileName;
+                        obj.hash = prjData.hash;
     
                         context = prjData.context;
                         obj.modules.(context).ui.unit = prjData.ui.unit;
@@ -137,6 +138,15 @@ classdef projectLib < handle
                         reportModel = prjData.ui.reportModel;
                         if ismember(reportModel, obj.modules.(context).ui.templates)
                             obj.modules.(context).ui.reportModel = reportModel;
+                        end
+
+                        % Pode ocorrer uma coincidência de fluxos que compõem
+                        % o projeto e fluxos já lidos. Se evidenciado, serão
+                        % mantidos os fluxos do projeto.
+                        idx = ismember({ecdObj.Hash}, {ecdData.Hash});
+                        if any(idx)
+                            delete(ecdObj(idx))
+                            ecdObj(idx) = [];
                         end
     
                         ecdObj = [ecdObj, ecdData];
@@ -207,7 +217,7 @@ classdef projectLib < handle
     methods
         %-----------------------------------------------------------------%
         function prjHash = computeProjectHash(obj, prjName, prjFile, ecdObj)
-            fileList = sort({ecdObj.FileName});
+            hashList = sort({ecdObj.Hash});
 
             annotationTable = [];            
             for ii = 1:numel(ecdObj)
@@ -224,7 +234,7 @@ classdef projectLib < handle
                 annotationTable = sortrows(annotationTable, 'COD_CTA');
             end
 
-            prjHash = Hash.sha1(sprintf('%s - %s - %s - %s', prjName, prjFile, strjoin(fileList, ' - '), jsonencode(annotationTable)));
+            prjHash = Hash.sha1(sprintf('%s - %s - %s - %s', prjName, prjFile, strjoin(hashList, ' - '), jsonencode(annotationTable)));
         end
 
         %-----------------------------------------------------------------%

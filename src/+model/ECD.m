@@ -148,6 +148,10 @@ classdef ECD < model.ECDBase
                      obj(idx).EncodingInfo, ...
                      obj(idx).Hash, bigFileWarning] = util.fileread(fileFullName, generalSettings.File.encodingList);
 
+                    if numel(obj) > 1 && ismember(obj(idx).Hash, {obj(1:end-1).Hash})
+                        error('File content has already been read')
+                    end
+
                     if ~isempty(bigFileWarning)
                         obj(idx).GUI.warnings{end+1} = jsonencode(bigFileWarning);
                     end
@@ -897,7 +901,7 @@ classdef ECD < model.ECDBase
         function update(obj, propertyName, updateType, varargin)
             arguments
                 obj
-                propertyName char {mustBeMember(propertyName, {'Table.x_CONTAS_ANOTACAO', 'Table.x_TABELA_APURACAO'})}
+                propertyName char {mustBeMember(propertyName, {'auxApp.dockECDMemoryUsage', 'Table.x_CONTAS_ANOTACAO', 'Table.x_TABELA_APURACAO'})}
                 updateType
             end
 
@@ -908,6 +912,18 @@ classdef ECD < model.ECDBase
             checkIfScalar(obj)
 
             switch propertyName
+                case 'auxApp.dockECDMemoryUsage'
+                    switch updateType
+                        case 'freeMemory'
+                            fileIndex = varargin{1};
+                            tableIdList = varargin{2};
+
+                            obj(fileIndex).Table = rmfield(obj(fileIndex).Table, strcat('x', tableIdList));
+
+                        otherwise
+                            error('UnexpectedCall')
+                    end
+
                 case 'Table.x_CONTAS_ANOTACAO'
                     switch updateType
                         case 'startup'

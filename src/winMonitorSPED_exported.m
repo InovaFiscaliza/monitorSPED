@@ -372,6 +372,24 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             otherwise
                                 error('UnexpectedCall')
                         end
+
+                    % auxApp.dockECDFilter
+                    case {'auxApp.dockECDMemoryUsage', 'auxApp.dockECDMemoryUsage_exported'}
+                        switch operationType
+                            case 'closeFcn'
+                                context  = varargin{1};
+                                varargin = [{'closeFcnCallFromDockModule'}, varargin(2:end)];
+                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
+
+                            case 'freeMemory'
+                                context  = varargin{1};
+                                varargin = [{operationType}, varargin(2:end)];
+                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
+                                return
+
+                            otherwise
+                                error('UnexpectedCall')
+                        end
     
                     otherwise
                         error('UnexpectedCaller')
@@ -409,7 +427,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             arguments
                 app
                 callingApp
-                auxAppName char {mustBeMember(auxAppName, {'ReportLib', 'ECDExport', 'ECDAccount', 'ECDFilter'})}
+                auxAppName char {mustBeMember(auxAppName, {'ReportLib', 'ECDExport', 'ECDAccount', 'ECDFilter', 'ECDMemoryUsage'})}
             end
 
             arguments (Repeating)
@@ -429,6 +447,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 case 'ECDFilter'
                     screenWidth  = 640;
                     screenHeight = 376;
+                case 'ECDMemoryUsage'
+                    screenWidth  = 460;
+                    screenHeight = 580;
             end
 
             ui.PopUpContainer(callingApp, class.Constants.appName, screenWidth, screenHeight)
@@ -1214,7 +1235,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             app.UIFigure, ...
                             'uigetfile', ...
                             '', ...
-                            {'*.txt;*.sped', 'Raw files (.txt, .sped)'; '*.mat', 'Project files (.mat)'}, ...
+                            {'*.txt;*.sped;*.mat', 'monitorSPED (.txt, .sped, .mat)'}, ...
                             app.General.fileFolder.lastVisited, ...
                             {'MultiSelect', 'on'} ...
                         );

@@ -2,75 +2,77 @@ classdef winECD_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure              matlab.ui.Figure
-        GridLayout            matlab.ui.container.GridLayout
-        DockModule            matlab.ui.container.GridLayout
-        dockModule_Undock     matlab.ui.control.Image
-        dockModule_Close      matlab.ui.control.Image
-        Toolbar               matlab.ui.container.GridLayout
-        tool_UploadFinalFile  matlab.ui.control.Image
-        tool_GenerateReport   matlab.ui.control.Image
-        tool_Separator2       matlab.ui.control.Image
-        tool_SaveProject      matlab.ui.control.Image
-        tool_Separator1       matlab.ui.control.Image
-        tool_AutoFill         matlab.ui.control.Image
-        tool_AccountEdition   matlab.ui.control.Image
-        tool_CompanyInfo      matlab.ui.control.Label
-        UITable2_AccountInfo  matlab.ui.control.Label
-        UITable2_FilterIcon   matlab.ui.control.Image
-        UITable2_FilterText   matlab.ui.control.Label
-        UITable2_CountText    matlab.ui.control.Label
-        UITable2_CountIcon    matlab.ui.control.Image
-        UITable2              matlab.ui.control.Table
-        UITable1_AccountInfo  matlab.ui.control.Label
-        UITable1_FilterIcon   matlab.ui.control.Image
-        UITable1_FilterText   matlab.ui.control.Label
-        UITable1_CountText    matlab.ui.control.Label
-        UITable1_CountIcon    matlab.ui.control.Image
-        UITable1              matlab.ui.control.Table
-        TabGroup              matlab.ui.container.TabGroup
-        Tab1                  matlab.ui.container.Tab
-        Tab1Grid              matlab.ui.container.GridLayout
-        FinanceFacts          matlab.ui.control.Label
-        Tab1Separator2        matlab.ui.control.Image
-        LogButton             matlab.ui.control.Button
-        ExportButton          matlab.ui.control.Button
-        Tab1Separator1        matlab.ui.control.Image
-        SheetList             matlab.ui.control.DropDown
-        SheetListLabel        matlab.ui.control.Label
-        TimePeriodList        matlab.ui.control.DropDown
-        TimePeriodListLabel   matlab.ui.control.Label
-        CompanyNameList       matlab.ui.control.DropDown
-        CompanyNameListLabel  matlab.ui.control.Label
-        Tab2                  matlab.ui.container.Tab
-        Tab2Grid              matlab.ui.container.GridLayout
-        Tab2Separator1_2      matlab.ui.control.Image
-        LogButton_2           matlab.ui.control.Button
-        StyleRefresh          matlab.ui.control.Image
-        StyleDelete           matlab.ui.control.Image
-        FontIconLabel         matlab.ui.control.Label
-        FontIcon              matlab.ui.control.DropDown
-        Tab2Separator3        matlab.ui.control.Image
-        FontColor             matlab.ui.control.ColorPicker
-        FontBackground        matlab.ui.control.ColorPicker
-        FontAlign3            matlab.ui.control.Image
-        FontAlign2            matlab.ui.control.Image
-        FontAlign1            matlab.ui.control.Image
-        FontStyle             matlab.ui.control.Button
-        FontWeight            matlab.ui.control.Button
-        FontFamily            matlab.ui.control.DropDown
-        Tab2Separator2        matlab.ui.control.Image
-        ColumnWidthLabel      matlab.ui.control.Label
-        ColumnWidth           matlab.ui.control.DropDown
-        RowHeightLabel        matlab.ui.control.Label
-        RowHeight             matlab.ui.control.Spinner
-        Tab2Separator1        matlab.ui.control.Image
-        SheetOnFocus          matlab.ui.control.Lamp
-        SheetHeight_Second    matlab.ui.control.Spinner
-        SheetView_Second      matlab.ui.control.DropDown
-        SheetHeight_First     matlab.ui.control.Spinner
-        SheetView_First       matlab.ui.control.DropDown
-        SheetViewStatus       matlab.ui.control.StateButton
+        UIFigure                matlab.ui.Figure
+        GridLayout              matlab.ui.container.GridLayout
+        DockModule              matlab.ui.container.GridLayout
+        dockModule_Undock       matlab.ui.control.Image
+        dockModule_Close        matlab.ui.control.Image
+        Toolbar                 matlab.ui.container.GridLayout
+        tool_UploadFinalFile    matlab.ui.control.Image
+        tool_GenerateReport     matlab.ui.control.Image
+        tool_Separator2         matlab.ui.control.Image
+        tool_SaveProject        matlab.ui.control.Image
+        tool_Separator1         matlab.ui.control.Image
+        tool_AutoFill           matlab.ui.control.Image
+        tool_AccountEdition     matlab.ui.control.Image
+        tool_CompanyInfo        matlab.ui.control.Label
+        UITable2_AccountInfo    matlab.ui.control.Label
+        UITable2_FilterIcon     matlab.ui.control.Image
+        UITable2_FilterText     matlab.ui.control.Label
+        UITable2_CountText      matlab.ui.control.Label
+        UITable2_CountIcon      matlab.ui.control.Image
+        UITable2                matlab.ui.control.Table
+        UITable1_AccountInfo    matlab.ui.control.Label
+        UITable1_FilterIcon     matlab.ui.control.Image
+        UITable1_FilterText     matlab.ui.control.Label
+        UITable1_CountText      matlab.ui.control.Label
+        UITable1_CountIcon      matlab.ui.control.Image
+        UITable1                matlab.ui.control.Table
+        TabGroup                matlab.ui.container.TabGroup
+        Tab1                    matlab.ui.container.Tab
+        Tab1Grid                matlab.ui.container.GridLayout
+        FinanceFacts            matlab.ui.control.Label
+        Tab1Separator3          matlab.ui.control.Image
+        LogButton               matlab.ui.control.Button
+        MemoryUsageButton       matlab.ui.control.Button
+        Tab1Separator2          matlab.ui.control.Image
+        ExportButton            matlab.ui.control.Button
+        Tab1Separator1          matlab.ui.control.Image
+        SheetList               matlab.ui.control.DropDown
+        SheetListLabel          matlab.ui.control.Label
+        TimePeriodList          matlab.ui.control.DropDown
+        TimePeriodListLabel     matlab.ui.control.Label
+        CompanyNameList         matlab.ui.control.DropDown
+        CompanyNameListLabel    matlab.ui.control.Label
+        Tab2                    matlab.ui.container.Tab
+        Tab2Grid                matlab.ui.container.GridLayout
+        StyleRefresh            matlab.ui.control.Image
+        StyleDelete             matlab.ui.control.Image
+        FontIconLabel           matlab.ui.control.Label
+        FontIcon                matlab.ui.control.DropDown
+        Tab2Separator4          matlab.ui.control.Image
+        FontColor               matlab.ui.control.ColorPicker
+        FontBackground          matlab.ui.control.ColorPicker
+        FontAlign3              matlab.ui.control.Image
+        FontAlign2              matlab.ui.control.Image
+        FontAlign1              matlab.ui.control.Image
+        FontStyle               matlab.ui.control.Button
+        FontWeight              matlab.ui.control.Button
+        FontFamily              matlab.ui.control.DropDown
+        Tab2Separator3          matlab.ui.control.Image
+        ColumnWidthLabel        matlab.ui.control.Label
+        ColumnWidth             matlab.ui.control.DropDown
+        RowHeightLabel          matlab.ui.control.Label
+        RowHeight               matlab.ui.control.Spinner
+        Tab2Separator2          matlab.ui.control.Image
+        OpenFilterModuleButton  matlab.ui.control.Button
+        Tab2Separator1          matlab.ui.control.Image
+        SheetOnFocus            matlab.ui.control.Lamp
+        SheetHeight_Second      matlab.ui.control.Spinner
+        SheetView_Second        matlab.ui.control.DropDown
+        SheetHeight_First       matlab.ui.control.Spinner
+        SheetView_First         matlab.ui.control.DropDown
+        SheetViewStatus         matlab.ui.control.StateButton
     end
 
     
@@ -185,6 +187,12 @@ classdef winECD_exported < matlab.apps.AppBase
                                 app.progressDialog.Visible = 'visible';                    
                                 checkIfTableRead(app, selectedECD, fileIndex, {tableId})
                                 app.progressDialog.Visible = 'hidden';
+
+                            case 'freeMemory'
+                                fileIndex = varargin{1};
+                                tableIdList = varargin{2};
+                                update(app.ecdObj, 'auxApp.dockECDMemoryUsage', 'freeMemory', fileIndex, tableIdList)
+                                ipcMainMatlabCallsHandler(app.mainApp, app, 'updateTreeView', fileIndex);
 
                             otherwise
                                 error('UnexpectedCall')
@@ -324,7 +332,9 @@ classdef winECD_exported < matlab.apps.AppBase
             
             cellfun(@(x) set(x, 'Enable', nonEmptyECDObject), { ...
                 app.ExportButton, ...
+                app.MemoryUsageButton, ...
                 app.LogButton, ...
+                app.OpenFilterModuleButton, ...
                 app.RowHeight, ...
                 app.ColumnWidth, ...
                 app.FontFamily, ...
@@ -1529,7 +1539,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
         end
 
-        % Button pushed function: LogButton_2
+        % Button pushed function: OpenFilterModuleButton
         function OpenFilterModuleButtonPushed(app, event)
 
             [~, fileIndex]  = selectedECDObject(app);
@@ -1546,6 +1556,14 @@ classdef winECD_exported < matlab.apps.AppBase
             context = 'ECD';
             dialogBox = struct('id', 'projectName', 'label', 'Nome do projeto:', 'type', 'text', 'defaultValue', app.projectData.name);            
             sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'onProjectSave', 'Fields', dialogBox, 'Context', context))
+
+        end
+
+        % Button pushed function: MemoryUsageButton
+        function MemoryUsageButtonPushed(app, event)
+            
+            [~, fileIndex] = selectedECDObject(app);
+            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDMemoryUsage', 'ECD', fileIndex)
 
         end
     end
@@ -1608,7 +1626,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create Tab1Grid
             app.Tab1Grid = uigridlayout(app.Tab1);
-            app.Tab1Grid.ColumnWidth = {90, 220, 60, 220, 3, 44, 44, 3, '1x'};
+            app.Tab1Grid.ColumnWidth = {90, 220, 60, 220, 3, 44, 3, 44, 44, 3, '1x'};
             app.Tab1Grid.RowHeight = {22, 22};
             app.Tab1Grid.RowSpacing = 5;
             app.Tab1Grid.BackgroundColor = [0.9804 0.9804 0.9804];
@@ -1690,29 +1708,48 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ExportButton.Layout.Column = 6;
             app.ExportButton.Text = '.xlsx .rtf';
 
-            % Create LogButton
-            app.LogButton = uibutton(app.Tab1Grid, 'push');
-            app.LogButton.ButtonPushedFcn = createCallbackFcn(app, @Toolbar_LOGInfoImageClicked, true);
-            app.LogButton.Icon = 'LOG_32.png';
-            app.LogButton.IconAlignment = 'top';
-            app.LogButton.FontSize = 10;
-            app.LogButton.Enable = 'off';
-            app.LogButton.Layout.Row = [1 2];
-            app.LogButton.Layout.Column = 7;
-            app.LogButton.Text = 'Leitura';
-
             % Create Tab1Separator2
             app.Tab1Separator2 = uiimage(app.Tab1Grid);
             app.Tab1Separator2.Enable = 'off';
             app.Tab1Separator2.Layout.Row = [1 2];
-            app.Tab1Separator2.Layout.Column = 8;
+            app.Tab1Separator2.Layout.Column = 7;
             app.Tab1Separator2.ImageSource = 'LineV.svg';
+
+            % Create MemoryUsageButton
+            app.MemoryUsageButton = uibutton(app.Tab1Grid, 'push');
+            app.MemoryUsageButton.ButtonPushedFcn = createCallbackFcn(app, @MemoryUsageButtonPushed, true);
+            app.MemoryUsageButton.Icon = 'pool_60_percent.png';
+            app.MemoryUsageButton.IconAlignment = 'top';
+            app.MemoryUsageButton.BackgroundColor = [0.9608 0.9608 0.9608];
+            app.MemoryUsageButton.FontSize = 10;
+            app.MemoryUsageButton.Enable = 'off';
+            app.MemoryUsageButton.Layout.Row = [1 2];
+            app.MemoryUsageButton.Layout.Column = 8;
+            app.MemoryUsageButton.Text = 'Em uso';
+
+            % Create LogButton
+            app.LogButton = uibutton(app.Tab1Grid, 'push');
+            app.LogButton.ButtonPushedFcn = createCallbackFcn(app, @Toolbar_LOGInfoImageClicked, true);
+            app.LogButton.Icon = 'LOG_24.png';
+            app.LogButton.IconAlignment = 'top';
+            app.LogButton.FontSize = 10;
+            app.LogButton.Enable = 'off';
+            app.LogButton.Layout.Row = [1 2];
+            app.LogButton.Layout.Column = 9;
+            app.LogButton.Text = 'Leitura';
+
+            % Create Tab1Separator3
+            app.Tab1Separator3 = uiimage(app.Tab1Grid);
+            app.Tab1Separator3.Enable = 'off';
+            app.Tab1Separator3.Layout.Row = [1 2];
+            app.Tab1Separator3.Layout.Column = 10;
+            app.Tab1Separator3.ImageSource = 'LineV.svg';
 
             % Create FinanceFacts
             app.FinanceFacts = uilabel(app.Tab1Grid);
             app.FinanceFacts.FontSize = 11;
             app.FinanceFacts.Layout.Row = [1 2];
-            app.FinanceFacts.Layout.Column = 9;
+            app.FinanceFacts.Layout.Column = 11;
             app.FinanceFacts.Interpreter = 'html';
             app.FinanceFacts.Text = '⚠️ Pendente leitura de informação contábil';
 
@@ -1798,6 +1835,24 @@ classdef winECD_exported < matlab.apps.AppBase
             app.Tab2Separator1.Layout.Column = 5;
             app.Tab2Separator1.ImageSource = 'LineV.svg';
 
+            % Create OpenFilterModuleButton
+            app.OpenFilterModuleButton = uibutton(app.Tab2Grid, 'push');
+            app.OpenFilterModuleButton.ButtonPushedFcn = createCallbackFcn(app, @OpenFilterModuleButtonPushed, true);
+            app.OpenFilterModuleButton.Icon = 'Filter_24.png';
+            app.OpenFilterModuleButton.IconAlignment = 'top';
+            app.OpenFilterModuleButton.FontSize = 10;
+            app.OpenFilterModuleButton.Enable = 'off';
+            app.OpenFilterModuleButton.Layout.Row = [1 2];
+            app.OpenFilterModuleButton.Layout.Column = 6;
+            app.OpenFilterModuleButton.Text = 'Filtro';
+
+            % Create Tab2Separator2
+            app.Tab2Separator2 = uiimage(app.Tab2Grid);
+            app.Tab2Separator2.Enable = 'off';
+            app.Tab2Separator2.Layout.Row = [1 2];
+            app.Tab2Separator2.Layout.Column = 7;
+            app.Tab2Separator2.ImageSource = 'LineV.svg';
+
             % Create RowHeight
             app.RowHeight = uispinner(app.Tab2Grid);
             app.RowHeight.Step = 5;
@@ -1839,12 +1894,12 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ColumnWidthLabel.Layout.Column = 9;
             app.ColumnWidthLabel.Text = {'LARGURA'; 'COLUNA'};
 
-            % Create Tab2Separator2
-            app.Tab2Separator2 = uiimage(app.Tab2Grid);
-            app.Tab2Separator2.Enable = 'off';
-            app.Tab2Separator2.Layout.Row = [1 2];
-            app.Tab2Separator2.Layout.Column = 10;
-            app.Tab2Separator2.ImageSource = 'LineV.svg';
+            % Create Tab2Separator3
+            app.Tab2Separator3 = uiimage(app.Tab2Grid);
+            app.Tab2Separator3.Enable = 'off';
+            app.Tab2Separator3.Layout.Row = [1 2];
+            app.Tab2Separator3.Layout.Column = 10;
+            app.Tab2Separator3.ImageSource = 'LineV.svg';
 
             % Create FontFamily
             app.FontFamily = uidropdown(app.Tab2Grid);
@@ -1930,12 +1985,12 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontColor.Layout.Column = 17;
             app.FontColor.BackgroundColor = [1 1 1];
 
-            % Create Tab2Separator3
-            app.Tab2Separator3 = uiimage(app.Tab2Grid);
-            app.Tab2Separator3.Enable = 'off';
-            app.Tab2Separator3.Layout.Row = [1 2];
-            app.Tab2Separator3.Layout.Column = 18;
-            app.Tab2Separator3.ImageSource = 'LineV.svg';
+            % Create Tab2Separator4
+            app.Tab2Separator4 = uiimage(app.Tab2Grid);
+            app.Tab2Separator4.Enable = 'off';
+            app.Tab2Separator4.Layout.Row = [1 2];
+            app.Tab2Separator4.Layout.Column = 18;
+            app.Tab2Separator4.ImageSource = 'LineV.svg';
 
             % Create FontIcon
             app.FontIcon = uidropdown(app.Tab2Grid);
@@ -1976,23 +2031,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.StyleRefresh.Layout.Row = 2;
             app.StyleRefresh.Layout.Column = 22;
             app.StyleRefresh.ImageSource = 'Refresh_18.png';
-
-            % Create LogButton_2
-            app.LogButton_2 = uibutton(app.Tab2Grid, 'push');
-            app.LogButton_2.ButtonPushedFcn = createCallbackFcn(app, @OpenFilterModuleButtonPushed, true);
-            app.LogButton_2.Icon = 'Filter_32.png';
-            app.LogButton_2.IconAlignment = 'top';
-            app.LogButton_2.FontSize = 10;
-            app.LogButton_2.Layout.Row = [1 2];
-            app.LogButton_2.Layout.Column = 6;
-            app.LogButton_2.Text = 'Filtro';
-
-            % Create Tab2Separator1_2
-            app.Tab2Separator1_2 = uiimage(app.Tab2Grid);
-            app.Tab2Separator1_2.Enable = 'off';
-            app.Tab2Separator1_2.Layout.Row = [1 2];
-            app.Tab2Separator1_2.Layout.Column = 7;
-            app.Tab2Separator1_2.ImageSource = 'LineV.svg';
 
             % Create UITable1
             app.UITable1 = uitable(app.GridLayout);
@@ -2155,7 +2193,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_SaveProject.Tooltip = {'Salva o projeto'};
             app.tool_SaveProject.Layout.Row = 2;
             app.tool_SaveProject.Layout.Column = 5;
-            app.tool_SaveProject.ImageSource = 'saveFile_18.png';
+            app.tool_SaveProject.ImageSource = 'Save_16.png';
 
             % Create tool_Separator2
             app.tool_Separator2 = uiimage(app.Toolbar);

@@ -1,5 +1,5 @@
 {
-    "version": 0.54,
+    "version": 0.58,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -55,6 +55,16 @@
                 "_TABELA_APURACAO"
             ]
         },
+        "cacheTables": [
+            "0000",
+            "9900",
+            "I050",
+            "_BALANCETE_GERAL",
+            "_BALANCETE_RESULTADO",
+            "_CONTAS_ANOTACAO",
+            "_CONTAS_DESCRICAO",
+            "_TABELA_APURACAO"
+        ],
         "accountOptions": [
             "-",
             "Não",
