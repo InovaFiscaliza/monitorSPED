@@ -191,7 +191,7 @@ classdef winECD_exported < matlab.apps.AppBase
                             case 'freeMemory'
                                 fileIndex = varargin{1};
                                 tableIdList = varargin{2};
-                                update(app.ecdObj, 'auxApp.dockECDMemoryUsage', 'freeMemory', fileIndex, tableIdList)
+                                update(app.ecdObj(fileIndex), 'auxApp.dockECDMemoryUsage', 'freeMemory', tableIdList)
                                 ipcMainMatlabCallsHandler(app.mainApp, app, 'updateTreeView', fileIndex);
 
                             otherwise
@@ -1769,7 +1769,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create SheetViewStatus
             app.SheetViewStatus = uibutton(app.Tab2Grid, 'state');
             app.SheetViewStatus.ValueChangedFcn = createCallbackFcn(app, @SheetViewStatusValueChanged, true);
-            app.SheetViewStatus.Icon = 'split_top_bottom_ts_24-a602190eb092f2373c13f20ec5875137.png';
+            app.SheetViewStatus.Icon = 'split_top_bottom_24.png';
             app.SheetViewStatus.IconAlignment = 'top';
             app.SheetViewStatus.Text = 'Tela';
             app.SheetViewStatus.BackgroundColor = [0.9608 0.9608 0.9608];

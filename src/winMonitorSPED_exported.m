@@ -888,7 +888,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 [defaultPath, defaultFile] = fileparts(app.projectData.file);
                 defaultName = fullfile(defaultPath, defaultFile);
             else
-                defaultName = class.Constants.DefaultFileName(app.General.fileFolder.userPath, 'ProjectData', -1);
+                defaultName = class.Constants.DefaultFileName(app.General.fileFolder.userPath, 'monitorSPED_ProjectData', -1);
             end
             
             prjFile = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', {'*.mat', 'monitorSPED (*.mat)'}, defaultName);

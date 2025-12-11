@@ -324,7 +324,7 @@ classdef (Abstract) HtmlTextGenerator
                     dataStruct(2) = struct('group', 'VERSÃO ESTÁVEL',   'value', stableVersion);
                     dataStruct(3) = struct('group', 'SITUAÇÃO',         'value', struct('updated', strjoin(updatedModule, ', '), 'nonupdated', strjoin(nonUpdatedModule, ', ')));
         
-                    msgWarning = textFormatGUI.struct2PrettyPrintList(dataStruct);
+                    msgWarning = textFormatGUI.struct2PrettyPrintList(dataStruct, 'print -1', '', 'popup');
                 end
                 
             catch ME

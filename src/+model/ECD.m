@@ -915,10 +915,8 @@ classdef ECD < model.ECDBase
                 case 'auxApp.dockECDMemoryUsage'
                     switch updateType
                         case 'freeMemory'
-                            fileIndex = varargin{1};
-                            tableIdList = varargin{2};
-
-                            obj(fileIndex).Table = rmfield(obj(fileIndex).Table, strcat('x', tableIdList));
+                            tableIdList = varargin{1};
+                            obj.Table = rmfield(obj.Table, strcat('x', tableIdList));
 
                         otherwise
                             error('UnexpectedCall')
