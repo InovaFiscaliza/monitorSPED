@@ -78,7 +78,7 @@ classdef (Abstract) Table
 
                     id = util.HtmlTextGenerator.generateTextId(ecdObj(ii), 'scalar-period-oriented', jj);
 
-                    validationMessage = ecdObj(ii).Sources(end).validationMessage;
+                    validationMessage = ecdObj(ii).Sources(jj).validationMessage;
                     if all(cellfun(@(x) isfield(validationMessage, x), {'xmlns', 'versao', 'nire', 'hashEsc'}))
                         validationMessage = rmfield(validationMessage, {'xmlns', 'versao', 'nire', 'hashEsc'});
                     end
