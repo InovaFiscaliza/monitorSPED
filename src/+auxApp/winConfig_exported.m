@@ -2,64 +2,66 @@ classdef winConfig_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure                   matlab.ui.Figure
-        GridLayout                 matlab.ui.container.GridLayout
-        DockModuleGroup            matlab.ui.container.GridLayout
-        dockModule_Undock          matlab.ui.control.Image
-        dockModule_Close           matlab.ui.control.Image
-        TabGroup                   matlab.ui.container.TabGroup
-        Tab1                       matlab.ui.container.Tab
-        Tab1Grid                   matlab.ui.container.GridLayout
-        openAuxiliarApp2Debug      matlab.ui.control.CheckBox
-        openAuxiliarAppAsDocked    matlab.ui.control.CheckBox
-        versionInfo                matlab.ui.control.Label
-        tool_versionInfoRefresh    matlab.ui.control.Image
-        versionInfoLabel           matlab.ui.control.Label
-        Tab2                       matlab.ui.container.Tab
-        Tab2Grid                   matlab.ui.container.GridLayout
-        configAnalysisPanel2       matlab.ui.container.Panel
-        configAnalysisGrid2        matlab.ui.container.GridLayout
-        Cofins                     matlab.ui.control.Spinner
-        CofinsLabel                matlab.ui.control.Label
-        PIS                        matlab.ui.control.Spinner
-        PISLabel                   matlab.ui.control.Label
-        configAnalysisPanel2Label  matlab.ui.control.Label
-        configAnalysisPanel1       matlab.ui.container.Panel
-        configAnalysisGrid1        matlab.ui.container.GridLayout
-        CheckStatus                matlab.ui.control.DropDown
-        CheckStatusLabel           matlab.ui.control.Label
-        SortMethod                 matlab.ui.control.DropDown
-        SortMethodLabel            matlab.ui.control.Label
-        InputType                  matlab.ui.control.DropDown
-        InputTypeLabel             matlab.ui.control.Label
-        configAnalysisRefresh      matlab.ui.control.Image
-        configAnalysisPanel1Label  matlab.ui.control.Label
-        Tab3                       matlab.ui.container.Tab
-        Tab3Grid                   matlab.ui.container.GridLayout
-        reportPanel                matlab.ui.container.Panel
-        reportGrid                 matlab.ui.container.GridLayout
-        reportDocType              matlab.ui.control.DropDown
-        reportDocTypeLabel         matlab.ui.control.Label
-        reportLabel                matlab.ui.control.Label
-        eFiscalizaPanel            matlab.ui.container.Panel
-        eFiscalizaGrid             matlab.ui.container.GridLayout
-        reportUnit                 matlab.ui.control.DropDown
-        reportUnitLabel            matlab.ui.control.Label
-        reportSystem               matlab.ui.control.DropDown
-        reportSystemLabel          matlab.ui.control.Label
-        eFiscalizaRefresh          matlab.ui.control.Image
-        eFiscalizaLabel            matlab.ui.control.Label
-        Tab4                       matlab.ui.container.Tab
-        Tab4Grid                   matlab.ui.container.GridLayout
-        userPathButton             matlab.ui.control.Image
-        userPath                   matlab.ui.control.EditField
-        userPathLabel              matlab.ui.control.Label
-        DataHubPOSTButton          matlab.ui.control.Image
-        DataHubPOST                matlab.ui.control.EditField
-        DATAHUBPOSTLabel           matlab.ui.control.Label
-        Toolbar                    matlab.ui.container.GridLayout
-        tool_simulationMode        matlab.ui.control.Image
-        tool_openDevTools          matlab.ui.control.Image
+        UIFigure                     matlab.ui.Figure
+        GridLayout                   matlab.ui.container.GridLayout
+        DockModuleGroup              matlab.ui.container.GridLayout
+        dockModule_Undock            matlab.ui.control.Image
+        dockModule_Close             matlab.ui.control.Image
+        TabGroup                     matlab.ui.container.TabGroup
+        Tab1                         matlab.ui.container.Tab
+        Tab1Grid                     matlab.ui.container.GridLayout
+        openAuxiliarApp2Debug        matlab.ui.control.CheckBox
+        openAuxiliarAppAsDocked      matlab.ui.control.CheckBox
+        versionInfo                  matlab.ui.control.Label
+        tool_versionInfoRefresh      matlab.ui.control.Image
+        versionInfoLabel             matlab.ui.control.Label
+        Tab2                         matlab.ui.container.Tab
+        Tab2Grid                     matlab.ui.container.GridLayout
+        configAnalysisPanel2         matlab.ui.container.Panel
+        configAnalysisGrid2          matlab.ui.container.GridLayout
+        Cofins                       matlab.ui.control.Spinner
+        CofinsLabel                  matlab.ui.control.Label
+        PIS                          matlab.ui.control.Spinner
+        PISLabel                     matlab.ui.control.Label
+        configAnalysisPanel2Label    matlab.ui.control.Label
+        configAnalysisPanel1         matlab.ui.container.Panel
+        configAnalysisGrid1          matlab.ui.container.GridLayout
+        CheckStatus                  matlab.ui.control.DropDown
+        CheckStatusLabel             matlab.ui.control.Label
+        SortMethod                   matlab.ui.control.DropDown
+        SortMethodLabel              matlab.ui.control.Label
+        InputType                    matlab.ui.control.DropDown
+        InputTypeLabel               matlab.ui.control.Label
+        configAnalysisRefresh        matlab.ui.control.Image
+        configAnalysisPanel1Label    matlab.ui.control.Label
+        Tab3                         matlab.ui.container.Tab
+        Tab3Grid                     matlab.ui.container.GridLayout
+        reportPanel                  matlab.ui.container.Panel
+        reportGrid                   matlab.ui.container.GridLayout
+        prjFileCompressionMode       matlab.ui.control.DropDown
+        prjFileCompressionModeLabel  matlab.ui.control.Label
+        reportDocType                matlab.ui.control.DropDown
+        reportDocTypeLabel           matlab.ui.control.Label
+        reportLabel                  matlab.ui.control.Label
+        eFiscalizaPanel              matlab.ui.container.Panel
+        eFiscalizaGrid               matlab.ui.container.GridLayout
+        reportUnit                   matlab.ui.control.DropDown
+        reportUnitLabel              matlab.ui.control.Label
+        reportSystem                 matlab.ui.control.DropDown
+        reportSystemLabel            matlab.ui.control.Label
+        eFiscalizaRefresh            matlab.ui.control.Image
+        eFiscalizaLabel              matlab.ui.control.Label
+        Tab4                         matlab.ui.container.Tab
+        Tab4Grid                     matlab.ui.container.GridLayout
+        userPathButton               matlab.ui.control.Image
+        userPath                     matlab.ui.control.EditField
+        userPathLabel                matlab.ui.control.Label
+        DataHubPOSTButton            matlab.ui.control.Image
+        DataHubPOST                  matlab.ui.control.EditField
+        DATAHUBPOSTLabel             matlab.ui.control.Label
+        Toolbar                      matlab.ui.container.GridLayout
+        tool_simulationMode          matlab.ui.control.Image
+        tool_openDevTools            matlab.ui.control.Image
     end
 
     
@@ -278,6 +280,10 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.reportSystem.Value  = app.mainApp.General.Report.system;
             set(app.reportUnit, 'Items', app.mainApp.General.eFiscaliza.defaultValues.unit, 'Value', app.mainApp.General.Report.unit)
             app.reportDocType.Value = app.mainApp.General.Report.Document;
+            
+            if ismember(app.mainApp.General.Report.outputCompressionMode, app.prjFileCompressionMode.Items)
+                app.prjFileCompressionMode.Value = app.mainApp.General.Report.outputCompressionMode;
+            end
 
             if checkEdition(app, 'REPORT')
                 app.eFiscalizaRefresh.Visible = 1;
@@ -506,7 +512,8 @@ classdef winConfig_exported < matlab.apps.AppBase
 
         end
 
-        % Value changed function: reportDocType, reportSystem, reportUnit
+        % Value changed function: prjFileCompressionMode, reportDocType, 
+        % ...and 2 other components
         function Config_ProjectParameterValueChanged(app, event)
             
             switch event.Source
@@ -518,6 +525,9 @@ classdef winConfig_exported < matlab.apps.AppBase
 
                 case app.reportDocType
                     app.mainApp.General.Report.Document = event.Value;
+
+                case app.prjFileCompressionMode
+                    app.mainApp.General.Report.outputCompressionMode = event.Value;
             end
 
             app.mainApp.General_I.Report = app.mainApp.General.Report;
@@ -962,7 +972,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.reportLabel.FontSize = 10;
             app.reportLabel.Layout.Row = 3;
             app.reportLabel.Layout.Column = 1;
-            app.reportLabel.Text = 'RELATÓRIO';
+            app.reportLabel.Text = 'OUTROS ASPECTOS RELACIONADOS AO PROJETO';
 
             % Create reportPanel
             app.reportPanel = uipanel(app.Tab3Grid);
@@ -974,7 +984,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create reportGrid
             app.reportGrid = uigridlayout(app.reportPanel);
             app.reportGrid.ColumnWidth = {350, 110, 110};
-            app.reportGrid.RowHeight = {22};
+            app.reportGrid.RowHeight = {22, 22};
             app.reportGrid.RowSpacing = 5;
             app.reportGrid.BackgroundColor = [1 1 1];
 
@@ -995,6 +1005,24 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.reportDocType.Layout.Row = 1;
             app.reportDocType.Layout.Column = [2 3];
             app.reportDocType.Value = 'Relatório de Atividades';
+
+            % Create prjFileCompressionModeLabel
+            app.prjFileCompressionModeLabel = uilabel(app.reportGrid);
+            app.prjFileCompressionModeLabel.WordWrap = 'on';
+            app.prjFileCompressionModeLabel.FontSize = 11;
+            app.prjFileCompressionModeLabel.Layout.Row = 2;
+            app.prjFileCompressionModeLabel.Layout.Column = 1;
+            app.prjFileCompressionModeLabel.Text = 'Compressão aplicada ao arquivo de saída do projeto?';
+
+            % Create prjFileCompressionMode
+            app.prjFileCompressionMode = uidropdown(app.reportGrid);
+            app.prjFileCompressionMode.Items = {'Não', 'Sim'};
+            app.prjFileCompressionMode.ValueChangedFcn = createCallbackFcn(app, @Config_ProjectParameterValueChanged, true);
+            app.prjFileCompressionMode.FontSize = 11;
+            app.prjFileCompressionMode.BackgroundColor = [1 1 1];
+            app.prjFileCompressionMode.Layout.Row = 2;
+            app.prjFileCompressionMode.Layout.Column = 2;
+            app.prjFileCompressionMode.Value = 'Sim';
 
             % Create Tab4
             app.Tab4 = uitab(app.TabGroup);

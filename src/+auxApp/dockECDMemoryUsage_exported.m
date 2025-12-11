@@ -2,16 +2,12 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure       matlab.ui.Figure
-        GridLayout     matlab.ui.container.GridLayout
-        Document       matlab.ui.container.GridLayout
-        Tree           matlab.ui.container.Tree
-        essentialNode  matlab.ui.container.TreeNode
-        cacheNode      matlab.ui.container.TreeNode
-        TreeLabel      matlab.ui.control.Label
-        btnClose       matlab.ui.control.Image
-        ContextMenu    matlab.ui.container.ContextMenu
-        Delete         matlab.ui.container.Menu
+        UIFigure    matlab.ui.Figure
+        GridLayout  matlab.ui.container.GridLayout
+        Document    matlab.ui.container.GridLayout
+        UITable     matlab.ui.control.Table
+        TreeLabel   matlab.ui.control.Label
+        btnClose    matlab.ui.control.Image
     end
 
     
@@ -20,22 +16,41 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
         Container
         isDocked = true
 
+        appHandleNameInBase
         mainApp
         callingApp
         inputArgs
     end
 
 
+    methods
+        %-----------------------------------------------------------------%
+        function deleteSelectedTables(app)
+            selectedRow = app.UITable.Selection;
+
+            if ~isempty(selectedRow)
+                tableId = app.UITable.Data.("REGISTRO"){selectedRow};
+                
+                if ~ismember(tableId, app.mainApp.General.ECD.cacheTables)
+                    context = app.inputArgs.context;
+                    index = app.inputArgs.index;
+                    ipcMainMatlabCallsHandler(app.mainApp, app, 'freeMemory', context, index, {tableId})
+
+                    updateTable(app, index)
+                end
+            end
+        end
+    end
+
+
     methods (Access = private)
         %-----------------------------------------------------------------%
-        function TreeBuilding(app, index)
-            if ~isempty(app.essentialNode.Children)
-                delete(app.essentialNode.Children)
-            end
-
-            if ~isempty(app.cacheNode.Children)
-                delete(app.cacheNode.Children)
-            end
+        function updateTable(app, index)
+            t = table( ...
+                'Size', [0, 3], ...
+                'VariableNames', {'REGISTRO', 'TAMANHO', 'OPERAÇÃO'}, ...
+                'VariableTypes', {'cell', 'cell', 'cell'} ...
+            );
 
             tableIdList = sort(extractAfter(fieldnames(app.mainApp.ecdObj(index).Table), 'x'));
 
@@ -45,19 +60,15 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
                 tableInfo = whos('tableData');
 
                 if ismember(tableId, app.mainApp.General.ECD.cacheTables)
-                    parentNode = app.essentialNode;
+                    deletableRowsText = '🔒︎';
                 else
-                    parentNode = app.cacheNode;
+                    deletableRowsText = sprintf('<a href="matlab:evalin(''base'', ''deleteSelectedTables(%s)'')">❌</a>', app.appHandleNameInBase);
                 end
 
-                uitreenode( ...
-                    parentNode, ...
-                    'Text', sprintf('%s - %s', tableId, textFormatGUI.bytes2human(tableInfo.bytes)), ...
-                    'NodeData', tableId ...
-                );
+                t(end+1, :) = {tableId, textFormatGUI.bytes2human(tableInfo.bytes), deletableRowsText};
             end
 
-            expand(app.Tree, 'all')
+            app.UITable.Data = t;
         end
     end
     
@@ -68,11 +79,29 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
         % Code that executes after component creation
         function startupFcn(app, mainApp, callingApp, context, index)
             
+            app.Container.Visible = 'off';
+
+            % Inicialmente, adiciona interpretador "html" para a uitable 
+            % e registra handle deste app no workspace "base", o que 
+            % possibilita excluir registros de tabelas por meio de cliques 
+            % na uitable. O pause é para que o MATLAB consiga aplicar o 
+            % estilo corretamente antes da apresentação da informação.
+            addStyle(app.UITable, uistyle("Interpreter", "html"));
+            addStyle(app.UITable, uistyle("HorizontalAlignment", "left"),   "column", 1);
+            addStyle(app.UITable, uistyle("HorizontalAlignment", "right"),  "column", 2);
+            addStyle(app.UITable, uistyle("HorizontalAlignment", "center"), "column", 3);
+            app.appHandleNameInBase = ui.Table.exportAppHandleToBaseWorkspace(app);
+            pause(1)
+            
+            % Posteriormente, registram-se handles para apps relacionados -
+            % "mainApp" e "callingApp" -, renderizando dados dos registros
+            % já lidos em tabela.
             app.mainApp    = mainApp;       
             app.callingApp = callingApp;
-            app.inputArgs  = struct('context', context, 'index', index);
+            app.inputArgs  = struct('context', context, 'index', index);            
+            updateTable(app, index)
 
-            TreeBuilding(app, index)
+            app.Container.Visible = 'on';
             
         end
 
@@ -81,35 +110,9 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
             
             context = app.inputArgs.context;
             ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcn', context)
-
+            ui.Table.deleteAppHandleFromBaseWorkspace(app.appHandleNameInBase)
+            
             delete(app)
-            
-        end
-
-        % Menu selected function: Delete
-        function DeleteSelected(app, event)
-            
-            selectedNodes = app.Tree.SelectedNodes;
-
-            if ~isempty(selectedNodes)
-                deletableTables = intersect(selectedNodes, app.cacheNode.Children);
-
-                if ~isempty(deletableTables)
-                    context = app.inputArgs.context;
-                    index = app.inputArgs.index;
-                    tableIdList = {deletableTables.NodeData};
-
-                    ipcMainMatlabCallsHandler(app.mainApp, app, 'freeMemory', context, index, tableIdList)
-                    TreeBuilding(app, index)
-                end
-            end
-
-        end
-
-        % Selection changed function: Tree
-        function TreeSelectionChanged(app, event)
-            
-            app.Delete.Enable = ~isempty(app.Tree.SelectedNodes);
             
         end
     end
@@ -181,38 +184,18 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
             app.TreeLabel.FontSize = 10;
             app.TreeLabel.Layout.Row = 1;
             app.TreeLabel.Layout.Column = 1;
-            app.TreeLabel.Text = 'TAMANHO DAS TABELAS';
+            app.TreeLabel.Text = 'ESPAÇO EM MEMÓRIA OCUPADO POR REGISTROS LIDOS OU CRIADOS';
 
-            % Create Tree
-            app.Tree = uitree(app.Document);
-            app.Tree.Multiselect = 'on';
-            app.Tree.SelectionChangedFcn = createCallbackFcn(app, @TreeSelectionChanged, true);
-            app.Tree.FontSize = 11;
-            app.Tree.Layout.Row = 2;
-            app.Tree.Layout.Column = 1;
-
-            % Create essentialNode
-            app.essentialNode = uitreenode(app.Tree);
-            app.essentialNode.Icon = 'Lock_18Gray.png';
-            app.essentialNode.Text = 'ESSENCIAIS';
-
-            % Create cacheNode
-            app.cacheNode = uitreenode(app.Tree);
-            app.cacheNode.Icon = 'Delete_32Red.png';
-            app.cacheNode.Text = 'SOB DEMANDA (em cache)';
-
-            % Create ContextMenu
-            app.ContextMenu = uicontextmenu(app.UIFigure);
-            app.ContextMenu.Tag = 'auxApp.dockECDMemoryUsage';
-
-            % Create Delete
-            app.Delete = uimenu(app.ContextMenu);
-            app.Delete.MenuSelectedFcn = createCallbackFcn(app, @DeleteSelected, true);
-            app.Delete.Enable = 'off';
-            app.Delete.Text = '❌ Excluir';
-            
-            % Assign app.ContextMenu
-            app.Tree.ContextMenu = app.ContextMenu;
+            % Create UITable
+            app.UITable = uitable(app.Document);
+            app.UITable.ColumnName = {'REGISTRO'; ''; ''};
+            app.UITable.ColumnWidth = {'1x', 110, 60};
+            app.UITable.RowName = {};
+            app.UITable.SelectionType = 'row';
+            app.UITable.Multiselect = 'off';
+            app.UITable.Layout.Row = 2;
+            app.UITable.Layout.Column = 1;
+            app.UITable.FontSize = 11;
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';

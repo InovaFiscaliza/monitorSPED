@@ -62,13 +62,14 @@ classdef projectLib < handle
         end
 
         %-----------------------------------------------------------------%
-        function Save(obj, ecdObj, context, prjName, prjFile)
+        function Save(obj, ecdObj, context, prjName, prjFile, outputFileCompressionMode)
             arguments
                 obj
                 ecdObj
                 context char {mustBeMember(context, {'File', 'ECD'})}
                 prjName
                 prjFile
+                outputFileCompressionMode
             end
 
             appName  = class.Constants.appName;
@@ -82,7 +83,12 @@ classdef projectLib < handle
                                                 'reportModel', obj.modules.(context).ui.reportModel));
             ecdData  = ecdObj;
 
-            save(prjFile, 'appName', 'prjData', 'ecdData', '-mat', '-v7', '-nocompression')
+            compressionMode = '';
+            if strcmp(outputFileCompressionMode, 'Não')
+                compressionMode = '-nocompression';
+            end
+
+            save(prjFile, 'appName', 'prjData', 'ecdData', '-mat', '-v7', compressionMode)
 
             obj.name = prjName;
             obj.file = prjFile;

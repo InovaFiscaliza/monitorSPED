@@ -899,7 +899,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.progressDialog.Visible = 'visible';
 
             try
-                Save(app.projectData, app.ecdObj, context, prjName, prjFile)
+                Save(app.projectData, app.ecdObj, context, prjName, prjFile, app.General.Report.outputCompressionMode)
             catch ME
                 appUtil.modalWindow(app.UIFigure, 'error', ME.message);
             end

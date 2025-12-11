@@ -1,5 +1,5 @@
 {
-    "version": 0.58,
+    "version": 0.60,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -81,7 +81,8 @@
     "Report": {
         "system": "eFiscaliza",
         "unit": "",
-        "Document": "Relatório de Atividades"
+        "Document": "Relatório de Atividades",
+        "outputCompressionMode": "Sim"
     },
     "eFiscaliza": {
         "internal": {
