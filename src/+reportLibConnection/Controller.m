@@ -31,29 +31,19 @@ classdef (Abstract) Controller
 
     methods (Static)
         %-----------------------------------------------------------------%
-        function Run(callingApp, projectData, ecdObj, reportSettings, generalSettings)        
+        function Run(mainApp, projectData, ecdObj, reportSettings, generalSettings)        
             arguments
-                callingApp
+                mainApp
                 projectData
                 ecdObj
                 reportSettings
                 generalSettings
             end
 
-            switch class(callingApp)
-                case {'winMonitorSPED', 'winMonitorSPED_exported'}
-                    app = callingApp;
-                    context = 'File';
-                case {'auxApp.winECD',  'auxApp.winECD_exported'}
-                    app = callingApp.mainApp;
-                    context = 'ECD';
-                otherwise
-                    error('UnexpectedCaller')
-            end
-
             [projectFolder, ...
-             programDataFolder] = appUtil.Path(class.Constants.appName, app.rootFolder);
+             programDataFolder] = appUtil.Path(class.Constants.appName, mainApp.rootFolder);
 
+            context    = reportSettings.context;
             issueId    = num2str(reportSettings.issue);
             docName    = reportSettings.model;
             docIndex   = find(strcmp({projectData.report.templates.Name}, docName), 1);
@@ -81,9 +71,9 @@ classdef (Abstract) Controller
             % e informações específicas, a compor itens com recorrências, como 
             % "Resultados".
             %-------------------------------------------------------------%
-            reportInfo = struct('App',      app, ...
-                                'Version',  app.General.AppVersion,                                                   ...
-                                'Path',     struct('rootFolder',                 app.rootFolder,                      ...
+            reportInfo = struct('App',      mainApp, ...
+                                'Version',  mainApp.General.AppVersion,                                               ...
+                                'Path',     struct('rootFolder',                 mainApp.rootFolder,                  ...
                                                    'userFolder',                 generalSettings.fileFolder.userPath, ...
                                                    'tempFolder',                 generalSettings.fileFolder.tempPath, ...
                                                    'appConnection',              projectFolder,                       ...
@@ -94,9 +84,8 @@ classdef (Abstract) Controller
                                                    'Version',                    docVersion.version),                 ...
                                 'Function', struct(...
                                                    ... % APLICÁVEIS ÀS SEÇÕES GERAIS DO RELATÓRIO
-                                                   'cfg_File',                  'reportLibConnection.Variable.GeneralSettings(reportInfo, "File")', ...
-                                                   'cfg_ECD',                   'reportLibConnection.Variable.GeneralSettings(reportInfo, "ECD")', ...
-                                                   'cfg_ReportTemplate',         jsonencode(struct('Name', docName, 'DocumentType', docType, 'Version', docVersion.version)), ...
+                                                   'cfg_File',                  'reportLibConnection.Variable.GeneralSettings(reportInfo, "File+ReportTemplate")', ...
+                                                   'cfg_ECD',                   'reportLibConnection.Variable.GeneralSettings(reportInfo, "ECD+ReportTemplate")', ...
                                                    'var_Issue',                  issueId, ...
                                                    'var_Unit',                   reportSettings.unit, ...
                                                    'tbl_FileByCompany',         'reportLibConnection.Table.FileByCompany(reportInfo)', ...
@@ -178,7 +167,7 @@ classdef (Abstract) Controller
             %-------------------------------------------------------------%
             % Exclui container criado para os plots, caso aplicável.
             %-------------------------------------------------------------%
-            hFigure    = app.UIFigure;
+            hFigure    = mainApp.UIFigure;
             hContainer = findobj(hFigure, 'Tag', 'reportGeneratorContainer');
             if ~isempty(hContainer)
                 delete(hContainer)
@@ -200,14 +189,27 @@ classdef (Abstract) Controller
                     web(HTMLFile, '-new')
                     updateGeneratedFiles(projectData, context)
 
-                case 'final'                    
-                    ZIPFile  = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', {'*.zip', 'monitorSPED (*.zip)'}, fullfile(generalSettings.fileFolder.userPath, [baseFileName '.zip']));
+                case 'final'
+                    generatedFilesId = strjoin(sort({ecdObj.Hash}), ' - ');
+
+                    JSONFile = '';
+                    if strcmp(context, 'ECD')
+                        JSONFile = [baseFullFileName '.json'];
+                        JSONContent = reportLibConnection.Table.scarabJsonFile(projectData, context, ecdObj);
+                        writematrix(JSONContent, JSONFile, "FileType", "text", "QuoteStrings", "none", "Encoding", "UTF-8")
+                    end
+
+                    ZIPFile  = appUtil.modalWindow(mainApp.UIFigure, 'uiputfile', '', {'*.zip', 'monitorSPED (*.zip)'}, fullfile(generalSettings.fileFolder.userPath, [baseFileName '.zip']));
                     if isempty(ZIPFile)
                         return
-                    end                    
+                    end
 
-                    zip(ZIPFile, HTMLFile)
-                    updateGeneratedFiles(projectData, context, {}, HTMLFile)
+                    ZIPFileList = {HTMLFile};
+                    if ~isempty(JSONFile)
+                        ZIPFileList{end+1} = JSONFile;
+                    end
+                    zip(ZIPFile, ZIPFileList)
+                    updateGeneratedFiles(projectData, context, generatedFilesId, {}, HTMLFile, JSONFile, ZIPFile)
             end
         end
     end

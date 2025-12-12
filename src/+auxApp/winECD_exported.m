@@ -194,6 +194,10 @@ classdef winECD_exported < matlab.apps.AppBase
                                 update(app.ecdObj(fileIndex), 'auxApp.dockECDMemoryUsage', 'freeMemory', tableIdList)
                                 ipcMainMatlabCallsHandler(app.mainApp, app, 'updateTreeView', fileIndex);
 
+                            case 'generateFinalReport'
+                                selectedECD = selectedECDObject(app);
+                                updateToolbar(app, selectedECD)
+
                             otherwise
                                 error('UnexpectedCall')
                         end
@@ -575,13 +579,15 @@ classdef winECD_exported < matlab.apps.AppBase
 
             nonEmptyECDObject               = ~isempty(selectedECD);
             hasSpecificNonEmptyTable        = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);
+            
             reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(context).generatedFiles.lastHTMLDocFullPath);
+            reportFinalRelatedToSelectedObj = isequal(selectedECD.Hash, app.projectData.modules.(context).generatedFiles.id);
 
             app.tool_AccountEdition.Enable  = hasSpecificNonEmptyTable;
             app.tool_AutoFill.Enable        = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', {app.SheetView_First.Value, app.SheetView_Second.Value});
             app.tool_SaveProject.Enable     = nonEmptyECDObject;
             app.tool_GenerateReport.Enable  = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO');
-            app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated;
+            app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated && reportFinalRelatedToSelectedObj;
         end
 
         %-----------------------------------------------------------------%
@@ -1566,6 +1572,46 @@ classdef winECD_exported < matlab.apps.AppBase
             ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDMemoryUsage', 'ECD', fileIndex)
 
         end
+
+        % Image clicked function: tool_UploadFinalFile
+        function tool_UploadFinalFileImageClicked(app, event)
+            
+            % <VALIDAÇÕES>
+            context = 'ECD';
+            lastHTMLDocFullPath = getGeneratedDocumentFileName(app.projectData, '.html', context);
+
+            msg = '';
+            if isempty(lastHTMLDocFullPath)
+                msg = 'A versão definitiva do relatório ainda não foi gerada.';
+            elseif ~isfile(lastHTMLDocFullPath)
+                msg = sprintf('O arquivo "%s" não foi encontrado.', lastHTMLDocFullPath);
+            elseif ~isfolder(app.mainApp.General.fileFolder.DataHub_POST)
+                msg = 'Pendente mapear pasta do Sharepoint';
+            elseif ~report_checkEFiscalizaIssueId(app.mainApp, app.projectData.modules.(context).ui.issue)
+                msg = sprintf('O número da inspeção "%.0f" é inválido.', app.projectData.modules.(context).ui.issue);
+            elseif isempty(app.projectData.modules.(context).ui.system)
+                msg = 'Ambiente do eFiscaliza precisa ser selecionado.';
+            elseif isempty(app.projectData.modules.(context).ui.unit)
+                msg = 'Unidade geradora do documento precisa ser selecionada.';
+            end
+
+            if ~isempty(msg)
+                appUtil.modalWindow(app.UIFigure, 'warning', msg);
+                return
+            end
+            % </VALIDAÇÕES>
+
+            % <PROCESSO>
+            if isempty(app.mainApp.eFiscalizaObj) || ~isvalid(app.mainApp.eFiscalizaObj)
+                dialogBox    = struct('id', 'login',    'label', 'Usuário: ', 'type', 'text');
+                dialogBox(2) = struct('id', 'password', 'label', 'Senha: ',   'type', 'password');
+                sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'eFiscalizaSignInPage', 'Fields', dialogBox, 'Context', context))
+            else
+                report_uploadInfoController(app.mainApp, [], 'uploadDocument', context)
+            end
+            % </PROCESSO>
+
+        end
     end
 
     % Component initialization
@@ -2215,6 +2261,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create tool_UploadFinalFile
             app.tool_UploadFinalFile = uiimage(app.Toolbar);
+            app.tool_UploadFinalFile.ImageClickedFcn = createCallbackFcn(app, @tool_UploadFinalFileImageClicked, true);
             app.tool_UploadFinalFile.Enable = 'off';
             app.tool_UploadFinalFile.Tooltip = {'Upload relatório'};
             app.tool_UploadFinalFile.Layout.Row = 2;

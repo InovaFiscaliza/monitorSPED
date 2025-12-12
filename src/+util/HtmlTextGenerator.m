@@ -8,8 +8,21 @@ classdef (Abstract) HtmlTextGenerator
     % Antes de cada função, consta a indicação do módulo que chama a
     % função.
 
+    % Além disso, cabe mencionar que um símbolo UTF-16 somente é renderizado 
+    % corretamente no SEI se representado como o seu equivalente HTML. 
+
     properties (Constant)
         %-----------------------------------------------------------------%
+        unicodeToHtmlHexMap = struct( ...
+            'Bullet',          struct('unicode', '•',  'html', '&#x2022;'), ...
+            'Hourglass',       struct('unicode', '⌛', 'html', '&#x231B;'), ...
+            'WhiteCircle',     struct('unicode', '⚪', 'html', '&#x26AA;'), ...
+            'RedCircle',       struct('unicode', '🔴', 'html', '&#x1F534;'), ...
+            'GreenCircle',     struct('unicode', '🟢', 'html', '&#x1F7E2;'), ...
+            'ExclamationMark', struct('unicode', '❗', 'html', '&#x2757;'), ...
+            'PlusSign',        struct('unicode', '➕', 'html', '&#x2795;'), ...
+            'ProhibitedSign',  struct('unicode', '🚫', 'html', '&#x1F6AB;') ...
+        );
     end
 
     
@@ -86,35 +99,40 @@ classdef (Abstract) HtmlTextGenerator
                         preffixText = sprintf('%s     ', strjoin(string(ecdObj.Period), ' a '));
                     end
 
+                    mapField = 'unicode';
+                    if numel(varargin) > 1 && ismember(varargin{2}, {'unicode', 'html'})
+                        mapField = varargin{2};
+                    end
+
                     hasWarnings = '';
                     if ~isempty(ecdObj.GUI.warnings)
-                        hasWarnings = '❗';
+                        hasWarnings = util.HtmlTextGenerator.unicodeToHtmlHexMap.('ExclamationMark').(mapField); 
                     end
 
                     hasTransactions = '';
                     if ~ecdObj.GUI.hasTransactions
-                        hasTransactions = '🚫';
+                        hasTransactions = util.HtmlTextGenerator.unicodeToHtmlHexMap.('ProhibitedSign').(mapField); 
                     end
 
                     [receitaFederalStatus, receitaFederalSourceFileStatus] = checkIfValidStatus(ecdObj);
                     if receitaFederalStatus
-                        receitaFederalStatusIcon = '🟢'; % '&#x1F7E2;'
+                        receitaFederalStatusIcon = util.HtmlTextGenerator.unicodeToHtmlHexMap.('GreenCircle').(mapField); 
                     else
                         if all(receitaFederalSourceFileStatus < 0)
-                            receitaFederalStatusIcon = '🔴'; % '&#x1F534;'
+                            receitaFederalStatusIcon = util.HtmlTextGenerator.unicodeToHtmlHexMap.('RedCircle').(mapField); 
                         else
-                            receitaFederalStatusIcon = '⚪';
+                            receitaFederalStatusIcon = util.HtmlTextGenerator.unicodeToHtmlHexMap.('WhiteCircle').(mapField); 
                         end
                     end
 
                     periodStatusIcon = '';
                     if ~ecdObj.GUI.hasValidPeriod
-                        periodStatusIcon = '⌛';
+                        periodStatusIcon = util.HtmlTextGenerator.unicodeToHtmlHexMap.('Hourglass').(mapField); 
                     end
 
                     mergeStatusIcon = '';
                     if ecdObj.PeriodMerged
-                        mergeStatusIcon = '➕';
+                        mergeStatusIcon = util.HtmlTextGenerator.unicodeToHtmlHexMap.('PlusSign').(mapField); 
                     end
 
                     textId = sprintf('%s%s%s%s%s%s', preffixText, hasWarnings, hasTransactions, receitaFederalStatusIcon, periodStatusIcon, mergeStatusIcon);
@@ -122,23 +140,28 @@ classdef (Abstract) HtmlTextGenerator
                 case 'scalar-period-oriented'
                     sourceIndex = varargin{1};
 
+                    mapField = 'unicode';
+                    if numel(varargin) > 1 && ismember(varargin{2}, {'unicode', 'html'})
+                        mapField = varargin{2};
+                    end
+
                     hasWarnings = '';
                     if ~isempty(ecdObj.GUI.warnings)
-                        hasWarnings = '❗';
+                        hasWarnings = util.HtmlTextGenerator.unicodeToHtmlHexMap.('ExclamationMark').(mapField); 
                     end
 
                     hasTransactions = '';
                     if ~ecdObj.GUI.hasTransactions
-                        hasTransactions = '🚫';
+                        hasTransactions = util.HtmlTextGenerator.unicodeToHtmlHexMap.('ProhibitedSign').(mapField); 
                     end
 
                     if ecdObj.Sources(sourceIndex).validationStatus > 0
-                        receitaFederalStatusIcon = '🟢'; % '&#x1F7E2;'
+                        receitaFederalStatusIcon = util.HtmlTextGenerator.unicodeToHtmlHexMap.('GreenCircle').(mapField); 
                     else
                         if ecdObj.Sources(sourceIndex).validationStatus < 0
-                            receitaFederalStatusIcon = '🔴'; % '&#x1F534;'
+                            receitaFederalStatusIcon = util.HtmlTextGenerator.unicodeToHtmlHexMap.('RedCircle').(mapField); 
                         else
-                            receitaFederalStatusIcon = '⚪';
+                            receitaFederalStatusIcon = util.HtmlTextGenerator.unicodeToHtmlHexMap.('WhiteCircle').(mapField); 
                         end
                     end
 
@@ -147,12 +170,12 @@ classdef (Abstract) HtmlTextGenerator
 
                     periodStatusIcon = '';
                     if ~isequal(monthsCovered, 1:12)
-                        periodStatusIcon = '⌛';
+                        periodStatusIcon = util.HtmlTextGenerator.unicodeToHtmlHexMap.('Hourglass').(mapField); 
                     end
 
                     mergeStatusIcon = '';
                     if ecdObj.PeriodMerged
-                        mergeStatusIcon = '➕';
+                        mergeStatusIcon = util.HtmlTextGenerator.unicodeToHtmlHexMap.('PlusSign').(mapField); 
                     end
 
                     textId = sprintf('%s%s%s%s%s', hasWarnings, hasTransactions, receitaFederalStatusIcon, periodStatusIcon, mergeStatusIcon);
@@ -188,7 +211,7 @@ classdef (Abstract) HtmlTextGenerator
                 end
 
                 if ~isempty(ecdObj.GUI.warnings)
-                    dataStruct(end+1) = struct('group', 'ALERTAS ❗', 'value', ['<font style="color: red;">' strjoin(ecdObj.GUI.warnings, '<br>') '</font>']);
+                    dataStruct(end+1) = struct('group', ['ALERTAS ' util.HtmlTextGenerator.unicodeToHtmlHexMap.('ExclamationMark').unicode], 'value', ['<font style="color: red;">' strjoin(ecdObj.GUI.warnings, '<br>') '</font>']);
                 end
                 
                 if ~ecdObj.GUI.hasTransactions
@@ -197,7 +220,7 @@ classdef (Abstract) HtmlTextGenerator
                         'Isto porque não foram encontrados contas de resultados (I050) ou lançamentos contábeis (I200) ' ...
                         'nesta escrituração.</font>' ...
                     ];
-                    dataStruct(end+1) = struct('group', 'FATO CONTÁBIL 🚫', 'value', hasTransactionsMessage);
+                    dataStruct(end+1) = struct('group', ['FATO CONTÁBIL ' util.HtmlTextGenerator.unicodeToHtmlHexMap.('ProhibitedSign').unicode], 'value', hasTransactionsMessage);
                 end
 
                 dataStruct(end+1) = struct('group', 'Layout',  'value', string(ecdObj.Layout));
@@ -205,12 +228,12 @@ classdef (Abstract) HtmlTextGenerator
                 if ~ecdObj.PeriodMerged
                     [receitaFederalStatus, receitaFederalSourceFileStatus] = checkIfValidStatus(ecdObj);
                     if receitaFederalStatus
-                        receitaFederalStatusIcon = '🟢'; % '&#x1F7E2;'
+                        receitaFederalStatusIcon = util.HtmlTextGenerator.unicodeToHtmlHexMap.('GreenCircle').unicode;
                     else
                         if all(receitaFederalSourceFileStatus < 0)
-                            receitaFederalStatusIcon = '🔴'; % '&#x1F534;'
+                            receitaFederalStatusIcon = util.HtmlTextGenerator.unicodeToHtmlHexMap.('RedCircle').unicode;
                         else
-                            receitaFederalStatusIcon = '⚪';
+                            receitaFederalStatusIcon = util.HtmlTextGenerator.unicodeToHtmlHexMap.('WhiteCircle').unicode;
                         end
                     end
                     dataStruct(end+1) = struct('group', sprintf('RECEITA FEDERAL %s', receitaFederalStatusIcon), 'value', ecdObj.Sources(end).validationMessage);

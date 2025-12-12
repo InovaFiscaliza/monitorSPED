@@ -913,6 +913,40 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
+        function reportGeneratorCall(app, context, indexes)
+            app.progressDialog.Visible = 'visible';
+
+            try
+                reportSettings = struct('context',       context,                                          ...
+                                        'system',        app.projectData.modules.(context).ui.system,      ...
+                                        'unit',          app.projectData.modules.(context).ui.unit,        ...
+                                        'issue',         app.projectData.modules.(context).ui.issue,       ...
+                                        'model',         app.projectData.modules.(context).ui.reportModel, ...
+                                        'reportVersion', app.projectData.modules.(context).ui.reportVersion);
+                reportLibConnection.Controller.Run(app, app.projectData, app.ecdObj(indexes), reportSettings, app.General)
+
+                if strcmp(context, 'ECD')
+                    ipcMainMatlabCallAuxiliarApp(app, 'ECD', 'MATLAB', 'generateFinalReport')
+                end
+
+            catch ME
+                uiFigure = app.UIFigure;
+                if strcmp(context, 'ECD')
+                    hAuxApp = auxAppHandle(app, 'ECD');
+                    if ~isempty(hAuxApp) && isvalid(hAuxApp) && ~hAuxApp.isDocked
+                        uiFigure = hAuxApp.UIFigure;
+                    end
+                end
+
+                appUtil.modalWindow(uiFigure, 'error', getReport(ME));
+            end
+
+            updateToolbar(app)
+    
+            app.progressDialog.Visible = 'hidden';
+        end
+
+        %-----------------------------------------------------------------%
         function report_uploadInfoController(app, credentials, operation, context)
             communicationStatus = report_sendHTMLDocToSEIviaEFiscaliza(app, credentials, operation, context);
             if communicationStatus && strcmp(app.projectData.modules.(context).ui.system, 'eFiscaliza')
@@ -983,58 +1017,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 sharepointFolder = app.General.fileFolder.userPath;
             end
 
-            sharepointFileList = getGeneratedDocumentFileName(app.projectData, 'rawFiles', context);
-            if strcmp(context, 'MonitoringPlan')
-                sharepointFileList = [sharepointFileList, {getGeneratedDocumentFileName(app.projectData, '.xlsx', context)}];
-            end
-            
-            for ii = 1:numel(sharepointFileList)
-                tempFilename = sharepointFileList{ii};
-
-                try
-                    if isfile(tempFilename)
-                        % copyfile(tempFilename, sharepointFolder, 'f');
-                        % 
-                        % if ~endsWith(tempFilename, '.xlsx')
-                        %     [~, basename]  = fileparts(tempFilename);
-                        %     jsonFilename   = [basename '.json'];
-                        %     [~, fileIndex] = ismember(tempFilename, {app.measData.Filename});
-                        % 
-                        %     if fileIndex
-                        %         fileWriter.RawFileMetaData(fullfile(sharepointFolder, jsonFilename), app.measData(fileIndex));
-                        %     end
-                        % end
-                    end
-                catch ME
-                    appUtil.modalWindow(app.UIFigure, 'error', getReport(ME))
-                end
-            end
-        end
-
-        %-----------------------------------------------------------------%
-        function reportGeneratorCall(app, context, indexes)
-            app.progressDialog.Visible = 'visible';
-
             try
-                % Inicialmente, faz-se a leitura dos registros ordinários
-                % de cada arquivo...
-                % toolbar_ReadFilesImageClicked(app, struct('Source', app.tool_GenerateReport, 'Indexes', indexes))
-
-                % E depois a biblioteca reportLib é chamada por meio de
-                % reportLibConnection.Controller.
-                reportSettings = struct('system',        app.projectData.modules.(context).ui.system,      ...
-                                        'unit',          app.projectData.modules.(context).ui.unit,        ...
-                                        'issue',         app.projectData.modules.(context).ui.issue,       ...
-                                        'model',         app.projectData.modules.(context).ui.reportModel, ...
-                                        'reportVersion', app.projectData.modules.(context).ui.reportVersion);
-                reportLibConnection.Controller.Run(app, app.projectData, app.ecdObj(indexes), reportSettings, app.General)
+                sharepointFile = getGeneratedDocumentFileName(app.projectData, '.json', context);
+                copyfile(sharepointFile, sharepointFolder, 'f');
             catch ME
-                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));
+                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME))
             end
-
-            updateToolbar(app)
-    
-            app.progressDialog.Visible = 'hidden';
         end
     end
 
@@ -1280,7 +1268,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             [app.ecdObj, msg] = addFiles(app.ecdObj, app.projectData, app.General, fileFullName{ii}, [], app.receitaFederalObj);
                         
                         case '.mat'
-                            [app.ecdObj, msg] = Load(app.projectData, app.ecdObj, fileFullName{ii});
+                            [app.ecdObj, msg] = Load(app.projectData, app.ecdObj, fileFullName{ii}, app.General);
                     end
 
                     if ~isempty(msg)
@@ -1441,7 +1429,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % </VALIDAÇÕES>
 
             % <PROCESSO>
-            if isempty(app.eFiscalizaObj)
+            if isempty(app.eFiscalizaObj) || ~isvalid(app.eFiscalizaObj)
                 dialogBox    = struct('id', 'login',    'label', 'Usuário: ', 'type', 'text');
                 dialogBox(2) = struct('id', 'password', 'label', 'Senha: ',   'type', 'password');
                 sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'eFiscalizaSignInPage', 'Fields', dialogBox, 'Context', context))

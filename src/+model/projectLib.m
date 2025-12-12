@@ -11,9 +11,12 @@ classdef projectLib < handle
             'settings',  [] ...
         )
 
+        % O "id", do "generatedFiles", é a lista ordenada de "hashs" dos fluxos 
+        % relacionados aos documentos gerados.
+
         modules = struct( ...
             'File',  struct('annotationTable', [], ...
-                            'generatedFiles',  struct('rawFiles', {{}}, 'lastHTMLDocFullPath', '', 'lastTableFullPath', '', 'lastZIPFullPath', ''), ...
+                            'generatedFiles',  struct('id', '', 'rawFiles', {{}}, 'lastHTMLDocFullPath', '', 'lastTableFullPath', '', 'lastZIPFullPath', ''), ...
                             'ui',              struct('system',        '',  ...
                                                       'unit',          '',  ...
                                                       'issue',         -1,  ...
@@ -21,7 +24,7 @@ classdef projectLib < handle
                                                       'reportModel',   '',  ...
                                                       'reportVersion', 'Preliminar')), ...
             'ECD',   struct('annotationTable', [], ...
-                            'generatedFiles',  struct('rawFiles', {{}}, 'lastHTMLDocFullPath', '', 'lastTableFullPath', '', 'lastZIPFullPath', ''), ...
+                            'generatedFiles',  struct('id', '', 'rawFiles', {{}}, 'lastHTMLDocFullPath', '', 'lastTableFullPath', '', 'lastZIPFullPath', ''), ...
                             'ui',              struct('system',        '',  ...
                                                       'unit',          '',  ...
                                                       'issue',         -1,  ...
@@ -78,6 +81,7 @@ classdef projectLib < handle
                               'name',    prjName, ...
                               'hash',    prjHash, ...
                               'context', context, ...
+                              'generatedFiles', struct('id', obj.modules.(context).generatedFiles.id, 'lastZIPFullPath', obj.modules.(context).generatedFiles.lastZIPFullPath), ...
                               'ui',      struct('unit',        obj.modules.(context).ui.unit,  ...
                                                 'issue',       obj.modules.(context).ui.issue,  ...
                                                 'reportModel', obj.modules.(context).ui.reportModel));
@@ -96,7 +100,7 @@ classdef projectLib < handle
         end
 
         %-----------------------------------------------------------------%
-        function [ecdObj, msg] = Load(obj, ecdObj, fileName)
+        function [ecdObj, msg] = Load(obj, ecdObj, fileName, generalSettings)
             % Em 10/12/2025, a versão 1 do projeto contempla instâncias das 
             % classes model.ECD e model.projectLib. Ao ler um arquivo .mat, 
             % usando função "load", o MATLAB realiza validações simples, como
@@ -113,8 +117,8 @@ classdef projectLib < handle
 
             % A alteração da forma de organização da informação no app pode 
             % demandar a criação de outras versões (2, 3...) do arquivo de 
-            % projeto (.monitorSPED), o que deve vir acompanhado de parsers 
-            % para manter compatibilidade, caso viável.
+            % projeto (.mat), o que deve vir acompanhado de parsers para manter 
+            % compatibilidade, caso viável.
 
             required = {'appName', 'prjData', 'ecdData'};
 
@@ -138,6 +142,27 @@ classdef projectLib < handle
                         obj.hash = prjData.hash;
     
                         context = prjData.context;
+
+                        if isfile(prjData.generatedFiles.lastZIPFullPath)
+                            try
+                                unzipFiles = unzip(prjData.generatedFiles.lastZIPFullPath, generalSettings.fileFolder.tempPath);
+                                for ii = 1:numel(unzipFiles)
+                                    [~, ~, unzipFileExt] = fileparts(unzipFiles{ii});
+
+                                    switch lower(unzipFileExt)
+                                        case '.html'
+                                            obj.modules.(context).generatedFiles.lastHTMLDocFullPath = unzipFiles{ii};
+                                        case '.json'
+                                            obj.modules.(context).generatedFiles.lastTableFullPath   = unzipFiles{ii};
+                                    end
+                                end
+                                
+                                obj.modules.(context).generatedFiles.id              = prjData.generatedFiles.id;
+                                obj.modules.(context).generatedFiles.lastZIPFullPath = prjData.generatedFiles.lastZIPFullPath;
+                            catch 
+                            end
+                        end
+
                         obj.modules.(context).ui.unit = prjData.ui.unit;
                         obj.modules.(context).ui.issue = prjData.ui.issue;
     
@@ -225,7 +250,7 @@ classdef projectLib < handle
         function prjHash = computeProjectHash(obj, prjName, prjFile, ecdObj)
             hashList = sort({ecdObj.Hash});
 
-            annotationTable = [];            
+            annotationTable = [];
             for ii = 1:numel(ecdObj)
                 if isfield(ecdObj(ii).Table, 'x_CONTAS_ANOTACAO') && ~isempty(ecdObj(ii).Table.x_CONTAS_ANOTACAO)
                     if isempty(annotationTable)
@@ -298,16 +323,18 @@ classdef projectLib < handle
         end
 
         %-----------------------------------------------------------------%
-        function updateGeneratedFiles(obj, context, rawFiles, htmlFile, tableFile, zipFile)
+        function updateGeneratedFiles(obj, context, id, rawFiles, htmlFile, tableFile, zipFile)
             arguments
                 obj
                 context   (1,:) char {mustBeMember(context, {'File', 'ECD'})}
+                id        char = ''
                 rawFiles  cell = {}
                 htmlFile  char = ''
                 tableFile char = ''
                 zipFile   char = ''
             end
 
+            obj.modules.(context).generatedFiles.id                  = id;
             obj.modules.(context).generatedFiles.rawFiles            = rawFiles;
             obj.modules.(context).generatedFiles.lastHTMLDocFullPath = htmlFile;
             obj.modules.(context).generatedFiles.lastTableFullPath   = tableFile;
@@ -330,16 +357,14 @@ classdef projectLib < handle
         function filename = getGeneratedDocumentFileName(obj, fileExt, context)
             arguments
                 obj
-                fileExt (1,:) char {mustBeMember(fileExt, {'rawFiles', '.html', '.xlsx', '.zip'})}
+                fileExt (1,:) char {mustBeMember(fileExt, {'.html', '.json', '.zip'})}
                 context (1,:) char {mustBeMember(context, {'File', 'ECD'})}
             end
 
             switch fileExt
-                case 'rawFiles'
-                    filename = obj.modules.(context).generatedFiles.rawFiles;
                 case '.html'
                     filename = obj.modules.(context).generatedFiles.lastHTMLDocFullPath;
-                case '.xlsx'
+                case '.json'
                     filename = obj.modules.(context).generatedFiles.lastTableFullPath;
                 case '.zip'
                     filename = obj.modules.(context).generatedFiles.lastZIPFullPath;

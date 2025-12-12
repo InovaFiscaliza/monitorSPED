@@ -76,7 +76,7 @@ classdef (Abstract) Table
                         zz = sprintf('.%d', jj);
                     end
 
-                    id = util.HtmlTextGenerator.generateTextId(ecdObj(ii), 'scalar-period-oriented', jj);
+                    id = util.HtmlTextGenerator.generateTextId(ecdObj(ii), 'scalar-period-oriented', jj, 'html');
 
                     validationMessage = ecdObj(ii).Sources(jj).validationMessage;
                     if all(cellfun(@(x) isfield(validationMessage, x), {'xmlns', 'versao', 'nire', 'hashEsc'}))
@@ -177,6 +177,51 @@ classdef (Abstract) Table
 
             Table = innerjoin(rawTable, ecdObj.Table.x_BALANCETE_RESULTADO, 'Keys', 'COD_CTA', 'RightVariables', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'});
             Table = innerjoin(Table,    ecdObj.Table.x_CONTAS_DESCRICAO,    'Keys', 'COD_CTA', 'RightVariables', 'DESCRIÇÃO');
+        end
+
+
+        %-----------------------------------------------------------------%
+        % TABELAS PARA SHAREPOINT (SCARAB)
+        %-----------------------------------------------------------------%
+        function jsonFileContent = scarabJsonFile(projectData, context, ecdObj)
+            jsonFileInfo = struct( ...
+                'Project', {}, ...
+                'CompanyInfo', {}, ...
+                'Period', {}, ...
+                'Sources', {}, ...
+                'Accounts', {}, ...
+                'TrialBalance', {}, ...
+                'TaxEstimateSummary', {} ...
+            );
+
+            for ii = 1:numel(ecdObj)
+                x_CONTAS_ANOTACAO     = ecdObj(ii).Table.x_CONTAS_ANOTACAO;
+                x_BALANCETE_RESULTADO = ecdObj(ii).Table.x_BALANCETE_RESULTADO;
+                x_TABELA_APURACAO     = ecdObj(ii).Table.x_TABELA_APURACAO;
+
+                % Ajustes nos nomes das colunas, eliminando caracteres especiais 
+                % ou nomes iniciados por números (como "Observação  ✎" e "01".
+                % Além disso, inserida nomes das linhas como uma coluna com
+                % nome "TIPO" (no caso da tabela de apuração).
+
+                x_CONTAS_ANOTACAO     = renamevars(x_CONTAS_ANOTACAO,     {'Apurado?  ✎', 'Alíquota ICMS', 'Observação  ✎'}, {'APURADO', 'ICMS', 'OBSERVACAO'});                
+                x_BALANCETE_RESULTADO = renamevars(x_BALANCETE_RESULTADO, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}, {'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'});
+                x_TABELA_APURACAO     = renamevars(x_TABELA_APURACAO,     {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}, {'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'});
+                x_TABELA_APURACAO     = [table(x_TABELA_APURACAO.Properties.RowNames, 'VariableName', {'TIPO'}), x_TABELA_APURACAO];                
+                x_TABELA_APURACAO.Properties.RowNames = {};
+
+                jsonFileInfo(end+1) = struct( ...
+                    'Project', rmfield(projectData.modules.(context).ui, {'templates', 'reportVersion'}), ...
+                    'CompanyInfo', ecdObj(ii).CompanyInfo, ...
+                    'Period', ecdObj(ii).Period, ...
+                    'Sources', ecdObj(ii).Sources, ...
+                    'Accounts', x_CONTAS_ANOTACAO, ...
+                    'TrialBalance', x_BALANCETE_RESULTADO, ...
+                    'TaxEstimateSummary', x_TABELA_APURACAO ...
+                );
+            end
+
+            jsonFileContent = jsonencode(jsonFileInfo, 'PrettyPrint', true);
         end
     end
 end
