@@ -52,9 +52,6 @@ classdef dockReportLib_exported < matlab.apps.AppBase
             end
 
             % Atualiza painel:
-            if ~isdeployed()
-                app.reportSystem.Items = {'eFiscaliza', 'eFiscaliza TS', 'eFiscaliza HM', 'eFiscaliza DS'};
-            end
             app.reportSystem.Value     = app.projectData.modules.(context).ui.system;
 
             set(app.reportUnit, 'Items', app.mainApp.General.eFiscaliza.defaultValues.unit, ...
@@ -279,7 +276,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
 
             % Create reportSystem
             app.reportSystem = uidropdown(app.eFiscalizaGrid);
-            app.reportSystem.Items = {'eFiscaliza', 'eFiscaliza TS'};
+            app.reportSystem.Items = {'eFiscaliza', 'eFiscaliza TS', 'eFiscaliza HM', 'eFiscaliza DS'};
             app.reportSystem.ValueChangedFcn = createCallbackFcn(app, @checkValues, true);
             app.reportSystem.FontSize = 11;
             app.reportSystem.BackgroundColor = [1 1 1];

@@ -581,7 +581,7 @@ classdef winECD_exported < matlab.apps.AppBase
             hasSpecificNonEmptyTable        = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);
             
             reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(context).generatedFiles.lastHTMLDocFullPath);
-            reportFinalRelatedToSelectedObj = isequal(selectedECD.Hash, app.projectData.modules.(context).generatedFiles.id);
+            reportFinalRelatedToSelectedObj = nonEmptyECDObject && isequal(selectedECD.Hash, app.projectData.modules.(context).generatedFiles.id);
 
             app.tool_AccountEdition.Enable  = hasSpecificNonEmptyTable;
             app.tool_AutoFill.Enable        = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', {app.SheetView_First.Value, app.SheetView_Second.Value});

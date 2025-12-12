@@ -173,9 +173,6 @@ classdef winConfig_exported < matlab.apps.AppBase
                             updatePanel_Analysis(app)
 
                         case 3
-                            if ~isdeployed()
-                                app.reportSystem.Items = {'eFiscaliza', 'eFiscaliza TS', 'eFiscaliza HM', 'eFiscaliza DS'};
-                            end
                             updatePanel_Report(app)
 
                         case 4
@@ -940,7 +937,7 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create reportSystem
             app.reportSystem = uidropdown(app.eFiscalizaGrid);
-            app.reportSystem.Items = {'eFiscaliza', 'eFiscaliza TS'};
+            app.reportSystem.Items = {'eFiscaliza', 'eFiscaliza TS', 'eFiscaliza HM', 'eFiscaliza DS'};
             app.reportSystem.ValueChangedFcn = createCallbackFcn(app, @Config_ProjectParameterValueChanged, true);
             app.reportSystem.FontSize = 11;
             app.reportSystem.BackgroundColor = [1 1 1];
