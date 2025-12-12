@@ -8,6 +8,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
         eFiscalizaLabel       matlab.ui.control.Label
         eFiscalizaPanel       matlab.ui.container.Panel
         eFiscalizaGrid        matlab.ui.container.GridLayout
+        Image                 matlab.ui.control.Image
         reportIssue           matlab.ui.control.NumericEditField
         reportIssueLabel      matlab.ui.control.Label
         reportUnit            matlab.ui.control.DropDown
@@ -125,6 +126,42 @@ classdef dockReportLib_exported < matlab.apps.AppBase
             ipcMainMatlabCallsHandler(app.mainApp, app, 'reportUserConfirmation', context, indexes)
 
         end
+
+        % Image clicked function: Image
+        function ImageClicked(app, event)
+            
+            % <VALIDAÇÕES>
+            context = app.inputArgs.context;
+            
+            msg = '';
+            if ~report_checkEFiscalizaIssueId(app.mainApp, app.projectData.modules.(context).ui.issue)
+                msg = sprintf('O número da inspeção "%.0f" é inválido.', app.projectData.modules.(context).ui.issue);
+            elseif isempty(app.projectData.modules.(context).ui.system)
+                msg = 'Ambiente do eFiscaliza precisa ser selecionado.';
+            end
+
+            if ~isempty(msg)
+                appUtil.modalWindow(app.UIFigure, 'warning', msg);
+                return
+            end
+            % </VALIDAÇÕES>
+
+            % <PROCESSO>
+            issueDetails = app.projectData.modules.(context).ui.issueDetails;
+            if ~isempty(issueDetails) && (issueDetails.issueId == app.reportIssue.Value)
+                report_showIssueDetails(app.mainApp, context)
+            else
+                if isempty(app.mainApp.eFiscalizaObj) || ~isvalid(app.mainApp.eFiscalizaObj)
+                    dialogBox    = struct('id', 'login',    'label', 'Usuário: ', 'type', 'text');
+                    dialogBox(2) = struct('id', 'password', 'label', 'Senha: ',   'type', 'password');
+                    sendEventToHTMLSource(app.callingApp.jsBackDoor, 'customForm', struct('UUID', 'eFiscalizaSignInPage:IssueQuery', 'Fields', dialogBox, 'Context', context))
+                else                    
+                    report_queryIssueDetails(app.mainApp, [], context)
+                end
+            end
+            % </PROCESSO>
+
+        end
     end
 
     % Component initialization
@@ -207,7 +244,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
 
             % Create reportGrid
             app.reportGrid = uigridlayout(app.reportPanel);
-            app.reportGrid.ColumnWidth = {'1x', 150};
+            app.reportGrid.ColumnWidth = {'1x', 150, 150};
             app.reportGrid.RowHeight = {22, 22};
             app.reportGrid.RowSpacing = 5;
             app.reportGrid.BackgroundColor = [1 1 1];
@@ -226,7 +263,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
             app.reportModelName.FontSize = 11;
             app.reportModelName.BackgroundColor = [1 1 1];
             app.reportModelName.Layout.Row = 1;
-            app.reportModelName.Layout.Column = 2;
+            app.reportModelName.Layout.Column = [2 3];
             app.reportModelName.Value = '';
 
             % Create reportVersionLabel
@@ -244,7 +281,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
             app.reportVersion.FontSize = 11;
             app.reportVersion.BackgroundColor = [1 1 1];
             app.reportVersion.Layout.Row = 2;
-            app.reportVersion.Layout.Column = 2;
+            app.reportVersion.Layout.Column = 3;
             app.reportVersion.Value = 'Preliminar';
 
             % Create reportLabel
@@ -262,8 +299,9 @@ classdef dockReportLib_exported < matlab.apps.AppBase
 
             % Create eFiscalizaGrid
             app.eFiscalizaGrid = uigridlayout(app.eFiscalizaPanel);
-            app.eFiscalizaGrid.ColumnWidth = {'1x', 150};
+            app.eFiscalizaGrid.ColumnWidth = {'1x', 123, 22};
             app.eFiscalizaGrid.RowHeight = {22, 22, 22};
+            app.eFiscalizaGrid.ColumnSpacing = 5;
             app.eFiscalizaGrid.RowSpacing = 5;
             app.eFiscalizaGrid.BackgroundColor = [1 1 1];
 
@@ -281,7 +319,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
             app.reportSystem.FontSize = 11;
             app.reportSystem.BackgroundColor = [1 1 1];
             app.reportSystem.Layout.Row = 1;
-            app.reportSystem.Layout.Column = 2;
+            app.reportSystem.Layout.Column = [2 3];
             app.reportSystem.Value = 'eFiscaliza';
 
             % Create reportUnitLabel
@@ -298,7 +336,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
             app.reportUnit.FontSize = 11;
             app.reportUnit.BackgroundColor = [1 1 1];
             app.reportUnit.Layout.Row = 2;
-            app.reportUnit.Layout.Column = 2;
+            app.reportUnit.Layout.Column = [2 3];
             app.reportUnit.Value = {};
 
             % Create reportIssueLabel
@@ -319,6 +357,14 @@ classdef dockReportLib_exported < matlab.apps.AppBase
             app.reportIssue.Layout.Row = 3;
             app.reportIssue.Layout.Column = 2;
             app.reportIssue.Value = -1;
+
+            % Create Image
+            app.Image = uiimage(app.eFiscalizaGrid);
+            app.Image.ImageClickedFcn = createCallbackFcn(app, @ImageClicked, true);
+            app.Image.Tooltip = {'Detalhes da inspeção'};
+            app.Image.Layout.Row = 3;
+            app.Image.Layout.Column = 3;
+            app.Image.ImageSource = 'Zoom_32.png';
 
             % Create eFiscalizaLabel
             app.eFiscalizaLabel = uilabel(app.Document);

@@ -20,7 +20,8 @@ classdef (Abstract) Variable
 
     methods (Static)
         %-----------------------------------------------------------------%
-        function fieldValue = GeneralSettings(reportInfo, fieldName)
+        function fieldValue = GeneralSettings(reportInfo, fieldName, varargin)
+            projectData     = reportInfo.Project;
             generalSettings = reportInfo.Settings;
 
             switch fieldName
@@ -43,6 +44,56 @@ classdef (Abstract) Variable
 
                 case 'ReportTemplate'
                      fieldValue = jsonencode(struct('Name', reportInfo.Model.Name, 'DocumentType', reportInfo.Model.DocumentType, 'Version', reportInfo.Model.Version));
+
+                case {'Solicitação de Inspeção'; 
+                      'Ação de Inspeção'; 
+                      'Atividade de Inspeção';
+                      'Unidade Demandante'
+                      'Unidade Executante';
+                      'Sede da Unidade Executante';
+                      'Descrição da Atividade de Inspeção';
+                      'Período Previsto da Fiscalização';
+                      'Lista de Fiscais';
+                      'Processo SEI'}
+
+                    context = varargin{1};
+
+                    if ~isempty(projectData.modules.(context).ui.issueDetails)
+                        switch fieldName
+                            case 'Solicitação de Inspeção'
+                                fieldValue = projectData.modules.(context).ui.issueDetails.issueTree.solicitacao;
+                            case 'Ação de Inspeção'
+                                fieldValue = projectData.modules.(context).ui.issueDetails.issueTree.acao;
+                            case 'Atividade de Inspeção'
+                                fieldValue = projectData.modules.(context).ui.issueDetails.issueTree.atividade;
+                            case 'Unidade Demandante'
+                                issueCode  = projectData.modules.(context).ui.issueDetails.issueTree.solicitacao; % 'SOL_GIDS_2024_0002'
+                                fieldValue = char(regexp(issueCode, '^SOL_([^_]+)_', 'tokens', 'once'));
+                            case 'Unidade Executante'
+                                fieldValue = projectData.modules.(context).ui.issueDetails.unit;
+                            case 'Sede da Unidade Executante'
+                                unit = projectData.modules.(context).ui.issueDetails.unit;
+                                unitIndex = find(strcmp({generalSettings.eFiscaliza.defaultValues.unitCityMapping.unit}, unit), 1);
+                                if ~isempty(unitIndex)
+                                    fieldValue = generalSettings.eFiscaliza.defaultValues.unitCityMapping(unitIndex).city;
+                                else
+                                    fieldValue = '';
+                                end
+                            case 'Descrição da Atividade de Inspeção'
+                                fieldValue = projectData.modules.(context).ui.issueDetails.description;
+                            case 'Período Previsto da Fiscalização'
+                                fieldValue = projectData.modules.(context).ui.issueDetails.period;
+                            case 'Lista de Fiscais'
+                                fiscais = projectData.modules.(context).ui.issueDetails.fiscais;
+                                if isscalar(fiscais)
+                                    fieldValue = char(fiscais);
+                                else
+                                    fieldValue = strjoin(strjoin(fiscais(1:end-1), ', '), fiscais(end), ' e ');
+                                end
+                            case 'Processo SEI'
+                                fieldValue = projectData.modules.(context).ui.issueDetails.sei;
+                        end
+                    end
 
                 otherwise
                     error('UnexpectedFieldName')

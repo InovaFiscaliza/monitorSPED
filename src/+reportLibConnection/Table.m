@@ -27,7 +27,7 @@ classdef (Abstract) Table
             ecdObj = reportInfo.Object;
             Table  = table('Size',          [0, 7],                                                       ...
                            'VariableTypes', {'double', 'cell', 'cell', 'cell', 'cell', 'double', 'cell'}, ...
-                           'VariableNames', {'#', 'CNPJ', 'NIRE', 'Razão Social', 'UF', 'Número de arquivos', 'Período contábil – Arquivo'});
+                           'VariableNames', {'#', 'CNPJ', 'NIRE', 'Razão Social', 'UF', 'Número de arquivos', 'Período contábil • Arquivo'});
 
             idsList = {ecdObj.CompanyId};
             ids = unique(idsList);
@@ -52,7 +52,7 @@ classdef (Abstract) Table
                     ecdObj(idIndexes(1)).CompanyName, ...
                     strjoin(unique({ecdObj(idIndexes).State}), '<br>'), ...
                     numel(ecdObj(idIndexes)), ...
-                    strjoin(strcat(arrayfun(@(x) sprintf('%s a %s', x.Period(:)), ecdObj(idIndexes), 'UniformOutput', false), '&emsp;–&emsp;', {ecdObj(idIndexes).FileName}), '<br>') ...
+                    strjoin(strcat(arrayfun(@(x) sprintf('%s a %s', x.Period(:)), ecdObj(idIndexes), 'UniformOutput', false), '&emsp;&#x2022;&emsp;', {ecdObj(idIndexes).FileName}), '<br>') ...
                 };                    
             end
         end
@@ -177,6 +177,10 @@ classdef (Abstract) Table
 
             Table = innerjoin(rawTable, ecdObj.Table.x_BALANCETE_RESULTADO, 'Keys', 'COD_CTA', 'RightVariables', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'});
             Table = innerjoin(Table,    ecdObj.Table.x_CONTAS_DESCRICAO,    'Keys', 'COD_CTA', 'RightVariables', 'DESCRIÇÃO');
+
+            % Eliminando caracteres especiais não renderizados no editor de
+            % texto do SEI.
+            Table.('DESCRIÇÃO') = replace(Table.('DESCRIÇÃO'), '↳', '&#x21B3;');
         end
 
 
@@ -200,10 +204,10 @@ classdef (Abstract) Table
                 x_TABELA_APURACAO     = ecdObj(ii).Table.x_TABELA_APURACAO;
 
                 % Ajustes nos nomes das colunas, eliminando caracteres especiais 
-                % ou nomes iniciados por números (como "Observação  ✎" e "01".
-                % Além disso, inserida nomes das linhas como uma coluna com
-                % nome "TIPO" (no caso da tabela de apuração).
-
+                % não renderizados no editor de texto do SEI, além de nomes
+                % iniciados por números (como "Observação  ✎" e "01"). Além 
+                % disso, inserida nomes das linhas como uma coluna com nome 
+                % "TIPO" (no caso da tabela de apuração).
                 x_CONTAS_ANOTACAO     = renamevars(x_CONTAS_ANOTACAO,     {'Apurado?  ✎', 'Alíquota ICMS', 'Observação  ✎'}, {'APURADO', 'ICMS', 'OBSERVACAO'});                
                 x_BALANCETE_RESULTADO = renamevars(x_BALANCETE_RESULTADO, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}, {'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'});
                 x_TABELA_APURACAO     = renamevars(x_TABELA_APURACAO,     {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}, {'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'});

@@ -1,7 +1,7 @@
 [
     {
-        "Name": "Inventário de arquivos",
-        "File": "Inventário.json",
+        "Name": "Inventário de arquivos (Relatório de Atividades)",
+        "File": "RA - Inventário.json",
         "Module": "File",
         "DocumentType": "Relatório de Atividades",
         "Description": "Relatório de inventário de arquivos contábeis.",
@@ -11,8 +11,8 @@
         "UserData": ""
     },
     {
-        "Name": "Análise contábil",
-        "File": "Análise contábil.json",
+        "Name": "Análise contábil (Relatório de Atividades)",
+        "File": "RA - Análise contábil.json",
         "Module": "ECD",
         "DocumentType": "Relatório de Atividades",
         "Description": "Relatório de análise de arquivos contábeis para fins de apuração dos valores devidos de FUST e FUNTTEL.",
@@ -22,8 +22,8 @@
         "UserData": ""
     },
     {
-        "Name": "Análise contábil (RelatórioFiscalização)",
-        "File": "Análise contábil (RelatórioFiscalização).json",
+        "Name": "Análise contábil (Relatório de Fiscalização)",
+        "File": "RF - Análise contábil.json",
         "Module": "ECD",
         "DocumentType": "Relatório de Fiscalização",
         "Description": "Relatório de análise de arquivos contábeis para fins de apuração dos valores devidos de FUST e FUNTTEL.",

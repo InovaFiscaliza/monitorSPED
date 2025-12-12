@@ -130,7 +130,7 @@
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Período contábil – Arquivo",
+                                "ColumnName": "Período contábil &emsp;&#x2022;&emsp; Arquivo",
                                 "Precision": "%s",
                                 "Width": "auto"
                             }

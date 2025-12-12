@@ -169,6 +169,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 context = event.HTMLEventData.context;
                                 report_uploadInfoController(app, event.HTMLEventData, 'uploadDocument', context)
 
+                            case 'eFiscalizaSignInPage:IssueQuery'
+                                context = event.HTMLEventData.context;
+                                report_queryIssueDetails(app, event.HTMLEventData, context)
+
                             case 'openDevTools'
                                 if isequal(app.General.operationMode.DevTools, rmfield(event.HTMLEventData, 'uuid'))
                                     webWin = struct(struct(struct(app.UIFigure).Controller).PlatformHost).CEF;
@@ -913,6 +917,21 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
+        function report_showIssueDetails(app, context)
+            issueId      = app.projectData.modules.(context).ui.issue;
+            issueDetails = app.projectData.modules.(context).ui.issueDetails;
+
+            if isempty(issueDetails) || issueDetails.issueId ~= issueId
+                msg = sprintf('Não identificada informações acerca da Atividade de Inspeção nº %d', issueId);
+            else
+                dataStruct = struct('group', 'ATIVIDADE DE INSPEÇÃO', 'value', issueDetails);
+                msg = textFormatGUI.struct2PrettyPrintList(dataStruct, 'print -1', '', 'popup');
+            end
+
+            appUtil.modalWindow(app.UIFigure, 'info', msg);
+        end
+
+        %-----------------------------------------------------------------%
         function reportGeneratorCall(app, context, indexes)
             app.progressDialog.Visible = 'visible';
 
@@ -941,8 +960,43 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 appUtil.modalWindow(uiFigure, 'error', getReport(ME));
             end
 
-            updateToolbar(app)
-    
+            updateToolbar(app)    
+            app.progressDialog.Visible = 'hidden';
+        end
+
+        %-------------------------------------------------------------------------%
+        function report_queryIssueDetails(app, credentials, context)
+            app.progressDialog.Visible = 'visible';
+
+            try
+                if ~isempty(credentials)
+                    app.eFiscalizaObj = ws.eFiscaliza(credentials.login, credentials.password);
+                end
+
+                env = strsplit(app.projectData.modules.(context).ui.system);
+                if numel(env) < 2
+                    env = 'PD';
+                else
+                    env = env{2};
+                end
+
+                issue = struct( ...
+                    'type', 'ATIVIDADE DE INSPEÇÃO', ...
+                    'id', app.projectData.modules.(context).ui.issue ...
+                );
+                
+                msg = run(app.eFiscalizaObj, env, 'queryIssue', issue);
+                if isstruct(msg)
+                    app.projectData.modules.(context).ui.issueDetails = msg;
+                else
+                    error(msg)
+                end
+
+            catch ME
+                appUtil.modalWindow(app.UIFigure, 'error', ME.message);
+            end
+
+            report_showIssueDetails(app, context)            
             app.progressDialog.Visible = 'hidden';
         end
 
@@ -964,20 +1018,34 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     app.eFiscalizaObj = ws.eFiscaliza(credentials.login, credentials.password);
                 end
 
-                % Parâmetros configurados no módulo auxiliar:
-                env   = strsplit(app.projectData.modules.(context).ui.system);
-                if numel(env) < 2; env = 'PD';
-                else;              env = env{2};
+                env = strsplit(app.projectData.modules.(context).ui.system);
+                if numel(env) < 2
+                    env = 'PD';
+                else
+                    env = env{2};
                 end
-                unit  = app.projectData.modules.(context).ui.unit;
-                issue = struct('type', 'ATIVIDADE DE INSPEÇÃO', 'id', app.projectData.modules.(context).ui.issue);                
+
+                unit = app.projectData.modules.(context).ui.unit;
+
+                issue = struct( ...
+                    'type', 'ATIVIDADE DE INSPEÇÃO', ...
+                    'id', app.projectData.modules.(context).ui.issue ...
+                );
 
                 switch operation
                     case 'uploadDocument'
+                        % O HTML definitivo criado...
                         fileName = getGeneratedDocumentFileName(app.projectData, '.html', context);
-                        docSpec  = app.General.eFiscaliza;
+
+                        % Identificando o ID do documento a ser criado no
+                        % SEI...
+                        [~, modelIdx]   = ismember(app.projectData.modules.(context).ui.reportModel, {app.projectData.report.templates.Name});
+                        docType         = app.projectData.report.templates(modelIdx).DocumentType;
+                        [~, docTypeIdx] = ismember(docType, {app.General.eFiscaliza.internal.typeIdMapping.type});
+
+                        docSpec = app.General.eFiscaliza;
                         docSpec.originId = docSpec.internal.originId;
-                        docSpec.typeId   = docSpec.internal.typeId;
+                        docSpec.typeId   = app.General.eFiscaliza.internal.typeIdMapping(docTypeIdx).id;
 
                         msg = run(app.eFiscalizaObj, env, operation, issue, unit, docSpec, fileName);
         

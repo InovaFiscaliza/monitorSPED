@@ -1,5 +1,5 @@
 {
-    "version": 0.61,
+    "version": 0.65,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -87,7 +87,10 @@
     "eFiscaliza": {
         "internal": {
             "originId": "G",
-            "typeId": "306"
+            "typeIdMapping": [
+                {"type": "Relatório de Fiscalização", "id": "19"},
+                {"type": "Relatório de Atividades", "id": "306"}
+            ]
         },
         "external": {
             "originId": "R",
@@ -127,6 +130,35 @@
                 "UO111",
                 "UO112",
                 "UO113"
+            ],
+            "unitCityMapping": [
+              {"unit": "GR01", "city": "São Paulo/SP"},
+              {"unit": "GR02", "city": "Rio de Janeiro/RJ"},
+              {"unit": "GR03", "city": "Curitiba/PR"},
+              {"unit": "GR04", "city": "Belo Horizonte/MG"},
+              {"unit": "GR05", "city": "Porto Alegre/RS"},
+              {"unit": "GR06", "city": "Recife/PE"},
+              {"unit": "GR07", "city": "Goiânia/GO"},
+              {"unit": "GR08", "city": "Salvador/BA"},
+              {"unit": "GR09", "city": "Fortaleza/CE"},
+              {"unit": "GR10", "city": "Belém/PA"},
+              {"unit": "GR11", "city": "Manaus/AM"},            
+              {"unit": "UO001", "city": "Brasília/DF"},
+              {"unit": "UO021", "city": "Vitória/ES"},
+              {"unit": "UO031", "city": "Florianópolis/SC"},
+              {"unit": "UO061", "city": "Maceió/AL"},
+              {"unit": "UO062", "city": "João Pessoa/PB"},
+              {"unit": "UO071", "city": "Cuiabá/MT"},
+              {"unit": "UO072", "city": "Campo Grande/MS"},
+              {"unit": "UO073", "city": "Palmas/TO"},
+              {"unit": "UO081", "city": "Aracaju/SE"},
+              {"unit": "UO091", "city": "Natal/RN"},
+              {"unit": "UO092", "city": "Teresina/PI"},
+              {"unit": "UO101", "city": "São Luís/MA"},
+              {"unit": "UO102", "city": "Macapá/AP"},
+              {"unit": "UO111", "city": "Porto Velho/RO"},
+              {"unit": "UO112", "city": "Rio Branco/AC"},
+              {"unit": "UO113", "city": "Boa Vista/RR"}
             ],
             "servicos_da_inspecao": {
                 "value": [
