@@ -308,11 +308,24 @@ classdef (Abstract) HtmlTextGenerator
             dataStruct(3) = struct('group', 'CreateCustomTable', 'value', strjoin(customIds, ', '));
 
             if isempty(ecdObj.GUI.warnings)
-                readWarnings = '-1';
+                readWarnings = '[]';
             else
                 readWarnings = strjoin(ecdObj.GUI.warnings, '\n');
             end
             dataStruct(4) = struct('group', 'Warnings', 'value', readWarnings);
+            
+            if isempty(ecdObj.GUI.generatedFiles)
+                dataStruct(end+1) = struct('group', 'Relatório definitivo', 'value', '[]');
+            else
+                for ii = 1:numel(ecdObj.GUI.generatedFiles)
+                    generatedFiles = struct( ...
+                        'zip',    ecdObj.GUI.generatedFiles(ii).files{3}, ...
+                        'status', ecdObj.GUI.generatedFiles(ii).status ...
+                    );
+
+                    dataStruct(end+1) = struct('group', sprintf('Relatório definitivo #%d', ii), 'value', generatedFiles);
+                end
+            end
 
             htmlContent = textFormatGUI.struct2PrettyPrintList(dataStruct, 'print -1', '', 'popup');
         end

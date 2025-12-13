@@ -84,7 +84,8 @@ classdef projectLib < handle
                               'hash',    prjHash, ...
                               'context', context, ...
                               'generatedFiles', struct('id', obj.modules.(context).generatedFiles.id, 'lastZIPFullPath', obj.modules.(context).generatedFiles.lastZIPFullPath), ...
-                              'ui',      struct('unit',         obj.modules.(context).ui.unit,  ...
+                              'ui',      struct('system',       obj.modules.(context).ui.system, ...
+                                                'unit',         obj.modules.(context).ui.unit,  ...
                                                 'issue',        obj.modules.(context).ui.issue, ...
                                                 'issueDetails', obj.modules.(context).ui.issueDetails, ...
                                                 'reportModel',  obj.modules.(context).ui.reportModel));
@@ -166,8 +167,9 @@ classdef projectLib < handle
                             end
                         end
 
-                        obj.modules.(context).ui.unit = prjData.ui.unit;
-                        obj.modules.(context).ui.issue = prjData.ui.issue;
+                        obj.modules.(context).ui.system       = prjData.ui.system;
+                        obj.modules.(context).ui.unit         = prjData.ui.unit;
+                        obj.modules.(context).ui.issue        = prjData.ui.issue;
                         obj.modules.(context).ui.issueDetails = prjData.ui.issueDetails;
     
                         reportModel = prjData.ui.reportModel;
@@ -327,10 +329,11 @@ classdef projectLib < handle
         end
 
         %-----------------------------------------------------------------%
-        function updateGeneratedFiles(obj, context, id, rawFiles, htmlFile, tableFile, zipFile)
+        function updateGeneratedFiles(obj, context, ecdObj, id, rawFiles, htmlFile, tableFile, zipFile)
             arguments
                 obj
                 context   (1,:) char {mustBeMember(context, {'File', 'ECD'})}
+                ecdObj         = []
                 id        char = ''
                 rawFiles  cell = {}
                 htmlFile  char = ''
@@ -343,6 +346,10 @@ classdef projectLib < handle
             obj.modules.(context).generatedFiles.lastHTMLDocFullPath = htmlFile;
             obj.modules.(context).generatedFiles.lastTableFullPath   = tableFile;
             obj.modules.(context).generatedFiles.lastZIPFullPath     = zipFile;
+
+            if isscalar(ecdObj)
+                update(ecdObj, 'GUI.GeneratedFiles', 'addFinalReportFiles', obj, context)
+            end
         end
 
         %-----------------------------------------------------------------%

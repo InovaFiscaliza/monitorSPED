@@ -1002,17 +1002,25 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function report_uploadInfoController(app, credentials, operation, context)
-            communicationStatus = report_sendHTMLDocToSEIviaEFiscaliza(app, credentials, operation, context);
-            if communicationStatus && strcmp(app.projectData.modules.(context).ui.system, 'eFiscaliza')
-                report_sendFilesToSharepoint(app, context)
+            [communicationStatus, communicationMessage] = report_sendHTMLDocToSEIviaEFiscaliza(app, credentials, operation, context);
+            
+            if communicationStatus 
+                if strcmp(app.projectData.modules.(context).ui.system, 'eFiscaliza')
+                    report_sendFilesToSharepoint(app, context)
+                end
+
+                generatedFilesId = app.projectData.modules.(context).generatedFiles.id;
+                [~, generatedFilesIdIndex] = ismember(generatedFilesId, {app.ecdObj.Hash});
+                if generatedFilesIdIndex
+                    update(app.ecdObj(generatedFilesIdIndex), 'GUI.GeneratedFiles', 'updateFinalReportStatus', app.projectData, context, communicationMessage)
+                end
             end
         end
 
         %-------------------------------------------------------------------------%
-        function communicationStatus = report_sendHTMLDocToSEIviaEFiscaliza(app, credentials, operation, context)
+        function [communicationStatus, communicationMessage] = report_sendHTMLDocToSEIviaEFiscaliza(app, credentials, operation, context)
             app.progressDialog.Visible = 'visible';
-            communicationStatus = false;
-
+            
             try
                 if ~isempty(credentials)
                     app.eFiscalizaObj = ws.eFiscaliza(credentials.login, credentials.password);
@@ -1057,18 +1065,19 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     error(msg)
                 end
 
-                modalWindowIcon     = 'success';
-                modalWindowMessage  = msg;
-                communicationStatus = true;
+                modalWindowIcon      = 'success';
+                communicationMessage = msg;
+                communicationStatus  = true;
 
             catch ME
-                app.eFiscalizaObj   = [];
-                
-                modalWindowIcon     = 'error';
-                modalWindowMessage  = ME.message;
+                app.eFiscalizaObj    = [];
+
+                modalWindowIcon      = 'error';
+                communicationMessage = ME.message;
+                communicationStatus  = false;
             end
 
-            appUtil.modalWindow(app.UIFigure, modalWindowIcon, modalWindowMessage);
+            appUtil.modalWindow(app.UIFigure, modalWindowIcon, communicationMessage);
             app.progressDialog.Visible = 'hidden';
         end
 

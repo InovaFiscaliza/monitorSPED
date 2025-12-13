@@ -159,12 +159,6 @@ classdef (Abstract) Controller
                                              'InfoSet', struct('indexes', idIndexes,         ...
                                                                'ecdObj', ecdObj(idIndexes)), ...
                                              'HTML',    struct('Component', {}, 'Source', {}, 'Value', {}));
-                    
-
-                % if any(arrayfun(@(x) ~isempty(x.GUI.externalFiles), ecdObj(idIndexes)))
-                %     externalFilesList = arrayfun(@(x) x.GUI.externalFiles, ecdObj(idIndexes));
-                %     dataOverview(end).HTML = vertcat(externalFilesList{:});
-                % end
             end
 
 
@@ -219,7 +213,7 @@ classdef (Abstract) Controller
                         ZIPFileList{end+1} = JSONFile;
                     end
                     zip(ZIPFile, ZIPFileList)
-                    updateGeneratedFiles(projectData, context, generatedFilesId, {}, HTMLFile, JSONFile, ZIPFile)
+                    updateGeneratedFiles(projectData, context, ecdObj, generatedFilesId, {}, HTMLFile, JSONFile, ZIPFile)
             end
         end
     end

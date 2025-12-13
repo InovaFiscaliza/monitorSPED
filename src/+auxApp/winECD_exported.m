@@ -191,7 +191,7 @@ classdef winECD_exported < matlab.apps.AppBase
                             case 'freeMemory'
                                 fileIndex = varargin{1};
                                 tableIdList = varargin{2};
-                                update(app.ecdObj(fileIndex), 'auxApp.dockECDMemoryUsage', 'freeMemory', tableIdList)
+                                update(app.ecdObj(fileIndex), 'Table.NonEssentialFiles', 'freeMemory', tableIdList)
                                 ipcMainMatlabCallsHandler(app.mainApp, app, 'updateTreeView', fileIndex);
 
                             case 'generateFinalReport'
@@ -1599,6 +1599,31 @@ classdef winECD_exported < matlab.apps.AppBase
                 appUtil.modalWindow(app.UIFigure, 'warning', msg);
                 return
             end
+
+            selectedECD   = selectedECDObject(app);
+            uploadReports = ~strcmp({selectedECD.GUI.generatedFiles.status}, '');
+
+            if any(uploadReports)
+                uploadStatus = extractAfter({selectedECD.GUI.generatedFiles(uploadReports).status}, 'Documento cadastrado no SEI sob o nº ');
+
+                if isscalar(uploadStatus)
+                    uploadStatus = uploadStatus{1};
+                else                    
+                    uploadStatus = strjoin([{strjoin(uploadStatus(1:end-1), ', ')}, uploadStatus(end)], ' e ');
+                end
+
+                msgQuestion = sprintf([ ...
+                    'Já foi realizado o <i>upload</i> para o SEI de relatório contendo ' ...
+                    'análise relacionada a este conjunto de dados contábeis - ' ...
+                    'SEI nº %s.\n\n' ...
+                    'Deseja realizar um novo <i>upload</i> para o SEI?' ...
+                ], uploadStatus);
+                userSelection = appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 2, 2);
+
+                if strcmp(userSelection, 'Não')
+                    return
+                end
+            end
             % </VALIDAÇÕES>
 
             % <PROCESSO>
@@ -1752,7 +1777,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ExportButton.Enable = 'off';
             app.ExportButton.Layout.Row = [1 2];
             app.ExportButton.Layout.Column = 6;
-            app.ExportButton.Text = '.xlsx .rtf';
+            app.ExportButton.Text = 'Exporta';
 
             % Create Tab1Separator2
             app.Tab1Separator2 = uiimage(app.Tab1Grid);
@@ -1782,7 +1807,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.LogButton.Enable = 'off';
             app.LogButton.Layout.Row = [1 2];
             app.LogButton.Layout.Column = 9;
-            app.LogButton.Text = 'Leitura';
+            app.LogButton.Text = 'Análise';
 
             % Create Tab1Separator3
             app.Tab1Separator3 = uiimage(app.Tab1Grid);

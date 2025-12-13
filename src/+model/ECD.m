@@ -83,10 +83,10 @@ classdef ECD < model.ECDBase
                 'type', 'auto', ...
                 'rate', [] ...
             ), ...
-            'externalFiles', table( ...
-                'Size', [0, 4], ...
-                'VariableTypes', {'cell', 'cell', 'cell', 'int8'}, ...
-                'VariableNames', {'Type', 'Tag', 'Filename', 'ID'} ...
+            'generatedFiles', struct( ...
+                'context', {}, ...
+                'files', {}, ...
+                'status', {} ...
             ), ...
             'tableView', struct( ...
                 'id', {}, ...
@@ -901,7 +901,12 @@ classdef ECD < model.ECDBase
         function update(obj, propertyName, updateType, varargin)
             arguments
                 obj
-                propertyName char {mustBeMember(propertyName, {'auxApp.dockECDMemoryUsage', 'Table.x_CONTAS_ANOTACAO', 'Table.x_TABELA_APURACAO'})}
+                propertyName char {mustBeMember(propertyName, { 'GUI.GeneratedFiles';
+                                                                'GUI.TableView.Filter';
+                                                                'GUI.TableView.Style';
+                                                                'Table.NonEssentialFiles';
+                                                                'Table.x_CONTAS_ANOTACAO';
+                                                                'Table.x_TABELA_APURACAO' })}
                 updateType
             end
 
@@ -912,7 +917,39 @@ classdef ECD < model.ECDBase
             checkIfScalar(obj)
 
             switch propertyName
-                case 'auxApp.dockECDMemoryUsage'
+                case 'GUI.GeneratedFiles'
+                    switch updateType
+                        case 'addFinalReportFiles'
+                            projectData  = varargin{1};
+                            context      = varargin{2};
+                            createdFiles = struct2cell(rmfield(projectData.modules.(context).generatedFiles, {'id', 'rawFiles'}));
+
+                            obj.GUI.generatedFiles(end+1) = struct('context', context, 'files', {createdFiles}, 'status', '');
+
+                        case 'updateFinalReportStatus'
+                            projectData  = varargin{1};
+                            context      = varargin{2};
+                            uploadStatus = varargin{3};
+                            uploadFiles  = struct2cell(rmfield(projectData.modules.(context).generatedFiles, {'id', 'rawFiles'}));
+
+                            uploadIndex = find(cellfun(@(x) isequal(uploadFiles, x), {obj.GUI.generatedFiles.files}), 1);
+                            if ~isempty(uploadIndex) && isempty(obj.GUI.generatedFiles(uploadIndex).status)
+                                obj.GUI.generatedFiles(uploadIndex).status = uploadStatus;
+                            else
+                                obj.GUI.generatedFiles(end+1) = struct('context', context, 'files', {uploadFiles}, 'status', uploadStatus);
+                            end
+
+                        otherwise
+                            error('UnexpectedCall')
+                    end
+
+                case 'GUI.TableView.Filter'
+                    % Pendente...
+
+                case 'GUI.TableView.Style'
+                    % Pendente...
+
+                case 'Table.NonEssentialFiles'
                     switch updateType
                         case 'freeMemory'
                             tableIdList = varargin{1};
