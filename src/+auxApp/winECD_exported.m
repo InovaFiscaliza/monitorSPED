@@ -452,8 +452,9 @@ classdef winECD_exported < matlab.apps.AppBase
                                       'ColumnName', {}, ...
                                       'ColumnEditable', false, ...
                                       'Data', [])
-                    app.UITable1_CountText.Text  = ' CONTAGEM : 0';
-                    app.UITable1_FilterText.Text = '0 DE 0 ';
+                    app.UITable1_AccountInfo.Text = '';
+                    app.UITable1_CountText.Text   = ' CONTAGEM : 0';
+                    app.UITable1_FilterText.Text  = '0 DE 0 ';
                     set(app.UITable1_FilterIcon, 'ImageSource', 'FilterGray_18.png', 'Tooltip', '')
                 end
 
@@ -462,8 +463,9 @@ classdef winECD_exported < matlab.apps.AppBase
                                       'ColumnName', {}, ...
                                       'ColumnEditable', false, ...
                                       'Data', [])
-                    app.UITable2_CountText.Text  = ' CONTAGEM : 0';
-                    app.UITable2_FilterText.Text = '0 DE 0 ';
+                    app.UITable2_AccountInfo.Text = '';
+                    app.UITable2_CountText.Text   = ' CONTAGEM : 0';
+                    app.UITable2_FilterText.Text  = '0 DE 0 ';
                     set(app.UITable2_FilterIcon, 'ImageSource', 'FilterGray_18.png', 'Tooltip', '')
                 end
             end
@@ -1617,7 +1619,7 @@ classdef winECD_exported < matlab.apps.AppBase
             
             context = 'ECD';
             dialogBox = struct('id', 'projectName', 'label', 'Nome do projeto:', 'type', 'text', 'defaultValue', app.projectData.name);            
-            sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'onProjectSave', 'Fields', dialogBox, 'Context', context))
+            sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'onProjectSave', 'Fields', dialogBox, 'Context', context, 'ColumnWidth', '100px'))
 
         end
 
