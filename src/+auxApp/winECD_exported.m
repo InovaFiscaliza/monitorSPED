@@ -172,8 +172,8 @@ classdef winECD_exported < matlab.apps.AppBase
 
                             case 'changeFilter'
                                 tableId = varargin{1};
-                                if strcmp(app.SheetView_First.Value, tableId)
-                                    SheetViewFirstValueChanged(app, struct('Source', app.SheetView_First))
+                                if strcmp(app.SheetList.Value, tableId)
+                                    SheetViewFirstValueChanged(app, struct('Source', app.SheetList))
                                 end
 
                                 if strcmp(app.SheetView_Second.Value, tableId)
@@ -266,6 +266,9 @@ classdef winECD_exported < matlab.apps.AppBase
                             ui.CustomizationBase.getElementsDataTag(hTableList);
 
                         case 2
+                            app.Tab2.UserData.rendered = true;
+                            startup_InitialLayout(app)
+                            TimePeriodListValueChanged(app)
                             app.FontFamily.Items = [{''}; listfonts];
 
                         otherwise
@@ -323,6 +326,10 @@ classdef winECD_exported < matlab.apps.AppBase
                 app.dockModule_Undock.Enable = 1;
             end
 
+            % TabGroup:
+          % app.Tab1.UserData.rendered = true;
+            app.Tab2.UserData.rendered = false;
+
             % Tabelas:
             app.UITable1.RowName = 'numbered';
             app.UITable2.RowName = 'numbered';
@@ -333,26 +340,33 @@ classdef winECD_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function startup_InitialLayout(app)
             nonEmptyECDObject = ~isempty(app.ecdObj);
+
+            renderedElements  = {
+                app.ExportButton;
+                app.MemoryUsageButton;
+                app.LogButton
+            };
+
+            if app.Tab2.UserData.rendered
+                renderedElements = [renderedElements; {
+                    app.OpenFilterModuleButton;
+                    app.RowHeight;
+                    app.ColumnWidth;
+                    app.FontFamily;
+                    app.FontWeight;
+                    app.FontStyle;
+                    app.FontAlign1;
+                    app.FontAlign2;
+                    app.FontAlign3;
+                    app.FontBackground;
+                    app.FontColor;
+                    app.FontIcon;
+                    app.StyleDelete;
+                    app.StyleRefresh                    
+                }];
+            end
             
-            cellfun(@(x) set(x, 'Enable', nonEmptyECDObject), { ...
-                app.ExportButton, ...
-                app.MemoryUsageButton, ...
-                app.LogButton, ...
-                app.OpenFilterModuleButton, ...
-                app.RowHeight, ...
-                app.ColumnWidth, ...
-                app.FontFamily, ...
-                app.FontWeight, ...
-                app.FontStyle, ...
-                app.FontAlign1, ...
-                app.FontAlign2, ...
-                app.FontAlign3, ...
-                app.FontBackground, ...
-                app.FontColor, ...
-                app.FontIcon, ...
-                app.StyleDelete, ...
-                app.StyleRefresh ...
-            })
+            cellfun(@(x) set(x, 'Enable', nonEmptyECDObject), renderedElements)
 
             if nonEmptyECDObject
                 idsList = {app.ecdObj.CompanyId};
@@ -550,19 +564,24 @@ classdef winECD_exported < matlab.apps.AppBase
             % seleção inicial, caso registro já parseado.
             sheetsSorted = sort([ordinaryIds; setdiff(customIds, notappplicableIds)]);
 
-            selection1 = app.SheetView_First.Value;
+            selection1 = app.SheetList.Value;
             if isempty(selection1) || ~ismember(selection1, sheetsSorted) || ~isfield(selectedECD.Table, ['x' selection1])
                 selection1 = sheetsSorted{1};
-            end
+            end            
+            set(app.SheetList, 'Items', sheetsSorted, 'Value', selection1)
 
-            selection2 = app.SheetView_First.Value;
-            if isempty(selection2) || ~ismember(selection2, sheetsSorted) || ~isfield(selectedECD.Table, ['x' selection2])
-                selection2 = sheetsSorted{1};
+            % Atualiza dropdowns apenas se a Tab2 já estiver sido renderizada, 
+            % evitando erros no console de tentativa de atualização de um 
+            % componente incompleto.
+            if app.Tab2.UserData.rendered
+                selection2 = app.SheetView_Second.Value;
+                if isempty(selection2) || ~ismember(selection2, sheetsSorted) || ~isfield(selectedECD.Table, ['x' selection2])
+                    selection2 = sheetsSorted{1};
+                end
+
+                set(app.SheetView_First,  'Items', sheetsSorted, 'Value', selection1)
+                set(app.SheetView_Second, 'Items', sheetsSorted, 'Value', selection2)
             end
-            
-            set(app.SheetList,        'Items', sheetsSorted, 'Value', selection1)
-            set(app.SheetView_First,  'Items', sheetsSorted, 'Value', selection1)
-            set(app.SheetView_Second, 'Items', sheetsSorted, 'Value', selection2)
         end
 
         %-----------------------------------------------------------------%
@@ -583,8 +602,12 @@ classdef winECD_exported < matlab.apps.AppBase
             reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(context).generatedFiles.lastHTMLDocFullPath);
             reportFinalRelatedToSelectedObj = nonEmptyECDObject && isequal(selectedECD.Hash, app.projectData.modules.(context).generatedFiles.id);
 
+            tableIdView = {app.SheetList.Value};
+            if ~isempty(app.SheetView_Second.Value)
+                tableIdView{end+1} = app.SheetView_Second.Value;
+            end
+            app.tool_AutoFill.Enable        = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', tableIdView);
             app.tool_AccountEdition.Enable  = hasSpecificNonEmptyTable;
-            app.tool_AutoFill.Enable        = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', {app.SheetView_First.Value, app.SheetView_Second.Value});
             app.tool_SaveProject.Enable     = nonEmptyECDObject;
             app.tool_GenerateReport.Enable  = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO');
             app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated && reportFinalRelatedToSelectedObj;
@@ -709,7 +732,7 @@ classdef winECD_exported < matlab.apps.AppBase
             clickedTable.UserData.Selection = clickedTable.Selection;
 
             if isempty(clickedTable.Selection)
-                tableCountText.Text       = '  CONTAGEM: 0';
+                tableCountText.Text       = ' CONTAGEM: 0';
                 tableSelectedAccount.Text = '';                    
             else
                 selectedCols = unique(clickedTable.Selection(:, 2));
@@ -737,9 +760,9 @@ classdef winECD_exported < matlab.apps.AppBase
                             end
                             cellsAverage = cellsSum/cellsCount;
                     end    
-                    tableCountText.Text = sprintf('  CONTAGEM: %d     SOMA: %.2f     MÉDIA: %.2f', cellsCount, cellsSum, cellsAverage);
+                    tableCountText.Text = sprintf(' CONTAGEM: %d     SOMA: %.2f     MÉDIA: %.2f', cellsCount, cellsSum, cellsAverage);
                 else
-                    tableCountText.Text = sprintf('  CONTAGEM: %d', cellsCount);
+                    tableCountText.Text = sprintf(' CONTAGEM: %d', cellsCount);
                 end
 
                 selectedRows = unique(clickedTable.Selection(:,1));
@@ -767,8 +790,10 @@ classdef winECD_exported < matlab.apps.AppBase
             hTable.UserData.Selection = [];
             hTable.UserData.SelectionType = 'none';
 
-            hTableAccountInfo.Text = '';
-            hTableCountText.Text   = '  CONTAGEM: 0';
+            if hTable == app.UITable2 && app.Tab2.UserData.rendered
+                hTableAccountInfo.Text = '';
+                hTableCountText.Text   = ' CONTAGEM: 0';
+            end
         end
 
         %-----------------------------------------------------------------%
@@ -1111,7 +1136,9 @@ classdef winECD_exported < matlab.apps.AppBase
             
             switch event.Source
                 case app.SheetList
-                    app.SheetView_First.Value = app.SheetList.Value;
+                    if app.Tab2.UserData.rendered
+                        app.SheetView_First.Value = app.SheetList.Value;
+                    end
                 case app.SheetView_First
                     app.SheetList.Value = app.SheetView_First.Value;
             end
@@ -1123,7 +1150,9 @@ classdef winECD_exported < matlab.apps.AppBase
         % Value changed function: SheetView_Second
         function SheetViewSecondValueChanged(app, event)
             
-            updateTable(app, app.UITable2, app.UITable2_AccountInfo, app.UITable2_CountText, app.UITable2_FilterText, app.UITable2_FilterIcon, app.SheetView_Second.Value)
+            if app.Tab2.UserData.rendered
+                updateTable(app, app.UITable2, app.UITable2_AccountInfo, app.UITable2_CountText, app.UITable2_FilterText, app.UITable2_FilterIcon, app.SheetView_Second.Value)
+            end
             
         end
 
@@ -1267,7 +1296,7 @@ classdef winECD_exported < matlab.apps.AppBase
             end
 
             switch clickedTable
-                case app.UITable1; tableId = app.SheetView_First.Value;
+                case app.UITable1; tableId = app.SheetList.Value;
                 case app.UITable2; tableId = app.SheetView_Second.Value;
             end
 
@@ -1354,7 +1383,7 @@ classdef winECD_exported < matlab.apps.AppBase
             end
 
             addStyle(clickedTable, s, "cell", clickedTable.Selection)
-            if strcmp(app.SheetView_First.Value, app.SheetView_Second.Value)
+            if strcmp(app.SheetList.Value, app.SheetView_Second.Value)
                 otherTable = setdiff([app.UITable1, app.UITable2], clickedTable);
                 addStyle(otherTable, s, "cell", clickedTable.Selection)
             end
@@ -1366,8 +1395,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 styleConfig.TargetIndex{ii}(:, 1) = d(styleConfig.TargetIndex{ii}(:, 1));
             end
 
-            selectedECD.GUI.tableView(styleIndex).id = tableId;
-            selectedECD.GUI.tableView(styleIndex).style = styleConfig;         
+            update(selectedECD, 'GUI.TableView.Style', 'addStyle', tableId, styleIndex, styleConfig)
             
         end
 
@@ -1378,7 +1406,7 @@ classdef winECD_exported < matlab.apps.AppBase
             clickedTable = onFocusTable(app);
             switch clickedTable
                 case app.UITable1
-                    tableId = app.SheetView_First.Value;
+                    tableId = app.SheetList.Value;
                 case app.UITable2
                     tableId = app.SheetView_Second.Value;
             end
@@ -1421,10 +1449,10 @@ classdef winECD_exported < matlab.apps.AppBase
                         end
 
                         if rerenderizationFlag
-                            selectedECD.GUI.tableView(styleIndex).style = currentStyleTable;
+                            update(selectedECD, 'GUI.TableView.Style', 'removeSelectedCellStyle', styleIndex, currentStyleTable)
                             applyTableStyle(app, selectedECD, clickedTable, tableId)
 
-                            if strcmp(app.SheetView_First.Value, app.SheetView_Second.Value)
+                            if strcmp(app.SheetList.Value, app.SheetView_Second.Value)
                                 otherTable = setdiff([app.UITable1, app.UITable2], clickedTable);
                                 applyTableStyle(app, selectedECD, otherTable, tableId)
                             end
@@ -1432,9 +1460,9 @@ classdef winECD_exported < matlab.apps.AppBase
 
                     case app.StyleRefresh
                         removeStyle(clickedTable)
-                        selectedECD.GUI.tableView(styleIndex).style = {};
+                        update(selectedECD, 'GUI.TableView.Style', 'removeTableStyle', styleIndex)
 
-                        if strcmp(app.SheetView_First.Value, app.SheetView_Second.Value)
+                        if strcmp(app.SheetList.Value, app.SheetView_Second.Value)
                             otherTable = setdiff([app.UITable1, app.UITable2], clickedTable);
                             removeStyle(otherTable)
                         end

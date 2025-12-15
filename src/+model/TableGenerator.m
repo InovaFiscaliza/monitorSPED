@@ -2,18 +2,27 @@ classdef (Abstract) TableGenerator
 
     methods (Static = true)
         %-----------------------------------------------------------------%
+        function accountMonthlySummary = SummaryTableTemplate(numAccounts)
+            accountMonthlySummary = table( ...
+                'Size', [numAccounts, 15], ...
+                'VariableTypes', {'cell', 'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'}, ...
+                'VariableNames', {'COD_NAT', 'COD_CTA', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'} ...
+            );
+        end
+
+        %-----------------------------------------------------------------%
         function accountMonthlySummary = SummaryByAccount(ecdObj)
             checkIfScalar(ecdObj)
             parseTableAndAddToCache(ecdObj, {'I200_I250'})
 
-            if ~isfield(ecdObj.Table, 'xI200') || isempty(ecdObj.Table.xI200)
-                error('Empresa provavelmente está inativa, sem movimentação fiscal.')
+            if ~isfield(ecdObj.Table, 'xI200_I250') || isempty(ecdObj.Table.xI200_I250)
+                accountMonthlySummary = model.TableGenerator.SummaryTableTemplate(0);
+                return
             end
 
             % Aplica filtros na tabela de fatos contábeis (I200_I250), de forma 
             % que sejam considerados apenas os lançamentos "NORMAIS". Além
             % disso, cria-se coluna "VL_DC_COM_SINAL".
-
             mergedTable_I200_I250 = ecdObj.Table.xI200_I250;
             mergedTable_I200_I250.("VL_DC_COM_SINAL") = mergedTable_I200_I250.("VL_DC");
             negativeValueIndexes  = strcmp(mergedTable_I200_I250.("IND_DC"), 'D');
@@ -29,12 +38,7 @@ classdef (Abstract) TableGenerator
             
             accountUniqueIdList = unique(ecdObj.Table.xI250.("COD_CTA"));
             numAccounts = numel(accountUniqueIdList);
-
-            accountMonthlySummary = table( ...
-                'Size', [numAccounts, 14], ...
-                'VariableTypes', {'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'}, ...
-                'VariableNames', {'COD_CTA', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'} ...
-            );
+            accountMonthlySummary = model.TableGenerator.SummaryTableTemplate(numAccounts);
 
            %parpoolCheck()
            %parfor ii = 1:numAccounts
@@ -50,7 +54,7 @@ classdef (Abstract) TableGenerator
                     accountBalanceByMonth(jj) = sum(accountTable.("VL_DC_COM_SINAL")(monthIndexes));
                 end
 
-                accountMonthlySummary(ii, :) = [{accountId}, num2cell([accountBalanceByMonth, sum(accountBalanceByMonth)])];
+                accountMonthlySummary(ii, :) = [{'', accountId}, num2cell([accountBalanceByMonth, sum(accountBalanceByMonth)])];
             end
 
             % Valida-se se o valor total de transações entre as contas por 
@@ -73,6 +77,7 @@ classdef (Abstract) TableGenerator
                 accountMonthlySummary, ...
                 accountDataBase, ...
                 'Keys', 'COD_CTA', ...
+                'LeftVariables', setdiff(accountMonthlySummary.Properties.VariableNames, 'COD_NAT', 'stable'), ...
                 'RightVariables', 'COD_NAT' ...
             );
 
@@ -96,7 +101,6 @@ classdef (Abstract) TableGenerator
             % '04': Contas de Resultado
             % '05': Contas de Compensação
             % '09': Outras
-
             checkIfScalar(ecdObj)
 
             accountMonthlySummary = ecdObj.Table.x_BALANCETE_GERAL;

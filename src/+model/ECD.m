@@ -944,10 +944,38 @@ classdef ECD < model.ECDBase
                     end
 
                 case 'GUI.TableView.Filter'
-                    % Pendente...
+                    switch updateType
+                        case 'createFilteringObject'
+                            tableId = varargin{1};
+                            filterIndex = varargin{2};
+                            obj.GUI.tableView(filterIndex).id     = tableId;
+                            obj.GUI.tableView(filterIndex).filter = tableFiltering;
+
+                        otherwise
+                            error('UnexpectedCall')
+                    end
 
                 case 'GUI.TableView.Style'
-                    % Pendente...
+                    switch updateType
+                        case 'addStyle'
+                            tableId = varargin{1};
+                            styleIndex = varargin{2};
+                            styleConfig = varargin{3};
+                            obj.GUI.tableView(styleIndex).id = tableId;
+                            obj.GUI.tableView(styleIndex).style = styleConfig;
+
+                        case 'removeSelectedCellStyle'
+                            styleIndex = varargin{1};
+                            styleConfig = varargin{2};
+                            obj.GUI.tableView(styleIndex).style = styleConfig;
+
+                        case 'removeTableStyle'
+                            styleIndex = varargin{1};                            
+                            obj.GUI.tableView(styleIndex).style = {};
+
+                        otherwise
+                            error('UnexpectedCall')
+                    end
 
                 case 'Table.NonEssentialFiles'
                     switch updateType

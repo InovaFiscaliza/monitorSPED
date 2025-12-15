@@ -500,7 +500,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     customizationStatus(tabIndex) = true;
                     switch tabIndex
                         case 1 % FILE
-                            elToModify = {app.popupContainerGrid, app.file_Tree, app.file_Metadata};                            
+                            elToModify = {app.popupContainerGrid, app.file_Tree, app.file_Metadata};
                             ui.CustomizationBase.getElementsDataTag(elToModify);
 
                             appName = class(app);

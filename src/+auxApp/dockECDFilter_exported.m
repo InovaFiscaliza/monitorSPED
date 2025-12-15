@@ -178,8 +178,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             end
 
             if ~filterStatus
-                selectedECD.GUI.tableView(filterIndex).id     = tableId;
-                selectedECD.GUI.tableView(filterIndex).filter = tableFiltering;
+                update(selectedECD, 'GUI.TableView.Filter', 'createFilteringObject', tableId, filterIndex)
             end
 
             fieldName = app.ColumnList.Value;            
