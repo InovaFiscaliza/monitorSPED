@@ -158,7 +158,7 @@ classdef winECD_exported < matlab.apps.AppBase
                                   'FileListChanged:Del', ...
                                   'FileListChanged:Merge'}
                                 startup_AppProperties(app)
-                                startup_InitialLayout(app)
+                                startup_InitialLayout(app, 'keepIfPossible')
 
                             case 'closeFcnCallFromDockModule'
                                 app.popupContainer.Parent.Visible = 0;
@@ -267,8 +267,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
                         case 2
                             app.Tab2.UserData.rendered = true;
-                            startup_InitialLayout(app)
-                            TimePeriodListValueChanged(app)
+                            startup_InitialLayout(app, 'keepCurrent')
                             app.FontFamily.Items = [{''}; listfonts];
 
                         otherwise
@@ -309,7 +308,7 @@ classdef winECD_exported < matlab.apps.AppBase
             
             startup_AppProperties(app)
             startup_GUIComponents(app)
-            startup_InitialLayout(app)
+            startup_InitialLayout(app, 'fromMainApp')
 
             app.progressDialog.Visible = 'hidden';
         end
@@ -338,7 +337,12 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function startup_InitialLayout(app)
+        function startup_InitialLayout(app, selectionMode)
+            arguments
+                app
+                selectionMode {mustBeMember(selectionMode, {'fromMainApp', 'keepIfPossible', 'keepCurrent'})}
+            end
+
             nonEmptyECDObject = ~isempty(app.ecdObj);
 
             renderedElements  = {
@@ -369,6 +373,14 @@ classdef winECD_exported < matlab.apps.AppBase
             cellfun(@(x) set(x, 'Enable', nonEmptyECDObject), renderedElements)
 
             if nonEmptyECDObject
+                % Seleção inicial:
+                initialCompanyName = app.CompanyNameList.Value;
+                initialTimePeriod  = {};
+                if ~isempty(app.TimePeriodList.Value)
+                    initialTimePeriod = app.TimePeriodList.Items{app.TimePeriodList.Value};
+                end
+
+                % Atualiza lista:
                 idsList = {app.ecdObj.CompanyId};
                 [ids, ~, idsIndexes] = unique(idsList);
 
@@ -391,16 +403,32 @@ classdef winECD_exported < matlab.apps.AppBase
 
                 % A seleção buscará respeitar aquilo que estiver selecionado 
                 % em winMonitorSPED.mlapp.
-                fileIndex = 1;
-                if ~isempty(app.mainApp.file_Tree.SelectedNodes)
-                    fileIndex = unique([app.mainApp.file_Tree.SelectedNodes.NodeData], 'stable');
-                    fileIndex = fileIndex(1);
+                switch selectionMode
+                    case 'fromMainApp'
+                        fileIndex = 1;
+                        if ~isempty(app.mainApp.file_Tree.SelectedNodes)
+                            fileIndex = unique([app.mainApp.file_Tree.SelectedNodes.NodeData], 'stable');
+                            fileIndex = fileIndex(1);
+                        end
+                        selectedCompanyIndex = find(cellfun(@(x) ismember(fileIndex, x), app.CompanyNameList.UserData.values), 1);
+                        app.CompanyNameList.Value = app.CompanyNameList.Items{selectedCompanyIndex};                
+                        updateTimePeriodList(app, fileIndex)
+                        TimePeriodListValueChanged(app)
+
+                    case 'keepIfPossible'
+                        if ~isempty(app.CompanyNameList.Value) && (~isequal(initialCompanyName, app.CompanyNameList.Value) || ~isequal(initialTimePeriod, app.TimePeriodList.Value))
+                            updateTimePeriodList(app, [])
+                            [~, initialTimePeriodIndex] = ismember(initialTimePeriod, app.TimePeriodList.Items);
+                            if initialTimePeriodIndex
+                                app.TimePeriodList.Value = initialTimePeriodIndex;
+                            end
+
+                            TimePeriodListValueChanged(app)
+                        end
+
+                    case 'keepCurrent'
+                        TimePeriodListValueChanged(app)
                 end
-                selectedCompanyIndex = find(cellfun(@(x) ismember(fileIndex, x), app.CompanyNameList.UserData.values), 1);
-                app.CompanyNameList.Value = app.CompanyNameList.Items{selectedCompanyIndex};
-                
-                updateTimePeriodList(app, fileIndex)
-                TimePeriodListValueChanged(app)
 
             else
                 cellfun(@(x) set(x, 'Items', {}), { ...
