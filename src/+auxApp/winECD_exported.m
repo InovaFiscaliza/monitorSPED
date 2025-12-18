@@ -448,64 +448,16 @@ classdef winECD_exported < matlab.apps.AppBase
                 end
 
                 if ~isempty(app.UITable1.Data)
-                    set(app.UITable1, 'ColumnWidth', 'auto', ...
-                                      'ColumnName', {}, ...
-                                      'ColumnEditable', false, ...
-                                      'Data', [])
-                    app.UITable1_AccountInfo.Text = '';
-                    app.UITable1_CountText.Text   = ' CONTAGEM : 0';
-                    app.UITable1_FilterText.Text  = '0 DE 0 ';
-                    set(app.UITable1_FilterIcon, 'ImageSource', 'FilterGray_18.png', 'Tooltip', '')
+                    restartTable(app, app.UITable1, app.UITable1_AccountInfo, app.UITable1_CountText, app.UITable1_FilterText, app.UITable1_FilterIcon)
                 end
 
                 if ~isempty(app.UITable2.Data)
-                    set(app.UITable2, 'ColumnWidth', 'auto', ...
-                                      'ColumnName', {}, ...
-                                      'ColumnEditable', false, ...
-                                      'Data', [])
-                    app.UITable2_AccountInfo.Text = '';
-                    app.UITable2_CountText.Text   = ' CONTAGEM : 0';
-                    app.UITable2_FilterText.Text  = '0 DE 0 ';
-                    set(app.UITable2_FilterIcon, 'ImageSource', 'FilterGray_18.png', 'Tooltip', '')
+                    restartTable(app, app.UITable2, app.UITable2_AccountInfo, app.UITable2_CountText, app.UITable2_FilterText, app.UITable2_FilterIcon)
                 end
             end
 
             selectedECD = selectedECDObject(app);
             updateToolbar(app, selectedECD)
-        end
-
-        %-----------------------------------------------------------------%
-        function menu_LayoutPopupApp(app, auxiliarApp, varargin)
-            arguments
-                app
-                auxiliarApp char {mustBeMember(auxiliarApp, {'ReportLib', 'ECDExport'})}
-            end
-
-            arguments (Repeating)
-                varargin 
-            end
-
-            % Inicialmente ajusta as dimensões do container.
-            switch auxiliarApp
-                case 'ReportLib'
-                    screenWidth  = 460;
-                    screenHeight = 308;
-                case 'ECDExport'
-                    screenWidth  = 460;
-                    screenHeight = 404;
-            end
-
-            ui.PopUpContainer(app, class.Constants.appName, screenWidth, screenHeight)
-
-            % Executa o app auxiliar.
-            inputArguments = [{app.mainApp}, varargin];
-            
-            if app.mainApp.General.operationMode.Debug
-                eval(sprintf('auxApp.dock%s(inputArguments{:})', auxiliarApp))
-            else
-                eval(sprintf('auxApp.dock%s_exported(app.popupContainer, inputArguments{:})', auxiliarApp))
-                app.popupContainer.Parent.Visible = 1;
-            end            
         end
     end
 
@@ -675,16 +627,10 @@ classdef winECD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function updateTable(app, hTable, hTableAccountInfo, hTableCountText, hTableFilterText, hTableFilterIcon, tableId)
-            [selectedECD, fileIndex] = selectedECDObject(app);
+            requestVisibilityChange(app.progressDialog, 'visible', 'unlocked')
 
-            % Evita que a janela de progresso seja apresentada quando
-            % alterado algum parâmetro em outro módulo.
-            if isAppVisible(app)
-                app.progressDialog.Visible = 'visible';
-            end
-
+            [selectedECD, fileIndex] = selectedECDObject(app);            
             checkIfTableRead(app, selectedECD, fileIndex, {tableId})
-
             tableIdField   = ['x' tableId];
             tableIdData    = selectedECD.Table.(tableIdField);
             
@@ -754,7 +700,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 hTable.ColumnWidth = 'auto';
             end
 
-            app.progressDialog.Visible = 'hidden';
+            requestVisibilityChange(app.progressDialog, 'hidden', 'unlocked')
         end
 
         %-----------------------------------------------------------------%
@@ -809,6 +755,19 @@ classdef winECD_exported < matlab.apps.AppBase
                 end                    
                 tableSelectedAccount.Text = selectedAccountDescription;
             end
+        end
+
+        %-----------------------------------------------------------------%
+        function restartTable(app, hTable, hTableAccountInfo, hTableCountText, hTableFilter, hTableFilterIcon)
+            set(hTable, 'ColumnWidth', 'auto', ...
+                        'ColumnName', {}, ...
+                        'ColumnEditable', false, ...
+                        'Data', [])
+            
+            hTableAccountInfo.Text = '';
+            hTableCountText.Text   = ' CONTAGEM : 0';
+            hTableFilter.Text      = '0 DE 0 ';
+            set(hTableFilterIcon, 'ImageSource', 'FilterGray_18.png', 'Tooltip', '')
         end
 
         %-----------------------------------------------------------------%
@@ -1150,6 +1109,8 @@ classdef winECD_exported < matlab.apps.AppBase
         % Value changed function: TimePeriodList
         function TimePeriodListValueChanged(app, event)
             
+            requestVisibilityChange(app.progressDialog, 'visible', 'locked')
+            
             selectedECD = selectedECDObject(app);
 
             app.tool_CompanyInfo.Text = sprintf('<font style="font-size: 11px; font-weight: bold;">%s</font> CNPJ %s (%s) \n%s ', ...
@@ -1158,6 +1119,8 @@ classdef winECD_exported < matlab.apps.AppBase
             updateSheetList(app)
             SheetViewFirstValueChanged(app, struct('Source', app.SheetList))
             SheetViewSecondValueChanged(app)
+
+            requestVisibilityChange(app.progressDialog, 'hidden', 'locked')
             
         end
 
@@ -1180,7 +1143,7 @@ classdef winECD_exported < matlab.apps.AppBase
         % Value changed function: SheetView_Second
         function SheetViewSecondValueChanged(app, event)
             
-            if app.Tab2.UserData.rendered
+            if app.UITable2.Visible
                 updateTable(app, app.UITable2, app.UITable2_AccountInfo, app.UITable2_CountText, app.UITable2_FilterText, app.UITable2_FilterIcon, app.SheetView_Second.Value)
             end
             
@@ -1197,6 +1160,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 set(app.SheetHeight_Second, 'Enable', 'on', 'Value', app.SheetHeight_First.Value)
                 
                 app.UITable2.Visible = 'on';
+                SheetViewSecondValueChanged(app)
                 rowHeight = {10,2,22};
                 
             else
@@ -1207,6 +1171,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 set(app.SheetHeight_Second, 'Enable', 'off', 'Value', 0)
 
                 app.UITable2.Visible = 'off';
+                restartTable(app, app.UITable2, app.UITable2_AccountInfo, app.UITable2_CountText, app.UITable2_FilterText, app.UITable2_FilterIcon)
                 rowHeight = {0,0,0};
 
                 if app.SheetOnFocus.Layout.Row ~= 1
