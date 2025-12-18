@@ -48,7 +48,7 @@ classdef (Abstract) HtmlTextGenerator
                 case {'MATLABEnvironment', 'desktopStandaloneApp'}
                     appMode = 'desktopApp';        
                 case 'webApp'
-                    computerName = ccTools.fcn.OperationSystem('computerName');
+                    computerName = appUtil.OperationSystem('computerName');
                     if strcmpi(computerName, appGeneral.computerName.webServer)
                         appMode = 'webServer';
                     else

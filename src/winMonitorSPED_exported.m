@@ -547,7 +547,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function startup_timerFcn(app)
-            if ccTools.fcn.UIFigureRenderStatus(app.UIFigure)
+            if ui.FigureRenderStatus(app.UIFigure)
                 stop(app.timerObj)
                 delete(app.timerObj)
 
@@ -581,7 +581,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 pause(.100)
 
                 % Cria tela de progresso...
-                app.progressDialog = ccTools.ProgressDialog(app.jsBackDoor);
+                app.progressDialog = ui.ProgressDialog(app.jsBackDoor);
     
                 startup_ConfigFileRead(app, appName, MFilePath)
                 startup_AppProperties(app)
