@@ -132,6 +132,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             end
 
                             closeModule(app.tabGroupController, ["ECD", "CONFIG"], app.General)
+
+                            if ~isempty(app.popupContainer)
+                                delete(app.popupContainer)
+                            end
     
                             if ~isempty(app.AppInfo.Tag)
                                 app.AppInfo.Tag = '';
@@ -366,6 +370,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 context  = varargin{1};
                                 varargin = [{'closeFcnCallFromDockModule'}, varargin(2:end)];
                                 ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
+                                
+                                % Apaga menu de contexto:
+                                hAuxApp = auxAppHandle(app, context);
+                                if ~isempty(hAuxApp)
+                                    deleteContextMenu(app.tabGroupController, hAuxApp.UIFigure, 'auxApp.dockECDFilter')
+                                end
 
                             case {'changeFilter', 'tableNotRead'}
                                 context  = varargin{1};

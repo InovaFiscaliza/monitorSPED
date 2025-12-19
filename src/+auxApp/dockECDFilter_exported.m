@@ -702,6 +702,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
 
             % Create ContextMenu
             app.ContextMenu = uicontextmenu(app.UIFigure);
+            app.ContextMenu.Tag = 'auxApp.dockECDFilter';
 
             % Create ExcluirMenu
             app.ExcluirMenu = uimenu(app.ContextMenu);
