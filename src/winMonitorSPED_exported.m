@@ -4,8 +4,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
     properties (Access = public)
         UIFigure                 matlab.ui.Figure
         GridLayout               matlab.ui.container.GridLayout
-        popupContainerGrid       matlab.ui.container.GridLayout
-        SplashScreen             matlab.ui.control.Image
         menu_Grid                matlab.ui.container.GridLayout
         AppInfo                  matlab.ui.control.Image
         FigurePosition           matlab.ui.control.Image
@@ -118,6 +116,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             % Esse fluxo será executado especificamente na
                             % versão webapp, quando o navegador atualiza a
                             % página (decorrente de F5 ou CTRL+F5).
+                            delete(app.progressDialog)
 
                             selectedNodes = app.file_Tree.SelectedNodes;
                             if ~isempty(app.file_Tree.SelectedNodes)
@@ -134,11 +133,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             closeModule(app.tabGroupController, ["ECD", "CONFIG"], app.General)
 
                             if ~isempty(app.popupContainer)
+                                auxDockAppName = app.popupContainer.UserData.auxDockAppName;
+                                deleteContextMenu(app.tabGroupController, app.UIFigure, auxDockAppName)
                                 delete(app.popupContainer)
-                            end
-    
-                            if ~isempty(app.AppInfo.Tag)
-                                app.AppInfo.Tag = '';
                             end
 
                             startup_Controller(app)
@@ -147,25 +144,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 app.file_Tree.SelectedNodes = selectedNodes;
                                 file_TreeSelectionChanged(app)
                             end
-
-                            app.progressDialog.Visible = 'hidden';
                         end
                         
                         app.renderCount = app.renderCount+1;
 
                     case 'unload'
                         closeFcn(app)
-
-                    case 'BackgroundColorTurnedInvisible'
-                        switch event.HTMLEventData
-                            case 'SplashScreen'
-                                if isvalid(app.popupContainerGrid)
-                                    delete(app.popupContainerGrid)
-                                end
-
-                            otherwise
-                                error('UnexpectedEvent')
-                        end
                     
                     case 'customForm'
                         switch event.HTMLEventData.uuid
@@ -466,17 +450,24 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     screenHeight = 580;
             end
 
+            requestVisibilityChange(app.progressDialog, 'visible', 'unlocked')
+
             ui.PopUpContainer(callingApp, class.Constants.appName, screenWidth, screenHeight)
 
             % Executa o app auxiliar.
             inputArguments = [{app, callingApp}, varargin];
+            auxDockAppName = sprintf('auxApp.dock%s', auxAppName);
             
             if app.General.operationMode.Debug
                 eval(sprintf('auxApp.dock%s(inputArguments{:})', auxAppName))
             else
-                eval(sprintf('auxApp.dock%s_exported(callingApp.popupContainer, inputArguments{:})', auxAppName))
+                eval([auxDockAppName '_exported(callingApp.popupContainer, inputArguments{:})'])
+                
+                callingApp.popupContainer.UserData.auxDockAppName = auxDockAppName;
                 callingApp.popupContainer.Parent.Visible = 1;
-            end            
+            end
+
+            requestVisibilityChange(app.progressDialog, 'hidden', 'unlocked')
         end
     end
     
@@ -510,25 +501,18 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     customizationStatus(tabIndex) = true;
                     switch tabIndex
                         case 1 % FILE
-                            elToModify = {app.popupContainerGrid, app.file_Tree, app.file_Metadata};
+                            elToModify = {app.file_Tree, app.file_Metadata};
                             ui.CustomizationBase.getElementsDataTag(elToModify);
 
                             appName = class(app);
-                            if isvalid(app.popupContainerGrid)
-                                try
-                                    sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', {struct('appName', appName, 'dataTag', elToModify{1}.UserData.id, 'style', struct('backgroundColor', 'rgba(255,255,255,0.65)'))});
-                                catch
-                                end
-                            end
-
                             try
-                                sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', {struct('appName', appName, 'dataTag', elToModify{2}.UserData.id, 'listener', struct('componentName', 'mainApp.file_Tree', 'keyEvents', {{'Delete', 'Backspace'}}))});
+                                sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', {struct('appName', appName, 'dataTag', elToModify{1}.UserData.id, 'listener', struct('componentName', 'mainApp.file_Tree', 'keyEvents', {{'Delete', 'Backspace'}}))});
                             catch ME
                                 appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));
                             end
 
                             try
-                                ui.TextView.startup(app.jsBackDoor, elToModify{3}, appName);
+                                ui.TextView.startup(app.jsBackDoor, elToModify{2}, appName);
                             catch ME
                                 appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));
                             end
@@ -567,9 +551,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function startup_Controller(app)
-            drawnow
+            % Cria tela de progresso...
+            app.progressDialog = ui.ProgressDialog(app.jsBackDoor);
+            requestVisibilityChange(app.progressDialog, 'visible', 'locked')
 
-            if ~app.renderCount            
+            drawnow
+            if ~app.renderCount
                 % Essa propriedade registra o tipo de execução da aplicação, podendo
                 % ser: 'built-in', 'desktopApp' ou 'webApp'.
                 app.executionMode  = appUtil.ExecutionMode(app.UIFigure);
@@ -590,26 +577,20 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 jsBackDoor_AppCustomizations(app, 1)
                 pause(.100)
 
-                % Cria tela de progresso...
-                app.progressDialog = ui.ProgressDialog(app.jsBackDoor);
-    
+                % Inicia módulo de operação paralelo...
+                parpoolCheck()
+
                 startup_ConfigFileRead(app, appName, MFilePath)
                 startup_AppProperties(app)
                 startup_GUIComponents(app)
 
-                % Por fim, exclui-se o splashscreen, um segundo após envio do comando 
-                % para que diminua a transparência do background.
-                sendEventToHTMLSource(app.jsBackDoor, 'turningBackgroundColorInvisible', struct('componentName', 'SplashScreen', 'componentDataTag', struct(app.SplashScreen).Controller.ViewModel.Id));
-                drawnow
-            
-                pause(1)
-                delete(app.popupContainerGrid)
-
             else
                 jsBackDoor_AppCustomizations(app, 0)
                 jsBackDoor_AppCustomizations(app, 1)
-                pause(.100)
             end
+
+            pause(.100)
+            requestVisibilityChange(app.progressDialog, 'hidden', 'locked')
         end
 
         %-----------------------------------------------------------------%
@@ -1160,9 +1141,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 appUtil.disablingWarningMessages()
 
                 % <GUI>
-                app.popupContainerGrid.Layout.Row = [1,2];
-                app.GridLayout.RowHeight(end) = [];
-
                 app.menu_AppName.Text = sprintf('%s v. %s\n<font style="font-size: 9px;">%s</font>', ...
                     class.Constants.appName, class.Constants.appVersion, class.Constants.appRelease);
                 % </GUI>
@@ -1231,14 +1209,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     appUtil.winPosition(app.UIFigure)
 
                 case app.AppInfo
-                    if isempty(app.AppInfo.Tag)
-                        app.progressDialog.Visible = 'visible';
-                        app.AppInfo.Tag = util.HtmlTextGenerator.AppInfo(app.General, app.rootFolder, app.executionMode, app.renderCount, "popup");
-                        app.progressDialog.Visible = 'hidden';
-                    end
-
-                    msgInfo = app.AppInfo.Tag;
-                    appUtil.modalWindow(app.UIFigure, 'info', msgInfo);
+                    appInfo = util.HtmlTextGenerator.AppInfo(app.General, app.rootFolder, app.executionMode, app.renderCount, "popup");
+                    appUtil.modalWindow(app.UIFigure, 'info', appInfo);
             end
 
         end
@@ -1582,7 +1554,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % Create GridLayout
             app.GridLayout = uigridlayout(app.UIFigure);
             app.GridLayout.ColumnWidth = {'1x'};
-            app.GridLayout.RowHeight = {54, '1x', 44};
+            app.GridLayout.RowHeight = {54, '1x'};
             app.GridLayout.ColumnSpacing = 0;
             app.GridLayout.RowSpacing = 0;
             app.GridLayout.Padding = [0 0 0 0];
@@ -1888,20 +1860,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.AppInfo.Layout.Row = 3;
             app.AppInfo.Layout.Column = 13;
             app.AppInfo.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Dots_32White.png');
-
-            % Create popupContainerGrid
-            app.popupContainerGrid = uigridlayout(app.GridLayout);
-            app.popupContainerGrid.ColumnWidth = {'1x', 880, '1x'};
-            app.popupContainerGrid.RowHeight = {'1x', 300, '1x'};
-            app.popupContainerGrid.Layout.Row = 3;
-            app.popupContainerGrid.Layout.Column = 1;
-            app.popupContainerGrid.BackgroundColor = [1 1 1];
-
-            % Create SplashScreen
-            app.SplashScreen = uiimage(app.popupContainerGrid);
-            app.SplashScreen.Layout.Row = 2;
-            app.SplashScreen.Layout.Column = 2;
-            app.SplashScreen.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'SplashScreen.gif');
 
             % Create file_ContextMenu_Tree
             app.file_ContextMenu_Tree = uicontextmenu(app.UIFigure);

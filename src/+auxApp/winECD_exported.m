@@ -183,10 +183,12 @@ classdef winECD_exported < matlab.apps.AppBase
                             case 'tableNotRead'
                                 [selectedECD, fileIndex] = selectedECDObject(app);
                                 tableId = varargin{1};
-                    
-                                app.progressDialog.Visible = 'visible';                    
+
+                                requestVisibilityChange(app.progressDialog, 'visible', 'unlocked')
+
                                 checkIfTableRead(app, selectedECD, fileIndex, {tableId})
-                                app.progressDialog.Visible = 'hidden';
+
+                                requestVisibilityChange(app.progressDialog, 'hidden', 'unlocked')
 
                             case 'freeMemory'
                                 fileIndex = varargin{1};
@@ -304,13 +306,9 @@ classdef winECD_exported < matlab.apps.AppBase
             jsBackDoor_Customizations(app, 0)
             jsBackDoor_Customizations(app, 1)
 
-            app.progressDialog.Visible = 'visible';
-            
             startup_AppProperties(app)
             startup_GUIComponents(app)
             startup_InitialLayout(app, 'fromMainApp')
-
-            app.progressDialog.Visible = 'hidden';
         end
 
         %-----------------------------------------------------------------%
@@ -912,11 +910,6 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function status = isAppVisible(app)
-            status = ~app.isDocked || app.mainApp.menu_Button2.Value;
-        end
-
-        %-----------------------------------------------------------------%
         function exportFiles(app, fileIndex, rawTableIdFields)
             selectedECD     = app.ecdObj(fileIndex);
 
@@ -924,7 +917,7 @@ classdef winECD_exported < matlab.apps.AppBase
             excelTempName   = [appUtil.DefaultFileName(app.mainApp.General.fileFolder.tempPath, 'monitorSPED') '.xlsx'];
             rtfTempFiles    = {};
 
-            app.progressDialog.Visible = 'visible';
+            requestVisibilityChange(app.progressDialog, 'visible', 'unlocked')
 
             % Inicialmente, checa se todos os registros foram efetivamente
             % lidos.
@@ -1001,7 +994,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 msgError{end+1} = ME.message;
             end
 
-            app.progressDialog.Visible = 'hidden';
+            requestVisibilityChange(app.progressDialog, 'hidden', 'unlocked')
 
             % WARNING MESSAGE
             if ~isempty(msgError)

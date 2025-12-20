@@ -247,7 +247,8 @@ classdef winConfig_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function updatePanel_General(app)
             % Versão:
-            ui.TextView.update(app.versionInfo, util.HtmlTextGenerator.AppInfo(app.mainApp.General, app.mainApp.rootFolder, app.mainApp.executionMode, app.mainApp.renderCount, "textview"));
+            appInfo = util.HtmlTextGenerator.AppInfo(app.mainApp.General, app.mainApp.rootFolder, app.mainApp.executionMode, app.mainApp.renderCount, "textview");
+            ui.TextView.update(app.versionInfo, appInfo);
 
             % Modo de operação:
             app.openAuxiliarAppAsDocked.Value = app.mainApp.General.operationMode.Dock;
