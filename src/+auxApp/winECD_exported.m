@@ -107,11 +107,22 @@ classdef winECD_exported < matlab.apps.AppBase
 
     methods
         %-----------------------------------------------------------------%
+        function finalizeInitialization(app)
+            drawnow
+            applyJSCustomizations(app, 0)
+            applyJSCustomizations(app, 1)
+
+            initializeAppProperties(app)
+            initializeUIComponents(app)
+            applyInitialLayout(app, 'fromMainApp')
+        end
+
+        %-----------------------------------------------------------------%
         function ipcSecundaryJSEventsHandler(app, event)
             try
                 switch event.HTMLEventName
                     case 'renderer'
-                        startup_Controller(app)
+                        finalizeInitialization(app)
 
                     case 'customForm'
                         ipcMainJSEventsHandler(app.mainApp, event)
@@ -157,8 +168,8 @@ classdef winECD_exported < matlab.apps.AppBase
                             case {'FileListChanged:Add', ...
                                   'FileListChanged:Del', ...
                                   'FileListChanged:Merge'}
-                                startup_AppProperties(app)
-                                startup_InitialLayout(app, 'keepIfPossible')
+                                initializeAppProperties(app)
+                                applyInitialLayout(app, 'keepIfPossible')
 
                             case 'closeFcnCallFromDockModule'
                                 app.popupContainer.Parent.Visible = 0;
@@ -216,17 +227,8 @@ classdef winECD_exported < matlab.apps.AppBase
 
     
     methods (Access = private)
-        %-----------------------------------------------------------------%
-        % INICIALIZAÇÃO
-        %-----------------------------------------------------------------%
-        function jsBackDoor_Initialization(app)
-            app.jsBackDoor = uihtml(app.UIFigure, "HTMLSource",           appUtil.jsBackDoorHTMLSource(),                 ...
-                                                  "HTMLEventReceivedFcn", @(~, evt)ipcSecundaryJSEventsHandler(app, evt), ...
-                                                  "Visible",              "off");
-        end
-
         %-------------------------------------------------------------------------%
-        function jsBackDoor_Customizations(app, tabIndex)
+        function applyJSCustomizations(app, tabIndex)
             persistent customizationStatus
             if isempty(customizationStatus)
                 customizationStatus = [false, false, false, false];
@@ -269,7 +271,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
                         case 2
                             app.Tab2.UserData.rendered = true;
-                            startup_InitialLayout(app, 'keepCurrent')
+                            applyInitialLayout(app, 'keepCurrent')
                             app.FontFamily.Items = [{''}; listfonts];
 
                         otherwise
@@ -282,43 +284,13 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function startup_timerCreation(app)
-            app.timerObj = timer("ExecutionMode", "fixedSpacing", ...
-                                 "StartDelay",    1.5,            ...
-                                 "Period",        .1,             ...
-                                 "TimerFcn",      @(~,~)app.startup_timerFcn);
-            start(app.timerObj)
-        end
-
-        %-----------------------------------------------------------------%
-        function startup_timerFcn(app)
-            if ui.FigureRenderStatus(app.UIFigure)
-                stop(app.timerObj)
-                delete(app.timerObj)
-                
-                jsBackDoor_Initialization(app)
-            end
-        end
-
-        %-----------------------------------------------------------------%
-        function startup_Controller(app)
-            drawnow
-            jsBackDoor_Customizations(app, 0)
-            jsBackDoor_Customizations(app, 1)
-
-            startup_AppProperties(app)
-            startup_GUIComponents(app)
-            startup_InitialLayout(app, 'fromMainApp')
-        end
-
-        %-----------------------------------------------------------------%
-        function startup_AppProperties(app)
+        function initializeAppProperties(app)
             app.projectData = app.mainApp.projectData;
             app.ecdObj      = app.mainApp.ecdObj;
         end
 
         %-----------------------------------------------------------------%
-        function startup_GUIComponents(app)
+        function initializeUIComponents(app)
             if ~strcmp(app.mainApp.executionMode, 'webApp')
                 app.dockModule_Undock.Enable = 1;
             end
@@ -335,7 +307,7 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function startup_InitialLayout(app, selectionMode)
+        function applyInitialLayout(app, selectionMode)
             arguments
                 app
                 selectionMode {mustBeMember(selectionMode, {'fromMainApp', 'keepIfPossible', 'keepCurrent'})}
@@ -1009,18 +981,12 @@ classdef winECD_exported < matlab.apps.AppBase
     methods (Access = private)
 
         % Code that executes after component creation
-        function startupFcn(app, mainApp, filterTable, rfDataHubAnnotation)
+        function startupFcn(app, mainApp)
             
-            app.mainApp = mainApp;
-
-            if app.isDocked
-                app.GridLayout.Padding(4)  = 30;
-                app.DockModule.Visible = 1;
-                app.jsBackDoor = mainApp.jsBackDoor;
-                startup_Controller(app)
-            else
-                appUtil.winPosition(app.UIFigure)
-                startup_timerCreation(app)
+            try
+                appEngine.initialize("secundaryApp", app, mainApp)
+            catch ME
+                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
             end
 
         end
@@ -1087,7 +1053,7 @@ classdef winECD_exported < matlab.apps.AppBase
         function TabGroupSelectionChanged(app, event)
             
             [~, tabIndex] = ismember(app.TabGroup.SelectedTab, app.TabGroup.Children);
-            jsBackDoor_Customizations(app, tabIndex)
+            applyJSCustomizations(app, tabIndex)
 
         end
 

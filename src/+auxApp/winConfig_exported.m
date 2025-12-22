@@ -4,7 +4,7 @@ classdef winConfig_exported < matlab.apps.AppBase
     properties (Access = public)
         UIFigure                     matlab.ui.Figure
         GridLayout                   matlab.ui.container.GridLayout
-        DockModuleGroup              matlab.ui.container.GridLayout
+        DockModule                   matlab.ui.container.GridLayout
         dockModule_Undock            matlab.ui.control.Image
         dockModule_Close             matlab.ui.control.Image
         TabGroup                     matlab.ui.container.TabGroup
@@ -95,13 +95,24 @@ classdef winConfig_exported < matlab.apps.AppBase
 
     methods
         %-----------------------------------------------------------------%
+        function finalizeInitialization(app)
+            drawnow
+            applyJSCustomizations(app, 0)
+            applyJSCustomizations(app, 1)
+
+            initializeAppProperties(app)
+            initializeUIComponents(app)
+            applyInitialLayout(app)
+        end
+
+        %-----------------------------------------------------------------%
         % IPC: COMUNICAÇÃO ENTRE PROCESSOS
         %-----------------------------------------------------------------%
         function ipcSecundaryJSEventsHandler(app, event)
             try
                 switch event.HTMLEventName
                     case 'renderer'
-                        startup_Controller(app)
+                        finalizeInitialization(app)
                         
                     otherwise
                         error('UnexpectedEvent')
@@ -116,16 +127,7 @@ classdef winConfig_exported < matlab.apps.AppBase
 
     methods (Access = private)
         %-----------------------------------------------------------------%
-        % JSBACKDOOR
-        %-----------------------------------------------------------------%
-        function jsBackDoor_Initialization(app)
-            app.jsBackDoor = uihtml(app.UIFigure, "HTMLSource",           appUtil.jsBackDoorHTMLSource(),                 ...
-                                                  "HTMLEventReceivedFcn", @(~, evt)ipcSecundaryJSEventsHandler(app, evt), ...
-                                                  "Visible",              "off");
-        end
-
-        %-----------------------------------------------------------------%
-        function jsBackDoor_Customizations(app, tabIndex)
+        function applyJSCustomizations(app, tabIndex)
             persistent customizationStatus
             if isempty(customizationStatus)
                 customizationStatus = [false, false, false, false];
@@ -153,7 +155,7 @@ classdef winConfig_exported < matlab.apps.AppBase
 
                             % Grid botões "dock":
                             if app.isDocked
-                                elToModify = {app.DockModuleGroup};
+                                elToModify = {app.DockModule};
                                 elDataTag  = ui.CustomizationBase.getElementsDataTag(elToModify);
                                 if ~isempty(elDataTag)
                                     sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
@@ -180,41 +182,9 @@ classdef winConfig_exported < matlab.apps.AppBase
                     end
             end
         end
-    end
-
-
-    methods (Access = private)
-        %-----------------------------------------------------------------%
-        function startup_timerCreation(app)
-            app.timerObj = timer("ExecutionMode", "fixedSpacing", ...
-                                 "StartDelay",    1.5,            ...
-                                 "Period",        .1,             ...
-                                 "TimerFcn",      @(~,~)app.startup_timerFcn);
-            start(app.timerObj)
-        end
 
         %-----------------------------------------------------------------%
-        function startup_timerFcn(app)
-            if ui.FigureRenderStatus(app.UIFigure)
-                stop(app.timerObj)
-                delete(app.timerObj)
-                
-                jsBackDoor_Initialization(app)
-            end
-        end
-
-        %-----------------------------------------------------------------%
-        function startup_Controller(app)
-            drawnow
-            jsBackDoor_Customizations(app, 0)
-            jsBackDoor_Customizations(app, 1)
-
-            startup_AppProperties(app)
-            startup_GUIComponents(app)
-        end
-
-        %-----------------------------------------------------------------%
-        function startup_AppProperties(app)
+        function initializeAppProperties(app)
             % Lê a versão de "GeneralSettings.json" que vem junto ao
             % projeto (e não a versão armazenada em "ProgramData").
             projectFolder     = appUtil.Path(class.Constants.appName, app.mainApp.rootFolder);
@@ -227,7 +197,7 @@ classdef winConfig_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function startup_GUIComponents(app)
+        function initializeUIComponents(app)
             if ~strcmp(app.mainApp.executionMode, 'webApp')
                 app.dockModule_Undock.Enable = 1;
                 app.tool_openDevTools.Enable = 1;
@@ -240,12 +210,10 @@ classdef winConfig_exported < matlab.apps.AppBase
             if ~isdeployed
                 app.openAuxiliarApp2Debug.Enable = 1;
             end
-
-            updatePanel_General(app)
         end
 
         %-----------------------------------------------------------------%
-        function updatePanel_General(app)
+        function applyInitialLayout(app)
             % Versão:
             appInfo = util.HtmlTextGenerator.AppInfo(app.mainApp.General, app.mainApp.rootFolder, app.mainApp.executionMode, app.mainApp.renderCount, "textview");
             ui.TextView.update(app.versionInfo, appInfo);
@@ -332,16 +300,10 @@ classdef winConfig_exported < matlab.apps.AppBase
         % Code that executes after component creation
         function startupFcn(app, mainApp)
             
-            app.mainApp = mainApp;
-
-            if app.isDocked
-                app.GridLayout.Padding(4) = 30;
-                app.DockModuleGroup.Visible = 1;
-                app.jsBackDoor = mainApp.jsBackDoor;
-                startup_Controller(app)
-            else
-                appUtil.winPosition(app.UIFigure)
-                startup_timerCreation(app)
+            try
+                appEngine.initialize("secundaryApp", app, mainApp)
+            catch ME
+                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
             end
             
         end
@@ -382,7 +344,7 @@ classdef winConfig_exported < matlab.apps.AppBase
         function TabGroup_TabSelectionChanged(app, event)
             
             [~, tabIndex] = ismember(app.TabGroup.SelectedTab, app.TabGroup.Children);
-            jsBackDoor_Customizations(app, tabIndex)
+            applyJSCustomizations(app, tabIndex)
             
         end
 
@@ -1084,18 +1046,18 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.userPathButton.Layout.Column = 2;
             app.userPathButton.ImageSource = 'OpenFile_36x36.png';
 
-            % Create DockModuleGroup
-            app.DockModuleGroup = uigridlayout(app.GridLayout);
-            app.DockModuleGroup.RowHeight = {'1x'};
-            app.DockModuleGroup.ColumnSpacing = 2;
-            app.DockModuleGroup.Padding = [5 2 5 2];
-            app.DockModuleGroup.Visible = 'off';
-            app.DockModuleGroup.Layout.Row = [2 3];
-            app.DockModuleGroup.Layout.Column = [3 4];
-            app.DockModuleGroup.BackgroundColor = [0.2 0.2 0.2];
+            % Create DockModule
+            app.DockModule = uigridlayout(app.GridLayout);
+            app.DockModule.RowHeight = {'1x'};
+            app.DockModule.ColumnSpacing = 2;
+            app.DockModule.Padding = [5 2 5 2];
+            app.DockModule.Visible = 'off';
+            app.DockModule.Layout.Row = [2 3];
+            app.DockModule.Layout.Column = [3 4];
+            app.DockModule.BackgroundColor = [0.2 0.2 0.2];
 
             % Create dockModule_Close
-            app.dockModule_Close = uiimage(app.DockModuleGroup);
+            app.dockModule_Close = uiimage(app.DockModule);
             app.dockModule_Close.ScaleMethod = 'none';
             app.dockModule_Close.ImageClickedFcn = createCallbackFcn(app, @DockModuleGroup_ButtonPushed, true);
             app.dockModule_Close.Tag = 'DRIVETEST';
@@ -1105,7 +1067,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.dockModule_Close.ImageSource = 'Delete_12SVG_white.svg';
 
             % Create dockModule_Undock
-            app.dockModule_Undock = uiimage(app.DockModuleGroup);
+            app.dockModule_Undock = uiimage(app.DockModule);
             app.dockModule_Undock.ScaleMethod = 'none';
             app.dockModule_Undock.ImageClickedFcn = createCallbackFcn(app, @DockModuleGroup_ButtonPushed, true);
             app.dockModule_Undock.Tag = 'DRIVETEST';

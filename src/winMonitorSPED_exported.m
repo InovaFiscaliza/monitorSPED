@@ -55,14 +55,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         % Essa propriedade registra o tipo de execução da aplicação, podendo
         % ser: 'built-in', 'desktopApp' ou 'webApp'.
-        executionMode        
-
-        % A função do timer é executada uma única vez após a renderização
-        % da figura, lendo arquivos de configuração, iniciando modo de operação
-        % paralelo etc. A ideia é deixar o MATLAB focar apenas na criação dos 
-        % componentes essenciais da GUI (especificados em "createComponents"), 
-        % mostrando a GUI para o usuário o mais rápido possível.
-        timerObj
+        executionMode
 
         % Controla a seleção da TabGroup a partir do menu.
         tabGroupController
@@ -88,6 +81,51 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
     methods
         %-----------------------------------------------------------------%
+        function finalizeInitialization(app)
+            % Cria tela de progresso...
+            app.progressDialog = ui.ProgressDialog(app.jsBackDoor);
+            requestVisibilityChange(app.progressDialog, 'visible', 'locked')
+
+            drawnow
+            if ~app.renderCount
+                % Essa propriedade registra o tipo de execução da aplicação, podendo
+                % ser: 'built-in', 'desktopApp' ou 'webApp'.
+                app.executionMode  = appUtil.ExecutionMode(app.UIFigure);
+                if ~strcmp(app.executionMode, 'webApp')
+                    app.FigurePosition.Visible = 1;
+                    appUtil.winMinSize(app.UIFigure, class.Constants.windowMinSize)
+                end
+    
+                % Identifica o local deste arquivo .MLAPP, caso se trate das versões 
+                % "built-in" ou "webapp", ou do .EXE relacionado, caso se trate da
+                % versão executável (neste caso, o ctfroot indicará o local do .MLAPP).
+                appName = class.Constants.appName;
+                MFilePath = fileparts(mfilename('fullpath'));
+                app.rootFolder = appUtil.RootFolder(appName, MFilePath);
+    
+                % Customizações...
+                applyJSCustomizations(app, 0)
+                applyJSCustomizations(app, 1)
+                pause(.100)
+
+                % Inicia módulo de operação paralelo...
+                parpoolCheck()
+
+                loadConfigurationFile(app, appName, MFilePath)
+                initializeAppProperties(app)
+                initializeUIComponents(app)
+                applyInitialLayout(app)
+
+            else
+                applyJSCustomizations(app, 0)
+                applyJSCustomizations(app, 1)
+            end
+
+            pause(.100)
+            requestVisibilityChange(app.progressDialog, 'hidden', 'locked')
+        end
+
+        %-----------------------------------------------------------------%
         % COMUNICAÇÃO ENTRE PROCESSOS:
         % • ipcMainJSEventsHandler
         %   Eventos recebidos do objeto app.jsBackDoor por meio de chamada 
@@ -111,7 +149,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     % JSBACKDOOR (compCustomization.js)
                     case 'renderer'
                         if ~app.renderCount
-                            startup_Controller(app)
+                            finalizeInitialization(app)
                         else
                             % Esse fluxo será executado especificamente na
                             % versão webapp, quando o navegador atualiza a
@@ -138,7 +176,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 delete(app.popupContainer)
                             end
 
-                            startup_Controller(app)
+                            finalizeInitialization(app)
 
                             if ~isempty(selectedNodes)
                                 app.file_Tree.SelectedNodes = selectedNodes;
@@ -183,7 +221,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             if ~isprop(app, 'isDocked') % mainApp (app container)
                                 auxAppTag = event.HTMLEventData.auxAppTag;
                                 if ~isempty(auxAppTag)
-                                    hAuxApp   = auxAppHandle(app, auxAppTag);
+                                    hAuxApp   = getAppHandle(app.tabGroupController, auxAppTag);
                                     objHandle = hAuxApp.(componentName);
                                 else
                                     objHandle = eval(['app.' componentName]);
@@ -356,7 +394,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
                                 
                                 % Apaga menu de contexto:
-                                hAuxApp = auxAppHandle(app, context);
+                                hAuxApp = getAppHandle(app.tabGroupController, context);
                                 if ~isempty(hAuxApp)
                                     deleteContextMenu(app.tabGroupController, hAuxApp.UIFigure, 'auxApp.dockECDFilter')
                                 end
@@ -403,10 +441,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.progressDialog.Visible = 'hidden';
         end
 
-
         %-----------------------------------------------------------------%
         function ipcMainMatlabCallAuxiliarApp(app, auxAppName, communicationType, varargin)
-            hAuxApp = auxAppHandle(app, auxAppName);
+            hAuxApp = getAppHandle(app.tabGroupController, auxAppName);
 
             if ~isempty(hAuxApp)
                 switch communicationType
@@ -474,15 +511,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
     
     methods (Access = private)
         %-----------------------------------------------------------------%
-        % JSBACKDOOR
-        %-----------------------------------------------------------------%
-        function jsBackDoor_Initialization(app)
-            app.jsBackDoor.HTMLSource           = appUtil.jsBackDoorHTMLSource();
-            app.jsBackDoor.HTMLEventReceivedFcn = @(~, evt)ipcMainJSEventsHandler(app, evt);
-        end
-
-        %-----------------------------------------------------------------%
-        function jsBackDoor_AppCustomizations(app, tabIndex)
+        function applyJSCustomizations(app, tabIndex)
             persistent customizationStatus
             if isempty(customizationStatus)
                 customizationStatus = [false, false, false];
@@ -524,77 +553,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     end
             end
         end
-    end
-
-
-    methods (Access = private)
-        %-----------------------------------------------------------------%
-        % INICIALIZAÇÃO DO APP
-        %-----------------------------------------------------------------%
-        function startup_timerCreation(app)
-            app.timerObj = timer("ExecutionMode", "fixedSpacing", ...
-                                 "StartDelay",    1.5,            ...
-                                 "Period",        .1,             ...
-                                 "TimerFcn",      @(~,~)app.startup_timerFcn);
-            start(app.timerObj)
-        end
 
         %-----------------------------------------------------------------%
-        function startup_timerFcn(app)
-            if ui.FigureRenderStatus(app.UIFigure)
-                stop(app.timerObj)
-                delete(app.timerObj)
-
-                jsBackDoor_Initialization(app)
-            end
-        end
-
-        %-----------------------------------------------------------------%
-        function startup_Controller(app)
-            % Cria tela de progresso...
-            app.progressDialog = ui.ProgressDialog(app.jsBackDoor);
-            requestVisibilityChange(app.progressDialog, 'visible', 'locked')
-
-            drawnow
-            if ~app.renderCount
-                % Essa propriedade registra o tipo de execução da aplicação, podendo
-                % ser: 'built-in', 'desktopApp' ou 'webApp'.
-                app.executionMode  = appUtil.ExecutionMode(app.UIFigure);
-                if ~strcmp(app.executionMode, 'webApp')
-                    app.FigurePosition.Visible = 1;
-                    appUtil.winMinSize(app.UIFigure, class.Constants.windowMinSize)
-                end
-    
-                % Identifica o local deste arquivo .MLAPP, caso se trate das versões 
-                % "built-in" ou "webapp", ou do .EXE relacionado, caso se trate da
-                % versão executável (neste caso, o ctfroot indicará o local do .MLAPP).
-                appName = class.Constants.appName;
-                MFilePath = fileparts(mfilename('fullpath'));
-                app.rootFolder = appUtil.RootFolder(appName, MFilePath);
-    
-                % Customizações...
-                jsBackDoor_AppCustomizations(app, 0)
-                jsBackDoor_AppCustomizations(app, 1)
-                pause(.100)
-
-                % Inicia módulo de operação paralelo...
-                parpoolCheck()
-
-                startup_ConfigFileRead(app, appName, MFilePath)
-                startup_AppProperties(app)
-                startup_GUIComponents(app)
-
-            else
-                jsBackDoor_AppCustomizations(app, 0)
-                jsBackDoor_AppCustomizations(app, 1)
-            end
-
-            pause(.100)
-            requestVisibilityChange(app.progressDialog, 'hidden', 'locked')
-        end
-
-        %-----------------------------------------------------------------%
-        function startup_ConfigFileRead(app, appName, MFilePath)
+        function loadConfigurationFile(app, appName, MFilePath)
             % "GeneralSettings.json"
             [app.General_I, msgWarning] = appUtil.generalSettingsLoad(appName, app.rootFolder);
             if ~isempty(msgWarning)
@@ -661,26 +622,25 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function startup_AppProperties(app)
-            % app.projectData
+        function initializeAppProperties(app)
             app.projectData = model.projectLib(app, app.rootFolder);
-
-            % app.receitaFederalObj
             app.receitaFederalObj = ws.ReceitaFederal();
         end
 
         %-----------------------------------------------------------------%
-        function startup_GUIComponents(app)
-            % Objeto que conecta o TabGroup ao GraphicMenu.
-            app.tabGroupController = tabGroupGraphicMenu(app.menu_Grid, app.TabGroup, app.progressDialog, @app.jsBackDoor_AppCustomizations, []);
-
+        function initializeUIComponents(app)
+            app.tabGroupController = tabGroupGraphicMenu(app.menu_Grid, app.TabGroup, app.progressDialog, @app.applyJSCustomizations, []);
             addComponent(app.tabGroupController, "Built-in", "",                 app.menu_Button1, "AlwaysOn", struct('On', 'OpenFile_32Yellow.png', 'Off', 'OpenFile_32White.png'), matlab.graphics.GraphicsPlaceholder, 1)
             addComponent(app.tabGroupController, "External", "auxApp.winECD",    app.menu_Button2, "AlwaysOn", struct('On', 'Zoom_32Yellow.png',     'Off', 'Zoom_32White.png'),     app.menu_Button1,                    2)
             addComponent(app.tabGroupController, "External", "auxApp.winConfig", app.menu_Button3, "AlwaysOn", struct('On', 'Settings_36Yellow.png', 'Off', 'Settings_36White.png'), app.menu_Button1,                    3)
 
+            addStyle(app.file_Tree, uistyle('Interpreter', 'html'))
+        end
+
+        %-----------------------------------------------------------------%
+        function applyInitialLayout(app)
             DataHubWarningLamp(app)
             app.file_FileSortMethod.Value = app.General.File.sortMethod;
-            addStyle(app.file_Tree, uistyle('Interpreter', 'html'))
         end
 
         %-----------------------------------------------------------------%
@@ -942,7 +902,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             catch ME
                 uiFigure = app.UIFigure;
                 if strcmp(context, 'ECD')
-                    hAuxApp = auxAppHandle(app, 'ECD');
+                    hAuxApp = getAppHandle(app.tabGroupController, 'ECD');
                     if ~isempty(hAuxApp) && isvalid(hAuxApp) && ~hAuxApp.isDocked
                         uiFigure = hAuxApp.UIFigure;
                     end
@@ -1092,40 +1052,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 appUtil.modalWindow(app.UIFigure, 'error', getReport(ME))
             end
         end
-    end
-
-
-    methods (Access = private)
-        %-----------------------------------------------------------------%
-        % TABGROUPCONTROLLER
-        %-----------------------------------------------------------------%
-        function hAuxApp = auxAppHandle(app, auxAppName)
-            arguments
-                app
-                auxAppName string {mustBeMember(auxAppName, ["ECD", "CONFIG"])}
-            end
-
-            hAuxApp = app.tabGroupController.Components.appHandle{app.tabGroupController.Components.Tag == auxAppName};
-        end
 
         %-----------------------------------------------------------------%
-        function inputArguments = auxAppInputArguments(app, auxAppName)
-            arguments
-                app
-                auxAppName char {mustBeMember(auxAppName, {'FILE', 'ECD', 'CONFIG'})}
-            end
-            
-            [auxAppIsOpen, ...
-             auxAppHandle] = checkStatusModule(app.tabGroupController, auxAppName);
-
+        function inputArguments = auxAppInputArguments(app, auxAppTag)
             inputArguments = {app};
-
-            switch auxAppName
-                case 'ECD'
-                    if auxAppIsOpen
-                        % ...
-                    end
-            end
         end
     end
     
@@ -1137,17 +1067,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         function startupFcn(app)
 
             try
-                % WARNING MESSAGES
-                appUtil.disablingWarningMessages()
-
-                % <GUI>
-                app.menu_AppName.Text = sprintf('%s v. %s\n<font style="font-size: 9px;">%s</font>', ...
-                    class.Constants.appName, class.Constants.appVersion, class.Constants.appRelease);
-                % </GUI>
-
-                appUtil.winPosition(app.UIFigure)
-                startup_timerCreation(app)
-
+                appEngine.initialize("mainApp", app)
             catch ME
                 appUtil.modalWindow(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
             end
