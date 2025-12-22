@@ -65,24 +65,12 @@ classdef winConfig_exported < matlab.apps.AppBase
     end
 
     
-    properties
+    properties (Access = public)
         %-----------------------------------------------------------------%
         Container
         isDocked = false
-        
         mainApp
-
-        % A função do timer é executada uma única vez após a renderização
-        % da figura, lendo arquivos de configuração, iniciando modo de operação
-        % paralelo etc. A ideia é deixar o MATLAB focar apenas na criação dos 
-        % componentes essenciais da GUI (especificados em "createComponents"), 
-        % mostrando a GUI para o usuário o mais rápido possível.
-        timerObj
         jsBackDoor
-
-        % Janela de progresso já criada no DOM. Dessa forma, controla-se 
-        % apenas a sua visibilidade - e tornando desnecessário criá-la a
-        % cada chamada (usando uiprogressdlg, por exemplo).
         progressDialog
     end
 
@@ -93,7 +81,7 @@ classdef winConfig_exported < matlab.apps.AppBase
     end
 
 
-    methods
+    methods (Access = public)
         %-----------------------------------------------------------------%
         function finalizeInitialization(app)
             drawnow
@@ -108,7 +96,7 @@ classdef winConfig_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         % IPC: COMUNICAÇÃO ENTRE PROCESSOS
         %-----------------------------------------------------------------%
-        function ipcSecundaryJSEventsHandler(app, event)
+        function ipcSecondaryJSEventsHandler(app, event)
             try
                 switch event.HTMLEventName
                     case 'renderer'
@@ -301,7 +289,8 @@ classdef winConfig_exported < matlab.apps.AppBase
         function startupFcn(app, mainApp)
             
             try
-                appEngine.initialize("secundaryApp", app, mainApp)
+                role = 'secondaryApp';
+                appEngine.initialize(role, app, mainApp)
             catch ME
                 appUtil.modalWindow(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
             end

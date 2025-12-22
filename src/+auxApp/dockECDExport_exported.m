@@ -25,13 +25,17 @@ classdef dockECDExport_exported < matlab.apps.AppBase
     end
 
     
-    properties (Access = private)
+    properties (Access = public)
         %-----------------------------------------------------------------%
         Container
-        isDocked = true
-
+        isDocked = true        
         mainApp
         callingApp
+    end
+
+
+    properties (Access = private)
+        %-----------------------------------------------------------------%
         inputArgs
     end
     
@@ -42,11 +46,16 @@ classdef dockECDExport_exported < matlab.apps.AppBase
         % Code that executes after component creation
         function startupFcn(app, mainApp, callingApp, context, index)
             
-            app.mainApp    = mainApp;       
-            app.callingApp = callingApp;
-            app.inputArgs  = struct('context', context, 'index', index);
+            try
+                role = 'secondaryDockApp';
+                appEngine.initialize(role, app, mainApp, callingApp)
 
-            expand(app.Tree, 'all')
+                app.inputArgs = struct('context', context, 'index', index);    
+                expand(app.Tree, 'all')
+                
+            catch ME
+                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
+            end
             
         end
 

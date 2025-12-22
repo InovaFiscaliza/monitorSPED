@@ -48,19 +48,21 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
     end
 
     
-    properties (Access = private)
+    properties (Access = public)
         %-----------------------------------------------------------------%
         Container
-        isDocked = true
-
+        isDocked = true        
         mainApp
         callingApp
         jsBackDoor
-        projectData
-        
-        inputArgs
-        currentAccount
+    end
 
+    
+    properties (Access = private)
+        %-----------------------------------------------------------------%
+        inputArgs
+        projectData
+        currentAccount
         UIAxes
     end
     
@@ -200,16 +202,21 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         % Code that executes after component creation
         function startupFcn(app, mainApp, callingApp, context, index, accountName)
             
-            app.mainApp     = mainApp;
-            app.callingApp  = callingApp;            
-            app.inputArgs   = struct('context', context, 'index', index);
-            app.projectData = mainApp.projectData;
+            try
+                role = 'secondaryDockApp';
+                appEngine.initialize(role, app, mainApp, callingApp)
 
-            app.jsBackDoor  = callingApp.jsBackDoor;
-            jsBackDoor_Customizations(app)
-
-            accountName = startupLayout(app, index, accountName);
-            updateLayout(app, index, accountName)
+                app.inputArgs   = struct('context', context, 'index', index);
+                app.projectData = mainApp.projectData;
+    
+                jsBackDoor_Customizations(app)
+    
+                accountName = startupLayout(app, index, accountName);
+                updateLayout(app, index, accountName)
+                
+            catch ME
+                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
+            end
             
         end
 

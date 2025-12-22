@@ -11,15 +11,19 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
     end
 
     
-    properties (Access = private)
+    properties (Access = public)
         %-----------------------------------------------------------------%
         Container
-        isDocked = true
-
-        appHandleNameInBase
+        isDocked = true        
         mainApp
         callingApp
+    end
+
+
+    properties (Access = private)
+        %-----------------------------------------------------------------%
         inputArgs
+        appHandleNameInBase
     end
 
 
@@ -79,29 +83,27 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
         % Code that executes after component creation
         function startupFcn(app, mainApp, callingApp, context, index)
             
-            app.Container.Visible = 'off';
+            try
+                role = 'secondaryDockApp';
+                appEngine.initialize(role, app, mainApp, callingApp)
 
-            % Inicialmente, adiciona interpretador "html" para a uitable 
-            % e registra handle deste app no workspace "base", o que 
-            % possibilita excluir registros de tabelas por meio de cliques 
-            % na uitable. O pause é para que o MATLAB consiga aplicar o 
-            % estilo corretamente antes da apresentação da informação.
-            addStyle(app.UITable, uistyle("Interpreter", "html"));
-            addStyle(app.UITable, uistyle("HorizontalAlignment", "left"),   "column", 1);
-            addStyle(app.UITable, uistyle("HorizontalAlignment", "right"),  "column", 2);
-            addStyle(app.UITable, uistyle("HorizontalAlignment", "center"), "column", 3);
-            app.appHandleNameInBase = ui.Table.exportAppHandleToBaseWorkspace(app);
-            pause(1)
-            
-            % Posteriormente, registram-se handles para apps relacionados -
-            % "mainApp" e "callingApp" -, renderizando dados dos registros
-            % já lidos em tabela.
-            app.mainApp    = mainApp;       
-            app.callingApp = callingApp;
-            app.inputArgs  = struct('context', context, 'index', index);            
-            updateTable(app, index)
+                app.inputArgs = struct('context', context, 'index', index);
 
-            app.Container.Visible = 'on';
+                % Registra handle deste app no workspace "base", o que possibilita 
+                % excluir registros de tabelas por meio de cliques na uitable.
+                app.appHandleNameInBase = ui.Table.exportAppHandleToBaseWorkspace(app);
+
+                % Customiza uitable, atualizando-se em seguida.
+                addStyle(app.UITable, uistyle("Interpreter", "html"));
+                addStyle(app.UITable, uistyle("HorizontalAlignment", "left"),   "column", 1);
+                addStyle(app.UITable, uistyle("HorizontalAlignment", "right"),  "column", 2);
+                addStyle(app.UITable, uistyle("HorizontalAlignment", "center"), "column", 3);
+                
+                updateTable(app, index)
+                
+            catch ME
+                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
+            end
             
         end
 

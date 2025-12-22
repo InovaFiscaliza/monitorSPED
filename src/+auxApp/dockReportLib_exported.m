@@ -27,15 +27,18 @@ classdef dockReportLib_exported < matlab.apps.AppBase
     end
 
     
-    properties (Access = private)
+    properties (Access = public)
         %-----------------------------------------------------------------%
         Container
-        isDocked = true
-
+        isDocked = true        
         mainApp
         callingApp
-        inputArgs
+    end
 
+
+    properties (Access = private)
+        %-----------------------------------------------------------------%
+        inputArgs
         projectData
     end
     
@@ -81,12 +84,17 @@ classdef dockReportLib_exported < matlab.apps.AppBase
         % Code that executes after component creation
         function startupFcn(app, mainApp, callingApp, context, indexes)
             
-            app.mainApp     = mainApp;
-            app.callingApp  = callingApp;
-            app.inputArgs   = struct('context', context, 'indexes', indexes);
-            app.projectData = app.mainApp.projectData;
+            try
+                role = 'secondaryDockApp';
+                appEngine.initialize(role, app, mainApp, callingApp)
 
-            updatePanel(app, context)
+                app.inputArgs   = struct('context', context, 'indexes', indexes);
+                app.projectData = app.mainApp.projectData;    
+                updatePanel(app, context)
+                
+            catch ME
+                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
+            end
             
         end
 

@@ -80,32 +80,21 @@ classdef winECD_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         Container
         isDocked = false
-
         mainApp
-
-        % A função do timer é executada uma única vez após a renderização
-        % da figura, lendo arquivos de configuração, iniciando modo de operação
-        % paralelo etc. A ideia é deixar o MATLAB focar apenas na criação dos 
-        % componentes essenciais da GUI (especificados em "createComponents"), 
-        % mostrando a GUI para o usuário o mais rápido possível.
-        timerObj
         jsBackDoor
-
-        % Janela de progresso já criada no DOM. Dessa forma, controla-se 
-        % apenas a sua visibilidade - e tornando desnecessário criá-la a
-        % cada chamada (usando uiprogressdlg, por exemplo).
         progressDialog
         popupContainer
+    end
 
-        %-----------------------------------------------------------------%
-        % ESPECIFICIDADES AUXAPP.ECD
+
+    properties (Access = private)
         %-----------------------------------------------------------------%
         projectData
         ecdObj
     end
 
 
-    methods
+    methods (Access = public)
         %-----------------------------------------------------------------%
         function finalizeInitialization(app)
             drawnow
@@ -118,7 +107,7 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function ipcSecundaryJSEventsHandler(app, event)
+        function ipcSecondaryJSEventsHandler(app, event)
             try
                 switch event.HTMLEventName
                     case 'renderer'
@@ -160,7 +149,7 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function ipcSecundaryMatlabCallsHandler(app, callingApp, operationType, varargin)
+        function ipcSecondaryMatlabCallsHandler(app, callingApp, operationType, varargin)
             try
                 switch class(callingApp)
                     case {'winMonitorSPED', 'winMonitorSPED_exported'}
@@ -984,7 +973,8 @@ classdef winECD_exported < matlab.apps.AppBase
         function startupFcn(app, mainApp)
             
             try
-                appEngine.initialize("secundaryApp", app, mainApp)
+                role = 'secondaryApp';
+                appEngine.initialize(role, app, mainApp)
             catch ME
                 appUtil.modalWindow(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
             end
@@ -1044,8 +1034,9 @@ classdef winECD_exported < matlab.apps.AppBase
         % Button pushed function: ExportButton
         function Toolbar_ExportExportExcelClicked(app, event)
             
+            context = 'ECD';
             [~, fileIndex] = selectedECDObject(app);
-            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDExport', 'ECD', fileIndex)
+            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDExport', context, fileIndex)
 
         end
 
