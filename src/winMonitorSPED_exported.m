@@ -4,7 +4,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
     properties (Access = public)
         UIFigure                 matlab.ui.Figure
         GridLayout               matlab.ui.container.GridLayout
-        MenuGrid                 matlab.ui.container.GridLayout
+        NavBar                   matlab.ui.container.GridLayout
         AppInfo                  matlab.ui.control.Image
         FigurePosition           matlab.ui.control.Image
         DataHubLamp              matlab.ui.control.Image
@@ -565,10 +565,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function initializeUIComponents(app)
-            app.tabGroupController = ui.TabNavigator(app.MenuGrid, app.TabGroup, app.progressDialog, @app.applyJSCustomizations, []);
+            app.tabGroupController = ui.TabNavigator(app.NavBar, app.TabGroup, app.progressDialog, @app.applyJSCustomizations, []);
             addComponent(app.tabGroupController, "Built-in", "",                 app.Tab1Button, "AlwaysOn", struct('On', 'OpenFile_32Yellow.png', 'Off', 'OpenFile_32White.png'), matlab.graphics.GraphicsPlaceholder, 1)
-            addComponent(app.tabGroupController, "External", "auxApp.winECD",    app.Tab2Button, "AlwaysOn", struct('On', 'Zoom_32Yellow.png',     'Off', 'Zoom_32White.png'),     app.Tab1Button,                    2)
-            addComponent(app.tabGroupController, "External", "auxApp.winConfig", app.Tab3Button, "AlwaysOn", struct('On', 'Settings_36Yellow.png', 'Off', 'Settings_36White.png'), app.Tab1Button,                    3)
+            addComponent(app.tabGroupController, "External", "auxApp.winECD",    app.Tab2Button, "AlwaysOn", struct('On', 'Zoom_32Yellow.png',     'Off', 'Zoom_32White.png'),     app.Tab1Button,                      2)
+            addComponent(app.tabGroupController, "External", "auxApp.winConfig", app.Tab3Button, "AlwaysOn", struct('On', 'Settings_36Yellow.png', 'Off', 'Settings_36White.png'), app.Tab1Button,                      3)
 
             addStyle(app.file_Tree, uistyle('Interpreter', 'html'))
         end
@@ -1613,27 +1613,27 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab3_Config.BackgroundColor = 'none';
             app.Tab3_Config.ForegroundColor = [0.129411764705882 0.129411764705882 0.129411764705882];
 
-            % Create MenuGrid
-            app.MenuGrid = uigridlayout(app.GridLayout);
-            app.MenuGrid.ColumnWidth = {22, 74, '1x', 34, 34, 5, 34, '1x', 20, 20, 1, 20, 20};
-            app.MenuGrid.RowHeight = {5, 7, 20, 7, 5};
-            app.MenuGrid.ColumnSpacing = 5;
-            app.MenuGrid.RowSpacing = 0;
-            app.MenuGrid.Padding = [10 5 5 5];
-            app.MenuGrid.Tag = 'COLORLOCKED';
-            app.MenuGrid.Layout.Row = 1;
-            app.MenuGrid.Layout.Column = 1;
-            app.MenuGrid.BackgroundColor = [0.2 0.2 0.2];
+            % Create NavBar
+            app.NavBar = uigridlayout(app.GridLayout);
+            app.NavBar.ColumnWidth = {22, 74, '1x', 34, 34, 5, 34, '1x', 20, 20, 1, 20, 20};
+            app.NavBar.RowHeight = {5, 7, 20, 7, 5};
+            app.NavBar.ColumnSpacing = 5;
+            app.NavBar.RowSpacing = 0;
+            app.NavBar.Padding = [10 5 5 5];
+            app.NavBar.Tag = 'COLORLOCKED';
+            app.NavBar.Layout.Row = 1;
+            app.NavBar.Layout.Column = 1;
+            app.NavBar.BackgroundColor = [0.2 0.2 0.2];
 
             % Create AppIcon
-            app.AppIcon = uiimage(app.MenuGrid);
+            app.AppIcon = uiimage(app.NavBar);
             app.AppIcon.ScaleMethod = 'none';
             app.AppIcon.Layout.Row = [1 5];
             app.AppIcon.Layout.Column = 1;
             app.AppIcon.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'deleteEntireRow_16-aa465db167fbf7f8e67f1c8f29834ebd.png');
 
             % Create AppName
-            app.AppName = uilabel(app.MenuGrid);
+            app.AppName = uilabel(app.NavBar);
             app.AppName.WordWrap = 'on';
             app.AppName.FontSize = 11;
             app.AppName.FontColor = [1 1 1];
@@ -1643,7 +1643,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.AppName.Text = {'monitorSPED v. 1.0.0'; '<font style="font-size: 9px;">R2024a</font>'};
 
             % Create Tab1Button
-            app.Tab1Button = uibutton(app.MenuGrid, 'state');
+            app.Tab1Button = uibutton(app.NavBar, 'state');
             app.Tab1Button.ValueChangedFcn = createCallbackFcn(app, @tabNavigatorButtonPushed, true);
             app.Tab1Button.Tag = 'FILE';
             app.Tab1Button.Tooltip = {'Leitura de arquivos'};
@@ -1657,7 +1657,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab1Button.Value = true;
 
             % Create Tab2Button
-            app.Tab2Button = uibutton(app.MenuGrid, 'state');
+            app.Tab2Button = uibutton(app.NavBar, 'state');
             app.Tab2Button.ValueChangedFcn = createCallbackFcn(app, @tabNavigatorButtonPushed, true);
             app.Tab2Button.Tag = 'ECD';
             app.Tab2Button.Tooltip = {'Escrituração Contábil Digital'};
@@ -1670,7 +1670,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab2Button.Layout.Column = 5;
 
             % Create ButtonsSeparator
-            app.ButtonsSeparator = uiimage(app.MenuGrid);
+            app.ButtonsSeparator = uiimage(app.NavBar);
             app.ButtonsSeparator.ScaleMethod = 'none';
             app.ButtonsSeparator.Enable = 'off';
             app.ButtonsSeparator.Layout.Row = [2 4];
@@ -1678,7 +1678,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.ButtonsSeparator.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV_White.svg');
 
             % Create Tab3Button
-            app.Tab3Button = uibutton(app.MenuGrid, 'state');
+            app.Tab3Button = uibutton(app.NavBar, 'state');
             app.Tab3Button.ValueChangedFcn = createCallbackFcn(app, @tabNavigatorButtonPushed, true);
             app.Tab3Button.Tag = 'CONFIG';
             app.Tab3Button.Tooltip = {'Configurações gerais'};
@@ -1691,12 +1691,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab3Button.Layout.Column = 7;
 
             % Create jsBackDoor
-            app.jsBackDoor = uihtml(app.MenuGrid);
+            app.jsBackDoor = uihtml(app.NavBar);
             app.jsBackDoor.Layout.Row = 3;
             app.jsBackDoor.Layout.Column = 9;
 
             % Create DataHubLamp
-            app.DataHubLamp = uiimage(app.MenuGrid);
+            app.DataHubLamp = uiimage(app.NavBar);
             app.DataHubLamp.Visible = 'off';
             app.DataHubLamp.Tooltip = {'Pendente mapear o Sharepoint'};
             app.DataHubLamp.Layout.Row = 3;
@@ -1704,7 +1704,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.DataHubLamp.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'red-circle-blink.gif');
 
             % Create FigurePosition
-            app.FigurePosition = uiimage(app.MenuGrid);
+            app.FigurePosition = uiimage(app.NavBar);
             app.FigurePosition.ImageClickedFcn = createCallbackFcn(app, @menuImageClicked, true);
             app.FigurePosition.Visible = 'off';
             app.FigurePosition.Tooltip = {'Reposiciona janela'};
@@ -1713,7 +1713,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.FigurePosition.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'layout1_32White.png');
 
             % Create AppInfo
-            app.AppInfo = uiimage(app.MenuGrid);
+            app.AppInfo = uiimage(app.NavBar);
             app.AppInfo.ImageClickedFcn = createCallbackFcn(app, @menuImageClicked, true);
             app.AppInfo.Tooltip = {'Informações gerais'};
             app.AppInfo.Layout.Row = 3;
