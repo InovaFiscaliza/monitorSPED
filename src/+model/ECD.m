@@ -319,7 +319,7 @@ classdef ECD < model.ECDBase
         function [obj, msg] = mergeFiles(obj, projectData, generalSettings, indexes, tempPath)
             try
                 content  = strjoin({obj(indexes).Content}, char(obj(indexes(1)).TERMINATOR));
-                tempFile = [appUtil.DefaultFileName(tempPath, 'monitorSPED') '.txt'];
+                tempFile = [appEngine.util.DefaultFileName(tempPath, 'monitorSPED') '.txt'];
                 writematrix(content, tempFile, "FileType", "text", "QuoteStrings", "none", "Encoding", obj(indexes(1)).Encoding);
     
                 [obj, msg] = addFiles(obj, projectData, generalSettings, tempFile, indexes);

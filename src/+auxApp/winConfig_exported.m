@@ -65,6 +65,12 @@ classdef winConfig_exported < matlab.apps.AppBase
     end
 
     
+    properties (Access = private)
+        %-----------------------------------------------------------------%
+        Role = 'secondaryApp'
+    end
+
+
     properties (Access = public)
         %-----------------------------------------------------------------%
         Container
@@ -83,37 +89,23 @@ classdef winConfig_exported < matlab.apps.AppBase
 
     methods (Access = public)
         %-----------------------------------------------------------------%
-        function finalizeInitialization(app)
-            drawnow
-            applyJSCustomizations(app, 0)
-            applyJSCustomizations(app, 1)
-
-            initializeAppProperties(app)
-            initializeUIComponents(app)
-            applyInitialLayout(app)
-        end
-
-        %-----------------------------------------------------------------%
         % IPC: COMUNICAÇÃO ENTRE PROCESSOS
         %-----------------------------------------------------------------%
         function ipcSecondaryJSEventsHandler(app, event)
             try
                 switch event.HTMLEventName
                     case 'renderer'
-                        finalizeInitialization(app)
+                        appEngine.activate(app, app.Role)
                         
                     otherwise
                         error('UnexpectedEvent')
                 end
 
             catch ME
-                appUtil.modalWindow(app.UIFigure, 'error', ME.message);
+                ui.Dialog(app.UIFigure, 'error', ME.message);
             end
         end
-    end
-    
 
-    methods (Access = private)
         %-----------------------------------------------------------------%
         function applyJSCustomizations(app, tabIndex)
             persistent customizationStatus
@@ -175,7 +167,7 @@ classdef winConfig_exported < matlab.apps.AppBase
         function initializeAppProperties(app)
             % Lê a versão de "GeneralSettings.json" que vem junto ao
             % projeto (e não a versão armazenada em "ProgramData").
-            projectFolder     = appUtil.Path(class.Constants.appName, app.mainApp.rootFolder);
+            projectFolder     = appEngine.util.Path(class.Constants.appName, app.mainApp.rootFolder);
             projectFilePath   = fullfile(projectFolder, 'GeneralSettings.json');
             projectGeneral    = jsondecode(fileread(projectFilePath));
 
@@ -210,7 +202,10 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.openAuxiliarAppAsDocked.Value = app.mainApp.General.operationMode.Dock;
             app.openAuxiliarApp2Debug.Value   = app.mainApp.General.operationMode.Debug;
         end
+    end
 
+
+    methods (Access = private)
         %-----------------------------------------------------------------%
         function updatePanel_Analysis(app)
             % FILE
@@ -277,7 +272,7 @@ classdef winConfig_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function saveGeneralSettings(app)
-            appUtil.generalSettingsSave(class.Constants.appName, app.mainApp.rootFolder, app.mainApp.General_I, app.mainApp.executionMode)
+            appEngine.util.generalSettingsSave(class.Constants.appName, app.mainApp.rootFolder, app.mainApp.General_I, app.mainApp.executionMode)
         end
     end
     
@@ -289,10 +284,9 @@ classdef winConfig_exported < matlab.apps.AppBase
         function startupFcn(app, mainApp)
             
             try
-                role = 'secondaryApp';
-                appEngine.initialize(role, app, mainApp)
+                appEngine.boot(app, app.Role, mainApp)
             catch ME
-                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
+                ui.Dialog(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
             end
             
         end
@@ -343,7 +337,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.progressDialog.Visible = 'visible';
 
             htmlContent = util.HtmlTextGenerator.checkUpdate(app.mainApp.General, app.mainApp.rootFolder);
-            appUtil.modalWindow(app.UIFigure, "info", htmlContent);       
+            ui.Dialog(app.UIFigure, "info", htmlContent);       
 
             app.progressDialog.Visible = 'hidden';
 
@@ -353,7 +347,7 @@ classdef winConfig_exported < matlab.apps.AppBase
         function Toolbar_SimulationModeButtonPushed(app, event)
             
             msgQuestion   = 'Deseja abrir os arquivos de <b>simulação</b>?';
-            userSelection = appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 2, 2);
+            userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 2, 2);
             
             if strcmp(userSelection, 'Não')
                 return
@@ -516,7 +510,7 @@ classdef winConfig_exported < matlab.apps.AppBase
                         else
                             selectedFolderFiles = dir(selectedFolder);
                             if ~ismember('.monitorsped_post', {selectedFolderFiles.name})
-                                appUtil.modalWindow(app.UIFigure, 'error', 'Não se trata da pasta "DataHub - POST", do monitorSPED.');
+                                ui.Dialog(app.UIFigure, 'error', 'Não se trata da pasta "DataHub - POST", do monitorSPED.');
                                 return
                             end
 

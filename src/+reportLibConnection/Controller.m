@@ -41,7 +41,7 @@ classdef (Abstract) Controller
             end
 
             [projectFolder, ...
-             programDataFolder] = appUtil.Path(class.Constants.appName, mainApp.rootFolder);
+             programDataFolder] = appEngine.util.Path(class.Constants.appName, mainApp.rootFolder);
 
             context    = reportSettings.context;
             issueId    = num2str(reportSettings.issue);
@@ -183,7 +183,7 @@ classdef (Abstract) Controller
             % navegador. Por outro lado, em sendo a versão "Definitiva",
             % salva-se o arquivo ZIP em pasta local.
             %-------------------------------------------------------------%
-            [baseFullFileName, baseFileName] = appUtil.DefaultFileName(generalSettings.fileFolder.tempPath, 'monitorSPED_FinalReport', issueId);
+            [baseFullFileName, baseFileName] = appEngine.util.DefaultFileName(generalSettings.fileFolder.tempPath, 'monitorSPED_FinalReport', issueId);
             HTMLFile = [baseFullFileName '.html'];
             
             writematrix(HTMLDocContent, HTMLFile, 'QuoteStrings', 'none', 'FileType', 'text', 'Encoding', docVersion.encoding)
@@ -203,7 +203,7 @@ classdef (Abstract) Controller
                         writematrix(JSONContent, JSONFile, "FileType", "text", "QuoteStrings", "none", "Encoding", "UTF-8")
                     end
 
-                    ZIPFile  = appUtil.modalWindow(mainApp.UIFigure, 'uiputfile', '', {'*.zip', 'monitorSPED (*.zip)'}, fullfile(generalSettings.fileFolder.userPath, [baseFileName '.zip']));
+                    ZIPFile  = ui.Dialog(mainApp.UIFigure, 'uiputfile', '', {'*.zip', 'monitorSPED (*.zip)'}, fullfile(generalSettings.fileFolder.userPath, [baseFileName '.zip']));
                     if isempty(ZIPFile)
                         return
                     end

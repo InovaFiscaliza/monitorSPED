@@ -36,6 +36,12 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
     end
 
     
+    properties (Access = private)
+        %-----------------------------------------------------------------%
+        Role = 'secondaryDockApp'
+    end
+    
+
     properties (Access = public)
         %-----------------------------------------------------------------%
         Container
@@ -206,15 +212,14 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
         function startupFcn(app, mainApp, callingApp, context, index, tableIdList, selectedTableId)
             
             try
-                role = 'secondaryDockApp';
-                appEngine.initialize(role, app, mainApp, callingApp)
+                appEngine.boot(app, app.Role, mainApp, callingApp)
 
                 app.inputArgs = struct('context', context, 'index', index);
                 app.ecdObj = mainApp.ecdObj;    
                 initialLayout(app, tableIdList, selectedTableId)
                 
             catch ME
-                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
+                ui.Dialog(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
             end
             
         end
@@ -360,7 +365,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
                         ipcMainMatlabCallsHandler(app.mainApp, app, 'changeFilter', context, tableId)
 
                     catch ME
-                        appUtil.modalWindow(app.UIFigure, 'error', ME.message);
+                        ui.Dialog(app.UIFigure, 'error', ME.message);
                     end
 
                 case app.CancelNewFilter

@@ -44,6 +44,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
     end
 
     
+    properties (Access = private)
+        %-----------------------------------------------------------------%
+        Role = 'mainApp'
+    end
+
+
     properties (Access = public)
         %-----------------------------------------------------------------%
         General
@@ -65,52 +71,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
     end
 
 
-    methods
-        %-----------------------------------------------------------------%
-        function finalizeInitialization(app)
-            % Cria tela de progresso...
-            app.progressDialog = ui.ProgressDialog(app.jsBackDoor);
-            requestVisibilityChange(app.progressDialog, 'visible', 'locked')
-
-            drawnow
-            if ~app.renderCount
-                % Essa propriedade registra o tipo de execução da aplicação, podendo
-                % ser: 'built-in', 'desktopApp' ou 'webApp'.
-                app.executionMode  = appUtil.ExecutionMode(app.UIFigure);
-                if ~strcmp(app.executionMode, 'webApp')
-                    app.FigurePosition.Visible = 1;
-                    appUtil.winMinSize(app.UIFigure, class.Constants.windowMinSize)
-                end
-    
-                % Identifica o local deste arquivo .MLAPP, caso se trate das versões 
-                % "built-in" ou "webapp", ou do .EXE relacionado, caso se trate da
-                % versão executável (neste caso, o ctfroot indicará o local do .MLAPP).
-                appName = class.Constants.appName;
-                MFilePath = fileparts(mfilename('fullpath'));
-                app.rootFolder = appUtil.RootFolder(appName, MFilePath);
-    
-                % Customizações...
-                applyJSCustomizations(app, 0)
-                applyJSCustomizations(app, 1)
-                pause(.100)
-
-                % Inicia módulo de operação paralelo...
-                parpoolCheck()
-
-                loadConfigurationFile(app, appName, MFilePath)
-                initializeAppProperties(app)
-                initializeUIComponents(app)
-                applyInitialLayout(app)
-
-            else
-                applyJSCustomizations(app, 0)
-                applyJSCustomizations(app, 1)
-            end
-
-            pause(.100)
-            requestVisibilityChange(app.progressDialog, 'hidden', 'locked')
-        end
-
+    methods (Access = public)
         %-----------------------------------------------------------------%
         % COMUNICAÇÃO ENTRE PROCESSOS:
         % • ipcMainJSEventsHandler
@@ -132,37 +93,22 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         function ipcMainJSEventsHandler(app, event)
             try
                 switch event.HTMLEventName
-                    % JSBACKDOOR (compCustomization.js)
+                    % MATLAB-JS BRIDGE (matlabJSBridge.js)
                     case 'renderer'
-                        if ~app.renderCount
-                            finalizeInitialization(app)
-                        else
-                            % Esse fluxo será executado especificamente na
-                            % versão webapp, quando o navegador atualiza a
-                            % página (decorrente de F5 ou CTRL+F5).
-                            delete(app.progressDialog)
+                        MFilePath   = fileparts(mfilename('fullpath'));
+                        parpoolFlag = true;
 
+                        if ~app.renderCount
+                            appEngine.activate(app, app.Role, MFilePath, parpoolFlag)
+                        else
                             selectedNodes = app.file_Tree.SelectedNodes;
                             if ~isempty(app.file_Tree.SelectedNodes)
                                 app.file_Tree.SelectedNodes = [];
                                 file_TreeSelectionChanged(app)
                             end
 
-                            if ~app.Tab1Button.Value
-                                app.Tab1Button.Value = true;                    
-                                menu_mainButtonPushed(app, struct('Source', app.Tab1Button, 'PreviousValue', false))
-                                drawnow
-                            end
-
-                            closeModule(app.tabGroupController, ["ECD", "CONFIG"], app.General)
-
-                            if ~isempty(app.popupContainer)
-                                auxDockAppName = app.popupContainer.UserData.auxDockAppName;
-                                deleteContextMenu(app.tabGroupController, app.UIFigure, auxDockAppName)
-                                delete(app.popupContainer)
-                            end
-
-                            finalizeInitialization(app)
+                            appEngine.beforeReload(app, app.Role)
+                            appEngine.activate(app, app.Role, MFilePath, parpoolFlag)
 
                             if ~isempty(selectedNodes)
                                 app.file_Tree.SelectedNodes = selectedNodes;
@@ -235,7 +181,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 drawnow
 
             catch ME
-                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));
+                ui.Dialog(app.UIFigure, 'error', getReport(ME));
             end
         end
 
@@ -269,7 +215,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                                     % Muda programaticamente o modo p/ ARQUIVOS.
                                     set(app.Tab1Button, 'Enable', 1, 'Value', 1)                    
-                                    menu_mainButtonPushed(app, struct('Source', app.Tab1Button, 'PreviousValue', false))
+                                    tabNavigatorButtonPushed(app, struct('Source', app.Tab1Button, 'PreviousValue', false))
                                 end
 
                             case 'fileSortMethodChanged'
@@ -418,7 +364,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 end
 
             catch ME
-                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));            
+                ui.Dialog(app.UIFigure, 'error', getReport(ME));            
             end
 
             % Caso um app auxiliar esteja em modo DOCK, o progressDialog do
@@ -494,7 +440,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
     end
     
     
-    methods (Access = private)
+    methods (Access = public)
+        %-----------------------------------------------------------------%
+        function navigateToTab(app, clickedButton)
+            tabNavigatorButtonPushed(app, struct('Source', clickedButton, 'PreviousValue', false))
+        end
+
         %-----------------------------------------------------------------%
         function applyJSCustomizations(app, tabIndex)
             persistent customizationStatus
@@ -522,13 +473,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             try
                                 sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', {struct('appName', appName, 'dataTag', elToModify{1}.UserData.id, 'listener', struct('componentName', 'mainApp.file_Tree', 'keyEvents', {{'Delete', 'Backspace'}}))});
                             catch ME
-                                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));
+                                ui.Dialog(app.UIFigure, 'error', getReport(ME));
                             end
 
                             try
                                 ui.TextView.startup(app.jsBackDoor, elToModify{2}, appName);
                             catch ME
-                                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME));
+                                ui.Dialog(app.UIFigure, 'error', getReport(ME));
                             end
 
                         otherwise
@@ -542,9 +493,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function loadConfigurationFile(app, appName, MFilePath)
             % "GeneralSettings.json"
-            [app.General_I, msgWarning] = appUtil.generalSettingsLoad(appName, app.rootFolder);
+            [app.General_I, msgWarning] = appEngine.util.generalSettingsLoad(appName, app.rootFolder);
             if ~isempty(msgWarning)
-                appUtil.modalWindow(app.UIFigure, 'error', msgWarning);
+                ui.Dialog(app.UIFigure, 'error', msgWarning);
             end
 
             % Para criação de arquivos temporários, cria-se uma pasta da 
@@ -590,7 +541,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 otherwise    
                     % Resgata a pasta de trabalho do usuário (configurável).
-                    userPaths = appUtil.UserPaths(app.General_I.fileFolder.userPath);
+                    userPaths = appEngine.util.UserPaths(app.General_I.fileFolder.userPath);
                     app.General_I.fileFolder.userPath = userPaths{end};
 
                     switch app.executionMode
@@ -614,7 +565,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function initializeUIComponents(app)
-            app.tabGroupController = tabGroupGraphicMenu(app.MenuGrid, app.TabGroup, app.progressDialog, @app.applyJSCustomizations, []);
+            app.tabGroupController = ui.TabNavigator(app.MenuGrid, app.TabGroup, app.progressDialog, @app.applyJSCustomizations, []);
             addComponent(app.tabGroupController, "Built-in", "",                 app.Tab1Button, "AlwaysOn", struct('On', 'OpenFile_32Yellow.png', 'Off', 'OpenFile_32White.png'), matlab.graphics.GraphicsPlaceholder, 1)
             addComponent(app.tabGroupController, "External", "auxApp.winECD",    app.Tab2Button, "AlwaysOn", struct('On', 'Zoom_32Yellow.png',     'Off', 'Zoom_32White.png'),     app.Tab1Button,                    2)
             addComponent(app.tabGroupController, "External", "auxApp.winConfig", app.Tab3Button, "AlwaysOn", struct('On', 'Settings_36Yellow.png', 'Off', 'Settings_36White.png'), app.Tab1Button,                    3)
@@ -814,7 +765,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.General_I.fileFolder.lastVisited = filePath;
             app.General.fileFolder.lastVisited   = filePath;
 
-            appUtil.generalSettingsSave(class.Constants.appName, app.rootFolder, app.General_I, app.executionMode)
+            appEngine.util.generalSettingsSave(class.Constants.appName, app.rootFolder, app.General_I, app.executionMode)
         end
     end
 
@@ -831,7 +782,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 defaultName = class.Constants.DefaultFileName(app.General.fileFolder.userPath, 'monitorSPED_ProjectData', -1);
             end
             
-            prjFile = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', {'*.mat', 'monitorSPED (*.mat)'}, defaultName);
+            prjFile = ui.Dialog(app.UIFigure, 'uiputfile', '', {'*.mat', 'monitorSPED (*.mat)'}, defaultName);
             if isempty(prjFile)
                 return
             end
@@ -841,7 +792,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             try
                 Save(app.projectData, app.ecdObj, context, prjName, prjFile, app.General.Report.outputCompressionMode)
             catch ME
-                appUtil.modalWindow(app.UIFigure, 'error', ME.message);
+                ui.Dialog(app.UIFigure, 'error', ME.message);
             end
 
             app.progressDialog.Visible = 'hidden';
@@ -864,7 +815,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 msg = textFormatGUI.struct2PrettyPrintList(dataStruct, 'print -1', '', 'popup');
             end
 
-            appUtil.modalWindow(app.UIFigure, 'info', msg);
+            ui.Dialog(app.UIFigure, 'info', msg);
         end
 
         %-----------------------------------------------------------------%
@@ -896,7 +847,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 end
 
             catch ME
-                appUtil.modalWindow(hCallingApp.UIFigure, 'error', getReport(ME));
+                ui.Dialog(hCallingApp.UIFigure, 'error', getReport(ME));
             end
 
             hCallingApp.progressDialog.Visible = 'hidden';
@@ -931,7 +882,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 end
 
             catch ME
-                appUtil.modalWindow(app.UIFigure, 'error', ME.message);
+                ui.Dialog(app.UIFigure, 'error', ME.message);
             end
 
             report_showIssueDetails(app, context)            
@@ -1015,7 +966,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 communicationStatus  = false;
             end
 
-            appUtil.modalWindow(app.UIFigure, modalWindowIcon, communicationMessage);
+            ui.Dialog(app.UIFigure, modalWindowIcon, communicationMessage);
             app.progressDialog.Visible = 'hidden';
         end
 
@@ -1036,7 +987,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 sharepointFile = getGeneratedDocumentFileName(app.projectData, '.json', context);
                 copyfile(sharepointFile, sharepointFolder, 'f');
             catch ME
-                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME))
+                ui.Dialog(app.UIFigure, 'error', getReport(ME))
             end
         end
 
@@ -1054,10 +1005,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         function startupFcn(app)
 
             try
-                role = 'mainApp';
-                appEngine.initialize(role, app)
+                appEngine.boot(app, app.Role)
             catch ME
-                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
+                ui.Dialog(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
             end
             
         end
@@ -1085,20 +1035,20 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             end
 
             if ~isempty(msgQuestion)                
-                userSelection = appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
+                userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
                 if userSelection == "Não"
                     return
                 end
             end
 
             % Aspectos gerais (comum em todos os apps):
-            appUtil.beforeDeleteApp(app.progressDialog, app.General_I.fileFolder.tempPath, app.tabGroupController, app.executionMode)
+            appEngine.beforeDeleteApp(app.progressDialog, app.General_I.fileFolder.tempPath, app.tabGroupController, app.executionMode)
             delete(app)
             
         end
 
         % Value changed function: Tab1Button, Tab2Button, Tab3Button
-        function menu_mainButtonPushed(app, event)
+        function tabNavigatorButtonPushed(app, event)
 
             clickedButton  = event.Source;
             auxAppTag      = clickedButton.Tag;
@@ -1109,16 +1059,16 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         % Image clicked function: AppInfo, FigurePosition
-        function menu_ToolbarImageCliced(app, event)
+        function menuImageClicked(app, event)
 
             switch event.Source
                 case app.FigurePosition
                     app.UIFigure.Position(3:4) = class.Constants.windowSize;
-                    appUtil.winPosition(app.UIFigure)
+                    appEngine.util.setWindowPosition(app.UIFigure)
 
                 case app.AppInfo
                     appInfo = util.HtmlTextGenerator.AppInfo(app.General, app.rootFolder, app.executionMode, app.renderCount, "popup");
-                    appUtil.modalWindow(app.UIFigure, 'info', appInfo);
+                    ui.Dialog(app.UIFigure, 'info', appInfo);
             end
 
         end
@@ -1162,7 +1112,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 app.General.operationMode.Simulation = false;
                 
                 [projectFolder, ...
-                 programDataFolder] = appUtil.Path(class.Constants.appName, app.rootFolder);
+                 programDataFolder] = appEngine.util.Path(class.Constants.appName, app.rootFolder);
                 simulationFolders   = {programDataFolder, projectFolder};
 
                 for ii = 1:numel(simulationFolders)
@@ -1179,14 +1129,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 if isempty(fileFullName)
                     msgWarning = 'Nenhum arquivo de simulação foi identificado.';
-                    appUtil.modalWindow(app.UIFigure, "warning", msgWarning);
+                    ui.Dialog(app.UIFigure, "warning", msgWarning);
                     return
                 end
 
             else
                 switch app.General.File.input
                     case 'file'
-                        [~, filePath, ~, fileName] = appUtil.modalWindow( ...
+                        [~, filePath, ~, fileName] = ui.Dialog( ...
                             app.UIFigure, ...
                             'uigetfile', ...
                             '', ...
@@ -1211,14 +1161,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             return
                         end
     
-                        d = appUtil.modalWindow(app.UIFigure, "progressdlg", "Em andamento...");
+                        d = ui.Dialog(app.UIFigure, "progressdlg", "Em andamento...");
                         [fileFullName, fileName] = util.getFilesFromFolder(filePath, {'.txt', '.sped'}, app.General.fileFolder.tempPath);
                 end
                 updateLastVisitedFolder(app, filePath)
             end
 
             if isempty(d)
-                d = appUtil.modalWindow(app.UIFigure, "progressdlg", "Em andamento...");
+                d = ui.Dialog(app.UIFigure, "progressdlg", "Em andamento...");
             end
             
             filesError = struct('File', {}, 'Error', {});
@@ -1248,7 +1198,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % LOG
             if ~isempty(filesError)
                 msgWarning = sprintf('Arquivos que apresentaram erro na leitura:\n%s\n\n', strjoin(strcat({'•&thinsp;<b>'}, {filesError.File}, {'</b>: <i>'}, {filesError.Error}), '</i>\n\n'));
-                appUtil.modalWindow(app.UIFigure, "error", msgWarning);
+                ui.Dialog(app.UIFigure, "error", msgWarning);
             end
             
             % Atualiza app.file_Tree.
@@ -1262,7 +1212,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         % Image clicked function: tool_ReadFiles
         function toolbar_ReadFilesImageClicked(app, event)
             
-            d = appUtil.modalWindow(app.UIFigure, "progressdlg", textFormatGUI.HTMLParagraph('Em andamento...'));
+            d = ui.Dialog(app.UIFigure, "progressdlg", textFormatGUI.HTMLParagraph('Em andamento...'));
 
             switch event.Source
                 case app.tool_ReadFiles
@@ -1286,7 +1236,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             if event.Source == app.tool_ReadFiles && ~isempty(warnings)
                 msgWarning = ['Alarme(s) gerado(s) no processo de leitura do(s) arquivo(s):<br>', strjoin(warnings, '<br>')];
-                appUtil.modalWindow(app.UIFigure, "warning", msgWarning);
+                ui.Dialog(app.UIFigure, "warning", msgWarning);
             end
 
             delete(d)
@@ -1300,10 +1250,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             if numel(indexes) >= 2
                 if ~isscalar(unique({app.ecdObj(indexes).CompanyId}))
-                    appUtil.modalWindow(app.UIFigure, 'info', 'A mesclagem é aplicável apenas a registros de uma mesma empresa.');
+                    ui.Dialog(app.UIFigure, 'info', 'A mesclagem é aplicável apenas a registros de uma mesma empresa.');
                     return
                 elseif ~isscalar(unique(year([app.ecdObj(indexes).Period])))
-                    appUtil.modalWindow(app.UIFigure, 'info', 'A mesclagem é aplicável apenas a registros de um mesmo ano fiscal.');
+                    ui.Dialog(app.UIFigure, 'info', 'A mesclagem é aplicável apenas a registros de um mesmo ano fiscal.');
                     return
                 end
 
@@ -1313,7 +1263,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 if isempty(msg)
                     file_ProjectRestart(app, indexes, 'FileListChanged:Merge')
                 else
-                    appUtil.modalWindow(app.UIFigure, "error", msg); 
+                    ui.Dialog(app.UIFigure, "error", msg); 
                 end
 
                 app.progressDialog.Visible = 'hidden';
@@ -1328,7 +1278,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             if ~isempty(indexes)
                 if all([app.ecdObj(indexes).PeriodMerged])
-                    appUtil.modalWindow(app.UIFigure, 'info', 'Consulta à Receita Federal não é aplicável a registro mesclado.');
+                    ui.Dialog(app.UIFigure, 'info', 'Consulta à Receita Federal não é aplicável a registro mesclado.');
                     return
                 end
 
@@ -1352,7 +1302,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             if ~isempty(indexes)
                 if numel(indexes) < numel(app.ecdObj)
                     msgQuestion   = 'Deseja gerar inventário de TODOS os arquivos lidos, ou apenas do SELECIONADO?';
-                    userSelection = appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'Todos', 'Selecionado', 'Cancelar'}, 1, 3);
+                    userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Todos', 'Selecionado', 'Cancelar'}, 1, 3);
 
                     switch userSelection
                         case 'Cancelar'
@@ -1391,7 +1341,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             end
 
             if ~isempty(msg)
-                appUtil.modalWindow(app.UIFigure, 'warning', msg);
+                ui.Dialog(app.UIFigure, 'warning', msg);
                 return
             end
             % </VALIDAÇÕES>
@@ -1422,7 +1372,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                    '➕ Registro mesclado<br>' ...
                    '⌛ Período fiscal não anual'];
 
-            appUtil.modalWindow(app.UIFigure, 'none', msg);
+            ui.Dialog(app.UIFigure, 'none', msg);
 
         end
 
@@ -1694,7 +1644,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create Tab1Button
             app.Tab1Button = uibutton(app.MenuGrid, 'state');
-            app.Tab1Button.ValueChangedFcn = createCallbackFcn(app, @menu_mainButtonPushed, true);
+            app.Tab1Button.ValueChangedFcn = createCallbackFcn(app, @tabNavigatorButtonPushed, true);
             app.Tab1Button.Tag = 'FILE';
             app.Tab1Button.Tooltip = {'Leitura de arquivos'};
             app.Tab1Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'OpenFile_32Yellow.png');
@@ -1708,7 +1658,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create Tab2Button
             app.Tab2Button = uibutton(app.MenuGrid, 'state');
-            app.Tab2Button.ValueChangedFcn = createCallbackFcn(app, @menu_mainButtonPushed, true);
+            app.Tab2Button.ValueChangedFcn = createCallbackFcn(app, @tabNavigatorButtonPushed, true);
             app.Tab2Button.Tag = 'ECD';
             app.Tab2Button.Tooltip = {'Escrituração Contábil Digital'};
             app.Tab2Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'Zoom_32White.png');
@@ -1729,7 +1679,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create Tab3Button
             app.Tab3Button = uibutton(app.MenuGrid, 'state');
-            app.Tab3Button.ValueChangedFcn = createCallbackFcn(app, @menu_mainButtonPushed, true);
+            app.Tab3Button.ValueChangedFcn = createCallbackFcn(app, @tabNavigatorButtonPushed, true);
             app.Tab3Button.Tag = 'CONFIG';
             app.Tab3Button.Tooltip = {'Configurações gerais'};
             app.Tab3Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'Settings_36White.png');
@@ -1755,7 +1705,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create FigurePosition
             app.FigurePosition = uiimage(app.MenuGrid);
-            app.FigurePosition.ImageClickedFcn = createCallbackFcn(app, @menu_ToolbarImageCliced, true);
+            app.FigurePosition.ImageClickedFcn = createCallbackFcn(app, @menuImageClicked, true);
             app.FigurePosition.Visible = 'off';
             app.FigurePosition.Tooltip = {'Reposiciona janela'};
             app.FigurePosition.Layout.Row = 3;
@@ -1764,7 +1714,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create AppInfo
             app.AppInfo = uiimage(app.MenuGrid);
-            app.AppInfo.ImageClickedFcn = createCallbackFcn(app, @menu_ToolbarImageCliced, true);
+            app.AppInfo.ImageClickedFcn = createCallbackFcn(app, @menuImageClicked, true);
             app.AppInfo.Tooltip = {'Informações gerais'};
             app.AppInfo.Layout.Row = 3;
             app.AppInfo.Layout.Column = 13;

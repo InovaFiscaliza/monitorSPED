@@ -25,6 +25,12 @@ classdef dockECDExport_exported < matlab.apps.AppBase
     end
 
     
+    properties (Access = private)
+        %-----------------------------------------------------------------%
+        Role = 'secondaryDockApp'
+    end
+
+
     properties (Access = public)
         %-----------------------------------------------------------------%
         Container
@@ -47,14 +53,13 @@ classdef dockECDExport_exported < matlab.apps.AppBase
         function startupFcn(app, mainApp, callingApp, context, index)
             
             try
-                role = 'secondaryDockApp';
-                appEngine.initialize(role, app, mainApp, callingApp)
+                appEngine.boot(app, app.Role, mainApp, callingApp)
 
                 app.inputArgs = struct('context', context, 'index', index);    
                 expand(app.Tree, 'all')
                 
             catch ME
-                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
+                ui.Dialog(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
             end
             
         end

@@ -76,6 +76,12 @@ classdef winECD_exported < matlab.apps.AppBase
     end
 
     
+    properties (Access = private)
+        %-----------------------------------------------------------------%
+        Role = 'secondaryApp'
+    end
+
+
     properties (Access = public)
         %-----------------------------------------------------------------%
         Container
@@ -96,22 +102,11 @@ classdef winECD_exported < matlab.apps.AppBase
 
     methods (Access = public)
         %-----------------------------------------------------------------%
-        function finalizeInitialization(app)
-            drawnow
-            applyJSCustomizations(app, 0)
-            applyJSCustomizations(app, 1)
-
-            initializeAppProperties(app)
-            initializeUIComponents(app)
-            applyInitialLayout(app, 'fromMainApp')
-        end
-
-        %-----------------------------------------------------------------%
         function ipcSecondaryJSEventsHandler(app, event)
             try
                 switch event.HTMLEventName
                     case 'renderer'
-                        finalizeInitialization(app)
+                        appEngine.activate(app, app.Role)
 
                     case 'customForm'
                         ipcMainJSEventsHandler(app.mainApp, event)
@@ -121,7 +116,7 @@ classdef winECD_exported < matlab.apps.AppBase
                             if ~isprop(app, 'isDocked') % mainApp (app container)
                                 auxAppTag = event.HTMLEventData.auxAppTag;
                                 if ~isempty(auxAppTag)
-                                    hAuxApp   = auxAppHandle(app, auxAppTag);
+                                    hAuxApp   = getAppHandle(app.mainApp.tabGroupController, auxAppTag);
                                     objHandle = hAuxApp.(componentName);
                                 else
                                     objHandle = eval(['app.' event.HTMLEventData.componentName]);
@@ -144,7 +139,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 end
 
             catch ME
-                appUtil.modalWindow(app.UIFigure, 'error', ME.message);
+                ui.Dialog(app.UIFigure, 'error', ME.message);
             end
         end
 
@@ -209,13 +204,10 @@ classdef winECD_exported < matlab.apps.AppBase
                 end
 
             catch ME
-                appUtil.modalWindow(app.UIFigure, 'error', ME.message);
+                ui.Dialog(app.UIFigure, 'error', ME.message);
             end
         end
-    end
-
-    
-    methods (Access = private)
+        
         %-------------------------------------------------------------------------%
         function applyJSCustomizations(app, tabIndex)
             persistent customizationStatus
@@ -299,7 +291,7 @@ classdef winECD_exported < matlab.apps.AppBase
         function applyInitialLayout(app, selectionMode)
             arguments
                 app
-                selectionMode {mustBeMember(selectionMode, {'fromMainApp', 'keepIfPossible', 'keepCurrent'})}
+                selectionMode {mustBeMember(selectionMode, {'fromMainApp', 'keepIfPossible', 'keepCurrent'})} = 'fromMainApp'
             end
 
             nonEmptyECDObject = ~isempty(app.ecdObj);
@@ -874,8 +866,8 @@ classdef winECD_exported < matlab.apps.AppBase
         function exportFiles(app, fileIndex, rawTableIdFields)
             selectedECD     = app.ecdObj(fileIndex);
 
-            defaultBaseName =  appUtil.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'monitorSPED');
-            excelTempName   = [appUtil.DefaultFileName(app.mainApp.General.fileFolder.tempPath, 'monitorSPED') '.xlsx'];
+            defaultBaseName =  appEngine.util.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'monitorSPED');
+            excelTempName   = [appEngine.util.DefaultFileName(app.mainApp.General.fileFolder.tempPath, 'monitorSPED') '.xlsx'];
             rtfTempFiles    = {};
 
             requestVisibilityChange(app.progressDialog, 'visible', 'unlocked')
@@ -937,7 +929,7 @@ classdef winECD_exported < matlab.apps.AppBase
                     nameFormatMap = {'*.zip', 'Zip (*.zip)'};
                 end
                 
-                fileFullPath = appUtil.modalWindow(app.UIFigure, 'uiputfile', '', nameFormatMap, defaultBaseName);
+                fileFullPath = ui.Dialog(app.UIFigure, 'uiputfile', '', nameFormatMap, defaultBaseName);
                 if isempty(fileFullPath)
                     return
                 end
@@ -946,7 +938,7 @@ classdef winECD_exported < matlab.apps.AppBase
                     copyfile(outputfiles{1}, fileFullPath, 'f')
 
                     if ~strcmp(app.mainApp.executionMode, 'webApp')
-                        appUtil.OperationSystem('openFile', fileFullPath)
+                        appEngine.util.OperationSystem('openFile', fileFullPath)
                     end
                 else
                     zip(fileFullPath, outputfiles)
@@ -960,7 +952,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % WARNING MESSAGE
             if ~isempty(msgError)
                 msgError = strjoin(msgError, '<br><br>');
-                appUtil.modalWindow(app.UIFigure, 'warning', msgError);
+                ui.Dialog(app.UIFigure, 'warning', msgError);
             end
         end
     end
@@ -973,10 +965,9 @@ classdef winECD_exported < matlab.apps.AppBase
         function startupFcn(app, mainApp)
             
             try
-                role = 'secondaryApp';
-                appEngine.initialize(role, app, mainApp)
+                appEngine.boot(app, app.Role, mainApp)
             catch ME
-                appUtil.modalWindow(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
+                ui.Dialog(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
             end
 
         end
@@ -1019,7 +1010,7 @@ classdef winECD_exported < matlab.apps.AppBase
             selectedECD = selectedECDObject(app);
 
             htmlContent = util.HtmlTextGenerator.Warnings(selectedECD);
-            appUtil.modalWindow(app.UIFigure, 'info', htmlContent);
+            ui.Dialog(app.UIFigure, 'info', htmlContent);
 
         end
 
@@ -1109,9 +1100,13 @@ classdef winECD_exported < matlab.apps.AppBase
                 app.SheetHeight_Second.Limits(1) = 1;
                 set(app.SheetHeight_Second, 'Enable', 'on', 'Value', app.SheetHeight_First.Value)
                 
-                app.UITable2.Visible = 'on';
-                SheetViewSecondValueChanged(app)
+                app.UITable2.Visible = 'on';                
                 rowHeight = {10,2,22};
+
+                selectedECD = selectedECDObject(app);
+                if ~isempty(selectedECD)
+                    SheetViewSecondValueChanged(app)
+                end
                 
             else
                 app.SheetView_Second.Enable  = "off";
@@ -1121,8 +1116,9 @@ classdef winECD_exported < matlab.apps.AppBase
                 set(app.SheetHeight_Second, 'Enable', 'off', 'Value', 0)
 
                 app.UITable2.Visible = 'off';
-                restartTable(app, app.UITable2, app.UITable2_AccountInfo, app.UITable2_CountText, app.UITable2_FilterText, app.UITable2_FilterIcon)
                 rowHeight = {0,0,0};
+                
+                restartTable(app, app.UITable2, app.UITable2_AccountInfo, app.UITable2_CountText, app.UITable2_FilterText, app.UITable2_FilterIcon)                
 
                 if app.SheetOnFocus.Layout.Row ~= 1
                     app.SheetOnFocus.Layout.Row = 1;
@@ -1461,7 +1457,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 focus(hTable)
 
             catch ME
-                appUtil.modalWindow(app.UIFigure, 'error', ME.message);
+                ui.Dialog(app.UIFigure, 'error', ME.message);
             end
 
         end
@@ -1569,7 +1565,7 @@ classdef winECD_exported < matlab.apps.AppBase
             end
 
             if ~isempty(msg)
-                appUtil.modalWindow(app.UIFigure, 'warning', msg);
+                ui.Dialog(app.UIFigure, 'warning', msg);
                 return
             end
 
@@ -1591,7 +1587,7 @@ classdef winECD_exported < matlab.apps.AppBase
                     'SEI nº %s.\n\n' ...
                     'Deseja realizar um novo <i>upload</i> para o SEI?' ...
                 ], uploadStatus);
-                userSelection = appUtil.modalWindow(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 2, 2);
+                userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 2, 2);
 
                 if strcmp(userSelection, 'Não')
                     return
