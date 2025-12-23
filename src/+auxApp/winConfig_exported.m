@@ -7,16 +7,16 @@ classdef winConfig_exported < matlab.apps.AppBase
         DockModule                   matlab.ui.container.GridLayout
         dockModule_Undock            matlab.ui.control.Image
         dockModule_Close             matlab.ui.control.Image
-        TabGroup                     matlab.ui.container.TabGroup
-        Tab1                         matlab.ui.container.Tab
-        Tab1Grid                     matlab.ui.container.GridLayout
+        SubTabGroup                  matlab.ui.container.TabGroup
+        SubTab1                      matlab.ui.container.Tab
+        SubGrid1                     matlab.ui.container.GridLayout
         openAuxiliarApp2Debug        matlab.ui.control.CheckBox
         openAuxiliarAppAsDocked      matlab.ui.control.CheckBox
         versionInfo                  matlab.ui.control.Label
         tool_versionInfoRefresh      matlab.ui.control.Image
         versionInfoLabel             matlab.ui.control.Label
-        Tab2                         matlab.ui.container.Tab
-        Tab2Grid                     matlab.ui.container.GridLayout
+        SubTab2                      matlab.ui.container.Tab
+        SubGrid2                     matlab.ui.container.GridLayout
         configAnalysisPanel2         matlab.ui.container.Panel
         configAnalysisGrid2          matlab.ui.container.GridLayout
         Cofins                       matlab.ui.control.Spinner
@@ -34,8 +34,8 @@ classdef winConfig_exported < matlab.apps.AppBase
         InputTypeLabel               matlab.ui.control.Label
         configAnalysisRefresh        matlab.ui.control.Image
         configAnalysisPanel1Label    matlab.ui.control.Label
-        Tab3                         matlab.ui.container.Tab
-        Tab3Grid                     matlab.ui.container.GridLayout
+        SubTab3                      matlab.ui.container.Tab
+        SubGrid3                     matlab.ui.container.GridLayout
         reportPanel                  matlab.ui.container.Panel
         reportGrid                   matlab.ui.container.GridLayout
         prjFileCompressionMode       matlab.ui.control.DropDown
@@ -51,8 +51,8 @@ classdef winConfig_exported < matlab.apps.AppBase
         reportSystemLabel            matlab.ui.control.Label
         eFiscalizaRefresh            matlab.ui.control.Image
         eFiscalizaLabel              matlab.ui.control.Label
-        Tab4                         matlab.ui.container.Tab
-        Tab4Grid                     matlab.ui.container.GridLayout
+        SubTab4                      matlab.ui.container.Tab
+        SubGrid4                     matlab.ui.container.GridLayout
         userPathButton               matlab.ui.control.Image
         userPath                     matlab.ui.control.EditField
         userPathLabel                matlab.ui.control.Label
@@ -88,8 +88,6 @@ classdef winConfig_exported < matlab.apps.AppBase
 
 
     methods (Access = public)
-        %-----------------------------------------------------------------%
-        % IPC: COMUNICAÇÃO ENTRE PROCESSOS
         %-----------------------------------------------------------------%
         function ipcSecondaryJSEventsHandler(app, event)
             try
@@ -158,6 +156,9 @@ classdef winConfig_exported < matlab.apps.AppBase
                             updatePanel_Report(app)
 
                         case 4
+                            if ~strcmp(app.mainApp.executionMode, 'webApp')
+                                set([app.DataHubPOSTButton, app.userPathButton], 'Enable', 1)
+                            end
                             updatePanel_Folder(app)
                     end
             end
@@ -179,10 +180,8 @@ classdef winConfig_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function initializeUIComponents(app)
             if ~strcmp(app.mainApp.executionMode, 'webApp')
-                app.dockModule_Undock.Enable = 1;
-                app.tool_openDevTools.Enable = 1;
-
-                set([app.DataHubPOSTButton, app.userPathButton], 'Enable', 1)
+                app.dockModule_Undock.Enable       = 1;
+                app.tool_openDevTools.Enable       = 1;                
                 app.tool_versionInfoRefresh.Enable = 1;
                 app.openAuxiliarAppAsDocked.Enable = 1;
             end
@@ -195,7 +194,13 @@ classdef winConfig_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function applyInitialLayout(app)
             % Versão:
-            appInfo = util.HtmlTextGenerator.AppInfo(app.mainApp.General, app.mainApp.rootFolder, app.mainApp.executionMode, app.mainApp.renderCount, "textview");
+            appInfo = util.HtmlTextGenerator.AppInfo( ...
+                app.mainApp.General, ...
+                app.mainApp.rootFolder, ...
+                app.mainApp.executionMode, ...
+                app.mainApp.renderCount, ...
+                "textview" ...
+            );
             ui.TextView.update(app.versionInfo, appInfo);
 
             % Modo de operação:
@@ -323,10 +328,10 @@ classdef winConfig_exported < matlab.apps.AppBase
 
         end
 
-        % Selection change function: TabGroup
-        function TabGroup_TabSelectionChanged(app, event)
+        % Selection change function: SubTabGroup
+        function SubTabGroup_TabSelectionChanged(app, event)
             
-            [~, tabIndex] = ismember(app.TabGroup.SelectedTab, app.TabGroup.Children);
+            [~, tabIndex] = ismember(app.SubTabGroup.SelectedTab, app.SubTabGroup.Children);
             applyJSCustomizations(app, tabIndex)
             
         end
@@ -606,28 +611,28 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.tool_simulationMode.Layout.Column = 1;
             app.tool_simulationMode.ImageSource = 'Import_16.png';
 
-            % Create TabGroup
-            app.TabGroup = uitabgroup(app.GridLayout);
-            app.TabGroup.AutoResizeChildren = 'off';
-            app.TabGroup.SelectionChangedFcn = createCallbackFcn(app, @TabGroup_TabSelectionChanged, true);
-            app.TabGroup.Layout.Row = [3 4];
-            app.TabGroup.Layout.Column = [2 3];
+            % Create SubTabGroup
+            app.SubTabGroup = uitabgroup(app.GridLayout);
+            app.SubTabGroup.AutoResizeChildren = 'off';
+            app.SubTabGroup.SelectionChangedFcn = createCallbackFcn(app, @SubTabGroup_TabSelectionChanged, true);
+            app.SubTabGroup.Layout.Row = [3 4];
+            app.SubTabGroup.Layout.Column = [2 3];
 
-            % Create Tab1
-            app.Tab1 = uitab(app.TabGroup);
-            app.Tab1.AutoResizeChildren = 'off';
-            app.Tab1.Title = 'ASPECTOS GERAIS';
-            app.Tab1.BackgroundColor = 'none';
+            % Create SubTab1
+            app.SubTab1 = uitab(app.SubTabGroup);
+            app.SubTab1.AutoResizeChildren = 'off';
+            app.SubTab1.Title = 'ASPECTOS GERAIS';
+            app.SubTab1.BackgroundColor = 'none';
 
-            % Create Tab1Grid
-            app.Tab1Grid = uigridlayout(app.Tab1);
-            app.Tab1Grid.ColumnWidth = {'1x', 22};
-            app.Tab1Grid.RowHeight = {17, 150, 22, '1x', 1, 22, 15};
-            app.Tab1Grid.RowSpacing = 5;
-            app.Tab1Grid.BackgroundColor = [1 1 1];
+            % Create SubGrid1
+            app.SubGrid1 = uigridlayout(app.SubTab1);
+            app.SubGrid1.ColumnWidth = {'1x', 22};
+            app.SubGrid1.RowHeight = {17, 150, 22, '1x', 1, 22, 15};
+            app.SubGrid1.RowSpacing = 5;
+            app.SubGrid1.BackgroundColor = [1 1 1];
 
             % Create versionInfoLabel
-            app.versionInfoLabel = uilabel(app.Tab1Grid);
+            app.versionInfoLabel = uilabel(app.SubGrid1);
             app.versionInfoLabel.VerticalAlignment = 'bottom';
             app.versionInfoLabel.FontSize = 10;
             app.versionInfoLabel.Layout.Row = 1;
@@ -635,7 +640,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.versionInfoLabel.Text = 'AMBIENTE:';
 
             % Create tool_versionInfoRefresh
-            app.tool_versionInfoRefresh = uiimage(app.Tab1Grid);
+            app.tool_versionInfoRefresh = uiimage(app.SubGrid1);
             app.tool_versionInfoRefresh.ScaleMethod = 'none';
             app.tool_versionInfoRefresh.ImageClickedFcn = createCallbackFcn(app, @Toolbar_AppEnvRefreshButtonPushed, true);
             app.tool_versionInfoRefresh.Enable = 'off';
@@ -646,7 +651,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.tool_versionInfoRefresh.ImageSource = 'Refresh_18.png';
 
             % Create versionInfo
-            app.versionInfo = uilabel(app.Tab1Grid);
+            app.versionInfo = uilabel(app.SubGrid1);
             app.versionInfo.BackgroundColor = [1 1 1];
             app.versionInfo.VerticalAlignment = 'top';
             app.versionInfo.WordWrap = 'on';
@@ -657,7 +662,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.versionInfo.Text = '';
 
             % Create openAuxiliarAppAsDocked
-            app.openAuxiliarAppAsDocked = uicheckbox(app.Tab1Grid);
+            app.openAuxiliarAppAsDocked = uicheckbox(app.SubGrid1);
             app.openAuxiliarAppAsDocked.ValueChangedFcn = createCallbackFcn(app, @Config_GeneralParameterValueChanged, true);
             app.openAuxiliarAppAsDocked.Enable = 'off';
             app.openAuxiliarAppAsDocked.Text = 'Modo DOCK: módulos auxiliares abertos na janela principal do app';
@@ -666,7 +671,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.openAuxiliarAppAsDocked.Layout.Column = [1 2];
 
             % Create openAuxiliarApp2Debug
-            app.openAuxiliarApp2Debug = uicheckbox(app.Tab1Grid);
+            app.openAuxiliarApp2Debug = uicheckbox(app.SubGrid1);
             app.openAuxiliarApp2Debug.ValueChangedFcn = createCallbackFcn(app, @Config_GeneralParameterValueChanged, true);
             app.openAuxiliarApp2Debug.Enable = 'off';
             app.openAuxiliarApp2Debug.Text = 'Modo DEBUG';
@@ -674,21 +679,21 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.openAuxiliarApp2Debug.Layout.Row = 7;
             app.openAuxiliarApp2Debug.Layout.Column = [1 2];
 
-            % Create Tab2
-            app.Tab2 = uitab(app.TabGroup);
-            app.Tab2.AutoResizeChildren = 'off';
-            app.Tab2.Title = 'ANÁLISE';
-            app.Tab2.BackgroundColor = 'none';
+            % Create SubTab2
+            app.SubTab2 = uitab(app.SubTabGroup);
+            app.SubTab2.AutoResizeChildren = 'off';
+            app.SubTab2.Title = 'ANÁLISE';
+            app.SubTab2.BackgroundColor = 'none';
 
-            % Create Tab2Grid
-            app.Tab2Grid = uigridlayout(app.Tab2);
-            app.Tab2Grid.ColumnWidth = {'1x', 22};
-            app.Tab2Grid.RowHeight = {17, 98, 22, '1x'};
-            app.Tab2Grid.RowSpacing = 5;
-            app.Tab2Grid.BackgroundColor = [1 1 1];
+            % Create SubGrid2
+            app.SubGrid2 = uigridlayout(app.SubTab2);
+            app.SubGrid2.ColumnWidth = {'1x', 22};
+            app.SubGrid2.RowHeight = {17, 98, 22, '1x'};
+            app.SubGrid2.RowSpacing = 5;
+            app.SubGrid2.BackgroundColor = [1 1 1];
 
             % Create configAnalysisPanel1Label
-            app.configAnalysisPanel1Label = uilabel(app.Tab2Grid);
+            app.configAnalysisPanel1Label = uilabel(app.SubGrid2);
             app.configAnalysisPanel1Label.VerticalAlignment = 'bottom';
             app.configAnalysisPanel1Label.FontSize = 10;
             app.configAnalysisPanel1Label.Layout.Row = 1;
@@ -696,7 +701,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.configAnalysisPanel1Label.Text = 'PROCESSO DE LEITURA DOS ARQUIVOS E VISUALIZAÇÃO DOS SEUS METADADOS';
 
             % Create configAnalysisRefresh
-            app.configAnalysisRefresh = uiimage(app.Tab2Grid);
+            app.configAnalysisRefresh = uiimage(app.SubGrid2);
             app.configAnalysisRefresh.ScaleMethod = 'none';
             app.configAnalysisRefresh.ImageClickedFcn = createCallbackFcn(app, @Config_AnalysisRefreshImageClicked, true);
             app.configAnalysisRefresh.Visible = 'off';
@@ -707,7 +712,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.configAnalysisRefresh.ImageSource = 'Refresh_18.png';
 
             % Create configAnalysisPanel1
-            app.configAnalysisPanel1 = uipanel(app.Tab2Grid);
+            app.configAnalysisPanel1 = uipanel(app.SubGrid2);
             app.configAnalysisPanel1.AutoResizeChildren = 'off';
             app.configAnalysisPanel1.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
             app.configAnalysisPanel1.Layout.Row = 2;
@@ -772,7 +777,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.CheckStatus.Value = 'Cache+RealTime';
 
             % Create configAnalysisPanel2Label
-            app.configAnalysisPanel2Label = uilabel(app.Tab2Grid);
+            app.configAnalysisPanel2Label = uilabel(app.SubGrid2);
             app.configAnalysisPanel2Label.VerticalAlignment = 'bottom';
             app.configAnalysisPanel2Label.FontSize = 10;
             app.configAnalysisPanel2Label.Layout.Row = 3;
@@ -780,7 +785,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.configAnalysisPanel2Label.Text = 'PROCESSO DE ANÁLISE DOS DADOS';
 
             % Create configAnalysisPanel2
-            app.configAnalysisPanel2 = uipanel(app.Tab2Grid);
+            app.configAnalysisPanel2 = uipanel(app.SubGrid2);
             app.configAnalysisPanel2.AutoResizeChildren = 'off';
             app.configAnalysisPanel2.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
             app.configAnalysisPanel2.Layout.Row = 4;
@@ -829,20 +834,20 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.Cofins.Layout.Column = 2;
             app.Cofins.Value = 3;
 
-            % Create Tab3
-            app.Tab3 = uitab(app.TabGroup);
-            app.Tab3.AutoResizeChildren = 'off';
-            app.Tab3.Title = 'PROJETO';
+            % Create SubTab3
+            app.SubTab3 = uitab(app.SubTabGroup);
+            app.SubTab3.AutoResizeChildren = 'off';
+            app.SubTab3.Title = 'PROJETO';
 
-            % Create Tab3Grid
-            app.Tab3Grid = uigridlayout(app.Tab3);
-            app.Tab3Grid.ColumnWidth = {'1x', 22};
-            app.Tab3Grid.RowHeight = {17, 70, 22, '1x'};
-            app.Tab3Grid.RowSpacing = 5;
-            app.Tab3Grid.BackgroundColor = [1 1 1];
+            % Create SubGrid3
+            app.SubGrid3 = uigridlayout(app.SubTab3);
+            app.SubGrid3.ColumnWidth = {'1x', 22};
+            app.SubGrid3.RowHeight = {17, 70, 22, '1x'};
+            app.SubGrid3.RowSpacing = 5;
+            app.SubGrid3.BackgroundColor = [1 1 1];
 
             % Create eFiscalizaLabel
-            app.eFiscalizaLabel = uilabel(app.Tab3Grid);
+            app.eFiscalizaLabel = uilabel(app.SubGrid3);
             app.eFiscalizaLabel.VerticalAlignment = 'bottom';
             app.eFiscalizaLabel.FontSize = 10;
             app.eFiscalizaLabel.Layout.Row = 1;
@@ -850,7 +855,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.eFiscalizaLabel.Text = 'INICIALIZAÇÃO eFISCALIZA';
 
             % Create eFiscalizaRefresh
-            app.eFiscalizaRefresh = uiimage(app.Tab3Grid);
+            app.eFiscalizaRefresh = uiimage(app.SubGrid3);
             app.eFiscalizaRefresh.ScaleMethod = 'none';
             app.eFiscalizaRefresh.ImageClickedFcn = createCallbackFcn(app, @Config_ProjectRefreshImageClicked, true);
             app.eFiscalizaRefresh.Visible = 'off';
@@ -861,7 +866,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.eFiscalizaRefresh.ImageSource = 'Refresh_18.png';
 
             % Create eFiscalizaPanel
-            app.eFiscalizaPanel = uipanel(app.Tab3Grid);
+            app.eFiscalizaPanel = uipanel(app.SubGrid3);
             app.eFiscalizaPanel.AutoResizeChildren = 'off';
             app.eFiscalizaPanel.Layout.Row = 2;
             app.eFiscalizaPanel.Layout.Column = [1 2];
@@ -910,7 +915,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.reportUnit.Value = {};
 
             % Create reportLabel
-            app.reportLabel = uilabel(app.Tab3Grid);
+            app.reportLabel = uilabel(app.SubGrid3);
             app.reportLabel.VerticalAlignment = 'bottom';
             app.reportLabel.FontSize = 10;
             app.reportLabel.Layout.Row = 3;
@@ -918,7 +923,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.reportLabel.Text = 'OUTROS ASPECTOS RELACIONADOS AO PROJETO';
 
             % Create reportPanel
-            app.reportPanel = uipanel(app.Tab3Grid);
+            app.reportPanel = uipanel(app.SubGrid3);
             app.reportPanel.AutoResizeChildren = 'off';
             app.reportPanel.BackgroundColor = [1 1 1];
             app.reportPanel.Layout.Row = 4;
@@ -967,22 +972,22 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.prjFileCompressionMode.Layout.Column = 2;
             app.prjFileCompressionMode.Value = 'Sim';
 
-            % Create Tab4
-            app.Tab4 = uitab(app.TabGroup);
-            app.Tab4.AutoResizeChildren = 'off';
-            app.Tab4.Title = 'MAPEAMENTO DE PASTAS';
-            app.Tab4.BackgroundColor = 'none';
+            % Create SubTab4
+            app.SubTab4 = uitab(app.SubTabGroup);
+            app.SubTab4.AutoResizeChildren = 'off';
+            app.SubTab4.Title = 'MAPEAMENTO DE PASTAS';
+            app.SubTab4.BackgroundColor = 'none';
 
-            % Create Tab4Grid
-            app.Tab4Grid = uigridlayout(app.Tab4);
-            app.Tab4Grid.ColumnWidth = {'1x', 20};
-            app.Tab4Grid.RowHeight = {17, 22, 22, 22, '1x'};
-            app.Tab4Grid.ColumnSpacing = 5;
-            app.Tab4Grid.RowSpacing = 5;
-            app.Tab4Grid.BackgroundColor = [1 1 1];
+            % Create SubGrid4
+            app.SubGrid4 = uigridlayout(app.SubTab4);
+            app.SubGrid4.ColumnWidth = {'1x', 20};
+            app.SubGrid4.RowHeight = {17, 22, 22, 22, '1x'};
+            app.SubGrid4.ColumnSpacing = 5;
+            app.SubGrid4.RowSpacing = 5;
+            app.SubGrid4.BackgroundColor = [1 1 1];
 
             % Create DATAHUBPOSTLabel
-            app.DATAHUBPOSTLabel = uilabel(app.Tab4Grid);
+            app.DATAHUBPOSTLabel = uilabel(app.SubGrid4);
             app.DATAHUBPOSTLabel.VerticalAlignment = 'bottom';
             app.DATAHUBPOSTLabel.FontSize = 10;
             app.DATAHUBPOSTLabel.Layout.Row = 1;
@@ -990,14 +995,14 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.DATAHUBPOSTLabel.Text = 'DATAHUB - POST:';
 
             % Create DataHubPOST
-            app.DataHubPOST = uieditfield(app.Tab4Grid, 'text');
+            app.DataHubPOST = uieditfield(app.SubGrid4, 'text');
             app.DataHubPOST.Editable = 'off';
             app.DataHubPOST.FontSize = 11;
             app.DataHubPOST.Layout.Row = 2;
             app.DataHubPOST.Layout.Column = 1;
 
             % Create DataHubPOSTButton
-            app.DataHubPOSTButton = uiimage(app.Tab4Grid);
+            app.DataHubPOSTButton = uiimage(app.SubGrid4);
             app.DataHubPOSTButton.ImageClickedFcn = createCallbackFcn(app, @Config_FolderButtonPushed, true);
             app.DataHubPOSTButton.Tag = 'DataHub_POST';
             app.DataHubPOSTButton.Enable = 'off';
@@ -1006,7 +1011,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.DataHubPOSTButton.ImageSource = 'OpenFile_36x36.png';
 
             % Create userPathLabel
-            app.userPathLabel = uilabel(app.Tab4Grid);
+            app.userPathLabel = uilabel(app.SubGrid4);
             app.userPathLabel.VerticalAlignment = 'bottom';
             app.userPathLabel.FontSize = 10;
             app.userPathLabel.Layout.Row = 3;
@@ -1014,14 +1019,14 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.userPathLabel.Text = 'PASTA DO USUÁRIO:';
 
             % Create userPath
-            app.userPath = uieditfield(app.Tab4Grid, 'text');
+            app.userPath = uieditfield(app.SubGrid4, 'text');
             app.userPath.Editable = 'off';
             app.userPath.FontSize = 11;
             app.userPath.Layout.Row = 4;
             app.userPath.Layout.Column = 1;
 
             % Create userPathButton
-            app.userPathButton = uiimage(app.Tab4Grid);
+            app.userPathButton = uiimage(app.SubGrid4);
             app.userPathButton.ImageClickedFcn = createCallbackFcn(app, @Config_FolderButtonPushed, true);
             app.userPathButton.Tag = 'userPath';
             app.userPathButton.Enable = 'off';
