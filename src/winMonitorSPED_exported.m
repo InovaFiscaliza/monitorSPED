@@ -38,7 +38,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         tool_SelectFilesToRead   matlab.ui.control.Image
         Tab2_Playback            matlab.ui.container.Tab
         Tab3_Config              matlab.ui.container.Tab
-        file_ContextMenu_Tree    matlab.ui.container.ContextMenu
+        ContextMenu              matlab.ui.container.ContextMenu
         contextmenu_merge        matlab.ui.container.Menu
         contextmenu_del          matlab.ui.container.Menu
     end
@@ -718,13 +718,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 textCompanyNode = util.HtmlTextGenerator.generateTextId(app.ecdObj(idIndexes(1)), 'company-oriented');
                 treeCompanyNode = uitreenode(parentNode, ...
                     'Text', textCompanyNode, ...
-                    'NodeData', idIndexes, 'ContextMenu', app.file_ContextMenu_Tree);
+                    'NodeData', idIndexes, 'ContextMenu', app.ContextMenu);
     
                 for idx = idIndexes
                     textPeriodNode = util.HtmlTextGenerator.generateTextId(app.ecdObj(idx), 'period-oriented', true);
                     treePeriodNode = uitreenode(treeCompanyNode, ...
                         'Text', textPeriodNode, ...
-                        'NodeData', idx, 'ContextMenu', app.file_ContextMenu_Tree);
+                        'NodeData', idx, 'ContextMenu', app.ContextMenu);
     
                     if ismember(idx, selectedNodeData)
                         selectedNode = [selectedNode, treePeriodNode];
@@ -1720,18 +1720,18 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.AppInfo.Layout.Column = 13;
             app.AppInfo.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Dots_32White.png');
 
-            % Create file_ContextMenu_Tree
-            app.file_ContextMenu_Tree = uicontextmenu(app.UIFigure);
-            app.file_ContextMenu_Tree.Tag = 'winMonitorSPED';
+            % Create ContextMenu
+            app.ContextMenu = uicontextmenu(app.UIFigure);
+            app.ContextMenu.Tag = 'winMonitorSPED';
 
             % Create contextmenu_merge
-            app.contextmenu_merge = uimenu(app.file_ContextMenu_Tree);
+            app.contextmenu_merge = uimenu(app.ContextMenu);
             app.contextmenu_merge.MenuSelectedFcn = createCallbackFcn(app, @toolbar_MergeFilesImageClicked, true);
             app.contextmenu_merge.Enable = 'off';
             app.contextmenu_merge.Text = '🔀 Mesclar';
 
             % Create contextmenu_del
-            app.contextmenu_del = uimenu(app.file_ContextMenu_Tree);
+            app.contextmenu_del = uimenu(app.ContextMenu);
             app.contextmenu_del.MenuSelectedFcn = createCallbackFcn(app, @contextMenu_delTreeNodeSelected, true);
             app.contextmenu_del.Enable = 'off';
             app.contextmenu_del.Text = '❌ Excluir';
