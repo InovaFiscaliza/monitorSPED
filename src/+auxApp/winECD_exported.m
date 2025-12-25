@@ -117,7 +117,7 @@ classdef winECD_exported < matlab.apps.AppBase
                                 auxAppTag = event.HTMLEventData.auxAppTag;
                                 if ~isempty(auxAppTag)
                                     hAuxApp   = getAppHandle(app.mainApp.tabGroupController, auxAppTag);
-                                    objHandle = hAuxApp.(componentName);
+                                    objHandle = hAuxApp.(event.HTMLEventData.componentName);
                                 else
                                     objHandle = eval(['app.' event.HTMLEventData.componentName]);
                                 end
