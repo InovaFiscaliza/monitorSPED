@@ -8,7 +8,7 @@
         "Author": "Eric Magalhães Delgado",
         "Version": "1.00",
         "Release": "23/09/2025",
-        "UserData": ""
+        "UserData": []
     },
     {
         "Name": "Análise contábil (Relatório de Atividades)",
@@ -19,7 +19,7 @@
         "Author": "Eric Magalhães Delgado",
         "Version": "1.00",
         "Release": "23/09/2025",
-        "UserData": ""
+        "UserData": []
     },
     {
         "Name": "Análise contábil (Relatório de Fiscalização)",
@@ -30,6 +30,6 @@
         "Author": "Eric Magalhães Delgado",
         "Version": "1.00",
         "Release": "14/11/2025",
-        "UserData": ""
+        "UserData": []
     }
 ]

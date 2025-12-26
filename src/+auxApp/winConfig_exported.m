@@ -219,14 +219,10 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.CheckStatus.Value = app.mainApp.General.File.checkStatus;
 
             % ECD
-            app.PIS.Value         = 100 * app.mainApp.General.ECD.taxConfig.PIS;
-            app.Cofins.Value      = 100 * app.mainApp.General.ECD.taxConfig.COFINS;
+            app.PIS.Value = 100 * app.mainApp.General.ECD.taxConfig.PIS;
+            app.Cofins.Value = 100 * app.mainApp.General.ECD.taxConfig.COFINS;
 
-            if checkEdition(app, 'ANALYSIS')
-                app.configAnalysisRefresh.Visible = 1;
-            else
-                app.configAnalysisRefresh.Visible = 0;
-            end
+            app.configAnalysisRefresh.Visible = checkEdition(app, 'ANALYSIS');
         end
 
         %-----------------------------------------------------------------%
@@ -239,11 +235,7 @@ classdef winConfig_exported < matlab.apps.AppBase
                 app.prjFileCompressionMode.Value = app.mainApp.General.Report.outputCompressionMode;
             end
 
-            if checkEdition(app, 'REPORT')
-                app.eFiscalizaRefresh.Visible = 1;
-            else
-                app.eFiscalizaRefresh.Visible = 0;
-            end
+            app.eFiscalizaRefresh.Visible = checkEdition(app, 'REPORT');
         end
 
         %-----------------------------------------------------------------%
