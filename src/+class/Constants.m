@@ -13,15 +13,6 @@ classdef (Abstract) Constants
     
     methods (Static = true)
         %-----------------------------------------------------------------%
-        function fileName = DefaultFileName(userPath, Prefix, Issue)
-            fileName = fullfile(userPath, sprintf('%s_%s', Prefix, datestr(now,'yyyy.mm.dd_THH.MM.SS')));
-
-            if Issue > 0
-                fileName = sprintf('%s_%d', fileName, Issue);
-            end
-        end
-
-        %-----------------------------------------------------------------%
         function d = english2portuguese()
             names  = ["AccountHistoric", ...
                       "FileName", ...
