@@ -28,9 +28,9 @@ classdef winECD_exported < matlab.apps.AppBase
         UITable1_CountText      matlab.ui.control.Label
         UITable1_CountIcon      matlab.ui.control.Image
         UITable1                matlab.ui.control.Table
-        TabGroup                matlab.ui.container.TabGroup
-        Tab1                    matlab.ui.container.Tab
-        Tab1Grid                matlab.ui.container.GridLayout
+        SubTabGroup             matlab.ui.container.TabGroup
+        SubTab1                 matlab.ui.container.Tab
+        SubGrid1                matlab.ui.container.GridLayout
         FinanceFacts            matlab.ui.control.Label
         Tab1Separator3          matlab.ui.control.Image
         LogButton               matlab.ui.control.Button
@@ -44,8 +44,8 @@ classdef winECD_exported < matlab.apps.AppBase
         TimePeriodListLabel     matlab.ui.control.Label
         CompanyNameList         matlab.ui.control.DropDown
         CompanyNameListLabel    matlab.ui.control.Label
-        Tab2                    matlab.ui.container.Tab
-        Tab2Grid                matlab.ui.container.GridLayout
+        SubTab2                 matlab.ui.container.Tab
+        SubGrid2                matlab.ui.container.GridLayout
         StyleRefresh            matlab.ui.control.Image
         StyleDelete             matlab.ui.control.Image
         FontIconLabel           matlab.ui.control.Label
@@ -212,7 +212,7 @@ classdef winECD_exported < matlab.apps.AppBase
         function applyJSCustomizations(app, tabIndex)
             persistent customizationStatus
             if isempty(customizationStatus)
-                customizationStatus = [false, false, false, false];
+                customizationStatus = zeros(1, numel(app.SubTabGroup.Children), 'logical');
             end
 
             if customizationStatus(tabIndex)
@@ -225,7 +225,7 @@ classdef winECD_exported < matlab.apps.AppBase
                     ui.CustomizationBase.getElementsDataTag({app.UITable1, app.UITable2});
 
                 case 2
-                    app.Tab2.UserData.rendered = true;
+                    app.SubTab2.UserData.rendered = true;
                     applyInitialLayout(app, 'keepCurrent')
                     app.FontFamily.Items = [{''}; listfonts];
             end
@@ -244,8 +244,8 @@ classdef winECD_exported < matlab.apps.AppBase
             end
 
             % TabGroup:
-          % app.Tab1.UserData.rendered = true;
-            app.Tab2.UserData.rendered = false;
+          % app.SubTab1.UserData.rendered = true;
+            app.SubTab2.UserData.rendered = false;
 
             % Tabelas:
             app.UITable1.RowName = 'numbered';
@@ -269,7 +269,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 app.LogButton
             };
 
-            if app.Tab2.UserData.rendered
+            if app.SubTab2.UserData.rendered
                 renderedElements = [renderedElements; {
                     app.OpenFilterModuleButton;
                     app.RowHeight;
@@ -473,7 +473,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Atualiza dropdowns apenas se a Tab2 já estiver sido renderizada, 
             % evitando erros no console de tentativa de atualização de um 
             % componente incompleto.
-            if app.Tab2.UserData.rendered
+            if app.SubTab2.UserData.rendered
                 selection2 = app.SheetView_Second.Value;
                 if isempty(selection2) || ~ismember(selection2, sheetsSorted) || ~isfield(selectedECD.Table, ['x' selection2])
                     selection2 = sheetsSorted{1};
@@ -697,7 +697,7 @@ classdef winECD_exported < matlab.apps.AppBase
             hTable.UserData.Selection = [];
             hTable.UserData.SelectionType = 'none';
 
-            if hTable == app.UITable2 && app.Tab2.UserData.rendered
+            if hTable == app.UITable2 && app.SubTab2.UserData.rendered
                 hTableAccountInfo.Text = '';
                 hTableCountText.Text   = ' CONTAGEM: 0';
             end
@@ -998,10 +998,10 @@ classdef winECD_exported < matlab.apps.AppBase
 
         end
 
-        % Selection change function: TabGroup
-        function TabGroupSelectionChanged(app, event)
+        % Selection change function: SubTabGroup
+        function SubTabGroupSelectionChanged(app, event)
             
-            [~, tabIndex] = ismember(app.TabGroup.SelectedTab, app.TabGroup.Children);
+            [~, tabIndex] = ismember(app.SubTabGroup.SelectedTab, app.SubTabGroup.Children);
             applyJSCustomizations(app, tabIndex)
 
         end
@@ -1037,7 +1037,7 @@ classdef winECD_exported < matlab.apps.AppBase
             
             switch event.Source
                 case app.SheetList
-                    if app.Tab2.UserData.rendered
+                    if app.SubTab2.UserData.rendered
                         app.SheetView_First.Value = app.SheetList.Value;
                     end
                 case app.SheetView_First
@@ -1618,28 +1618,28 @@ classdef winECD_exported < matlab.apps.AppBase
             app.GridLayout.Padding = [0 0 0 0];
             app.GridLayout.BackgroundColor = [1 1 1];
 
-            % Create TabGroup
-            app.TabGroup = uitabgroup(app.GridLayout);
-            app.TabGroup.AutoResizeChildren = 'off';
-            app.TabGroup.SelectionChangedFcn = createCallbackFcn(app, @TabGroupSelectionChanged, true);
-            app.TabGroup.Layout.Row = [3 4];
-            app.TabGroup.Layout.Column = [2 7];
+            % Create SubTabGroup
+            app.SubTabGroup = uitabgroup(app.GridLayout);
+            app.SubTabGroup.AutoResizeChildren = 'off';
+            app.SubTabGroup.SelectionChangedFcn = createCallbackFcn(app, @SubTabGroupSelectionChanged, true);
+            app.SubTabGroup.Layout.Row = [3 4];
+            app.SubTabGroup.Layout.Column = [2 7];
 
-            % Create Tab1
-            app.Tab1 = uitab(app.TabGroup);
-            app.Tab1.AutoResizeChildren = 'off';
-            app.Tab1.Title = 'ASPECTOS GERAIS';
-            app.Tab1.BackgroundColor = 'none';
+            % Create SubTab1
+            app.SubTab1 = uitab(app.SubTabGroup);
+            app.SubTab1.AutoResizeChildren = 'off';
+            app.SubTab1.Title = 'ASPECTOS GERAIS';
+            app.SubTab1.BackgroundColor = 'none';
 
-            % Create Tab1Grid
-            app.Tab1Grid = uigridlayout(app.Tab1);
-            app.Tab1Grid.ColumnWidth = {90, 220, 60, 220, 3, 44, 3, 44, 44, 3, '1x'};
-            app.Tab1Grid.RowHeight = {22, 22};
-            app.Tab1Grid.RowSpacing = 5;
-            app.Tab1Grid.BackgroundColor = [0.9804 0.9804 0.9804];
+            % Create SubGrid1
+            app.SubGrid1 = uigridlayout(app.SubTab1);
+            app.SubGrid1.ColumnWidth = {90, 220, 60, 220, 3, 44, 3, 44, 44, 3, '1x'};
+            app.SubGrid1.RowHeight = {22, 22};
+            app.SubGrid1.RowSpacing = 5;
+            app.SubGrid1.BackgroundColor = [0.9804 0.9804 0.9804];
 
             % Create CompanyNameListLabel
-            app.CompanyNameListLabel = uilabel(app.Tab1Grid);
+            app.CompanyNameListLabel = uilabel(app.SubGrid1);
             app.CompanyNameListLabel.FontSize = 10;
             app.CompanyNameListLabel.FontColor = [0.149 0.149 0.149];
             app.CompanyNameListLabel.Layout.Row = 1;
@@ -1647,7 +1647,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.CompanyNameListLabel.Text = 'EMPRESA:';
 
             % Create CompanyNameList
-            app.CompanyNameList = uidropdown(app.Tab1Grid);
+            app.CompanyNameList = uidropdown(app.SubGrid1);
             app.CompanyNameList.Items = {};
             app.CompanyNameList.ValueChangedFcn = createCallbackFcn(app, @CompanyNameListValueChanged, true);
             app.CompanyNameList.FontSize = 11;
@@ -1658,7 +1658,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.CompanyNameList.Value = {};
 
             % Create TimePeriodListLabel
-            app.TimePeriodListLabel = uilabel(app.Tab1Grid);
+            app.TimePeriodListLabel = uilabel(app.SubGrid1);
             app.TimePeriodListLabel.FontSize = 10;
             app.TimePeriodListLabel.FontColor = [0.149 0.149 0.149];
             app.TimePeriodListLabel.Layout.Row = 2;
@@ -1666,7 +1666,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.TimePeriodListLabel.Text = 'PERÍODO FISCAL:';
 
             % Create TimePeriodList
-            app.TimePeriodList = uidropdown(app.Tab1Grid);
+            app.TimePeriodList = uidropdown(app.SubGrid1);
             app.TimePeriodList.Items = {};
             app.TimePeriodList.ValueChangedFcn = createCallbackFcn(app, @TimePeriodListValueChanged, true);
             app.TimePeriodList.FontSize = 11;
@@ -1677,7 +1677,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.TimePeriodList.Value = {};
 
             % Create SheetListLabel
-            app.SheetListLabel = uilabel(app.Tab1Grid);
+            app.SheetListLabel = uilabel(app.SubGrid1);
             app.SheetListLabel.HorizontalAlignment = 'right';
             app.SheetListLabel.FontSize = 10;
             app.SheetListLabel.FontColor = [0.149 0.149 0.149];
@@ -1686,7 +1686,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetListLabel.Text = 'REGISTRO:';
 
             % Create SheetList
-            app.SheetList = uidropdown(app.Tab1Grid);
+            app.SheetList = uidropdown(app.SubGrid1);
             app.SheetList.Items = {};
             app.SheetList.ValueChangedFcn = createCallbackFcn(app, @SheetViewFirstValueChanged, true);
             app.SheetList.FontSize = 11;
@@ -1697,14 +1697,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetList.Value = {};
 
             % Create Tab1Separator1
-            app.Tab1Separator1 = uiimage(app.Tab1Grid);
+            app.Tab1Separator1 = uiimage(app.SubGrid1);
             app.Tab1Separator1.Enable = 'off';
             app.Tab1Separator1.Layout.Row = [1 2];
             app.Tab1Separator1.Layout.Column = 5;
             app.Tab1Separator1.ImageSource = 'LineV.svg';
 
             % Create ExportButton
-            app.ExportButton = uibutton(app.Tab1Grid, 'push');
+            app.ExportButton = uibutton(app.SubGrid1, 'push');
             app.ExportButton.ButtonPushedFcn = createCallbackFcn(app, @Toolbar_ExportExportExcelClicked, true);
             app.ExportButton.Icon = 'Export_24.png';
             app.ExportButton.IconAlignment = 'top';
@@ -1716,14 +1716,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ExportButton.Text = 'Exporta';
 
             % Create Tab1Separator2
-            app.Tab1Separator2 = uiimage(app.Tab1Grid);
+            app.Tab1Separator2 = uiimage(app.SubGrid1);
             app.Tab1Separator2.Enable = 'off';
             app.Tab1Separator2.Layout.Row = [1 2];
             app.Tab1Separator2.Layout.Column = 7;
             app.Tab1Separator2.ImageSource = 'LineV.svg';
 
             % Create MemoryUsageButton
-            app.MemoryUsageButton = uibutton(app.Tab1Grid, 'push');
+            app.MemoryUsageButton = uibutton(app.SubGrid1, 'push');
             app.MemoryUsageButton.ButtonPushedFcn = createCallbackFcn(app, @MemoryUsageButtonPushed, true);
             app.MemoryUsageButton.Icon = 'pool_60_percent.png';
             app.MemoryUsageButton.IconAlignment = 'top';
@@ -1735,7 +1735,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.MemoryUsageButton.Text = 'Em uso';
 
             % Create LogButton
-            app.LogButton = uibutton(app.Tab1Grid, 'push');
+            app.LogButton = uibutton(app.SubGrid1, 'push');
             app.LogButton.ButtonPushedFcn = createCallbackFcn(app, @Toolbar_LOGInfoImageClicked, true);
             app.LogButton.Icon = 'LOG_24.png';
             app.LogButton.IconAlignment = 'top';
@@ -1746,35 +1746,35 @@ classdef winECD_exported < matlab.apps.AppBase
             app.LogButton.Text = 'Análise';
 
             % Create Tab1Separator3
-            app.Tab1Separator3 = uiimage(app.Tab1Grid);
+            app.Tab1Separator3 = uiimage(app.SubGrid1);
             app.Tab1Separator3.Enable = 'off';
             app.Tab1Separator3.Layout.Row = [1 2];
             app.Tab1Separator3.Layout.Column = 10;
             app.Tab1Separator3.ImageSource = 'LineV.svg';
 
             % Create FinanceFacts
-            app.FinanceFacts = uilabel(app.Tab1Grid);
+            app.FinanceFacts = uilabel(app.SubGrid1);
             app.FinanceFacts.FontSize = 11;
             app.FinanceFacts.Layout.Row = [1 2];
             app.FinanceFacts.Layout.Column = 11;
             app.FinanceFacts.Interpreter = 'html';
             app.FinanceFacts.Text = '⚠️ Pendente leitura de informação contábil';
 
-            % Create Tab2
-            app.Tab2 = uitab(app.TabGroup);
-            app.Tab2.AutoResizeChildren = 'off';
-            app.Tab2.Title = 'LAYOUT';
-            app.Tab2.BackgroundColor = 'none';
+            % Create SubTab2
+            app.SubTab2 = uitab(app.SubTabGroup);
+            app.SubTab2.AutoResizeChildren = 'off';
+            app.SubTab2.Title = 'LAYOUT';
+            app.SubTab2.BackgroundColor = 'none';
 
-            % Create Tab2Grid
-            app.Tab2Grid = uigridlayout(app.Tab2);
-            app.Tab2Grid.ColumnWidth = {44, 220, 40, 10, 3, 44, 3, 90, 90, 3, 22, 22, 22, 22, 22, 44, 44, 3, 90, '1x', 18, 18};
-            app.Tab2Grid.RowHeight = {22, 22};
-            app.Tab2Grid.RowSpacing = 5;
-            app.Tab2Grid.BackgroundColor = [0.9804 0.9804 0.9804];
+            % Create SubGrid2
+            app.SubGrid2 = uigridlayout(app.SubTab2);
+            app.SubGrid2.ColumnWidth = {44, 220, 40, 10, 3, 44, 3, 90, 90, 3, 22, 22, 22, 22, 22, 44, 44, 3, 90, '1x', 18, 18};
+            app.SubGrid2.RowHeight = {22, 22};
+            app.SubGrid2.RowSpacing = 5;
+            app.SubGrid2.BackgroundColor = [0.9804 0.9804 0.9804];
 
             % Create SheetViewStatus
-            app.SheetViewStatus = uibutton(app.Tab2Grid, 'state');
+            app.SheetViewStatus = uibutton(app.SubGrid2, 'state');
             app.SheetViewStatus.ValueChangedFcn = createCallbackFcn(app, @SheetViewStatusValueChanged, true);
             app.SheetViewStatus.Icon = 'split_top_bottom_24.png';
             app.SheetViewStatus.IconAlignment = 'top';
@@ -1785,7 +1785,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetViewStatus.Layout.Column = 1;
 
             % Create SheetView_First
-            app.SheetView_First = uidropdown(app.Tab2Grid);
+            app.SheetView_First = uidropdown(app.SubGrid2);
             app.SheetView_First.Items = {};
             app.SheetView_First.ValueChangedFcn = createCallbackFcn(app, @SheetViewFirstValueChanged, true);
             app.SheetView_First.FontSize = 11;
@@ -1795,7 +1795,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetView_First.Value = {};
 
             % Create SheetHeight_First
-            app.SheetHeight_First = uispinner(app.Tab2Grid);
+            app.SheetHeight_First = uispinner(app.SubGrid2);
             app.SheetHeight_First.Limits = [1 5];
             app.SheetHeight_First.RoundFractionalValues = 'on';
             app.SheetHeight_First.ValueDisplayFormat = '%d';
@@ -1807,7 +1807,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetHeight_First.Value = 1;
 
             % Create SheetView_Second
-            app.SheetView_Second = uidropdown(app.Tab2Grid);
+            app.SheetView_Second = uidropdown(app.SubGrid2);
             app.SheetView_Second.Items = {};
             app.SheetView_Second.ValueChangedFcn = createCallbackFcn(app, @SheetViewSecondValueChanged, true);
             app.SheetView_Second.Enable = 'off';
@@ -1818,7 +1818,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetView_Second.Value = {};
 
             % Create SheetHeight_Second
-            app.SheetHeight_Second = uispinner(app.Tab2Grid);
+            app.SheetHeight_Second = uispinner(app.SubGrid2);
             app.SheetHeight_Second.Limits = [0 5];
             app.SheetHeight_Second.RoundFractionalValues = 'on';
             app.SheetHeight_Second.ValueDisplayFormat = '%d';
@@ -1829,21 +1829,21 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetHeight_Second.Layout.Column = 3;
 
             % Create SheetOnFocus
-            app.SheetOnFocus = uilamp(app.Tab2Grid);
+            app.SheetOnFocus = uilamp(app.SubGrid2);
             app.SheetOnFocus.Tooltip = {'Tabela em evidência'};
             app.SheetOnFocus.Layout.Row = 1;
             app.SheetOnFocus.Layout.Column = 4;
             app.SheetOnFocus.Color = [0.7059 0.8706 1];
 
             % Create Tab2Separator1
-            app.Tab2Separator1 = uiimage(app.Tab2Grid);
+            app.Tab2Separator1 = uiimage(app.SubGrid2);
             app.Tab2Separator1.Enable = 'off';
             app.Tab2Separator1.Layout.Row = [1 2];
             app.Tab2Separator1.Layout.Column = 5;
             app.Tab2Separator1.ImageSource = 'LineV.svg';
 
             % Create OpenFilterModuleButton
-            app.OpenFilterModuleButton = uibutton(app.Tab2Grid, 'push');
+            app.OpenFilterModuleButton = uibutton(app.SubGrid2, 'push');
             app.OpenFilterModuleButton.ButtonPushedFcn = createCallbackFcn(app, @OpenFilterModuleButtonPushed, true);
             app.OpenFilterModuleButton.Icon = 'Filter_24.png';
             app.OpenFilterModuleButton.IconAlignment = 'top';
@@ -1854,14 +1854,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.OpenFilterModuleButton.Text = 'Filtro';
 
             % Create Tab2Separator2
-            app.Tab2Separator2 = uiimage(app.Tab2Grid);
+            app.Tab2Separator2 = uiimage(app.SubGrid2);
             app.Tab2Separator2.Enable = 'off';
             app.Tab2Separator2.Layout.Row = [1 2];
             app.Tab2Separator2.Layout.Column = 7;
             app.Tab2Separator2.ImageSource = 'LineV.svg';
 
             % Create RowHeight
-            app.RowHeight = uispinner(app.Tab2Grid);
+            app.RowHeight = uispinner(app.SubGrid2);
             app.RowHeight.Step = 5;
             app.RowHeight.Limits = [0 50];
             app.RowHeight.RoundFractionalValues = 'on';
@@ -1873,7 +1873,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.RowHeight.Layout.Column = 8;
 
             % Create RowHeightLabel
-            app.RowHeightLabel = uilabel(app.Tab2Grid);
+            app.RowHeightLabel = uilabel(app.SubGrid2);
             app.RowHeightLabel.HorizontalAlignment = 'center';
             app.RowHeightLabel.WordWrap = 'on';
             app.RowHeightLabel.FontSize = 10;
@@ -1882,7 +1882,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.RowHeightLabel.Text = {'ALTURA LINHA'; '(offset)'};
 
             % Create ColumnWidth
-            app.ColumnWidth = uidropdown(app.Tab2Grid);
+            app.ColumnWidth = uidropdown(app.SubGrid2);
             app.ColumnWidth.Items = {'', 'auto', 'fit', '1x'};
             app.ColumnWidth.ValueChangedFcn = createCallbackFcn(app, @TableColumnWidthChanged, true);
             app.ColumnWidth.Enable = 'off';
@@ -1893,7 +1893,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ColumnWidth.Value = '';
 
             % Create ColumnWidthLabel
-            app.ColumnWidthLabel = uilabel(app.Tab2Grid);
+            app.ColumnWidthLabel = uilabel(app.SubGrid2);
             app.ColumnWidthLabel.HorizontalAlignment = 'center';
             app.ColumnWidthLabel.WordWrap = 'on';
             app.ColumnWidthLabel.FontSize = 10;
@@ -1902,14 +1902,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ColumnWidthLabel.Text = {'LARGURA'; 'COLUNA'};
 
             % Create Tab2Separator3
-            app.Tab2Separator3 = uiimage(app.Tab2Grid);
+            app.Tab2Separator3 = uiimage(app.SubGrid2);
             app.Tab2Separator3.Enable = 'off';
             app.Tab2Separator3.Layout.Row = [1 2];
             app.Tab2Separator3.Layout.Column = 10;
             app.Tab2Separator3.ImageSource = 'LineV.svg';
 
             % Create FontFamily
-            app.FontFamily = uidropdown(app.Tab2Grid);
+            app.FontFamily = uidropdown(app.SubGrid2);
             app.FontFamily.Items = {};
             app.FontFamily.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontFamily.Enable = 'off';
@@ -1921,7 +1921,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontFamily.Value = {};
 
             % Create FontWeight
-            app.FontWeight = uibutton(app.Tab2Grid, 'push');
+            app.FontWeight = uibutton(app.SubGrid2, 'push');
             app.FontWeight.ButtonPushedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontWeight.BackgroundColor = [0.9804 0.9804 0.9804];
             app.FontWeight.FontName = 'Century';
@@ -1932,7 +1932,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontWeight.Text = 'B';
 
             % Create FontStyle
-            app.FontStyle = uibutton(app.Tab2Grid, 'push');
+            app.FontStyle = uibutton(app.SubGrid2, 'push');
             app.FontStyle.ButtonPushedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontStyle.BackgroundColor = [0.9804 0.9804 0.9804];
             app.FontStyle.FontName = 'Century';
@@ -1943,7 +1943,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontStyle.Text = 'I ';
 
             % Create FontAlign1
-            app.FontAlign1 = uiimage(app.Tab2Grid);
+            app.FontAlign1 = uiimage(app.SubGrid2);
             app.FontAlign1.ScaleMethod = 'none';
             app.FontAlign1.ImageClickedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontAlign1.Enable = 'off';
@@ -1953,7 +1953,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign1.ImageSource = 'AlignedLeft_16-7f46662cd6fd7221119660e14bdcea56.png';
 
             % Create FontAlign2
-            app.FontAlign2 = uiimage(app.Tab2Grid);
+            app.FontAlign2 = uiimage(app.SubGrid2);
             app.FontAlign2.ScaleMethod = 'none';
             app.FontAlign2.ImageClickedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontAlign2.Enable = 'off';
@@ -1963,7 +1963,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign2.ImageSource = 'AlignedCenter_16-b91485db227234029c43b7823c09ebff.png';
 
             % Create FontAlign3
-            app.FontAlign3 = uiimage(app.Tab2Grid);
+            app.FontAlign3 = uiimage(app.SubGrid2);
             app.FontAlign3.ScaleMethod = 'none';
             app.FontAlign3.ImageClickedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontAlign3.Enable = 'off';
@@ -1973,7 +1973,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign3.ImageSource = 'AlignedRight_16-7827788943408c9bac98181b7ad0efb5.png';
 
             % Create FontBackground
-            app.FontBackground = uicolorpicker(app.Tab2Grid);
+            app.FontBackground = uicolorpicker(app.SubGrid2);
             app.FontBackground.Value = [1 0 0.0118];
             app.FontBackground.Icon = 'fill';
             app.FontBackground.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
@@ -1983,7 +1983,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontBackground.BackgroundColor = [1 1 1];
 
             % Create FontColor
-            app.FontColor = uicolorpicker(app.Tab2Grid);
+            app.FontColor = uicolorpicker(app.SubGrid2);
             app.FontColor.Value = [0 0 0.0118];
             app.FontColor.Icon = 'text';
             app.FontColor.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
@@ -1993,14 +1993,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontColor.BackgroundColor = [1 1 1];
 
             % Create Tab2Separator4
-            app.Tab2Separator4 = uiimage(app.Tab2Grid);
+            app.Tab2Separator4 = uiimage(app.SubGrid2);
             app.Tab2Separator4.Enable = 'off';
             app.Tab2Separator4.Layout.Row = [1 2];
             app.Tab2Separator4.Layout.Column = 18;
             app.Tab2Separator4.ImageSource = 'LineV.svg';
 
             % Create FontIcon
-            app.FontIcon = uidropdown(app.Tab2Grid);
+            app.FontIcon = uidropdown(app.SubGrid2);
             app.FontIcon.Items = {'', 'question', 'info', 'success', 'warning', 'error', 'none'};
             app.FontIcon.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontIcon.Enable = 'off';
@@ -2011,7 +2011,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontIcon.Value = '';
 
             % Create FontIconLabel
-            app.FontIconLabel = uilabel(app.Tab2Grid);
+            app.FontIconLabel = uilabel(app.SubGrid2);
             app.FontIconLabel.HorizontalAlignment = 'center';
             app.FontIconLabel.WordWrap = 'on';
             app.FontIconLabel.FontSize = 10;
@@ -2020,7 +2020,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontIconLabel.Text = 'ÍCONE';
 
             % Create StyleDelete
-            app.StyleDelete = uiimage(app.Tab2Grid);
+            app.StyleDelete = uiimage(app.SubGrid2);
             app.StyleDelete.ScaleMethod = 'none';
             app.StyleDelete.ImageClickedFcn = createCallbackFcn(app, @TableStyleDeleteOrRefresh, true);
             app.StyleDelete.Enable = 'off';
@@ -2030,7 +2030,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.StyleDelete.ImageSource = 'clear_all_outputs_16-3d3c482971dfdb6852db717989f585fa.png';
 
             % Create StyleRefresh
-            app.StyleRefresh = uiimage(app.Tab2Grid);
+            app.StyleRefresh = uiimage(app.SubGrid2);
             app.StyleRefresh.ScaleMethod = 'none';
             app.StyleRefresh.ImageClickedFcn = createCallbackFcn(app, @TableStyleDeleteOrRefresh, true);
             app.StyleRefresh.Enable = 'off';
