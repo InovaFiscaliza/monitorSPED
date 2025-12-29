@@ -215,52 +215,19 @@ classdef winECD_exported < matlab.apps.AppBase
                 customizationStatus = [false, false, false, false];
             end
 
+            if customizationStatus(tabIndex)
+                return
+            end
+
+            customizationStatus(tabIndex) = true;
             switch tabIndex
-                case 0 % STARTUP
-                    if app.isDocked
-                        app.progressDialog = app.mainApp.progressDialog;
-                    else
-                        sendEventToHTMLSource(app.jsBackDoor, 'startup', app.mainApp.executionMode);
-                        app.progressDialog = ui.ProgressDialog(app.jsBackDoor);                        
-                    end
-                    customizationStatus = [false, false, false, false];
+                case 1
+                    ui.CustomizationBase.getElementsDataTag({app.UITable1, app.UITable2});
 
-                otherwise
-                    if customizationStatus(tabIndex)
-                        return
-                    end
-
-                    customizationStatus(tabIndex) = true;
-                    switch tabIndex
-                        case 1
-                            appName = class(app);
-
-                            % Grid botões "dock":
-                            if app.isDocked
-                                elToModify = {app.DockModule};
-                                elDataTag  = ui.CustomizationBase.getElementsDataTag(elToModify);
-                                if ~isempty(elDataTag)
-                                    sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
-                                        struct('appName', appName, 'dataTag', elDataTag{1}, 'style', struct('transition', 'opacity 2s ease', 'opacity', '0.5')) ...
-                                    });
-                                end
-                            end
-
-                            % Outros elementos:
-                            hTableList = {app.UITable1, app.UITable2};
-                            ui.CustomizationBase.getElementsDataTag(hTableList);
-
-                        case 2
-                            app.Tab2.UserData.rendered = true;
-                            applyInitialLayout(app, 'keepCurrent')
-                            app.FontFamily.Items = [{''}; listfonts];
-
-                        otherwise
-                            % Customização de componentes constantes nas outras abas, 
-                            % os quais são renderizados completamente apenas após a 
-                            % abertura da aba.
-                            % ...
-                    end
+                case 2
+                    app.Tab2.UserData.rendered = true;
+                    applyInitialLayout(app, 'keepCurrent')
+                    app.FontFamily.Items = [{''}; listfonts];
             end
         end
 

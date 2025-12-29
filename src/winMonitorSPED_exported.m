@@ -20,9 +20,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         file_Grid                matlab.ui.container.GridLayout
         file_Tree                matlab.ui.container.Tree
         file_Metadata            matlab.ui.control.Label
-        TabGroup2                matlab.ui.container.TabGroup
-        ARQUIVOSTab              matlab.ui.container.Tab
-        GridLayout2              matlab.ui.container.GridLayout
+        SubTabGroup              matlab.ui.container.TabGroup
+        SubTab1                  matlab.ui.container.Tab
+        SubGrid1                 matlab.ui.container.GridLayout
         Image                    matlab.ui.control.Image
         file_FileSortMethodIcon  matlab.ui.control.Image
         file_FileSortMethod      matlab.ui.control.DropDown
@@ -450,43 +450,35 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         function applyJSCustomizations(app, tabIndex)
             persistent customizationStatus
             if isempty(customizationStatus)
-                customizationStatus = [false, false, false];
+                customizationStatus = false;
             end
 
+            if customizationStatus(tabIndex)
+                return
+            end
+
+            customizationStatus(tabIndex) = true;
             switch tabIndex
-                case 0
-                    sendEventToHTMLSource(app.jsBackDoor, 'startup', app.executionMode);
-                    customizationStatus = [false, false, false];
+                case 1
+                    elToModify = {app.file_Tree, app.file_Metadata};
+                    ui.CustomizationBase.getElementsDataTag(elToModify);
+
+                    appName = class(app);
+                    try
+                        sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', {struct('appName', appName, 'dataTag', elToModify{1}.UserData.id, 'listener', struct('componentName', 'mainApp.file_Tree', 'keyEvents', {{'Delete', 'Backspace'}}))});
+                    catch ME
+                        ui.Dialog(app.UIFigure, 'error', getReport(ME));
+                    end
+
+                    try
+                        ui.TextView.startup(app.jsBackDoor, elToModify{2}, appName);
+                    catch ME
+                        ui.Dialog(app.UIFigure, 'error', getReport(ME));
+                    end
 
                 otherwise
-                    if customizationStatus(tabIndex)
-                        return
-                    end
-
-                    customizationStatus(tabIndex) = true;
-                    switch tabIndex
-                        case 1 % FILE
-                            elToModify = {app.file_Tree, app.file_Metadata};
-                            ui.CustomizationBase.getElementsDataTag(elToModify);
-
-                            appName = class(app);
-                            try
-                                sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', {struct('appName', appName, 'dataTag', elToModify{1}.UserData.id, 'listener', struct('componentName', 'mainApp.file_Tree', 'keyEvents', {{'Delete', 'Backspace'}}))});
-                            catch ME
-                                ui.Dialog(app.UIFigure, 'error', getReport(ME));
-                            end
-
-                            try
-                                ui.TextView.startup(app.jsBackDoor, elToModify{2}, appName);
-                            catch ME
-                                ui.Dialog(app.UIFigure, 'error', getReport(ME));
-                            end
-
-                        otherwise
-                            % Customização dos módulos que são renderizados
-                            % nesta figura são controladas pelos próprios
-                            % módulos.
-                    end
+                    % Previsto pensando em evolução, caso adicionado uitab
+                    % ao app.SubTabGrid...
             end
         end
 
@@ -1526,29 +1518,29 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_UploadFinalFile.Layout.Column = 9;
             app.tool_UploadFinalFile.ImageSource = 'Up_24.png';
 
-            % Create TabGroup2
-            app.TabGroup2 = uitabgroup(app.file_Grid);
-            app.TabGroup2.AutoResizeChildren = 'off';
-            app.TabGroup2.Layout.Row = 1;
-            app.TabGroup2.Layout.Column = [2 6];
+            % Create SubTabGroup
+            app.SubTabGroup = uitabgroup(app.file_Grid);
+            app.SubTabGroup.AutoResizeChildren = 'off';
+            app.SubTabGroup.Layout.Row = 1;
+            app.SubTabGroup.Layout.Column = [2 6];
 
-            % Create ARQUIVOSTab
-            app.ARQUIVOSTab = uitab(app.TabGroup2);
-            app.ARQUIVOSTab.AutoResizeChildren = 'off';
-            app.ARQUIVOSTab.Title = 'ARQUIVOS';
-            app.ARQUIVOSTab.BackgroundColor = 'none';
-            app.ARQUIVOSTab.ForegroundColor = [0.129411764705882 0.129411764705882 0.129411764705882];
+            % Create SubTab1
+            app.SubTab1 = uitab(app.SubTabGroup);
+            app.SubTab1.AutoResizeChildren = 'off';
+            app.SubTab1.Title = 'ARQUIVOS';
+            app.SubTab1.BackgroundColor = 'none';
+            app.SubTab1.ForegroundColor = [0.129411764705882 0.129411764705882 0.129411764705882];
 
-            % Create GridLayout2
-            app.GridLayout2 = uigridlayout(app.ARQUIVOSTab);
-            app.GridLayout2.ColumnWidth = {22, 150, '1x', 22};
-            app.GridLayout2.RowHeight = {22, 22};
-            app.GridLayout2.ColumnSpacing = 5;
-            app.GridLayout2.RowSpacing = 5;
-            app.GridLayout2.BackgroundColor = [0.9804 0.9804 0.9804];
+            % Create SubGrid1
+            app.SubGrid1 = uigridlayout(app.SubTab1);
+            app.SubGrid1.ColumnWidth = {22, 150, '1x', 22};
+            app.SubGrid1.RowHeight = {22, 22};
+            app.SubGrid1.ColumnSpacing = 5;
+            app.SubGrid1.RowSpacing = 5;
+            app.SubGrid1.BackgroundColor = [0.9804 0.9804 0.9804];
 
             % Create file_ModuleIntro
-            app.file_ModuleIntro = uilabel(app.GridLayout2);
+            app.file_ModuleIntro = uilabel(app.SubGrid1);
             app.file_ModuleIntro.VerticalAlignment = 'top';
             app.file_ModuleIntro.WordWrap = 'on';
             app.file_ModuleIntro.FontSize = 11;
@@ -1558,7 +1550,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.file_ModuleIntro.Text = 'Este aplicativo permite a leitura de arquivos textuais da Escrituração Contábil Digital (ECD) e a sua análise.';
 
             % Create file_FileSortMethod
-            app.file_FileSortMethod = uidropdown(app.GridLayout2);
+            app.file_FileSortMethod = uidropdown(app.SubGrid1);
             app.file_FileSortMethod.Items = {'CNPJ', 'PERÍODO FISCAL', 'RECEITA FEDERAL'};
             app.file_FileSortMethod.ValueChangedFcn = createCallbackFcn(app, @file_FileSortMethodValueChanged, true);
             app.file_FileSortMethod.FontSize = 10;
@@ -1568,14 +1560,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.file_FileSortMethod.Value = 'CNPJ';
 
             % Create file_FileSortMethodIcon
-            app.file_FileSortMethodIcon = uiimage(app.GridLayout2);
+            app.file_FileSortMethodIcon = uiimage(app.SubGrid1);
             app.file_FileSortMethodIcon.ScaleMethod = 'none';
             app.file_FileSortMethodIcon.Layout.Row = 2;
             app.file_FileSortMethodIcon.Layout.Column = 1;
             app.file_FileSortMethodIcon.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'sort_az_ascending.png');
 
             % Create Image
-            app.Image = uiimage(app.GridLayout2);
+            app.Image = uiimage(app.SubGrid1);
             app.Image.ScaleMethod = 'none';
             app.Image.ImageClickedFcn = createCallbackFcn(app, @toolbar_ShowLegendImageClicked, true);
             app.Image.Tooltip = {'Legenda de símbolos'};
