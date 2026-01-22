@@ -25,7 +25,7 @@ classdef (Abstract) HtmlTextGenerator
             'HierarchyArrow',  struct('unicode', '↳',  'html', '&#x21B3;') ...
         );
     end
-
+    
     
     methods (Static = true)
         %-----------------------------------------------------------------%
@@ -69,7 +69,6 @@ classdef (Abstract) HtmlTextGenerator
             htmlContent     = textFormatGUI.struct2PrettyPrintList(dataStruct, 'print -1', freeInitialText, outputFormat);
         end
 
-
         %-----------------------------------------------------------------%
         % WINMONITORSPED: FILE
         %-----------------------------------------------------------------%
@@ -82,8 +81,6 @@ classdef (Abstract) HtmlTextGenerator
             arguments (Repeating)
                 varargin
             end
-
-            checkIfScalar(ecdObj)
 
             switch elementType
                 case 'company-oriented'
@@ -279,16 +276,15 @@ classdef (Abstract) HtmlTextGenerator
             htmlContent = textFormatGUI.struct2PrettyPrintList(dataStruct, 'delete', freeInitialText);
         end
 
-
         %-----------------------------------------------------------------%
         % AUXAPP.WINECD
         %-----------------------------------------------------------------%
-        function [accountTable, index, htmlContent] = AccountInfo(ecdObj, accountName)
+        function [accountTable, index, htmlContent] = AccountInfo(ecdObj, accountName, generalSettings)
             accountTable  = innerjoin(ecdObj.Table.x_CONTAS_ANOTACAO, ecdObj.Table.x_BALANCETE_RESULTADO, 'Keys', 'COD_CTA', 'RightVariables', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'});
             accountTable  = innerjoin(accountTable,                   ecdObj.Table.x_CONTAS_DESCRICAO,    'Keys', 'COD_CTA', 'RightVariables', 'DESCRIÇÃO');
 
             [~, index]    = ismember(accountName, accountTable.("COD_CTA"));
-            accountHist   = getAccountHistoric(ecdObj, accountName);
+            accountHist   = getAccountHistoric(ecdObj, accountName, generalSettings);
 
             dataStruct(1) = struct('group', 'FullDescription', 'value', ['•&thinsp;' accountTable.('DESCRIÇÃO'){index}]);
             dataStruct(2) = struct('group', 'AccountHistoric', 'value', textFormatGUI.cellstr2Bullets(accountHist));
@@ -329,7 +325,6 @@ classdef (Abstract) HtmlTextGenerator
 
             htmlContent = textFormatGUI.struct2PrettyPrintList(dataStruct, 'print -1', '', 'popup');
         end
-
         
         %-----------------------------------------------------------------%
         % AUXAPP.WINCONFIG: CHECKUPDATE
@@ -370,5 +365,22 @@ classdef (Abstract) HtmlTextGenerator
         
             htmlContent = msgWarning;
         end
+
+        %-----------------------------------------------------------------%
+        % AUXAPP.DOCKREPORTLIB
+        %-----------------------------------------------------------------%
+        function htmlContent = issueDetails(system, issue, details)
+            dataStruct      = struct('group', 'CADASTRO', 'value', details);
+            freeInitialText = sprintf('<font style="font-size: 16px;"><b>Atividade de Inspeção #%d</b></font> %s<br><br>', issue, system);
+            htmlContent     = textFormatGUI.struct2PrettyPrintList(dataStruct, 'print -1', freeInitialText, 'popup');
+        end
+    
+        %-----------------------------------------------------------------%
+        function htmlContent = entityDetails(id, details)
+            dataStruct      = struct('group', 'CADASTRO', 'value', details);
+            freeInitialText = sprintf('<font style="font-size: 16px;"><b>%s</b></font><br><br>', id);
+            htmlContent     = textFormatGUI.struct2PrettyPrintList(dataStruct, 'delete', freeInitialText, 'popup');
+        end
     end
+
 end

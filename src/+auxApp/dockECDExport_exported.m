@@ -68,7 +68,7 @@ classdef dockECDExport_exported < matlab.apps.AppBase
         function closeFcn(app, event)
             
             context = app.inputArgs.context;
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcn', context)
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcnCallFromPopupApp', context, 'auxApp.dockECDExport')
 
             delete(app)
             
@@ -89,7 +89,7 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             tableIdFields(cellfun(@(x) isempty(x), tableIdFields)) = [];
             tableIdFields = [sort(tableIdFields(startsWith(tableIdFields, 'x'))), sort(tableIdFields(startsWith(tableIdFields, 'm')))];
 
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'exportECD', context, index, tableIdFields)
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'onExportECD', context, index, tableIdFields)
 
         end
 

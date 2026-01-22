@@ -68,6 +68,7 @@ classdef winConfig_exported < matlab.apps.AppBase
     properties (Access = private)
         %-----------------------------------------------------------------%
         Role = 'secondaryApp'
+        Context = 'CONFIG'
     end
 
 
@@ -106,16 +107,11 @@ classdef winConfig_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function applyJSCustomizations(app, tabIndex)
-            persistent customizationStatus
-            if isempty(customizationStatus)
-                customizationStatus = zeros(1, numel(app.SubTabGroup.Children), 'logical');
-            end
-
-            if customizationStatus(tabIndex)
+            if app.SubTabGroup.UserData.isTabInitialized(tabIndex)
                 return
             end
-
-            customizationStatus(tabIndex) = true;
+            app.SubTabGroup.UserData.isTabInitialized(tabIndex) = true;
+            
             switch tabIndex
                 case 1
                     elDataTag = ui.CustomizationBase.getElementsDataTag({app.versionInfo});
@@ -145,7 +141,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             projectFilePath   = fullfile(projectFolder, 'GeneralSettings.json');
             projectGeneral    = jsondecode(fileread(projectFilePath));
 
-            app.defaultValues = struct('File',   projectGeneral.File, ...
+            app.defaultValues = struct('FILE',   projectGeneral.FILE, ...
                                        'ECD',    projectGeneral.ECD, ...
                                        'Report', projectGeneral.Report);
         end
@@ -187,9 +183,9 @@ classdef winConfig_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function updatePanel_Analysis(app)
             % FILE
-            app.InputType.Value   = app.mainApp.General.File.input;
-            app.SortMethod.Value  = app.mainApp.General.File.sortMethod;
-            app.CheckStatus.Value = app.mainApp.General.File.checkStatus;
+            app.InputType.Value   = app.mainApp.General.FILE.input;
+            app.SortMethod.Value  = app.mainApp.General.FILE.sortMethod;
+            app.CheckStatus.Value = app.mainApp.General.FILE.checkStatus;
 
             % ECD
             app.PIS.Value = 100 * app.mainApp.General.ECD.taxConfig.PIS;
@@ -224,7 +220,7 @@ classdef winConfig_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function editionFlag = checkEdition(app, tabName)
             editionFlag   = false;
-            currentValues = struct('File',   app.mainApp.General.File, ...
+            currentValues = struct('FILE',   app.mainApp.General.FILE, ...
                                    'ECD',    app.mainApp.General.ECD,  ...
                                    'Report', app.mainApp.General.Report);
 
@@ -264,7 +260,7 @@ classdef winConfig_exported < matlab.apps.AppBase
         % Close request function: UIFigure
         function closeFcn(app, event)
             
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcn')
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcn', app.Context)
             delete(app)
             
         end
@@ -360,14 +356,14 @@ classdef winConfig_exported < matlab.apps.AppBase
                 return
 
             else
-                app.mainApp.General.File   = app.defaultValues.File;
+                app.mainApp.General.FILE   = app.defaultValues.FILE;
                 app.mainApp.General.ECD    = app.defaultValues.ECD;
 
-                if ~isequal(app.mainApp.General.File.sortMethod, app.SortMethod.Value)
+                if ~isequal(app.mainApp.General.FILE.sortMethod, app.SortMethod.Value)
                     ipcMainMatlabCallsHandler(app.mainApp, app, 'fileSortMethodChanged')
                 end
 
-                app.mainApp.General_I.File = app.mainApp.General.File;
+                app.mainApp.General_I.FILE = app.mainApp.General.FILE;
                 app.mainApp.General_I.ECD  = app.mainApp.General.ECD;
 
                 updatePanel_Analysis(app)
@@ -382,14 +378,14 @@ classdef winConfig_exported < matlab.apps.AppBase
             
             switch event.Source
                 case app.InputType
-                    app.mainApp.General.File.input           = app.InputType.Value;
+                    app.mainApp.General.FILE.input           = app.InputType.Value;
 
                 case app.SortMethod
-                    app.mainApp.General.File.sortMethod      = app.SortMethod.Value;
+                    app.mainApp.General.FILE.sortMethod      = app.SortMethod.Value;
                     ipcMainMatlabCallsHandler(app.mainApp, app, 'fileSortMethodChanged')
 
                 case app.CheckStatus
-                    app.mainApp.General.File.checkStatus     = app.CheckStatus.Value;
+                    app.mainApp.General.FILE.checkStatus     = app.CheckStatus.Value;
 
                 case app.PIS
                     app.mainApp.General.ECD.taxConfig.PIS    = app.PIS.Value / 100;
@@ -400,7 +396,7 @@ classdef winConfig_exported < matlab.apps.AppBase
                     ipcMainMatlabCallsHandler(app.mainApp, app, 'COFINSValueChanged')
             end
 
-            app.mainApp.General_I.File = app.mainApp.General.File;
+            app.mainApp.General_I.FILE = app.mainApp.General.FILE;
             app.mainApp.General_I.ECD  = app.mainApp.General.ECD;
 
             updatePanel_Analysis(app)
@@ -968,12 +964,13 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create DataHubPOSTButton
             app.DataHubPOSTButton = uiimage(app.SubGrid4);
+            app.DataHubPOSTButton.ScaleMethod = 'none';
             app.DataHubPOSTButton.ImageClickedFcn = createCallbackFcn(app, @Config_FolderButtonPushed, true);
             app.DataHubPOSTButton.Tag = 'DataHub_POST';
             app.DataHubPOSTButton.Enable = 'off';
             app.DataHubPOSTButton.Layout.Row = 2;
             app.DataHubPOSTButton.Layout.Column = 2;
-            app.DataHubPOSTButton.ImageSource = 'OpenFile_36x36.png';
+            app.DataHubPOSTButton.ImageSource = 'folder-opened-16px.svg';
 
             % Create userPathLabel
             app.userPathLabel = uilabel(app.SubGrid4);
@@ -992,12 +989,13 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create userPathButton
             app.userPathButton = uiimage(app.SubGrid4);
+            app.userPathButton.ScaleMethod = 'none';
             app.userPathButton.ImageClickedFcn = createCallbackFcn(app, @Config_FolderButtonPushed, true);
             app.userPathButton.Tag = 'userPath';
             app.userPathButton.Enable = 'off';
             app.userPathButton.Layout.Row = 4;
             app.userPathButton.Layout.Column = 2;
-            app.userPathButton.ImageSource = 'OpenFile_36x36.png';
+            app.userPathButton.ImageSource = 'folder-opened-16px.svg';
 
             % Create DockModule
             app.DockModule = uigridlayout(app.GridLayout);

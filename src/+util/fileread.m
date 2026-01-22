@@ -17,7 +17,7 @@ function [content, filesize, encoding, encodingJson, hashHex, bigFileWarning] = 
         hashEndMarkerPosition = strfind(byteArray, hashEndMarker{end}) + numel(hashEndMarker{end}) - 1;
         byteArray = byteArray(1:hashEndMarkerPosition);
     end
-    hashHex = calculateSHA1Hash(byteArray);
+    hashHex = Hash.sha1(byteArray);
 
     % Encoding detection
     encodingInfo = table( ...
@@ -46,7 +46,6 @@ function [content, filesize, encoding, encodingJson, hashHex, bigFileWarning] = 
     if isempty(bigFileWarning)
         content = native2unicode(byteArray, encoding);
     else
-        byteArray = [];
         content = fileread(fileFullName, 'Encoding', encoding);
         hashEndMarker = regexp(content, '\|9999\|[^\r\n]*(?:\r?\n)?', 'match');
         if ~isempty(hashEndMarker)
@@ -54,13 +53,4 @@ function [content, filesize, encoding, encodingJson, hashHex, bigFileWarning] = 
             content = content(1:hashEndMarkerPosition);
         end
     end
-end
-
-%-------------------------------------------------------------------------%
-function hashHex = calculateSHA1Hash(byteArray)
-    md = java.security.MessageDigest.getInstance('SHA-1');
-    md.update(uint8(byteArray));
-    
-    hashBytes = typecast(md.digest(), 'uint8'); 
-    hashHex   = lower(sprintf('%02x', hashBytes));
 end

@@ -67,7 +67,6 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
     properties (Access = private)
         %-----------------------------------------------------------------%
         inputArgs
-        projectData
         currentAccount
         UIAxes
     end
@@ -75,7 +74,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
 
     methods (Access = private)
         %-----------------------------------------------------------------%
-        function jsBackDoor_Customizations(app)
+        function applyJSCustomizations(app)
             drawnow
 
             elToModify = {app.accountInfo};
@@ -107,7 +106,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function updateLayout(app, index, accountName)
             selectedECD  = app.mainApp.ecdObj(index);
-            [accountTable, index, htmlContent] = util.HtmlTextGenerator.AccountInfo(selectedECD, accountName);
+            [accountTable, index, htmlContent] = util.HtmlTextGenerator.AccountInfo(selectedECD, accountName, app.mainApp.General);
             
             % Árvore de descrição da conta:
             app.accountInfo.Text = htmlContent;
@@ -211,11 +210,8 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             try
                 appEngine.boot(app, app.Role, mainApp, callingApp)
 
-                app.inputArgs   = struct('context', context, 'index', index);
-                app.projectData = mainApp.projectData;
-    
-                jsBackDoor_Customizations(app)
-    
+                applyJSCustomizations(app)
+                app.inputArgs = struct('context', context, 'index', index);
                 accountName = startupLayout(app, index, accountName);
                 updateLayout(app, index, accountName)
                 
@@ -229,7 +225,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         function closeFcn(app, event)
             
             context = app.inputArgs.context;
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcn', context)
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcnCallFromPopupApp', context, 'auxApp.dockECDAccount')
 
             delete(app)
             
@@ -285,7 +281,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             updateLayout(app, fileIndex, app.accountList.Value)
 
             context = app.inputArgs.context;
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'accountEdited', context)
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'onAccountEdited', context)
             
         end
 

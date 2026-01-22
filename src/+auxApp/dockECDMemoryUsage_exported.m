@@ -44,7 +44,7 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
                 if ~ismember(tableId, app.mainApp.General.ECD.cacheTables)
                     context = app.inputArgs.context;
                     index = app.inputArgs.index;
-                    ipcMainMatlabCallsHandler(app.mainApp, app, 'freeMemory', context, index, {tableId})
+                    ipcMainMatlabCallsHandler(app.mainApp, app, 'onCacheCleanup', context, index, {tableId})
 
                     updateTable(app, index)
                 end
@@ -116,7 +116,7 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
         function closeFcn(app, event)
             
             context = app.inputArgs.context;
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcn', context)
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcnCallFromPopupApp', context, 'auxApp.dockECDMemoryUsage')
             ui.Table.deleteAppHandleFromBaseWorkspace(app.appHandleNameInBase)
             
             delete(app)

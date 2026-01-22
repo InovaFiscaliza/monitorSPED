@@ -13,12 +13,7 @@ function hashHex = calculateFileHash(content, encoding, terminator)
 
     splitContent = strjoin(splitContent(1:lastLineIndex), char(terminator));
     byteArray = [unicode2native(splitContent, encoding), terminator];
-
-    md = java.security.MessageDigest.getInstance('SHA-1');
-    md.update(uint8(byteArray));
-    
-    hashBytes = typecast(md.digest(), 'uint8'); 
-    hashHex   = lower(sprintf('%02x', hashBytes));
+    hashHex = Hash.sha1(byteArray);
 end
 
 % Arquivo vazio                                                                                                    - Hash da39a3ee5e6b4b0d3255bfef95601890afd80709

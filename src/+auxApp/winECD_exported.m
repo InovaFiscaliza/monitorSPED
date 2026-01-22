@@ -10,12 +10,11 @@ classdef winECD_exported < matlab.apps.AppBase
         Toolbar                 matlab.ui.container.GridLayout
         tool_UploadFinalFile    matlab.ui.control.Image
         tool_GenerateReport     matlab.ui.control.Image
-        tool_Separator2         matlab.ui.control.Image
-        tool_SaveProject        matlab.ui.control.Image
-        tool_Separator1         matlab.ui.control.Image
+        tool_OpenPopupProject   matlab.ui.control.Image
+        tool_CompanyInfo        matlab.ui.control.Label
+        tool_Separator          matlab.ui.control.Image
         tool_AutoFill           matlab.ui.control.Image
         tool_AccountEdition     matlab.ui.control.Image
-        tool_CompanyInfo        matlab.ui.control.Label
         UITable2_AccountInfo    matlab.ui.control.Label
         UITable2_FilterIcon     matlab.ui.control.Image
         UITable2_FilterText     matlab.ui.control.Label
@@ -79,6 +78,7 @@ classdef winECD_exported < matlab.apps.AppBase
     properties (Access = private)
         %-----------------------------------------------------------------%
         Role = 'secondaryApp'
+        Context = 'ECD'
     end
 
 
@@ -155,17 +155,17 @@ classdef winECD_exported < matlab.apps.AppBase
                                 initializeAppProperties(app)
                                 applyInitialLayout(app, 'keepIfPossible')
 
-                            case 'closeFcnCallFromDockModule'
+                            case 'closeFcnCallFromPopupApp'
                                 app.popupContainer.Parent.Visible = 0;
 
-                            case 'exportECD'
+                            case 'onExportECD'
                                 app.popupContainer.Parent.Visible = 0;
                                 exportFiles(app, varargin{:})
 
-                            case 'accountEdited'
+                            case 'onAccountEdited'
                                 forceUpdateTable(app)
 
-                            case 'changeFilter'
+                            case 'onFilterChanged'
                                 tableId = varargin{1};
                                 if strcmp(app.SheetList.Value, tableId)
                                     SheetViewFirstValueChanged(app, struct('Source', app.SheetList))
@@ -175,7 +175,7 @@ classdef winECD_exported < matlab.apps.AppBase
                                     SheetViewSecondValueChanged(app)
                                 end
 
-                            case 'tableNotRead'
+                            case 'onTableReadRequired'
                                 [selectedECD, fileIndex] = selectedECDObject(app);
                                 tableId = varargin{1};
 
@@ -185,15 +185,34 @@ classdef winECD_exported < matlab.apps.AppBase
 
                                 requestVisibilityChange(app.progressDialog, 'hidden', 'unlocked')
 
-                            case 'freeMemory'
+                            case 'onCacheCleanup'
                                 fileIndex = varargin{1};
                                 tableIdList = varargin{2};
-                                update(app.ecdObj(fileIndex), 'Table.NonEssentialFiles', 'freeMemory', tableIdList)
+                                update(app.ecdObj(fileIndex), 'Table.NonEssentialFiles', 'onCacheCleanup', tableIdList)
                                 ipcMainMatlabCallsHandler(app.mainApp, app, 'updateTreeView', fileIndex);
 
-                            case 'generateFinalReport'
+                            % auxApp.dockReportLib >> winMonitorSPED >> auxApp.winECD
+                            case {'onProjectRestart',        ...
+                                  'onProjectLoad',           ...
+                                  'onTableCellEdited'}
+                                % ...
+
+                            case {'onReportGenerate', 'onFinalReportFileChanged'}
                                 selectedECD = selectedECDObject(app);
                                 updateToolbar(app, selectedECD)
+
+                            case 'onFetchIssueDetails'
+                                system   = varargin{1};
+                                issue    = varargin{2};
+                                details  = varargin{3};
+                                msgError = varargin{4};
+
+                                if ~isempty(msgError)
+                                    error(msgError)
+                                end
+
+                                msg = util.HtmlTextGenerator.issueDetails(system, issue, details);
+                                ui.Dialog(app.UIFigure, 'info', msg);
 
                             otherwise
                                 error('UnexpectedCall')
@@ -210,16 +229,11 @@ classdef winECD_exported < matlab.apps.AppBase
         
         %-------------------------------------------------------------------------%
         function applyJSCustomizations(app, tabIndex)
-            persistent customizationStatus
-            if isempty(customizationStatus)
-                customizationStatus = zeros(1, numel(app.SubTabGroup.Children), 'logical');
-            end
-
-            if customizationStatus(tabIndex)
+            if app.SubTabGroup.UserData.isTabInitialized(tabIndex)
                 return
             end
-
-            customizationStatus(tabIndex) = true;
+            app.SubTabGroup.UserData.isTabInitialized(tabIndex) = true;
+            
             switch tabIndex
                 case 1
                     ui.CustomizationBase.getElementsDataTag({app.UITable1, app.UITable2});
@@ -486,8 +500,6 @@ classdef winECD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function updateToolbar(app, selectedECD)
-            context = 'ECD';
-
             % A tabela "x_CONTAS_ANOTACAO" é composta pelas contas analíticas
             % de resultado que compõem "_BALANCETE_RESULTADO". Por essa razão, 
             % caso essa tabela não seja vazia, infere-se que é possível
@@ -499,8 +511,8 @@ classdef winECD_exported < matlab.apps.AppBase
             nonEmptyECDObject               = ~isempty(selectedECD);
             hasSpecificNonEmptyTable        = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);
             
-            reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(context).generatedFiles.lastHTMLDocFullPath);
-            reportFinalRelatedToSelectedObj = nonEmptyECDObject && isequal(selectedECD.Hash, app.projectData.modules.(context).generatedFiles.id);
+            reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(app.Context).generatedFiles.lastHTMLDocFullPath);
+            reportFinalRelatedToSelectedObj = nonEmptyECDObject && isequal(selectedECD.Hash, app.projectData.modules.(app.Context).generatedFiles.id);
 
             tableIdView = {app.SheetList.Value};
             if ~isempty(app.SheetView_Second.Value)
@@ -508,7 +520,7 @@ classdef winECD_exported < matlab.apps.AppBase
             end
             app.tool_AutoFill.Enable        = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', tableIdView);
             app.tool_AccountEdition.Enable  = hasSpecificNonEmptyTable;
-            app.tool_SaveProject.Enable     = nonEmptyECDObject;
+            app.tool_Separator.Visible     = nonEmptyECDObject;
             app.tool_GenerateReport.Enable  = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO');
             app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated && reportFinalRelatedToSelectedObj;
         end
@@ -549,10 +561,9 @@ classdef winECD_exported < matlab.apps.AppBase
 
             [selectedECD, fileIndex] = selectedECDObject(app);            
             checkIfTableRead(app, selectedECD, fileIndex, {tableId})
-            tableIdField   = ['x' tableId];
-            tableIdData    = selectedECD.Table.(tableIdField);
+            tableIdData    = selectedECD.Table.(['x' tableId]);
             
-            % Filtra, caso aplicável.
+            % Filtra os dados, caso aplicável.
             [filterIndex, filterStatus] = checkTableCustomFilter(app, selectedECD, tableId, 'active');
 
             if filterStatus
@@ -563,15 +574,33 @@ classdef winECD_exported < matlab.apps.AppBase
                 visibleRows = (1:height(tableIdData))';                
                 filterIconTooltip = '';
             end
-            
-            numRows        = height(tableIdData);
+
+            % Número total de linhas da tabela e número de linhas visíveis.
+            numRows = height(tableIdData);
             numVisibleRows = numel(visibleRows);
 
-            % Renderiza...    
-            columnWidth    = 'auto';
-            columnNames    = tableIdData.Properties.VariableNames;
+            % Inclusão da coluna "CTA", caso habilitado.
+            if app.mainApp.General.ui.accountDescriptionScope
+                variableNames = tableIdData.Properties.VariableNames;
+                if ismember('COD_CTA', variableNames) && ~ismember('CTA', variableNames)
+                    tableIdData = addAccountDescription(selectedECD, tableIdData, variableNames, 'CTA');
+                end
+            end
+
+            % Configuração básica das colunas:
+            % - largura padrão em modo automático;
+            % - nomes das colunas retirados da própria tabela; e
+            % - colunas editáveis identificadas pelo marcador (✎) no nome
+            columnWidth = 'auto';
+            columnNames = tableIdData.Properties.VariableNames;
             columnEditable = contains(columnNames, '✎');
 
+            % Definição dos rótulos das linhas, orientado à seguinte ordem
+            % de priorização:
+            % (1) RowNames definidos explicitamente na table;
+            % (2) Numeração automática quando todas as linhas estão visíveis;
+            % (3) Índices reais das linhas quando apenas um subconjunto é exibido
+            %     (neste caso, força largura uniforme das colunas)
             if ~isempty(tableIdData.Properties.RowNames)
                 rowNames = tableIdData.Properties.RowNames;
             elseif numVisibleRows == numRows
@@ -580,18 +609,44 @@ classdef winECD_exported < matlab.apps.AppBase
                 columnWidth = '1x';
                 rowNames = string(visibleRows);
             end
+
+            % Verifica se a tabela suporta formatação customizável das suas
+            % colunas, obtendo-se especificação de cada coluna. Caso todos os 
+            % formatos sejam vazios, a configuração do parâmetro "ColumnFormat"
+            % é inócua. Em sendo válido, deve-se converter os dados tabulares
+            % (originalmente no formato "table") para "cell array".
+            columnFormat = {};
+            if ui.Table.hasCustomizableColumnFormat(tableIdData)
+                columnFormat = model.ECDBase.getFieldSpecification(columnNames, 'Format');
+                if isempty(columnFormat) || all(cellfun(@isempty, columnFormat))
+                    columnFormat = {};
+                end
+            end
+
+            if ~isempty(columnFormat)
+                tableIdData = table2cell(tableIdData);
+            end
+
+            columnFormatOptionalArgs = {};
+            if ~isequal(hTable.ColumnFormat, columnFormat)
+                columnFormatOptionalArgs = {'ColumnFormat', columnFormat};
+            end
             
+            % Aplicação final das propriedades na uitable
             set(hTable, 'ColumnWidth', columnWidth, ...
                         'ColumnName', columnNames, ...
                         'ColumnEditable', columnEditable, ...
                         'RowName', rowNames, ...
-                        'Data', tableIdData(visibleRows, :))
+                        'Data', tableIdData(visibleRows, :), ...
+                        columnFormatOptionalArgs{:})
             pause(.250) % drawnow
             hTable.UserData.TableId = tableId;
             hTable.UserData.visibleRows = visibleRows;
 
             % Atualiza elementos que suportam a tabela...
             restartTableSelectionControl(app, hTable, hTableAccountInfo, hTableCountText)
+            updateTableFootnote(app, hTable, hTableCountText, hTableAccountInfo)
+
             numberOfRowsText = sprintf('%d DE %d LINHAS ', numVisibleRows, numRows);
             if numRows == 1
                 numberOfRowsText = replace(numberOfRowsText, 'LINHAS', 'LINHA');                
@@ -629,12 +684,10 @@ classdef winECD_exported < matlab.apps.AppBase
                 tableCountText.Text       = ' CONTAGEM: 0';
                 tableSelectedAccount.Text = '';                    
             else
-                selectedCols = unique(clickedTable.Selection(:, 2));
-                selectedColsNames = clickedTable.Data.Properties.VariableNames(selectedCols);
-
+                selectedColumnIdxs = unique(clickedTable.Selection(:, 2))';
                 isNumeric = true;
-                for ii = 1:numel(selectedColsNames)
-                    if ~isnumeric(clickedTable.Data.(selectedColsNames{ii}))
+                for columnIdx = selectedColumnIdxs
+                    if ~isnumeric(clickedTable.Data{1, columnIdx})
                         isNumeric = false;
                         break;
                     end
@@ -644,8 +697,14 @@ classdef winECD_exported < matlab.apps.AppBase
                 if isNumeric
                     switch clickedTable.UserData.SelectionType
                         case 'column'
-                            cellsSum = sum(double(clickedTable.Data{:, selectedCols}), 'all');
-                            cellsAverage = mean(double(clickedTable.Data{:, selectedCols}), 'all');
+                            if istable(clickedTable.Data)
+                                referenceData = double(clickedTable.Data.(selectedColumnIdxs));
+                            else
+                                referenceData = double(cell2mat(clickedTable.Data(:, selectedColumnIdxs)));
+                            end
+
+                            cellsSum      = sum(referenceData, 'all');
+                            cellsAverage  = mean(referenceData, 'all');
 
                         otherwise
                             cellsSum = 0;
@@ -660,15 +719,16 @@ classdef winECD_exported < matlab.apps.AppBase
                 end
 
                 selectedRows = unique(clickedTable.Selection(:,1));
-                selectedAccountDescription = '';            
-                if isscalar(selectedRows) && ismember('COD_CTA', clickedTable.Data.Properties.VariableNames)
+                selectedAccountDescription = '';
+                [~, accountColumnIdx] = ismember('COD_CTA', clickedTable.ColumnName);
+                if isscalar(selectedRows) && accountColumnIdx
                     selectedECD = selectedECDObject(app);
 
-                    selectedAccount = clickedTable.Data.("COD_CTA"){selectedRows};
+                    selectedAccount = clickedTable.Data{selectedRows, accountColumnIdx};
                     selectedAccountIndex = find(strcmp(selectedECD.Table.x_CONTAS_DESCRICAO.("COD_CTA"), selectedAccount), 1);
         
                     if ~isempty(selectedAccountIndex)
-                        selectedAccountDescription = sprintf('COD_CTA %s\n%s', selectedAccount, selectedECD.Table.x_CONTAS_DESCRICAO.("DESCRIÇÃO"){selectedAccountIndex});
+                        selectedAccountDescription = sprintf('COD_CTA %s\n%s', char(selectedAccount), selectedECD.Table.x_CONTAS_DESCRICAO.("DESCRIÇÃO"){selectedAccountIndex});
                     end
                 end                    
                 tableSelectedAccount.Text = selectedAccountDescription;
@@ -942,7 +1002,7 @@ classdef winECD_exported < matlab.apps.AppBase
         % Close request function: UIFigure
         function closeFcn(app, event)
 
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcn')
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcn', app.Context)
             delete(app)
             
         end
@@ -985,16 +1045,15 @@ classdef winECD_exported < matlab.apps.AppBase
         function Toolbar_ReportImageClicked(app, event)
             
             [~, fileIndex] = selectedECDObject(app);
-            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ReportLib', 'ECD', fileIndex)
+            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ReportLib', app.Context, fileIndex)
             
         end
 
         % Button pushed function: ExportButton
         function Toolbar_ExportExportExcelClicked(app, event)
             
-            context = 'ECD';
             [~, fileIndex] = selectedECDObject(app);
-            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDExport', context, fileIndex)
+            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDExport', app.Context, fileIndex)
 
         end
 
@@ -1173,18 +1232,10 @@ classdef winECD_exported < matlab.apps.AppBase
             rowIndex = event.Indices(1);
             colIndex = event.Indices(2);            
 
-            columnNames = event.Source.Data.Properties.VariableNames;
+            columnNames = event.Source.ColumnName;
             editedCellColumnName = columnNames{colIndex};
 
             selectedECD = selectedECDObject(app);
-            
-            % Para contornar regra de negócio esquisita do MATLAB, que possibilita
-            % criação de nova categoria.
-            if strcmp(editedCellColumnName, 'Apurado?  ✎') && ~ismember(newData, app.mainApp.General.ECD.accountOptions)
-                forceUpdateTable(app)
-                return
-            end
-
             if iscell(selectedECD.Table.x_CONTAS_ANOTACAO{rowIndex, colIndex})
                 newData = {strtrim(newData)};
             end
@@ -1394,8 +1445,8 @@ classdef winECD_exported < matlab.apps.AppBase
                    ~isfield(hTable.StyleObservations, propertyName) || ...
                     isempty(hTable.StyleObservations.(propertyName)))
     
-                    hTableName  = ui.CustomizationBase.getPropertyName(hTable, 'ECD');
-                    customEvent = struct('auxAppTag',     'ECD',              ...
+                    hTableName  = ui.CustomizationBase.getPropertyName(hTable, app.Context);
+                    customEvent = struct('auxAppTag',     app.Context,        ...
                                          'componentName', hTableName,         ...
                                          'dataTag',       hTable.UserData.id, ...
                                          'childClass',    'mw-table-row',     ...
@@ -1455,16 +1506,16 @@ classdef winECD_exported < matlab.apps.AppBase
         function ExportButton_2Pushed(app, event)
             
             clickedTable = onFocusTable(app);
-            
-            if ~isempty(clickedTable.Selection) && isscalar(unique(clickedTable.Selection(:,1))) && ismember('COD_CTA', clickedTable.Data.Properties.VariableNames)
+            [~, accountColumnIdx] = ismember('COD_CTA', clickedTable.ColumnName);
+            if ~isempty(clickedTable.Selection) && isscalar(unique(clickedTable.Selection(:,1))) && accountColumnIdx
                 selectedRow = unique(clickedTable.Selection(:,1));
-                accountName = clickedTable.Data.('COD_CTA'){selectedRow};
+                accountName = clickedTable.Data{selectedRow, accountColumnIdx};
             else
                 accountName = '';
             end
 
             [~, fileIndex] = selectedECDObject(app);
-            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDAccount', 'ECD', fileIndex, accountName)
+            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDAccount', app.Context, fileIndex, accountName)
 
         end
 
@@ -1488,16 +1539,14 @@ classdef winECD_exported < matlab.apps.AppBase
             tableIdList     = app.SheetList.Items;
             selectedTableId = app.SheetList.Value;
 
-            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDFilter', 'ECD', fileIndex, tableIdList, selectedTableId)
+            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDFilter', app.Context, fileIndex, tableIdList, selectedTableId)
 
         end
 
-        % Image clicked function: tool_SaveProject
-        function tool_SaveProjectImageClicked(app, event)
+        % Image clicked function: tool_OpenPopupProject
+        function tool_OpenPopupProjectImageClicked(app, event)
             
-            context = 'ECD';
-            dialogBox = struct('id', 'projectName', 'label', 'Nome do projeto:', 'type', 'text', 'defaultValue', app.projectData.name);            
-            sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'onProjectSave', 'Fields', dialogBox, 'Context', context, 'ColumnWidth', '100px'))
+            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ReportLib', app.Context)
 
         end
 
@@ -1505,7 +1554,7 @@ classdef winECD_exported < matlab.apps.AppBase
         function MemoryUsageButtonPushed(app, event)
             
             [~, fileIndex] = selectedECDObject(app);
-            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDMemoryUsage', 'ECD', fileIndex)
+            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDMemoryUsage', app.Context, fileIndex)
 
         end
 
@@ -1513,8 +1562,7 @@ classdef winECD_exported < matlab.apps.AppBase
         function tool_UploadFinalFileImageClicked(app, event)
             
             % <VALIDAÇÕES>
-            context = 'ECD';
-            lastHTMLDocFullPath = getGeneratedDocumentFileName(app.projectData, '.html', context);
+            lastHTMLDocFullPath = getGeneratedDocumentFileName(app.projectData, '.html', app.Context);
 
             msg = '';
             if isempty(lastHTMLDocFullPath)
@@ -1523,11 +1571,11 @@ classdef winECD_exported < matlab.apps.AppBase
                 msg = sprintf('O arquivo "%s" não foi encontrado.', lastHTMLDocFullPath);
             elseif ~isfolder(app.mainApp.General.fileFolder.DataHub_POST)
                 msg = 'Pendente mapear pasta do Sharepoint';
-            elseif ~report_checkEFiscalizaIssueId(app.mainApp, app.projectData.modules.(context).ui.issue)
-                msg = sprintf('O número da inspeção "%.0f" é inválido.', app.projectData.modules.(context).ui.issue);
-            elseif isempty(app.projectData.modules.(context).ui.system)
+            elseif ~report_checkEFiscalizaIssueId(app.mainApp, app.projectData.modules.(app.Context).ui.issue)
+                msg = sprintf('O número da inspeção "%.0f" é inválido.', app.projectData.modules.(app.Context).ui.issue);
+            elseif isempty(app.projectData.modules.(app.Context).ui.system)
                 msg = 'Ambiente do eFiscaliza precisa ser selecionado.';
-            elseif isempty(app.projectData.modules.(context).ui.unit)
+            elseif isempty(app.projectData.modules.(app.Context).ui.unit)
                 msg = 'Unidade geradora do documento precisa ser selecionada.';
             end
 
@@ -1566,9 +1614,9 @@ classdef winECD_exported < matlab.apps.AppBase
             if isempty(app.mainApp.eFiscalizaObj) || ~isvalid(app.mainApp.eFiscalizaObj)
                 dialogBox    = struct('id', 'login',    'label', 'Usuário: ', 'type', 'text');
                 dialogBox(2) = struct('id', 'password', 'label', 'Senha: ',   'type', 'password');
-                sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'eFiscalizaSignInPage', 'Fields', dialogBox, 'Context', context))
+                sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'eFiscalizaSignInPage', 'Fields', dialogBox, 'Context', app.Context))
             else
-                report_uploadInfoController(app.mainApp, [], 'uploadDocument', context)
+                report_uploadInfoController(app.mainApp, [], 'uploadDocument', app.Context)
             end
             % </PROCESSO>
 
@@ -1950,7 +1998,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign1.Tooltip = {'Sublinhado'};
             app.FontAlign1.Layout.Row = 2;
             app.FontAlign1.Layout.Column = 13;
-            app.FontAlign1.ImageSource = 'AlignedLeft_16-7f46662cd6fd7221119660e14bdcea56.png';
+            app.FontAlign1.ImageSource = 'aligned-left-16px.png';
 
             % Create FontAlign2
             app.FontAlign2 = uiimage(app.SubGrid2);
@@ -1960,7 +2008,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign2.Tooltip = {'Sublinhado'};
             app.FontAlign2.Layout.Row = 2;
             app.FontAlign2.Layout.Column = 14;
-            app.FontAlign2.ImageSource = 'AlignedCenter_16-b91485db227234029c43b7823c09ebff.png';
+            app.FontAlign2.ImageSource = 'aligned-center-16px.png';
 
             % Create FontAlign3
             app.FontAlign3 = uiimage(app.SubGrid2);
@@ -1970,7 +2018,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign3.Tooltip = {'Sublinhado'};
             app.FontAlign3.Layout.Row = 2;
             app.FontAlign3.Layout.Column = 15;
-            app.FontAlign3.ImageSource = 'AlignedRight_16-7827788943408c9bac98181b7ad0efb5.png';
+            app.FontAlign3.ImageSource = 'aligned-right-16px.png';
 
             % Create FontBackground
             app.FontBackground = uicolorpicker(app.SubGrid2);
@@ -2145,7 +2193,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create Toolbar
             app.Toolbar = uigridlayout(app.GridLayout);
-            app.Toolbar.ColumnWidth = {'1x', 22, 22, 5, 22, 5, 22, 22};
+            app.Toolbar.ColumnWidth = {22, 22, 5, '1x', 22, 22, 22};
             app.Toolbar.RowHeight = {4, 17, 2};
             app.Toolbar.ColumnSpacing = 5;
             app.Toolbar.RowSpacing = 0;
@@ -2154,25 +2202,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.Toolbar.Layout.Column = [1 9];
             app.Toolbar.BackgroundColor = [0.9412 0.9412 0.9412];
 
-            % Create tool_CompanyInfo
-            app.tool_CompanyInfo = uilabel(app.Toolbar);
-            app.tool_CompanyInfo.VerticalAlignment = 'top';
-            app.tool_CompanyInfo.WordWrap = 'on';
-            app.tool_CompanyInfo.FontSize = 9;
-            app.tool_CompanyInfo.FontColor = [0.149 0.149 0.149];
-            app.tool_CompanyInfo.Layout.Row = [1 3];
-            app.tool_CompanyInfo.Layout.Column = 1;
-            app.tool_CompanyInfo.Interpreter = 'html';
-            app.tool_CompanyInfo.Text = '';
-
             % Create tool_AccountEdition
             app.tool_AccountEdition = uiimage(app.Toolbar);
             app.tool_AccountEdition.ScaleMethod = 'none';
             app.tool_AccountEdition.ImageClickedFcn = createCallbackFcn(app, @ExportButton_2Pushed, true);
             app.tool_AccountEdition.Enable = 'off';
             app.tool_AccountEdition.Tooltip = {'Edita informações das contas movimentadas'};
-            app.tool_AccountEdition.Layout.Row = 2;
-            app.tool_AccountEdition.Layout.Column = 2;
+            app.tool_AccountEdition.Layout.Row = [1 3];
+            app.tool_AccountEdition.Layout.Column = 1;
             app.tool_AccountEdition.ImageSource = 'Variable_edit_16.png';
 
             % Create tool_AutoFill
@@ -2180,35 +2217,38 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_AutoFill.ImageClickedFcn = createCallbackFcn(app, @tool_AutoFillImageClicked, true);
             app.tool_AutoFill.Enable = 'off';
             app.tool_AutoFill.Tooltip = {'Sugere anotação das contas movimentadas'};
-            app.tool_AutoFill.Layout.Row = 2;
-            app.tool_AutoFill.Layout.Column = 3;
+            app.tool_AutoFill.Layout.Row = [1 2];
+            app.tool_AutoFill.Layout.Column = 2;
             app.tool_AutoFill.ImageSource = 'AutoFill_36Blue.png';
 
-            % Create tool_Separator1
-            app.tool_Separator1 = uiimage(app.Toolbar);
-            app.tool_Separator1.ScaleMethod = 'none';
-            app.tool_Separator1.Enable = 'off';
-            app.tool_Separator1.Layout.Row = [1 3];
-            app.tool_Separator1.Layout.Column = 4;
-            app.tool_Separator1.ImageSource = 'LineV.svg';
+            % Create tool_Separator
+            app.tool_Separator = uiimage(app.Toolbar);
+            app.tool_Separator.ScaleMethod = 'none';
+            app.tool_Separator.Enable = 'off';
+            app.tool_Separator.Visible = 'off';
+            app.tool_Separator.Layout.Row = [1 3];
+            app.tool_Separator.Layout.Column = 3;
+            app.tool_Separator.ImageSource = 'LineV.svg';
 
-            % Create tool_SaveProject
-            app.tool_SaveProject = uiimage(app.Toolbar);
-            app.tool_SaveProject.ScaleMethod = 'none';
-            app.tool_SaveProject.ImageClickedFcn = createCallbackFcn(app, @tool_SaveProjectImageClicked, true);
-            app.tool_SaveProject.Enable = 'off';
-            app.tool_SaveProject.Tooltip = {'Salva o projeto'};
-            app.tool_SaveProject.Layout.Row = 2;
-            app.tool_SaveProject.Layout.Column = 5;
-            app.tool_SaveProject.ImageSource = 'Save_16.png';
+            % Create tool_CompanyInfo
+            app.tool_CompanyInfo = uilabel(app.Toolbar);
+            app.tool_CompanyInfo.VerticalAlignment = 'top';
+            app.tool_CompanyInfo.WordWrap = 'on';
+            app.tool_CompanyInfo.FontSize = 9;
+            app.tool_CompanyInfo.FontColor = [0.149 0.149 0.149];
+            app.tool_CompanyInfo.Layout.Row = [1 3];
+            app.tool_CompanyInfo.Layout.Column = 4;
+            app.tool_CompanyInfo.Interpreter = 'html';
+            app.tool_CompanyInfo.Text = '';
 
-            % Create tool_Separator2
-            app.tool_Separator2 = uiimage(app.Toolbar);
-            app.tool_Separator2.ScaleMethod = 'none';
-            app.tool_Separator2.Enable = 'off';
-            app.tool_Separator2.Layout.Row = [1 3];
-            app.tool_Separator2.Layout.Column = 6;
-            app.tool_Separator2.ImageSource = 'LineV.svg';
+            % Create tool_OpenPopupProject
+            app.tool_OpenPopupProject = uiimage(app.Toolbar);
+            app.tool_OpenPopupProject.ScaleMethod = 'none';
+            app.tool_OpenPopupProject.ImageClickedFcn = createCallbackFcn(app, @tool_OpenPopupProjectImageClicked, true);
+            app.tool_OpenPopupProject.Tooltip = {'Projeto (fiscalizada, arquivo de backup etc)'};
+            app.tool_OpenPopupProject.Layout.Row = [1 3];
+            app.tool_OpenPopupProject.Layout.Column = 5;
+            app.tool_OpenPopupProject.ImageSource = 'organization-20px-black.svg';
 
             % Create tool_GenerateReport
             app.tool_GenerateReport = uiimage(app.Toolbar);
@@ -2216,8 +2256,8 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_GenerateReport.ImageClickedFcn = createCallbackFcn(app, @Toolbar_ReportImageClicked, true);
             app.tool_GenerateReport.Enable = 'off';
             app.tool_GenerateReport.Tooltip = {'Gera relatório análise'};
-            app.tool_GenerateReport.Layout.Row = 2;
-            app.tool_GenerateReport.Layout.Column = 7;
+            app.tool_GenerateReport.Layout.Row = [1 3];
+            app.tool_GenerateReport.Layout.Column = 6;
             app.tool_GenerateReport.ImageSource = 'Publish_HTML_16.png';
 
             % Create tool_UploadFinalFile
@@ -2226,7 +2266,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_UploadFinalFile.Enable = 'off';
             app.tool_UploadFinalFile.Tooltip = {'Upload relatório'};
             app.tool_UploadFinalFile.Layout.Row = 2;
-            app.tool_UploadFinalFile.Layout.Column = 8;
+            app.tool_UploadFinalFile.Layout.Column = 7;
             app.tool_UploadFinalFile.ImageSource = 'Up_24.png';
 
             % Create DockModule

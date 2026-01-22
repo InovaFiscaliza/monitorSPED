@@ -228,7 +228,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
         function closeFcn(app, event)
             
             context = app.inputArgs.context;
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcn', context)
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcnCallFromPopupApp', context, 'auxApp.dockECDFilter')
 
             delete(app)
             
@@ -333,7 +333,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
                     TreeUpdate(app)
 
                     context = app.inputArgs.context;
-                    ipcMainMatlabCallsHandler(app.mainApp, app, 'changeFilter', context, tableId)
+                    ipcMainMatlabCallsHandler(app.mainApp, app, 'onFilterChanged', context, tableId)
                 end
             end
 
@@ -362,7 +362,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
                         
                         context = app.inputArgs.context;
                         tableId = app.TableIdList.Value;
-                        ipcMainMatlabCallsHandler(app.mainApp, app, 'changeFilter', context, tableId)
+                        ipcMainMatlabCallsHandler(app.mainApp, app, 'onFilterChanged', context, tableId)
 
                     catch ME
                         ui.Dialog(app.UIFigure, 'error', ME.message);
@@ -382,7 +382,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
 
             if ~isfield(app.ecdObj(index).Table, ['x' tableId])
                 context = app.inputArgs.context;
-                ipcMainMatlabCallsHandler(app.mainApp, app, 'tableNotRead', context, tableId)
+                ipcMainMatlabCallsHandler(app.mainApp, app, 'onTableReadRequired', context, tableId)
             end
 
             set(app.ColumnList, 'Items', app.ecdObj(index).Table.(['x' tableId]).Properties.VariableNames)
@@ -418,7 +418,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
                     toogleFilterRule(filterObj, currentEnableArray)
 
                     context = app.inputArgs.context;
-                    ipcMainMatlabCallsHandler(app.mainApp, app, 'changeFilter', context, tableId)
+                    ipcMainMatlabCallsHandler(app.mainApp, app, 'onFilterChanged', context, tableId)
                 end
             end
             

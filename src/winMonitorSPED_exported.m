@@ -30,6 +30,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         file_toolGrid            matlab.ui.container.GridLayout
         tool_UploadFinalFile     matlab.ui.control.Image
         tool_GenerateReport      matlab.ui.control.Image
+        tool_OpenPopupProject    matlab.ui.control.Image
         tool_CheckRFB            matlab.ui.control.Image
         tool_Separator2          matlab.ui.control.Image
         tool_MergeFiles          matlab.ui.control.Image
@@ -47,6 +48,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
     properties (Access = private)
         %-----------------------------------------------------------------%
         Role = 'mainApp'
+        Context = 'FILE'
     end
 
 
@@ -104,7 +106,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             selectedNodes = app.file_Tree.SelectedNodes;
                             if ~isempty(app.file_Tree.SelectedNodes)
                                 app.file_Tree.SelectedNodes = [];
-                                file_TreeSelectionChanged(app)
+                                onTreeSelectionChanged(app)
                             end
 
                             appEngine.beforeReload(app, app.Role)
@@ -112,7 +114,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                             if ~isempty(selectedNodes)
                                 app.file_Tree.SelectedNodes = selectedNodes;
-                                file_TreeSelectionChanged(app)
+                                onTreeSelectionChanged(app)
                             end
                         end
                         
@@ -120,27 +122,26 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                     case 'unload'
                         closeFcn(app)
-                    
+
                     case 'customForm'
                         switch event.HTMLEventData.uuid
-                            case 'eFiscalizaSignInPage'
+                            case 'onFetchIssueDetails'
                                 context = event.HTMLEventData.context;
-                                report_uploadInfoController(app, event.HTMLEventData, 'uploadDocument', context)
+                                reportFetchIssueDetails(app, context, event.HTMLEventData)
 
-                            case 'eFiscalizaSignInPage:IssueQuery'
+                            case 'onReportGenerate'
                                 context = event.HTMLEventData.context;
-                                report_queryIssueDetails(app, event.HTMLEventData, context)
+                                reportGenerate(app, context, event.HTMLEventData)
+
+                            case 'onUploadArtifacts'
+                                context = event.HTMLEventData.context;
+                                reportUploadArtifacts(app, context, event.HTMLEventData, 'uploadDocument')
 
                             case 'openDevTools'
                                 if isequal(app.General.operationMode.DevTools, rmfield(event.HTMLEventData, 'uuid'))
                                     webWin = struct(struct(struct(app.UIFigure).Controller).PlatformHost).CEF;
                                     webWin.openDevTools();
                                 end
-
-                            case 'onProjectSave'
-                                context = event.HTMLEventData.context;
-                                prjName = event.HTMLEventData.projectName;
-                                report_saveProject(app, context, prjName)
                         end
 
                     case 'getNavigatorBasicInformation'
@@ -173,7 +174,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                     % MAINAPP
                     case 'mainApp.file_Tree'
-                        contextMenu_delTreeNodeSelected(app)
+                        ContextMenu_DeleteSelectedTreeNode(app)
 
                     otherwise
                         error('UnexpectedEvent')
@@ -190,187 +191,141 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             varargout = {};
 
             try
-                switch class(callingApp)
-                    % auxApp.winConfig
-                    case {'auxApp.winConfig', 'auxApp.winConfig_exported'}
-                        switch operationType
-                            case 'closeFcn'
-                                closeModule(app.tabGroupController, "CONFIG", app.General)
+                switch operationType
+                    case 'closeFcn'
+                        auxAppTag    = varargin{1};
+                        closeModule(app.tabGroupController, auxAppTag, app.General, 'normal')
 
-                            case 'dockButtonPushed'
-                                auxAppTag = varargin{1};
-                                varargout{1} = auxAppInputArguments(app, auxAppTag);
+                    case 'dockButtonPushed'
+                        auxAppTag    = varargin{1};
+                        varargout{1} = {app};
 
-                            case 'checkDataHubLampStatus'
-                                DataHubWarningLamp(app)
-
-                            case 'openDevTools'
-                                dialogBox    = struct('id', 'login',    'label', 'Usuário: ', 'type', 'text');
-                                dialogBox(2) = struct('id', 'password', 'label', 'Senha: ',   'type', 'password');
-                                sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'openDevTools', 'Fields', dialogBox))
-
-                            case 'simulationModeChanged'
-                                if app.General.operationMode.Simulation
-                                    toolbar_SelectFileToReadImageClicked(app)
-
-                                    % Muda programaticamente o modo p/ ARQUIVOS.
-                                    set(app.Tab1Button, 'Enable', 1, 'Value', 1)                    
-                                    tabNavigatorButtonPushed(app, struct('Source', app.Tab1Button, 'PreviousValue', false))
-                                end
-
-                            case 'fileSortMethodChanged'
-                                if ~strcmp(app.file_FileSortMethod.Value, app.General.File.sortMethod)
-                                    app.file_FileSortMethod.Value = app.General.File.sortMethod;
-                                    file_FileSortMethodValueChanged(app)
-                                end
-
-                            case {'PISValueChanged', 'COFINSValueChanged'}
-                                error('Pendente de implementação! :(')
-
-                            otherwise
-                                error('UnexpectedCall')
-                        end
-
-                    % auxApp.winECD
-                    case {'auxApp.winECD', 'auxApp.winECD_exported'}
-                        switch operationType
-                            case 'closeFcn'
-                                closeModule(app.tabGroupController, "ECD", app.General)
-
-                            case 'dockButtonPushed'
-                                auxAppTag = varargin{1};
-                                varargout{1} = auxAppInputArguments(app, auxAppTag);
-
-                            case 'updateTreeView'
-                                if ~isempty(app.file_Tree.SelectedNodes)
-                                    nodeData = unique([app.file_Tree.SelectedNodes.NodeData]);
-
-                                    if isequal(nodeData, varargin{1})
-                                        app.file_Metadata.UserData = [];
-                                        file_TreeSelectionChanged(app)
-                                    end
-                                end
-
-                            otherwise
-                                error('UnexpectedCall')
-                        end
-
-                    % auxApp.dockReportLib
-                    case {'auxApp.dockReportLib', 'auxApp.dockReportLib_exported'}
-                        switch operationType
-                            case 'closeFcn'
-                                context = varargin{1};
-                                switch context
-                                    case 'File'
-                                        app.popupContainer.Parent.Visible = 0;
-                                    case 'ECD'
-                                        varargin = [{'closeFcnCallFromDockModule'}, varargin];
-                                        ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
-                                end
-
-                            case 'reportUserConfirmation'
-                                context = varargin{1};
-                                indexes = varargin{2};
-
-                                delete(callingApp)
-                                ipcMainMatlabCallsHandler(app, callingApp, 'closeFcn', varargin{:});
-                                reportGeneratorCall(app, context, indexes)
-
-                            otherwise
-                                error('UnexpectedCall')
-                        end
-
-                    % auxApp.dockECDExport
-                    case {'auxApp.dockECDExport', 'auxApp.dockECDExport_exported'}
-                        switch operationType
-                            case 'closeFcn'
-                                context  = varargin{1};
-                                varargin = [{'closeFcnCallFromDockModule'}, varargin(2:end)];
-                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
-
-                            case 'exportECD'
-                                delete(callingApp)
-                                
-                                context  = varargin{1};
-                                varargin = [{operationType}, varargin(2:end)];
-                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
-
-                            otherwise
-                                error('UnexpectedCall')
-                        end
-
-                    % auxApp.dockECDAccount
-                    case {'auxApp.dockECDAccount', 'auxApp.dockECDAccount_exported'}
-                        switch operationType
-                            case 'closeFcn'
-                                context  = varargin{1};
-                                varargin = [{'closeFcnCallFromDockModule'}, varargin(2:end)];
-                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
-
-                            case 'accountEdited'
-                                context  = varargin{1};
-                                varargin = [{operationType}, varargin(2:end)];
-                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
-                                return
-
-                            otherwise
-                                error('UnexpectedCall')
-                        end
-
-                    % auxApp.dockECDFilter
-                    case {'auxApp.dockECDFilter', 'auxApp.dockECDFilter_exported'}
-                        switch operationType
-                            case 'closeFcn'
-                                context  = varargin{1};
-                                varargin = [{'closeFcnCallFromDockModule'}, varargin(2:end)];
-                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
-                                
-                                % Apaga menu de contexto:
-                                hAuxApp = getAppHandle(app.tabGroupController, context);
-                                if ~isempty(hAuxApp)
-                                    deleteContextMenu(app.tabGroupController, hAuxApp.UIFigure, 'auxApp.dockECDFilter')
-                                end
-
-                            case {'changeFilter', 'tableNotRead'}
-                                context  = varargin{1};
-                                varargin = [{operationType}, varargin(2:end)];
-                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
-                                return
-
-                            otherwise
-                                error('UnexpectedCall')
-                        end
-
-                    % auxApp.dockECDFilter
-                    case {'auxApp.dockECDMemoryUsage', 'auxApp.dockECDMemoryUsage_exported'}
-                        switch operationType
-                            case 'closeFcn'
-                                context  = varargin{1};
-                                varargin = [{'closeFcnCallFromDockModule'}, varargin(2:end)];
-                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
-
-                            case 'freeMemory'
-                                context  = varargin{1};
-                                varargin = [{operationType}, varargin(2:end)];
-                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
-                                return
-
-                            otherwise
-                                error('UnexpectedCall')
-                        end
-    
                     otherwise
-                        error('UnexpectedCaller')
+                        switch class(callingApp)
+                            % auxApp.winConfig (CONFIG)
+                            case {'auxApp.winConfig', 'auxApp.winConfig_exported'}
+                                switch operationType
+                                    case 'checkDataHubLampStatus'
+                                        updateWarningLampVisibility(app)
+        
+                                    case 'openDevTools'
+                                        dialogBox    = struct('id', 'login',    'label', 'Usuário: ', 'type', 'text');
+                                        dialogBox(2) = struct('id', 'password', 'label', 'Senha: ',   'type', 'password');
+                                        sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'openDevTools', 'Fields', dialogBox))
+        
+                                    case 'simulationModeChanged'
+                                        if app.General.operationMode.Simulation
+                                            Toolbar_SelectFileToReadImageClicked(app)
+        
+                                            % Muda programaticamente o modo p/ ARQUIVOS.
+                                            set(app.Tab1Button, 'Enable', 1, 'Value', 1)                    
+                                            onTabNavigatorButtonPushed(app, struct('Source', app.Tab1Button, 'PreviousValue', false))
+                                        end
+        
+                                    case 'fileSortMethodChanged'
+                                        if ~strcmp(app.file_FileSortMethod.Value, app.General.FILE.sortMethod)
+                                            app.file_FileSortMethod.Value = app.General.FILE.sortMethod;
+                                            onFileSortMethodValueChanged(app)
+                                        end
+        
+                                    case {'PISValueChanged', 'COFINSValueChanged'}
+                                        error('Pendente de implementação! :(')
+        
+                                    otherwise
+                                        error('UnexpectedCall')
+                                end
+        
+                            % auxApp.winECD (ECD)
+                            case {'auxApp.winECD', 'auxApp.winECD_exported'}
+                                switch operationType
+                                    case 'updateTreeView'
+                                        if ~isempty(app.file_Tree.SelectedNodes)
+                                            nodeData = unique([app.file_Tree.SelectedNodes.NodeData]);
+        
+                                            if isequal(nodeData, varargin{1})
+                                                app.file_Metadata.UserData = [];
+                                                onTreeSelectionChanged(app)
+                                            end
+                                        end
+        
+                                    otherwise
+                                        error('UnexpectedCall')
+                                end
+
+                            % DOCKS:OTHERS
+                            case {'auxApp.dockReportLib',      'auxApp.dockReportLib_exported',  ...
+                                  'auxApp.dockECDExport',      'auxApp.dockECDExport_exported',  ...
+                                  'auxApp.dockECDAccount',     'auxApp.dockECDAccount_exported', ...
+                                  'auxApp.dockECDFilter',      'auxApp.dockECDFilter_exported',  ...
+                                  'auxApp.dockECDMemoryUsage', 'auxApp.dockECDMemoryUsage_exported'}
+                                switch operationType
+                                    case 'closeFcnCallFromPopupApp'
+                                        context = varargin{1};
+                                        moduleTag = varargin{2};
+        
+                                        switch context
+                                            case {'mainApp', 'FILE'}
+                                                hApp = app;
+                                                app.popupContainer.Parent.Visible = 0;
+                                            otherwise
+                                                hApp = getAppHandle(app.tabGroupController, context);
+                                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', operationType)
+                                        end
+                                        
+                                        if ~isempty(hApp)
+                                            deleteContextMenu(app.tabGroupController, hApp.UIFigure, moduleTag)
+                                        end
+        
+                                    % auxApp.dockReportLib
+                                    case {'onProjectRestart', 'onProjectLoad', 'onFinalReportFileChanged'}
+                                        context = varargin{1};
+                                        indexes = varargin{2};
+        
+                                        delete(callingApp)
+                                        ipcMainMatlabCallsHandler(app, callingApp, 'closeFcn', varargin{:});
+                                        reportGenerate(app, context, indexes)
+                                        
+                                    % auxApp.dockECDExport
+                                    case 'onExportECD'
+                                        delete(callingApp)
+                                        
+                                        context  = varargin{1};
+                                        varargin = [{operationType}, varargin(2:end)];
+                                        ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
+        
+                                    % auxApp.dockECDAccount
+                                    case 'onAccountEdited'
+                                        context  = varargin{1};
+                                        varargin = [{operationType}, varargin(2:end)];
+                                        ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
+                                        return
+
+                                    % auxApp.dockECDFilter        
+                                    case {'onFilterChanged', 'onTableReadRequired'}
+                                        context  = varargin{1};
+                                        varargin = [{operationType}, varargin(2:end)];
+                                        ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
+                                        return
+
+                                    % auxApp.dockECDMemoryUsage        
+                                    case 'onCacheCleanup'
+                                        context  = varargin{1};
+                                        varargin = [{operationType}, varargin(2:end)];
+                                        ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
+                                        return
+        
+                                    otherwise
+                                        error('UnexpectedCall')
+                                end
+            
+                            otherwise
+                                error('UnexpectedCaller')
+                        end
                 end
 
             catch ME
                 ui.Dialog(app.UIFigure, 'error', getReport(ME));            
             end
-
-            % Caso um app auxiliar esteja em modo DOCK, o progressDialog do
-            % app auxiliar coincide com o do appAnalise. Força-se, portanto, 
-            % a condição abaixo para evitar possível bloqueio da tela.
-            app.progressDialog.Visible = 'hidden';
         end
 
         %-----------------------------------------------------------------%
@@ -404,7 +359,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             switch auxAppName
                 case 'ReportLib'
                     screenWidth  = 460;
-                    screenHeight = 308;
+                    screenHeight = 602;
                 case 'ECDExport'
                     screenWidth  = 460;
                     screenHeight = 404;
@@ -443,29 +398,32 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
     methods (Access = public)
         %-----------------------------------------------------------------%
         function navigateToTab(app, clickedButton)
-            tabNavigatorButtonPushed(app, struct('Source', clickedButton, 'PreviousValue', false))
+            onTabNavigatorButtonPushed(app, struct('Source', clickedButton, 'PreviousValue', false))
         end
 
         %-----------------------------------------------------------------%
         function applyJSCustomizations(app, tabIndex)
-            persistent customizationStatus
-            if isempty(customizationStatus)
-                customizationStatus = zeros(1, numel(app.SubTabGroup.Children), 'logical');
-            end
-
-            if customizationStatus(tabIndex)
+            if app.SubTabGroup.UserData.isTabInitialized(tabIndex)
                 return
             end
+            app.SubTabGroup.UserData.isTabInitialized(tabIndex) = true;
 
-            customizationStatus(tabIndex) = true;
             switch tabIndex
                 case 1
-                    elToModify = {app.file_Tree, app.file_Metadata};
+                    appName = class(app);
+                    elToModify = {
+                        app.file_Tree; 
+                        app.file_Metadata;
+                        app.Tab1Button;
+                        app.Tab2Button;
+                        app.Tab3Button
+                    };
                     ui.CustomizationBase.getElementsDataTag(elToModify);
 
-                    appName = class(app);
                     try
-                        sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', {struct('appName', appName, 'dataTag', elToModify{1}.UserData.id, 'listener', struct('componentName', 'mainApp.file_Tree', 'keyEvents', {{'Delete', 'Backspace'}}))});
+                        sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
+                            struct('appName', appName, 'dataTag', elToModify{1}.UserData.id, 'listener', struct('componentName', 'mainApp.file_Tree', 'keyEvents', {{'Delete', 'Backspace'}})) ...
+                        });
                     catch ME
                         ui.Dialog(app.UIFigure, 'error', getReport(ME));
                     end
@@ -474,6 +432,15 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         ui.TextView.startup(app.jsBackDoor, elToModify{2}, appName);
                     catch ME
                         ui.Dialog(app.UIFigure, 'error', getReport(ME));
+                    end
+
+                    try
+                        sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
+                            struct('appName', appName, 'dataTag', elToModify{3}.UserData.id, 'generation', 1, 'class', 'tab-navigator-button'), ...
+                            struct('appName', appName, 'dataTag', elToModify{4}.UserData.id, 'generation', 1, 'class', 'tab-navigator-button'), ...
+                            struct('appName', appName, 'dataTag', elToModify{5}.UserData.id, 'generation', 1, 'class', 'tab-navigator-button') ...
+                        });
+                    catch
                     end
 
                 otherwise
@@ -497,15 +464,15 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.General_I.fileFolder.tempPath  = tempDir;
             app.General_I.fileFolder.MFilePath = MFilePath;
 
-            if ~ismember(app.General_I.File.input, {'file', 'folder'})
-                app.General_I.File.input = 'file';
+            if ~ismember(app.General_I.FILE.input, {'file', 'folder'})
+                app.General_I.FILE.input = 'file';
             end
 
-            if ~ismember(app.General_I.File.sortMethod, {'CNPJ', 'PERÍODO FISCAL', 'RECEITA FEDERAL'})
-                app.General_I.File.sortMethod = 'CNPJ';
+            if ~ismember(app.General_I.FILE.sortMethod, {'CNPJ', 'PERÍODO FISCAL', 'RECEITA FEDERAL'})
+                app.General_I.FILE.sortMethod = 'CNPJ';
             end
 
-            if ~ismember(app.General_I.File.checkStatus, {'OnlyCache', 'Cache+RealTime', 'RealTime'})
+            if ~ismember(app.General_I.FILE.checkStatus, {'OnlyCache', 'Cache+RealTime', 'RealTime'})
                 app.General_I.File.checkStatus = 'Cache+RealTime';
             end
 
@@ -520,16 +487,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     % A pasta do usuário não é configurável, mas obtida por 
                     % meio de chamada a uiputfile. 
                     app.General_I.fileFolder.userPath = tempDir;
-
-                    % A renderização do plot no MATLAB WebServer, enviando-o à uma 
-                    % sessão do webapp como imagem Base64, é crítica por depender 
-                    % das comunicações WebServer-webapp e WebServer-BaseMapServer. 
-                    % Ao configurar o Basemap como "none", entretanto, elimina-se a 
-                    % necessidade de comunicação com BaseMapServer, além de tornar 
-                    % mais eficiente a comunicação com webapp porque as imagens
-                    % Base64 são menores (uma imagem com Basemap "sattelite" pode 
-                    % ter 500 kB, enquanto uma imagem sem Basemap pode ter 25 kB).
-                    app.General_I.Plot.GeographicAxes.Basemap = 'none';
 
                 otherwise    
                     % Resgata a pasta de trabalho do usuário (configurável).
@@ -551,35 +508,30 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function initializeAppProperties(app)
-            app.projectData = model.projectLib(app, app.rootFolder);
+            app.projectData = model.Project(app, app.rootFolder);
             app.receitaFederalObj = ws.ReceitaFederal();
         end
 
         %-----------------------------------------------------------------%
         function initializeUIComponents(app)
             app.tabGroupController = ui.TabNavigator(app.NavBar, app.TabGroup, app.progressDialog);
-            addComponent(app.tabGroupController, "Built-in", "",                 app.Tab1Button, "AlwaysOn", struct('On', 'OpenFile_32Yellow.png', 'Off', 'OpenFile_32White.png'), matlab.graphics.GraphicsPlaceholder, 1)
-            addComponent(app.tabGroupController, "External", "auxApp.winECD",    app.Tab2Button, "AlwaysOn", struct('On', 'Zoom_32Yellow.png',     'Off', 'Zoom_32White.png'),     app.Tab1Button,                      2)
-            addComponent(app.tabGroupController, "External", "auxApp.winConfig", app.Tab3Button, "AlwaysOn", struct('On', 'Settings_36Yellow.png', 'Off', 'Settings_36White.png'), app.Tab1Button,                      3)
+            addComponent(app.tabGroupController, "Built-in", "",                 app.Tab1Button, "AlwaysOn", struct('On', '', 'Off', ''), matlab.graphics.GraphicsPlaceholder, 1)
+            addComponent(app.tabGroupController, "External", "auxApp.winECD",    app.Tab2Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      2)
+            addComponent(app.tabGroupController, "External", "auxApp.winConfig", app.Tab3Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      3)
+            app.tabGroupController.inlineSVG = true;
 
             addStyle(app.file_Tree, uistyle('Interpreter', 'html'))
         end
 
         %-----------------------------------------------------------------%
         function applyInitialLayout(app)
-            DataHubWarningLamp(app)
-            app.file_FileSortMethod.Value = app.General.File.sortMethod;
+            updateWarningLampVisibility(app)
+            app.file_FileSortMethod.Value = app.General.FILE.sortMethod;
         end
+    end
 
-        %-----------------------------------------------------------------%
-        function DataHubWarningLamp(app)
-            if isfolder(app.General.fileFolder.DataHub_POST)
-                app.DataHubLamp.Visible = 0;
-            else
-                app.DataHubLamp.Visible = 1;
-            end
-        end
 
+    methods (Access = private)
         %-----------------------------------------------------------------%
         function file_ProjectRestart(app, indexes, updateType)
             arguments
@@ -650,7 +602,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 end
             end
 
-            file_TreeSelectionChanged(app)
+            onTreeSelectionChanged(app)
         end
 
         %-----------------------------------------------------------------%
@@ -734,13 +686,19 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
+        % MISCELÂNEAS
+        %-----------------------------------------------------------------%
+        function updateWarningLampVisibility(app)
+            app.DataHubLamp.Visible = ~isfolder(app.General.fileFolder.DataHub_POST);
+        end
+
+        %-----------------------------------------------------------------%
         function updateToolbar(app)
-            context = 'File';
             indexes = file_findSelectedNodeData(app);
 
             nonEmptySelection               = ~isempty(indexes);
             nonScalarSelection              = ~isscalar(indexes);
-            reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(context).generatedFiles.lastHTMLDocFullPath);
+            reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(app.Context).generatedFiles.lastHTMLDocFullPath);
 
             app.tool_ReadFiles.Enable       = nonEmptySelection;
             app.tool_MergeFiles.Enable      = nonEmptySelection && nonScalarSelection;
@@ -762,230 +720,144 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
     end
 
 
-    methods
+    methods (Access = private)
         %-----------------------------------------------------------------%
         % SISTEMA DE GESTÃO DA FISCALIZAÇÃO (eFiscaliza/SEI)
         %-----------------------------------------------------------------%
-        function report_saveProject(app, context, prjName)
-            if isfile(app.projectData.file)
-                [defaultPath, defaultFile] = fileparts(app.projectData.file);
-                defaultName = fullfile(defaultPath, defaultFile);
-            else
-                defaultName = appEngine.util.DefaultFileName(app.General.fileFolder.userPath, 'monitorSPED_ProjectData', -1);
+        function createEFiscalizaObject(app, credentials)
+            if ~isempty(credentials)
+                app.eFiscalizaObj = ws.eFiscaliza(credentials.login, credentials.password);
             end
-            
-            prjFile = ui.Dialog(app.UIFigure, 'uiputfile', '', {'*.mat', 'monitorSPED (*.mat)'}, defaultName);
-            if isempty(prjFile)
-                return
+        end
+
+        %-----------------------------------------------------------------%
+        function reportFetchIssueDetails(app, context, credentials)
+            callingApp = getAppHandle(app.tabGroupController, context);
+            if isempty(callingApp)
+                callingApp = app;
             end
 
-            app.progressDialog.Visible = 'visible';
+            callingApp.progressDialog.Visible = 'visible';
 
+            createEFiscalizaObject(app, credentials)
+            system = app.projectData.modules.(context).ui.system;
+            issue  = app.projectData.modules.(context).ui.issue;
+            [details, msgError] = getOrFetchIssueDetails(app.projectData, system, issue, app.eFiscalizaObj);
+
+            if app ~= callingApp
+                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', 'onFetchIssueDetails', system, issue, details, msgError)
+            end
+
+            callingApp.progressDialog.Visible = 'hidden';
+        end
+
+        %-----------------------------------------------------------------%
+        function reportGenerate(app, context, credentials)
+            callingApp = getAppHandle(app.tabGroupController, context);
+            if isempty(callingApp)
+                callingApp = app;
+            end
+
+            callingApp.progressDialog.Visible = 'visible';
+
+            createEFiscalizaObject(app, credentials)
             try
-                Save(app.projectData, app.ecdObj, context, prjName, prjFile, app.General.Report.outputCompressionMode)
-            catch ME
-                ui.Dialog(app.UIFigure, 'error', ME.message);
-            end
-
-            app.progressDialog.Visible = 'hidden';
-        end
-
-        %-----------------------------------------------------------------%
-        function status = report_checkEFiscalizaIssueId(app, issue)
-            status = (issue > 0) && (issue < inf);
-        end
-
-        %-----------------------------------------------------------------%
-        function report_showIssueDetails(app, context)
-            issueId      = app.projectData.modules.(context).ui.issue;
-            issueDetails = app.projectData.modules.(context).ui.issueDetails;
-
-            if isempty(issueDetails) || issueDetails.issueId ~= issueId
-                msg = sprintf('Não identificada informações acerca da Atividade de Inspeção nº %d', issueId);
-            else
-                dataStruct = struct('group', 'ATIVIDADE DE INSPEÇÃO', 'value', issueDetails);
-                msg = textFormatGUI.struct2PrettyPrintList(dataStruct, 'print -1', '', 'popup');
-            end
-
-            ui.Dialog(app.UIFigure, 'info', msg);
-        end
-
-        %-----------------------------------------------------------------%
-        function reportGeneratorCall(app, context, indexes)
-            hCallingApp = app;
-            if ~strcmp(context, 'File')
-                hSecondaryApp = getAppHandle(app.tabGroupController, context);
-                
-                if ~isempty(hSecondaryApp) && isvalid(hSecondaryApp) && ~hSecondaryApp.isDocked
-                    hCallingApp = hSecondaryApp;
-                end
-            end
-
-            hCallingApp.progressDialog.Visible = 'visible';
-
-            try
-                reportSettings = struct('context',       context,                                          ...
-                                        'system',        app.projectData.modules.(context).ui.system,      ...
-                                        'unit',          app.projectData.modules.(context).ui.unit,        ...
-                                        'issue',         app.projectData.modules.(context).ui.issue,       ...
-                                        'model',         app.projectData.modules.(context).ui.reportModel, ...
-                                        'reportVersion', app.projectData.modules.(context).ui.reportVersion);
-                reportLibConnection.Controller.Run(app, app.projectData, app.ecdObj(indexes), reportSettings, app.General)
-
-                if strcmp(context, 'File')
+                reportLibConnection.Controller.Run(app, callingApp, context)
+                if app == callingApp
                     updateToolbar(app)
                 else
-                    ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', 'generateFinalReport')
+                    ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', 'onReportGenerate')
                 end
-
             catch ME
-                ui.Dialog(hCallingApp.UIFigure, 'error', getReport(ME));
+                ui.Dialog(callingApp.UIFigure, 'error', getReport(ME));
             end
 
-            hCallingApp.progressDialog.Visible = 'hidden';
-        end
-
-        %-------------------------------------------------------------------------%
-        function report_queryIssueDetails(app, credentials, context)
-            app.progressDialog.Visible = 'visible';
-
-            try
-                if ~isempty(credentials)
-                    app.eFiscalizaObj = ws.eFiscaliza(credentials.login, credentials.password);
-                end
-
-                env = strsplit(app.projectData.modules.(context).ui.system);
-                if numel(env) < 2
-                    env = 'PD';
-                else
-                    env = env{2};
-                end
-
-                issue = struct( ...
-                    'type', 'ATIVIDADE DE INSPEÇÃO', ...
-                    'id', app.projectData.modules.(context).ui.issue ...
-                );
-                
-                msg = run(app.eFiscalizaObj, env, 'queryIssue', issue);
-                if isstruct(msg)
-                    app.projectData.modules.(context).ui.issueDetails = msg;
-                else
-                    error(msg)
-                end
-
-            catch ME
-                ui.Dialog(app.UIFigure, 'error', ME.message);
-            end
-
-            report_showIssueDetails(app, context)            
-            app.progressDialog.Visible = 'hidden';
+            callingApp.progressDialog.Visible = 'hidden';
         end
 
         %-----------------------------------------------------------------%
-        function report_uploadInfoController(app, credentials, operation, context)
-            [communicationStatus, communicationMessage] = report_sendHTMLDocToSEIviaEFiscaliza(app, credentials, operation, context);
-            
-            if communicationStatus 
-                if strcmp(app.projectData.modules.(context).ui.system, 'eFiscaliza')
-                    report_sendFilesToSharepoint(app, context)
-                end
+        function reportUploadArtifacts(app, context, credentials, operation)
+            callingApp = getAppHandle(app.tabGroupController, context);
+            if isempty(callingApp)
+                callingApp = app;
+            end
 
-                generatedFilesId = app.projectData.modules.(context).generatedFiles.id;
-                [~, generatedFilesIdIndex] = ismember(generatedFilesId, {app.ecdObj.Hash});
-                if generatedFilesIdIndex
-                    update(app.ecdObj(generatedFilesIdIndex), 'GUI.GeneratedFiles', 'updateFinalReportStatus', app.projectData, context, communicationMessage)
+            callingApp.progressDialog.Visible = 'visible';
+
+            createEFiscalizaObject(app, credentials)
+            [status1, icon1, msg1] = reportUploadToSEI(app, context, operation);
+            ui.Dialog(callingApp.UIFigure, icon1, msg1);
+
+            callingApp.progressDialog.Visible = 'hidden';
+
+            if status1 && strcmp(app.projectData.modules.(context).ui.system, 'eFiscaliza')
+                [status2, msg2] = reportUploadJsonToSharepoint(app);
+
+                if ~status2
+                    ui.Dialog(callingApp.UIFigure, 'error', msg2);
                 end
             end
         end
 
         %-------------------------------------------------------------------------%
-        function [communicationStatus, communicationMessage] = report_sendHTMLDocToSEIviaEFiscaliza(app, credentials, operation, context)
-            app.progressDialog.Visible = 'visible';
-            
+        function [status, icon, msg] = reportUploadToSEI(app, context, operation)
             try
-                if ~isempty(credentials)
-                    app.eFiscalizaObj = ws.eFiscaliza(credentials.login, credentials.password);
-                end
-
                 env = strsplit(app.projectData.modules.(context).ui.system);
-                if numel(env) < 2
+                if isscalar(env)
                     env = 'PD';
                 else
                     env = env{2};
                 end
 
+                system = app.projectData.modules.(context).ui.system;
                 unit = app.projectData.modules.(context).ui.unit;
-
-                issue = struct( ...
+                issue = app.projectData.modules.(context).ui.issue;
+                issueInfo = struct( ...
                     'type', 'ATIVIDADE DE INSPEÇÃO', ...
-                    'id', app.projectData.modules.(context).ui.issue ...
+                    'id', issue ...
                 );
 
                 switch operation
                     case 'uploadDocument'
-                        % O HTML definitivo criado...
-                        fileName = getGeneratedDocumentFileName(app.projectData, '.html', context);
+                        HTMLFile = getGeneratedDocumentFileName(app.projectData, '.html', context);
 
-                        % Identificando o ID do documento a ser criado no
-                        % SEI...
                         [~, modelIdx]   = ismember(app.projectData.modules.(context).ui.reportModel, {app.projectData.report.templates.Name});
                         docType         = app.projectData.report.templates(modelIdx).DocumentType;
                         [~, docTypeIdx] = ismember(docType, {app.General.eFiscaliza.internal.typeIdMapping.type});
 
                         docSpec = app.General.eFiscaliza;
                         docSpec.originId = docSpec.internal.originId;
-                        docSpec.typeId   = app.General.eFiscaliza.internal.typeIdMapping(docTypeIdx).id;
+                        docSpec.typeId = app.General.eFiscaliza.internal.typeIdMapping(docTypeIdx).id;
 
-                        msg = run(app.eFiscalizaObj, env, operation, issue, unit, docSpec, fileName);
-        
+                        response = run(app.eFiscalizaObj, env, operation, issueInfo, unit, docSpec, HTMLFile);
+
                     otherwise
                         error('Unexpected call')
                 end
-                
-                if ~contains(msg, 'Documento cadastrado no SEI', 'IgnoreCase', true)
-                    error(msg)
+
+                if ~contains(response, 'Documento cadastrado no SEI', 'IgnoreCase', true)
+                    error(response)
                 end
 
-                modalWindowIcon      = 'success';
-                communicationMessage = msg;
-                communicationStatus  = true;
+                updateUploadedFiles(app.projectData, context, system, issue, response)
+
+                status = true;
+                icon   = 'success';
+                msg    = response;
 
             catch ME
-                app.eFiscalizaObj    = [];
-
-                modalWindowIcon      = 'error';
-                communicationMessage = ME.message;
-                communicationStatus  = false;
+                app.eFiscalizaObj = [];
+                
+                status = false;
+                icon   = 'error';
+                msg    = ME.message;
             end
-
-            ui.Dialog(app.UIFigure, modalWindowIcon, communicationMessage);
-            app.progressDialog.Visible = 'hidden';
         end
 
         %------------------------------------------------------------------------%
-        function report_sendFilesToSharepoint(app, context)
-            % Evita subir por engano, quando no ambiente de desenvolvimento,
-            % de arquivos na pasta "POST".
-            try
-                if ~isdeployed()
-                    error('ForceDebugMode')
-                end
-                sharepointFolder = app.General.fileFolder.DataHub_POST;
-            catch
-                sharepointFolder = app.General.fileFolder.userPath;
-            end
-
-            try
-                sharepointFile = getGeneratedDocumentFileName(app.projectData, '.json', context);
-                copyfile(sharepointFile, sharepointFolder, 'f');
-            catch ME
-                ui.Dialog(app.UIFigure, 'error', getReport(ME))
-            end
-        end
-
-        %-----------------------------------------------------------------%
-        function inputArguments = auxAppInputArguments(app, auxAppTag)
-            inputArguments = {app};
+        function [status, msg] = reportUploadJsonToSharepoint(app)
+            JSONFile = getGeneratedDocumentFileName(app.projectData, '.json', context);
+            [status, msg] = copyfile(JSONFile, app.General.fileFolder.DataHub_POST, 'f');
         end
     end
     
@@ -1013,7 +885,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             end
 
             msgQuestion = '';
-            if CheckIfUpdateNeeded(app.projectData, app.ecdObj)
+            if checkIfUpdateNeeded(app.projectData, app.ecdObj)
                 msgQuestion = sprintf([ ...
                     'O projeto "%s" foi modificado (nome, arquivo de saída, ' ...
                     'lista de arquivos de entrada ou tabelas de anotação das ' ...
@@ -1039,34 +911,34 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             
         end
 
-        % Value changed function: Tab1Button, Tab2Button, Tab3Button
-        function tabNavigatorButtonPushed(app, event)
-
-            clickedButton  = event.Source;
-            auxAppTag      = clickedButton.Tag;
-
-            inputArguments = auxAppInputArguments(app, auxAppTag);
-            openModule(app.tabGroupController, event.Source, event.PreviousValue, app.General, inputArguments{:})
-            
-        end
-
-        % Image clicked function: AppInfo, FigurePosition
-        function menuImageClicked(app, event)
+        % Callback function: AppInfo, FigurePosition, Tab1Button, 
+        % ...and 2 other components
+        function onTabNavigatorButtonPushed(app, event)
 
             switch event.Source
+                case {app.Tab1Button, app.Tab2Button, app.Tab3Button}
+                    openModule(app.tabGroupController, event.Source, event.PreviousValue, app.General, app)
+
                 case app.FigurePosition
                     app.UIFigure.Position(3:4) = class.Constants.windowSize;
                     appEngine.util.setWindowPosition(app.UIFigure)
+                    focus(findobj(app.NavBar.Children, 'Type', 'uistatebutton', 'Value', true))
 
                 case app.AppInfo
-                    appInfo = util.HtmlTextGenerator.AppInfo(app.General, app.rootFolder, app.executionMode, app.renderCount, "popup");
+                    appInfo = util.HtmlTextGenerator.AppInfo( ...
+                        app.General, ...
+                        app.rootFolder, ...
+                        app.executionMode, ...
+                        app.renderCount, ...
+                        "popup" ...
+                    );
                     ui.Dialog(app.UIFigure, 'info', appInfo);
             end
-
+            
         end
 
         % Selection changed function: file_Tree
-        function file_TreeSelectionChanged(app, event)
+        function onTreeSelectionChanged(app, event)
             
             indexes = file_findSelectedNodeData(app);
             
@@ -1087,7 +959,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         % Value changed function: file_FileSortMethod
-        function file_FileSortMethodValueChanged(app, event)
+        function onFileSortMethodValueChanged(app, event)
             
             indexes = file_findSelectedNodeData(app);
             file_ProjectRestart(app, indexes, 'FilesReordered')
@@ -1095,7 +967,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         % Image clicked function: tool_SelectFilesToRead
-        function toolbar_SelectFileToReadImageClicked(app, event)
+        function Toolbar_SelectFileToReadImageClicked(app, event)
 
             d = [];
             fileFullName = {};
@@ -1126,7 +998,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 end
 
             else
-                switch app.General.File.input
+                switch app.General.FILE.input
                     case 'file'
                         [~, filePath, ~, fileName] = ui.Dialog( ...
                             app.UIFigure, ...
@@ -1202,15 +1074,17 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         % Image clicked function: tool_ReadFiles
-        function toolbar_ReadFilesImageClicked(app, event)
+        function Toolbar_ReadFilesImageClicked(app, event)
             
             d = ui.Dialog(app.UIFigure, "progressdlg", textFormatGUI.HTMLParagraph('Em andamento...'));
 
             switch event.Source
                 case app.tool_ReadFiles
                     indexes = file_findSelectedNodeData(app);
+
                 case app.tool_GenerateReport
                     indexes = event.Indexes;
+
                 otherwise
                     error('UnexpectedCaller')
             end
@@ -1218,7 +1092,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             warnings = {};
             for ii = 1:numel(indexes)
                 d.Message = textFormatGUI.HTMLParagraph(sprintf('Em andamento a leitura dos registros do arquivo %d de %d:<br>• <b>%s</b>', ii, numel(indexes), app.ecdObj(indexes(ii)).FileName));
-                parseTableAndAddToCache(app.ecdObj(indexes(ii)))
+                parseTableAndAddToCache(app.ecdObj(indexes(ii)), {'all'}, app.General)
 
                 if ~isempty(app.ecdObj(indexes(ii)).GUI.warnings)
                     warnings{end+1} = sprintf('• <b>%s</b><br>%s', app.ecdObj(indexes(ii)).FileName, strjoin(app.ecdObj(indexes(ii)).GUI.warnings, '<br>'));
@@ -1236,7 +1110,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         % Callback function: contextmenu_merge, tool_MergeFiles
-        function toolbar_MergeFilesImageClicked(app, event)
+        function Toolbar_MergeFilesImageClicked(app, event)
 
             indexes = file_findSelectedNodeData(app);
 
@@ -1264,7 +1138,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         % Image clicked function: tool_CheckRFB
-        function toolbar_CheckStatusImageClicked(app, event)
+        function Toolbar_CheckStatusImageClicked(app, event)
             
             indexes = file_findSelectedNodeData(app);
 
@@ -1276,7 +1150,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 app.progressDialog.Visible = 'visible';
 
-                checkFileFlag = checkFileStatus(app.ecdObj(indexes), app.receitaFederalObj, app.General.File.encodingList, app.General.File.checkStatus);
+                checkFileFlag = checkFileStatus(app.ecdObj(indexes), app.receitaFederalObj, app.General.FILE.encodingList, app.General.FILE.checkStatus);
                 if checkFileFlag
                     file_ProjectRestart(app, indexes, 'FileStatusChecked')
                 end
@@ -1287,7 +1161,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         % Image clicked function: tool_GenerateReport
-        function toolbar_GenerateReportImageClicked(app, event)
+        function Toolbar_GenerateReportImageClicked(app, event)
             
             indexes = file_findSelectedNodeData(app);
 
@@ -1304,17 +1178,16 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     end
                 end
 
-                context = 'File';
-                ipcMainMatlabOpenPopupApp(app, app, 'ReportLib', context, indexes)
+                ipcMainMatlabOpenPopupApp(app, app, 'ReportLib', obj.Context, indexes)
             end
 
         end
 
         % Image clicked function: tool_UploadFinalFile
-        function toolbar_UploadFinalFileImageClicked(app, event)
+        function Toolbar_UploadFinalFileImageClicked(app, event)
             
             % <VALIDAÇÕES>
-            context = 'File';
+            context = app.Context;
             lastHTMLDocFullPath = getGeneratedDocumentFileName(app.projectData, '.html', context);
 
             msg = '';
@@ -1344,14 +1217,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 dialogBox(2) = struct('id', 'password', 'label', 'Senha: ',   'type', 'password');
                 sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'eFiscalizaSignInPage', 'Fields', dialogBox, 'Context', context))
             else
-                report_uploadInfoController(app, [], 'uploadDocument', context)
+                reportUploadArtifacts(app, [], 'uploadDocument', context)
             end
             % </PROCESSO>
 
         end
 
         % Image clicked function: Image
-        function toolbar_ShowLegendImageClicked(app, event)
+        function Toolbar_ShowLegendImageClicked(app, event)
             
             msg = ['Em relação ao conteúdo:<br>' ...
                    '🚫 Escrituração não possui lançamentos contábeis<br>' ...
@@ -1369,7 +1242,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         % Menu selected function: contextmenu_del
-        function contextMenu_delTreeNodeSelected(app, event)
+        function ContextMenu_DeleteSelectedTreeNode(app, event)
             
             indexes = file_findSelectedNodeData(app);
 
@@ -1379,6 +1252,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 
                 file_ProjectRestart(app, [], 'FileListChanged:Del')
             end
+
+        end
+
+        % Image clicked function: tool_OpenPopupProject
+        function tool_OpenPopupProjectImageClicked(app, event)
+
+            ipcMainMatlabOpenPopupApp(app, app, 'ReportLib', app.Context)
 
         end
     end
@@ -1436,7 +1316,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create file_toolGrid
             app.file_toolGrid = uigridlayout(app.file_Grid);
-            app.file_toolGrid.ColumnWidth = {22, 5, 22, 22, 5, 22, '1x', 22, 22};
+            app.file_toolGrid.ColumnWidth = {22, 5, 22, 22, 5, 22, '1x', 22, 22, 22};
             app.file_toolGrid.RowHeight = {4, 17, 2};
             app.file_toolGrid.ColumnSpacing = 5;
             app.file_toolGrid.RowSpacing = 0;
@@ -1448,7 +1328,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % Create tool_SelectFilesToRead
             app.tool_SelectFilesToRead = uiimage(app.file_toolGrid);
             app.tool_SelectFilesToRead.ScaleMethod = 'none';
-            app.tool_SelectFilesToRead.ImageClickedFcn = createCallbackFcn(app, @toolbar_SelectFileToReadImageClicked, true);
+            app.tool_SelectFilesToRead.ImageClickedFcn = createCallbackFcn(app, @Toolbar_SelectFileToReadImageClicked, true);
             app.tool_SelectFilesToRead.Tooltip = {'Seleciona arquivos'};
             app.tool_SelectFilesToRead.Layout.Row = 2;
             app.tool_SelectFilesToRead.Layout.Column = 1;
@@ -1465,7 +1345,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % Create tool_ReadFiles
             app.tool_ReadFiles = uiimage(app.file_toolGrid);
             app.tool_ReadFiles.ScaleMethod = 'none';
-            app.tool_ReadFiles.ImageClickedFcn = createCallbackFcn(app, @toolbar_ReadFilesImageClicked, true);
+            app.tool_ReadFiles.ImageClickedFcn = createCallbackFcn(app, @Toolbar_ReadFilesImageClicked, true);
             app.tool_ReadFiles.Enable = 'off';
             app.tool_ReadFiles.Tooltip = {'Leitura de todos os registros ordinários'};
             app.tool_ReadFiles.Layout.Row = 2;
@@ -1475,7 +1355,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % Create tool_MergeFiles
             app.tool_MergeFiles = uiimage(app.file_toolGrid);
             app.tool_MergeFiles.ScaleMethod = 'none';
-            app.tool_MergeFiles.ImageClickedFcn = createCallbackFcn(app, @toolbar_MergeFilesImageClicked, true);
+            app.tool_MergeFiles.ImageClickedFcn = createCallbackFcn(app, @Toolbar_MergeFilesImageClicked, true);
             app.tool_MergeFiles.Enable = 'off';
             app.tool_MergeFiles.Tooltip = {'Mescla informação contábil'};
             app.tool_MergeFiles.Layout.Row = [1 3];
@@ -1492,30 +1372,39 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create tool_CheckRFB
             app.tool_CheckRFB = uiimage(app.file_toolGrid);
-            app.tool_CheckRFB.ImageClickedFcn = createCallbackFcn(app, @toolbar_CheckStatusImageClicked, true);
+            app.tool_CheckRFB.ImageClickedFcn = createCallbackFcn(app, @Toolbar_CheckStatusImageClicked, true);
             app.tool_CheckRFB.Enable = 'off';
             app.tool_CheckRFB.Tooltip = {'Consulta à Receita Federal'};
             app.tool_CheckRFB.Layout.Row = [1 3];
             app.tool_CheckRFB.Layout.Column = 6;
             app.tool_CheckRFB.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'receita-federal-novo-logo-png_seeklogo-203693.png');
 
+            % Create tool_OpenPopupProject
+            app.tool_OpenPopupProject = uiimage(app.file_toolGrid);
+            app.tool_OpenPopupProject.ScaleMethod = 'none';
+            app.tool_OpenPopupProject.ImageClickedFcn = createCallbackFcn(app, @tool_OpenPopupProjectImageClicked, true);
+            app.tool_OpenPopupProject.Tooltip = {'Projeto (fiscalizada, arquivo de backup etc)'};
+            app.tool_OpenPopupProject.Layout.Row = [1 3];
+            app.tool_OpenPopupProject.Layout.Column = 8;
+            app.tool_OpenPopupProject.ImageSource = 'organization-20px-black.svg';
+
             % Create tool_GenerateReport
             app.tool_GenerateReport = uiimage(app.file_toolGrid);
             app.tool_GenerateReport.ScaleMethod = 'none';
-            app.tool_GenerateReport.ImageClickedFcn = createCallbackFcn(app, @toolbar_GenerateReportImageClicked, true);
+            app.tool_GenerateReport.ImageClickedFcn = createCallbackFcn(app, @Toolbar_GenerateReportImageClicked, true);
             app.tool_GenerateReport.Enable = 'off';
             app.tool_GenerateReport.Tooltip = {'Gera relatório'; '(estado escrituração na Receita Federal)'};
-            app.tool_GenerateReport.Layout.Row = 2;
-            app.tool_GenerateReport.Layout.Column = 8;
+            app.tool_GenerateReport.Layout.Row = [1 3];
+            app.tool_GenerateReport.Layout.Column = 9;
             app.tool_GenerateReport.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Publish_HTML_16.png');
 
             % Create tool_UploadFinalFile
             app.tool_UploadFinalFile = uiimage(app.file_toolGrid);
-            app.tool_UploadFinalFile.ImageClickedFcn = createCallbackFcn(app, @toolbar_UploadFinalFileImageClicked, true);
+            app.tool_UploadFinalFile.ImageClickedFcn = createCallbackFcn(app, @Toolbar_UploadFinalFileImageClicked, true);
             app.tool_UploadFinalFile.Enable = 'off';
             app.tool_UploadFinalFile.Tooltip = {'Upload relatório'};
             app.tool_UploadFinalFile.Layout.Row = 2;
-            app.tool_UploadFinalFile.Layout.Column = 9;
+            app.tool_UploadFinalFile.Layout.Column = 10;
             app.tool_UploadFinalFile.ImageSource = 'Up_24.png';
 
             % Create SubTabGroup
@@ -1552,7 +1441,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % Create file_FileSortMethod
             app.file_FileSortMethod = uidropdown(app.SubGrid1);
             app.file_FileSortMethod.Items = {'CNPJ', 'PERÍODO FISCAL', 'RECEITA FEDERAL'};
-            app.file_FileSortMethod.ValueChangedFcn = createCallbackFcn(app, @file_FileSortMethodValueChanged, true);
+            app.file_FileSortMethod.ValueChangedFcn = createCallbackFcn(app, @onFileSortMethodValueChanged, true);
             app.file_FileSortMethod.FontSize = 10;
             app.file_FileSortMethod.BackgroundColor = [0.9804 0.9804 0.9804];
             app.file_FileSortMethod.Layout.Row = 2;
@@ -1569,7 +1458,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % Create Image
             app.Image = uiimage(app.SubGrid1);
             app.Image.ScaleMethod = 'none';
-            app.Image.ImageClickedFcn = createCallbackFcn(app, @toolbar_ShowLegendImageClicked, true);
+            app.Image.ImageClickedFcn = createCallbackFcn(app, @Toolbar_ShowLegendImageClicked, true);
             app.Image.Tooltip = {'Legenda de símbolos'};
             app.Image.Layout.Row = 2;
             app.Image.Layout.Column = 4;
@@ -1588,7 +1477,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % Create file_Tree
             app.file_Tree = uitree(app.file_Grid);
             app.file_Tree.Multiselect = 'on';
-            app.file_Tree.SelectionChangedFcn = createCallbackFcn(app, @file_TreeSelectionChanged, true);
+            app.file_Tree.SelectionChangedFcn = createCallbackFcn(app, @onTreeSelectionChanged, true);
             app.file_Tree.FontSize = 11;
             app.file_Tree.Layout.Row = 3;
             app.file_Tree.Layout.Column = [2 3];
@@ -1636,11 +1525,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create Tab1Button
             app.Tab1Button = uibutton(app.NavBar, 'state');
-            app.Tab1Button.ValueChangedFcn = createCallbackFcn(app, @tabNavigatorButtonPushed, true);
+            app.Tab1Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.Tab1Button.Tag = 'FILE';
             app.Tab1Button.Tooltip = {'Leitura de arquivos'};
-            app.Tab1Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'OpenFile_32Yellow.png');
-            app.Tab1Button.IconAlignment = 'top';
+            app.Tab1Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'folder-active-24px-yellow.svg');
             app.Tab1Button.Text = '';
             app.Tab1Button.BackgroundColor = [0.2 0.2 0.2];
             app.Tab1Button.FontSize = 11;
@@ -1650,11 +1538,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create Tab2Button
             app.Tab2Button = uibutton(app.NavBar, 'state');
-            app.Tab2Button.ValueChangedFcn = createCallbackFcn(app, @tabNavigatorButtonPushed, true);
+            app.Tab2Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.Tab2Button.Tag = 'ECD';
             app.Tab2Button.Tooltip = {'Escrituração Contábil Digital'};
-            app.Tab2Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'Zoom_32White.png');
-            app.Tab2Button.IconAlignment = 'top';
+            app.Tab2Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'graph-24px-white.svg');
             app.Tab2Button.Text = '';
             app.Tab2Button.BackgroundColor = [0.2 0.2 0.2];
             app.Tab2Button.FontSize = 11;
@@ -1671,11 +1558,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create Tab3Button
             app.Tab3Button = uibutton(app.NavBar, 'state');
-            app.Tab3Button.ValueChangedFcn = createCallbackFcn(app, @tabNavigatorButtonPushed, true);
+            app.Tab3Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.Tab3Button.Tag = 'CONFIG';
             app.Tab3Button.Tooltip = {'Configurações gerais'};
-            app.Tab3Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'Settings_36White.png');
-            app.Tab3Button.IconAlignment = 'top';
+            app.Tab3Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'gear-24px-white.svg');
             app.Tab3Button.Text = '';
             app.Tab3Button.BackgroundColor = [0.2 0.2 0.2];
             app.Tab3Button.FontSize = 11;
@@ -1697,20 +1583,22 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create FigurePosition
             app.FigurePosition = uiimage(app.NavBar);
-            app.FigurePosition.ImageClickedFcn = createCallbackFcn(app, @menuImageClicked, true);
+            app.FigurePosition.ScaleMethod = 'none';
+            app.FigurePosition.ImageClickedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.FigurePosition.Visible = 'off';
             app.FigurePosition.Tooltip = {'Reposiciona janela'};
             app.FigurePosition.Layout.Row = 3;
             app.FigurePosition.Layout.Column = 12;
-            app.FigurePosition.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'layout1_32White.png');
+            app.FigurePosition.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'screen-normal-24px-white.svg');
 
             % Create AppInfo
             app.AppInfo = uiimage(app.NavBar);
-            app.AppInfo.ImageClickedFcn = createCallbackFcn(app, @menuImageClicked, true);
+            app.AppInfo.ScaleMethod = 'none';
+            app.AppInfo.ImageClickedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.AppInfo.Tooltip = {'Informações gerais'};
             app.AppInfo.Layout.Row = 3;
             app.AppInfo.Layout.Column = 13;
-            app.AppInfo.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Dots_32White.png');
+            app.AppInfo.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'kebab-vertical-24px-white.svg');
 
             % Create ContextMenu
             app.ContextMenu = uicontextmenu(app.UIFigure);
@@ -1718,13 +1606,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create contextmenu_merge
             app.contextmenu_merge = uimenu(app.ContextMenu);
-            app.contextmenu_merge.MenuSelectedFcn = createCallbackFcn(app, @toolbar_MergeFilesImageClicked, true);
+            app.contextmenu_merge.MenuSelectedFcn = createCallbackFcn(app, @Toolbar_MergeFilesImageClicked, true);
             app.contextmenu_merge.Enable = 'off';
             app.contextmenu_merge.Text = '🔀 Mesclar';
 
             % Create contextmenu_del
             app.contextmenu_del = uimenu(app.ContextMenu);
-            app.contextmenu_del.MenuSelectedFcn = createCallbackFcn(app, @contextMenu_delTreeNodeSelected, true);
+            app.contextmenu_del.MenuSelectedFcn = createCallbackFcn(app, @ContextMenu_DeleteSelectedTreeNode, true);
             app.contextmenu_del.Enable = 'off';
             app.contextmenu_del.Text = '❌ Excluir';
 
