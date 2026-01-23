@@ -22,10 +22,11 @@ classdef (Abstract) Variable
         %-----------------------------------------------------------------%
         function fieldValue = GeneralSettings(reportInfo, fieldName, varargin)
             projectData     = reportInfo.Project;
+            context         = reportInfo.Context;
             generalSettings = reportInfo.Settings;
 
             switch fieldName
-                case {'File+ReportTemplate', 'ECD+ReportTemplate'}
+                case {'FILE+ReportTemplate', 'ECD+ReportTemplate'}
                     fieldNames = strsplit(fieldName, '+');
                     fieldValue = sprintf([ ...
                         '<span style=\"display: block; margin: 10px; margin-bottom: 20px; ' ...
@@ -39,7 +40,7 @@ classdef (Abstract) Variable
                         'e &#x231B; (período fiscal não anual)</span>' ...
                         ], fieldNames{1}, reportLibConnection.Variable.GeneralSettings(reportInfo, fieldNames{1}), reportLibConnection.Variable.GeneralSettings(reportInfo, 'ReportTemplate'));
 
-                case {'File', 'ECD'}
+                case {'FILE', 'ECD'}
                     fieldValue = jsonencode(generalSettings.(fieldName));
 
                 case 'ReportTemplate'
@@ -56,23 +57,23 @@ classdef (Abstract) Variable
                       'Lista de Fiscais';
                       'Processo SEI'}
 
-                    context = varargin{1};
+                    issueDetails = getOrFetchIssueDetails(projectData, projectData.modules.(context).ui.system, projectData.modules.(context).ui.issue, reportInfo.App.eFiscalizaObj);
 
-                    if ~isempty(projectData.modules.(context).ui.issueDetails)
+                    if ~isempty(issueDetails)
                         switch fieldName
                             case 'Solicitação de Inspeção'
-                                fieldValue = projectData.modules.(context).ui.issueDetails.issueTree.solicitacao;
+                                fieldValue = issueDetails.issueTree.solicitacao;
                             case 'Ação de Inspeção'
-                                fieldValue = projectData.modules.(context).ui.issueDetails.issueTree.acao;
+                                fieldValue = issueDetails.issueTree.acao;
                             case 'Atividade de Inspeção'
-                                fieldValue = projectData.modules.(context).ui.issueDetails.issueTree.atividade;
+                                fieldValue = issueDetails.issueTree.atividade;
                             case 'Unidade Demandante'
-                                issueCode  = projectData.modules.(context).ui.issueDetails.issueTree.solicitacao; % 'SOL_GIDS_2024_0002'
+                                issueCode  = issueDetails.issueTree.solicitacao; % 'SOL_GIDS_2024_0002'
                                 fieldValue = char(regexp(issueCode, '^SOL_([^_]+)_', 'tokens', 'once'));
                             case 'Unidade Executante'
-                                fieldValue = projectData.modules.(context).ui.issueDetails.unit;
+                                fieldValue = issueDetails.unit;
                             case 'Sede da Unidade Executante'
-                                unit = projectData.modules.(context).ui.issueDetails.unit;
+                                unit = issueDetails.unit;
                                 unitIndex = find(strcmp({generalSettings.eFiscaliza.defaultValues.unitCityMapping.unit}, unit), 1);
                                 if ~isempty(unitIndex)
                                     fieldValue = generalSettings.eFiscaliza.defaultValues.unitCityMapping(unitIndex).city;
@@ -80,18 +81,18 @@ classdef (Abstract) Variable
                                     fieldValue = '';
                                 end
                             case 'Descrição da Atividade de Inspeção'
-                                fieldValue = projectData.modules.(context).ui.issueDetails.description;
+                                fieldValue = issueDetails.description;
                             case 'Período Previsto da Fiscalização'
-                                fieldValue = projectData.modules.(context).ui.issueDetails.period;
+                                fieldValue = issueDetails.period;
                             case 'Lista de Fiscais'
-                                fiscais = projectData.modules.(context).ui.issueDetails.fiscais;
+                                fiscais = issueDetails.fiscais;
                                 if isscalar(fiscais)
                                     fieldValue = char(fiscais);
                                 else
                                     fieldValue = strjoin(strjoin(fiscais(1:end-1), ', '), fiscais(end), ' e ');
                                 end
                             case 'Processo SEI'
-                                fieldValue = projectData.modules.(context).ui.issueDetails.sei;
+                                fieldValue = issueDetails.sei;
                         end
                     end
 

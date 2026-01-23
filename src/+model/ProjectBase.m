@@ -31,7 +31,22 @@ classdef (Abstract) ProjectBase
         end
 
         %-----------------------------------------------------------------%
-        function prjHash = computeProjectHash(prjName, prjFile, ecdObj, issueDetails, entityDetails)
+        function hash = computeUploadedFileHash(system, issue, status)
+            hash = Hash.sha1(strjoin({system, num2str(issue), status}, ' - '));
+        end
+
+        %-----------------------------------------------------------------%
+        function hash = computeReportFileInventoryHash(ecdObj)
+            hash = strjoin(sort({ecdObj.Hash}), ' - ');
+        end
+
+        %-----------------------------------------------------------------%
+        function hash = computeReportAnalysisResultsHash(ecdObj)
+            hash = model.ProjectBase.computeProjectHash('', '', ecdObj, [], []);
+        end
+
+        %-----------------------------------------------------------------%
+        function hash = computeProjectHash(prjName, prjFile, ecdObj, issueDetails, entityDetails)
             hashList = sort({ecdObj.Hash});
 
             annotationTable = [];
@@ -49,7 +64,7 @@ classdef (Abstract) ProjectBase
                 annotationTable = sortrows(annotationTable, 'COD_CTA');
             end
 
-            prjHash = Hash.sha1(sprintf('%s - %s - %s - %s - %s - %s', prjName, prjFile, strjoin(hashList, ' - '), jsonencode(annotationTable), jsonencode(issueDetails), jsonencode(entityDetails)));
+            hash = Hash.sha1(sprintf('%s - %s - %s - %s - %s - %s', prjName, prjFile, strjoin(hashList, ' - '), jsonencode(annotationTable), jsonencode(issueDetails), jsonencode(entityDetails)));
         end
     end
     

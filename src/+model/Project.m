@@ -28,61 +28,16 @@ classdef Project < handle
         function obj = Project(mainApp, rootFolder)
             obj.mainApp = mainApp;
             obj.rootFolder = rootFolder;
-            
             obj.inss = model.ProjectBase.readInssReferenceData(rootFolder);
-            contextInitialization(obj, {'FILE', 'ECD'}, mainApp.General)
+            restart(obj)
         end
 
         %-----------------------------------------------------------------%
-        function contextInitialization(obj, contextList, generalSettings)
-            % O "id", do "generatedFiles", é a lista ordenada de "hashs" dos registros 
-            % que compõem "inspectedProducts".
-
-            obj.name = '';
-            obj.file = '';
-            obj.hash = '';
-
-            for ii = 1:numel(contextList)
-                context = contextList{ii};
-                obj.modules.(context) = struct( ...
-                    'annotationTable', [], ...
-                    'generatedFiles', struct( ...
-                        'id', '', ...
-                        'rawFiles', {{}}, ...
-                        'lastHTMLDocFullPath', '', ...
-                        'lastJSONFullPath', '', ...
-                        'lastTableFullPath', '', ...
-                        'lastZIPFullPath', '' ...
-                    ), ...
-                    'uploadedFiles', struct( ...
-                        'hash', {}, ...
-                        'system', {}, ...
-                        'issue', {}, ...
-                        'status', {}, ...
-                        'timestamp', {} ...
-                    ), ...
-                    'ui', struct( ...
-                        'system', '', ...
-                        'unit',   '',  ...
-                        'issue',  -1,  ...
-                        'templates', {{}}, ...
-                        'reportModel', '',  ...
-                        'reportVersion', 'Preliminar', ...
-                        'entityTypes', {{}},  ...
-                        'entity', struct( ...
-                            'type', '', ...
-                            'name', '', ...
-                            'id',   '', ...
-                            'status', false ...
-                        ) ...
-                    ) ...
-                );
-
-                obj.modules.(context).ui.entityTypes = generalSettings.ui.typeOfEntity.options;
-                obj.modules.(context).ui.entity.type = generalSettings.ui.typeOfEntity.default;
-            end
-
-            ReadReportTemplates(obj, obj.rootFolder)
+        % ## LIFECYCLE MANAGEMENT ##
+        %-----------------------------------------------------------------%
+        function restart(obj, context)
+            contextList = {'FILE', 'ECD'};
+            contextInitialization(obj, contextList, obj.mainApp.General)
         end
 
         %-----------------------------------------------------------------%
@@ -96,20 +51,19 @@ classdef Project < handle
         end
 
         %-----------------------------------------------------------------%
-        % ## SAVE ##
-        %-----------------------------------------------------------------%
-        function save(obj, ecdObj, prjName, prjFile, outputFileCompressionMode)
+        function save(obj, context, prjName, prjFile, outputFileCompressionMode, ecdObj)
             arguments
                 obj
-                ecdObj
+                context (1,:) char {mustBeMember(context, {'FILE', 'ECD'})}
                 prjName
                 prjFile
                 outputFileCompressionMode
+                ecdObj
             end
 
             source    = class.Constants.appName;
             type      = 'ProjectData';
-            version   = 2;
+            version   = 1;
             userData  = [];
 
             prjHash  = model.ProjectBase.computeProjectHash(prjName, prjFile, ecdObj, obj.issueDetails, obj.entityDetails);
@@ -135,27 +89,24 @@ classdef Project < handle
         end
 
         %-----------------------------------------------------------------%
-        % ## LOAD ##
-        %-----------------------------------------------------------------%
-        function [ecdObj, msg] = load(obj, ecdObj, fileName, generalSettings)
-            % Em 10/12/2025, a versão 1 do projeto contempla instâncias das 
-            % classes model.ECD e model.projectLib. Ao ler um arquivo .mat, 
+        function [ecdObj, msg] = load(obj, context, fileName, generalSettings, ecdObj)
+            arguments
+                obj
+                context (1,:) char {mustBeMember(context, {'FILE', 'ECD'})}
+                fileName
+                generalSettings
+                ecdObj
+            end
+
+            % Em 23/01/2026, a versão 1 do projeto contempla instâncias das 
+            % classes model.ECD e model.Project. Ao ler um arquivo .mat, 
             % usando função "load", o MATLAB realiza validações simples, como
             % adicionar novas propriedades (com valores padrão) ou remover 
             % outras que não existem mais (independentemente do seu conteúdo). 
 
-            % A seguir lista com principais propriedades de cada classe.
-            % • model.ECD
-            %   "FileName", "FileFullName", "Size", "Hash", "Encoding", "EncodingInfo", 
-            %   "Content", "Layout", "Table", "CompanyName", "CompanyId", "CompanyInfo", 
-            %   "State", "Period", "PeriodMerged", "Sources" e "GUI".            
-            % • model.projectLib
-            %   "name", "file", "report", "modules" e "INSS".
-
-            % A alteração da forma de organização da informação no app pode 
-            % demandar a criação de outras versões (2, 3...) do arquivo de 
-            % projeto (.mat), o que deve vir acompanhado de parsers para manter 
-            % compatibilidade, caso viável.
+            % Foi mantido, por compatibilidade, "context" como argumento de 
+            % entrada, viabilizando uso do mesmo módulo auxApp.dockReportLib
+            % em vários apps (monitorSPED, SCH etc).
 
             try
                 required = {'source', 'version', 'variables'};
@@ -167,58 +118,75 @@ classdef Project < handle
                 
                 prjData = load(fileName, '-mat', required{:});
                 
-                if ~strcmp(class.Constants.appName, source)
-                    error('File generated by a different application. Expected: %s. Found: %s.', class.Constants.appName, appName)
+                if ~strcmp(class.Constants.appName, prjData.source)
+                    error('File generated by a different application. Expected: %s. Found: %s.', class.Constants.appName, prjData.source)
                 end
     
                 switch prjData.version
                     case 1
-                        obj.name = prjData.name;
+                        restart(obj)
+
+                        obj.name = prjData.variables.name;
                         obj.file = fileName;
-                        obj.hash = prjData.hash;
+                        obj.hash = prjData.variables.hash;
+
+                        contextList = {'FILE', 'ECD'};
+                        for ii = 1:numel(contextList)
+                            context = contextList{ii};
+
+                            if isfile(prjData.variables.modules.(context).generatedFiles.lastZIPFullPath)
+                                try
+                                    unzipFiles = unzip(prjData.variables.modules.(context).generatedFiles.lastZIPFullPath, generalSettings.fileFolder.tempPath);
+                                    for jj = 1:numel(unzipFiles)
+                                        [~, ~, unzipFileExt] = fileparts(unzipFiles{jj});
     
-                        context = prjData.context;
-
-                        if isfile(prjData.generatedFiles.lastZIPFullPath)
-                            try
-                                unzipFiles = unzip(prjData.generatedFiles.lastZIPFullPath, generalSettings.fileFolder.tempPath);
-                                for ii = 1:numel(unzipFiles)
-                                    [~, ~, unzipFileExt] = fileparts(unzipFiles{ii});
-
-                                    switch lower(unzipFileExt)
-                                        case '.html'
-                                            obj.modules.(context).generatedFiles.lastHTMLDocFullPath = unzipFiles{ii};
-                                        case '.json'
-                                            obj.modules.(context).generatedFiles.lastTableFullPath   = unzipFiles{ii};
+                                        switch lower(unzipFileExt)
+                                            case '.html'
+                                                obj.modules.(context).generatedFiles.lastHTMLDocFullPath = unzipFiles{jj};
+                                            case '.json'
+                                                obj.modules.(context).generatedFiles.lastJSONFullPath    = unzipFiles{jj};
+                                            case '.xlsx'
+                                                obj.modules.(context).generatedFiles.lastTableFullPath   = unzipFiles{jj};
+                                        end
                                     end
+                                    
+                                    obj.modules.(context).generatedFiles.id              = prjData.variables.modules.(context).generatedFiles.id;
+                                    obj.modules.(context).generatedFiles.lastZIPFullPath = prjData.variables.modules.(context).generatedFiles.lastZIPFullPath;
+                                catch 
                                 end
-                                
-                                obj.modules.(context).generatedFiles.id              = prjData.generatedFiles.id;
-                                obj.modules.(context).generatedFiles.lastZIPFullPath = prjData.generatedFiles.lastZIPFullPath;
-                            catch 
                             end
+    
+                            obj.modules.(context).ui.system = prjData.variables.modules.(context).ui.system;
+                            obj.modules.(context).ui.unit   = prjData.variables.modules.(context).ui.unit;
+                            obj.modules.(context).ui.issue  = prjData.variables.modules.(context).ui.issue;
+                            obj.modules.(context).ui.entity = prjData.variables.modules.(context).ui.entity;
+        
+                            reportModel = prjData.variables.modules.(context).ui.reportModel;
+                            if ismember(reportModel, obj.modules.(context).ui.templates)
+                                obj.modules.(context).ui.reportModel = reportModel;
+                            end
+    
+                            obj.modules.(context).uploadedFiles = [prjData.variables.modules.(context).uploadedFiles, obj.modules.(context).uploadedFiles];
+                            [~, uniqueUploadedFilesIndexes] = unique({obj.modules.(context).uploadedFiles.hash});
+                            obj.modules.(context).uploadedFiles = obj.modules.(context).uploadedFiles(uniqueUploadedFilesIndexes);
                         end
 
-                        obj.modules.(context).ui.system       = prjData.ui.system;
-                        obj.modules.(context).ui.unit         = prjData.ui.unit;
-                        obj.modules.(context).ui.issue        = prjData.ui.issue;
-                        obj.modules.(context).ui.issueDetails = prjData.ui.issueDetails;
-    
-                        reportModel = prjData.ui.reportModel;
-                        if ismember(reportModel, obj.modules.(context).ui.templates)
-                            obj.modules.(context).ui.reportModel = reportModel;
-                        end
+                        obj.issueDetails = [prjData.variables.issueDetails, obj.issueDetails];                        
+                        
+                        obj.entityDetails = [prjData.variables.entityDetails, obj.entityDetails];                        
+                        [~, uniqueDetailsIndexes] = unique({obj.entityDetails.id});
+                        obj.entityDetails = obj.entityDetails(uniqueDetailsIndexes);
 
                         % Pode ocorrer uma coincidência de fluxos que compõem
                         % o projeto e fluxos já lidos. Se evidenciado, serão
                         % mantidos os fluxos do projeto.
-                        idx = ismember({ecdObj.Hash}, {ecdData.Hash});
+                        idx = ismember({ecdObj.Hash}, {prjData.variables.ecdData.Hash});
                         if any(idx)
                             delete(ecdObj(idx))
                             ecdObj(idx) = [];
                         end
     
-                        ecdObj = [ecdObj, ecdData];
+                        ecdObj = [ecdObj, prjData.variables.ecdData];
     
                     otherwise
                         error('UnexpectedVersion')
@@ -292,7 +260,7 @@ classdef Project < handle
         function status = validateReportRequirements(obj, context, requirement)
             arguments
                 obj 
-                context 
+                context   (1,:) char {mustBeMember(context, {'FILE', 'ECD'})} 
                 requirement {mustBeMember(requirement, {'issue', 'unit', 'reportModel', 'entity'})}
             end
             switch requirement
@@ -505,7 +473,59 @@ classdef Project < handle
 
     methods (Access = private)
         %-----------------------------------------------------------------%
-        function ReadReportTemplates(obj, rootFolder)
+        function contextInitialization(obj, contextList, generalSettings)
+            % O "id", do "generatedFiles", é a lista ordenada de "hashs" dos registros 
+            % que compõem "inspectedProducts".
+
+            obj.name = '';
+            obj.file = '';
+            obj.hash = '';
+
+            for ii = 1:numel(contextList)
+                context = contextList{ii};
+                obj.modules.(context) = struct( ...
+                    'annotationTable', [], ...
+                    'generatedFiles', struct( ...
+                        'id', '', ...
+                        'rawFiles', {{}}, ...
+                        'lastHTMLDocFullPath', '', ...
+                        'lastJSONFullPath', '', ...
+                        'lastTableFullPath', '', ...
+                        'lastZIPFullPath', '' ...
+                    ), ...
+                    'uploadedFiles', struct( ...
+                        'hash', {}, ...
+                        'system', {}, ...
+                        'issue', {}, ...
+                        'status', {}, ...
+                        'timestamp', {} ...
+                    ), ...
+                    'ui', struct( ...
+                        'system', '', ...
+                        'unit',   '',  ...
+                        'issue',  -1,  ...
+                        'templates', {{}}, ...
+                        'reportModel', '',  ...
+                        'reportVersion', 'Preliminar', ...
+                        'entityTypes', {{}},  ...
+                        'entity', struct( ...
+                            'type', '', ...
+                            'name', '', ...
+                            'id',   '', ...
+                            'status', false ...
+                        ) ...
+                    ) ...
+                );
+
+                obj.modules.(context).ui.entityTypes = generalSettings.ui.typeOfEntity.options;
+                obj.modules.(context).ui.entity.type = generalSettings.ui.typeOfEntity.default;
+            end
+
+            readReportTemplatesFile(obj, obj.rootFolder)
+        end
+
+        %-----------------------------------------------------------------%
+        function readReportTemplatesFile(obj, rootFolder)
             [projectFolder, ...
              programDataFolder] = appEngine.util.Path(class.Constants.appName, rootFolder);
             projectFilePath  = fullfile(projectFolder,     'ReportTemplates.json');

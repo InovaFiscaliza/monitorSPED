@@ -113,11 +113,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
             app.eFiscalizaSystem.Value = app.projectData.modules.(context).ui.system;
             app.eFiscalizaIssue.Value  = app.projectData.modules.(context).ui.issue;
             set(app.eFiscalizaUnit, 'Items', app.mainApp.General.eFiscaliza.defaultValues.unit, 'Value', app.projectData.modules.(context).ui.unit)
-
-            validIssue = (app.eFiscalizaIssue.Value > 0) && ~isinf(app.eFiscalizaIssue.Value);
-            if validIssue
-                app.eFiscalizaIssueDetails.Enable = true;
-            end
+            app.eFiscalizaIssueDetails.Enable = (app.eFiscalizaIssue.Value > 0) && ~isinf(app.eFiscalizaIssue.Value);
 
             % REPORT PANEL
             set(app.reportModel, 'Items', app.projectData.modules.(context).ui.templates, 'Value', app.projectData.modules.(context).ui.reportModel)
@@ -143,12 +139,12 @@ classdef dockReportLib_exported < matlab.apps.AppBase
     methods (Access = private)
 
         % Code that executes after component creation
-        function startupFcn(app, mainApp, callingApp, context)
+        function startupFcn(app, mainApp, callingApp, context, varargin)
             
             try
                 appEngine.boot(app, app.Role, mainApp, callingApp)
 
-                app.inputArgs = struct('context', context);
+                app.inputArgs = struct('context', context, 'varargin', {varargin});
                 updatePanel(app, context)
                 
             catch ME
@@ -177,7 +173,8 @@ classdef dockReportLib_exported < matlab.apps.AppBase
             end
     
             context = app.inputArgs.context;
-            contextInitialization(app.projectData, {context}, app.mainApp.General)
+            restart(app.projectData, {context})
+
             ipcMainMatlabCallsHandler(app.mainApp, app, 'onProjectRestart', context)
             updatePanel(app, context)
 
@@ -186,7 +183,8 @@ classdef dockReportLib_exported < matlab.apps.AppBase
         % Image clicked function: prjOpenFileButton
         function onProjectLoad(app, event)
             
-            context = app.inputArgs.context;
+            context  = app.inputArgs.context;
+            varargin = app.inputArgs.varargin;
             
             [fileFullPath, fileFolder] = ui.Dialog(app.UIFigure, 'uigetfile', '', {'*.mat', 'SCH'}, app.mainApp.General.fileFolder.lastVisited, {'MultiSelect', 'off'});
             if isempty(fileFullPath)
@@ -197,7 +195,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
             d = ui.Dialog(app.UIFigure, "progressdlg", "Em andamento...");
             
             try
-                msg = load(app.projectData, 'file', fileFullPath, app.mainApp.General);
+                [app.mainApp.ecdObj, msg] = load(app.projectData, context, fileFullPath, app.mainApp.General, varargin{:});
                 ipcMainMatlabCallsHandler(app.mainApp, app, 'onProjectLoad', context)
                 updatePanel(app, context)
 
@@ -216,10 +214,11 @@ classdef dockReportLib_exported < matlab.apps.AppBase
         % Image clicked function: prjSaveButton
         function onProjectSave(app, event)
             
-            context = app.inputArgs.context;
+            context  = app.inputArgs.context;
+            varargin = app.inputArgs.varargin;
 
             if isfile(app.projectData.file)
-                if ~checkIfUpdateNeeded(app.projectData)
+                if ~checkIfUpdateNeeded(app.projectData, varargin{:})
                     msgQuestion = sprintf('Ao que parece, o projeto "<b>%s</b>" não sofreu alterações.<br><br>Deseja continuar mesmo assim?', app.projectData.name);
                     selection   = ui.Dialog(app.UIFigure, "uiconfirm", msgQuestion, {'Sim', 'Não'}, 1, 2);
                     if strcmp(selection, 'Não')
@@ -239,7 +238,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
                 return
             end
 
-            save(app.projectData, context, projectName, projectFile, app.mainApp.General.Report.outputCompressionMode)
+            save(app.projectData, context, projectName, projectFile, app.mainApp.General.Report.outputCompressionMode, varargin{:})
             updatePanel(app, context)
 
         end

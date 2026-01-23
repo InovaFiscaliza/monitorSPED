@@ -2,76 +2,76 @@ classdef winECD_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure                matlab.ui.Figure
-        GridLayout              matlab.ui.container.GridLayout
-        DockModule              matlab.ui.container.GridLayout
-        dockModule_Undock       matlab.ui.control.Image
-        dockModule_Close        matlab.ui.control.Image
-        Toolbar                 matlab.ui.container.GridLayout
-        tool_UploadFinalFile    matlab.ui.control.Image
-        tool_GenerateReport     matlab.ui.control.Image
-        tool_OpenPopupProject   matlab.ui.control.Image
-        tool_CompanyInfo        matlab.ui.control.Label
-        tool_Separator          matlab.ui.control.Image
-        tool_AutoFill           matlab.ui.control.Image
-        tool_AccountEdition     matlab.ui.control.Image
-        UITable2_AccountInfo    matlab.ui.control.Label
-        UITable2_FilterIcon     matlab.ui.control.Image
-        UITable2_FilterText     matlab.ui.control.Label
-        UITable2_CountText      matlab.ui.control.Label
-        UITable2_CountIcon      matlab.ui.control.Image
-        UITable2                matlab.ui.control.Table
-        UITable1_AccountInfo    matlab.ui.control.Label
-        UITable1_FilterIcon     matlab.ui.control.Image
-        UITable1_FilterText     matlab.ui.control.Label
-        UITable1_CountText      matlab.ui.control.Label
-        UITable1_CountIcon      matlab.ui.control.Image
-        UITable1                matlab.ui.control.Table
-        SubTabGroup             matlab.ui.container.TabGroup
-        SubTab1                 matlab.ui.container.Tab
-        SubGrid1                matlab.ui.container.GridLayout
-        FinanceFacts            matlab.ui.control.Label
-        Tab1Separator3          matlab.ui.control.Image
-        LogButton               matlab.ui.control.Button
-        MemoryUsageButton       matlab.ui.control.Button
-        Tab1Separator2          matlab.ui.control.Image
-        ExportButton            matlab.ui.control.Button
-        Tab1Separator1          matlab.ui.control.Image
-        SheetList               matlab.ui.control.DropDown
-        SheetListLabel          matlab.ui.control.Label
-        TimePeriodList          matlab.ui.control.DropDown
-        TimePeriodListLabel     matlab.ui.control.Label
-        CompanyNameList         matlab.ui.control.DropDown
-        CompanyNameListLabel    matlab.ui.control.Label
-        SubTab2                 matlab.ui.container.Tab
-        SubGrid2                matlab.ui.container.GridLayout
-        StyleRefresh            matlab.ui.control.Image
-        StyleDelete             matlab.ui.control.Image
-        FontIconLabel           matlab.ui.control.Label
-        FontIcon                matlab.ui.control.DropDown
-        Tab2Separator4          matlab.ui.control.Image
-        FontColor               matlab.ui.control.ColorPicker
-        FontBackground          matlab.ui.control.ColorPicker
-        FontAlign3              matlab.ui.control.Image
-        FontAlign2              matlab.ui.control.Image
-        FontAlign1              matlab.ui.control.Image
-        FontStyle               matlab.ui.control.Button
-        FontWeight              matlab.ui.control.Button
-        FontFamily              matlab.ui.control.DropDown
-        Tab2Separator3          matlab.ui.control.Image
-        ColumnWidthLabel        matlab.ui.control.Label
-        ColumnWidth             matlab.ui.control.DropDown
-        RowHeightLabel          matlab.ui.control.Label
-        RowHeight               matlab.ui.control.Spinner
-        Tab2Separator2          matlab.ui.control.Image
-        OpenFilterModuleButton  matlab.ui.control.Button
-        Tab2Separator1          matlab.ui.control.Image
-        SheetOnFocus            matlab.ui.control.Lamp
-        SheetHeight_Second      matlab.ui.control.Spinner
-        SheetView_Second        matlab.ui.control.DropDown
-        SheetHeight_First       matlab.ui.control.Spinner
-        SheetView_First         matlab.ui.control.DropDown
-        SheetViewStatus         matlab.ui.control.StateButton
+        UIFigure               matlab.ui.Figure
+        GridLayout             matlab.ui.container.GridLayout
+        DockModule             matlab.ui.container.GridLayout
+        dockModule_Undock      matlab.ui.control.Image
+        dockModule_Close       matlab.ui.control.Image
+        Toolbar                matlab.ui.container.GridLayout
+        tool_UploadFinalFile   matlab.ui.control.Image
+        tool_GenerateReport    matlab.ui.control.Image
+        tool_OpenPopupProject  matlab.ui.control.Image
+        tool_CompanyInfo       matlab.ui.control.Label
+        tool_Separator         matlab.ui.control.Image
+        tool_AutoFill          matlab.ui.control.Image
+        tool_AccountButton     matlab.ui.control.Image
+        UITable2_AccountInfo   matlab.ui.control.Label
+        UITable2_FilterIcon    matlab.ui.control.Image
+        UITable2_FilterText    matlab.ui.control.Label
+        UITable2_CountText     matlab.ui.control.Label
+        UITable2_CountIcon     matlab.ui.control.Image
+        UITable2               matlab.ui.control.Table
+        UITable1_AccountInfo   matlab.ui.control.Label
+        UITable1_FilterIcon    matlab.ui.control.Image
+        UITable1_FilterText    matlab.ui.control.Label
+        UITable1_CountText     matlab.ui.control.Label
+        UITable1_CountIcon     matlab.ui.control.Image
+        UITable1               matlab.ui.control.Table
+        SubTabGroup            matlab.ui.container.TabGroup
+        SubTab1                matlab.ui.container.Tab
+        SubGrid1               matlab.ui.container.GridLayout
+        FinanceFacts           matlab.ui.control.Label
+        Tab1Separator3         matlab.ui.control.Image
+        LogButton              matlab.ui.control.Button
+        MemoryUsageButton      matlab.ui.control.Button
+        Tab1Separator2         matlab.ui.control.Image
+        ExportButton           matlab.ui.control.Button
+        Tab1Separator1         matlab.ui.control.Image
+        SheetList              matlab.ui.control.DropDown
+        SheetListLabel         matlab.ui.control.Label
+        TimePeriodList         matlab.ui.control.DropDown
+        TimePeriodListLabel    matlab.ui.control.Label
+        CompanyNameList        matlab.ui.control.DropDown
+        CompanyNameListLabel   matlab.ui.control.Label
+        SubTab2                matlab.ui.container.Tab
+        SubGrid2               matlab.ui.container.GridLayout
+        StyleRefresh           matlab.ui.control.Image
+        StyleDelete            matlab.ui.control.Image
+        FontIconLabel          matlab.ui.control.Label
+        FontIcon               matlab.ui.control.DropDown
+        Tab2Separator4         matlab.ui.control.Image
+        FontColor              matlab.ui.control.ColorPicker
+        FontBackground         matlab.ui.control.ColorPicker
+        FontAlign3             matlab.ui.control.Image
+        FontAlign2             matlab.ui.control.Image
+        FontAlign1             matlab.ui.control.Image
+        FontStyle              matlab.ui.control.Button
+        FontWeight             matlab.ui.control.Button
+        FontFamily             matlab.ui.control.DropDown
+        Tab2Separator3         matlab.ui.control.Image
+        ColumnWidthLabel       matlab.ui.control.Label
+        ColumnWidth            matlab.ui.control.DropDown
+        RowHeightLabel         matlab.ui.control.Label
+        RowHeight              matlab.ui.control.Spinner
+        Tab2Separator2         matlab.ui.control.Image
+        FilterButton           matlab.ui.control.Button
+        Tab2Separator1         matlab.ui.control.Image
+        SheetOnFocus           matlab.ui.control.Lamp
+        SheetHeight_Second     matlab.ui.control.Spinner
+        SheetView_Second       matlab.ui.control.DropDown
+        SheetHeight_First      matlab.ui.control.Spinner
+        SheetView_First        matlab.ui.control.DropDown
+        SheetViewStatus        matlab.ui.control.StateButton
     end
 
     
@@ -125,7 +125,8 @@ classdef winECD_exported < matlab.apps.AppBase
                         switch eventName
                             case {'FileListChanged:Add', ...
                                   'FileListChanged:Del', ...
-                                  'FileListChanged:Merge'}
+                                  'FileListChanged:Merge', ...
+                                  'FileListChanged:ProjectLoad'}
                                 initializeAppProperties(app)
                                 applyInitialLayout(app, 'keepIfPossible')
 
@@ -259,7 +260,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             if app.SubTab2.UserData.rendered
                 renderedElements = [renderedElements; {
-                    app.OpenFilterModuleButton;
+                    app.FilterButton;
                     app.RowHeight;
                     app.ColumnWidth;
                     app.FontFamily;
@@ -311,13 +312,9 @@ classdef winECD_exported < matlab.apps.AppBase
                 % em winMonitorSPED.mlapp.
                 switch selectionMode
                     case 'fromMainApp'
-                        fileIndex = 1;
-                        if ~isempty(app.mainApp.file_Tree.SelectedNodes)
-                            fileIndex = unique([app.mainApp.file_Tree.SelectedNodes.NodeData], 'stable');
-                            fileIndex = fileIndex(1);
-                        end
-                        selectedCompanyIndex = find(cellfun(@(x) ismember(fileIndex, x), app.CompanyNameList.UserData.values), 1);
-                        app.CompanyNameList.Value = app.CompanyNameList.Items{selectedCompanyIndex};                
+                        fileIndex = ipcMainMatlabCallsHandler(app.mainApp, app, 'getSelectedFileIndex');
+                        companyIndex = find(cellfun(@(x) ismember(fileIndex, x), app.CompanyNameList.UserData.values), 1);
+                        app.CompanyNameList.Value = app.CompanyNameList.Items{companyIndex};
                         updateTimePeriodList(app, fileIndex)
                         TimePeriodListValueChanged(app)
 
@@ -493,7 +490,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 tableIdView{end+1} = app.SheetView_Second.Value;
             end
             app.tool_AutoFill.Enable        = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', tableIdView);
-            app.tool_AccountEdition.Enable  = hasSpecificNonEmptyTable;
+            app.tool_AccountButton.Enable  = hasSpecificNonEmptyTable;
             app.tool_Separator.Visible     = nonEmptyECDObject;
             app.tool_GenerateReport.Enable  = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO');
             app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated && reportFinalRelatedToSelectedObj;
@@ -956,6 +953,33 @@ classdef winECD_exported < matlab.apps.AppBase
                 ui.Dialog(app.UIFigure, 'warning', msgError);
             end
         end
+
+        %-----------------------------------------------------------------%
+        function reportDispatchOperation(app, eventName, varargin)
+            arguments
+                app
+                eventName {mustBeMember(eventName, {'onReportGenerate', 'onUploadArtifacts'})}
+            end
+
+            arguments (Repeating)
+                varargin
+            end
+
+            if isempty(app.mainApp.eFiscalizaObj) || ~isvalid(app.mainApp.eFiscalizaObj)
+                dialogBox    = struct('id', 'login',    'label', 'Usuário: ', 'type', 'text');
+                dialogBox(2) = struct('id', 'password', 'label', 'Senha: ',   'type', 'password');
+
+                customFormData = struct('UUID', eventName, 'Fields', dialogBox, 'Context', app.Context);
+                if ~isempty(varargin)
+                    customFormData.Varargin = varargin;
+                end
+
+                sendEventToHTMLSource(app.jsBackDoor, 'customForm', customFormData)
+
+            else
+                ipcMainMatlabCallsHandler(app.mainApp, app, eventName, app.Context, varargin{:})
+            end
+        end
     end
     
 
@@ -1005,37 +1029,220 @@ classdef winECD_exported < matlab.apps.AppBase
 
         end
 
-        % Button pushed function: LogButton
-        function Toolbar_LOGInfoImageClicked(app, event)
+        % Selection change function: SubTabGroup
+        function SubTabGroupSelectionChanged(app, event)
+            
+            [~, tabIndex] = ismember(app.SubTabGroup.SelectedTab, app.SubTabGroup.Children);
+            applyJSCustomizations(app, tabIndex)
+
+        end
+
+        % Callback function: ExportButton, FilterButton, MemoryUsageButton,
+        % 
+        % ...and 1 other component
+        function onPopupModuleRequest(app, event)
+            
+            context = app.Context;
+            [~, fileIndex] = selectedECDObject(app);
+
+            switch event.Source
+                case app.ExportButton
+                    ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDExport', context, fileIndex)
+
+                case app.MemoryUsageButton
+                    ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDMemoryUsage', context, fileIndex)
+
+                case app.FilterButton
+                    tableIdList     = app.SheetList.Items;
+                    selectedTableId = app.SheetList.Value;
+        
+                    ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDFilter', context, fileIndex, tableIdList, selectedTableId)
+
+                case app.tool_AccountButton
+                    clickedTable = onFocusTable(app);
+                    [~, accountColumnIdx] = ismember('COD_CTA', clickedTable.ColumnName);
+
+                    if ~isempty(clickedTable.Selection) && isscalar(unique(clickedTable.Selection(:,1))) && accountColumnIdx
+                        selectedRow = unique(clickedTable.Selection(:,1));
+                        accountName = clickedTable.Data{selectedRow, accountColumnIdx};
+                    else
+                        accountName = '';
+                    end
+                    
+                    ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDAccount', context, fileIndex, accountName)
+            end
+
+        end
+
+        % Image clicked function: tool_AutoFill
+        function Toolbar_AutoFillImageClicked(app, event)
             
             selectedECD = selectedECDObject(app);
+            if ~isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO')
+                return
+            end
 
-            htmlContent = util.HtmlTextGenerator.Warnings(selectedECD);
-            ui.Dialog(app.UIFigure, 'info', htmlContent);
+            update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'autoFill')
+            forceUpdateTable(app)
+
+        end
+
+        % Image clicked function: tool_OpenPopupProject
+        function Toolbar_OpenPopupProjectImageClicked(app, event)
+            
+            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ReportLib', app.Context, app.ecdObj)
 
         end
 
         % Image clicked function: tool_GenerateReport
         function Toolbar_ReportImageClicked(app, event)
             
+            context = app.Context;
+            if ~validateReportRequirements(app.projectData, context, 'reportModel')
+                ui.Dialog(app.UIFigure, 'warning', 'Pendente escolha do modelo de relatório.');
+                return
+            end
+            
             [~, fileIndex] = selectedECDObject(app);
-            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ReportLib', app.Context, fileIndex)
+
+            if ~isempty(fileIndex)
+                % <VALIDAÇÕES>
+                issue = app.projectData.modules.(context).ui.issue;
+                reportVersion = app.projectData.modules.(context).ui.reportVersion;
+    
+                msgWarning = {};
+                if ~validateReportRequirements(app.projectData, context, 'issue')
+                    msgWarning{end+1} = sprintf('• O número da inspeção "%.0f" é inválido.', issue);
+                end
+    
+                if ~validateReportRequirements(app.projectData, context, 'unit')
+                    msgWarning{end+1} = '• Unidade geradora do documento precisa ser selecionada.';
+                end
+    
+                if isempty(msgWarning)
+                    switch reportVersion
+                        case 'Definitiva'
+                            msgQuestion = sprintf('Confirma que se trata de monitoração relacionada à Atividade de Inspeção nº %.0f?', issue);
+                            userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
+                            if userSelection == "Não"
+                                return
+                            end
+                            
+                        case 'Preliminar'
+                            % ...
+                    end
+    
+                else
+                    switch reportVersion
+                        case 'Definitiva'
+                            msgInfo = sprintf([ ...
+                                    'Foi(ram) identificado(s) a(s) pendência(s):<br>%s' ...
+                                    '<br><br>' ...
+                                    '<b>Essa(s) pendência(s) precisa(m) ser resolvida(s) ' ...
+                                    'antes de ser gerada a versão "Definitiva" do relatório</b>.' ...
+                                ], strjoin(msgWarning, '<br>') ...
+                            );
+                            ui.Dialog(app.UIFigure, 'warning', msgInfo);
+                            return
+    
+                        case 'Preliminar'
+                            msgQuestion = sprintf([ ...
+                                    'Foi(ram) identificado(s) a(s) pendência(s):<br>%s' ...
+                                    '<br><br>' ...
+                                    '<b>Continuar mesmo assim?</b>' ...
+                                ], strjoin(msgWarning, '<br>') ...
+                            );
+                            selection = ui.Dialog(app.UIFigure, "uiconfirm", msgQuestion, {'Sim', 'Não'}, 1, 2);
+                            if strcmp(selection, 'Não')
+                                return
+                            end
+                    end
+                end
+                % </VALIDAÇÕES>
+    
+                % <PROCESSO>
+                reportDispatchOperation(app, 'onReportGenerate', fileIndex)
+                % </PROCESSO>
+            end
             
         end
 
-        % Button pushed function: ExportButton
-        function Toolbar_ExportExportExcelClicked(app, event)
+        % Image clicked function: tool_UploadFinalFile
+        function Toolbar_UploadFinalFileImageClicked(app, event)
             
-            [~, fileIndex] = selectedECDObject(app);
-            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDExport', app.Context, fileIndex)
+            % <VALIDAÇÕES>
+            context = app.Context;            
+            system = app.projectData.modules.(context).ui.system;
+            issue = app.projectData.modules.(context).ui.issue;
+            generatedHtmlFilePath = getGeneratedDocumentFileName(app.projectData, '.html', context);
 
-        end
+            msg = '';
+            if isempty(generatedHtmlFilePath)
+                msg = 'A versão definitiva do relatório ainda não foi gerada.';
+            elseif ~isfile(generatedHtmlFilePath)
+                msg = sprintf('O arquivo "%s" não foi encontrado.', generatedHtmlFilePath);
+            elseif ~isfolder(app.mainApp.General.fileFolder.DataHub_POST)
+                msg = 'Pendente mapear pasta do Sharepoint';
+            elseif ~validateReportRequirements(app.projectData, context, 'issue')
+                msg = sprintf('O número da inspeção "%.0f" é inválido.', issue);
+            elseif ~validateReportRequirements(app.projectData, context, 'unit')
+                msg = 'Unidade geradora do documento precisa ser selecionada.';
+            elseif isempty(system)
+                msg = 'Ambiente do eFiscaliza precisa ser selecionado.';
+            end
 
-        % Selection change function: SubTabGroup
-        function SubTabGroupSelectionChanged(app, event)
-            
-            [~, tabIndex] = ismember(app.SubTabGroup.SelectedTab, app.SubTabGroup.Children);
-            applyJSCustomizations(app, tabIndex)
+            if ~isempty(msg)
+                ui.Dialog(app.UIFigure, 'warning', msg);
+                return
+            end
+
+            selectedECD = selectedECDObject(app);
+
+            storedReportHash  = app.projectData.modules.(context).generatedFiles.id;
+            currentReportHash = model.ProjectBase.computeReportFileInventoryHash(selectedECD);
+
+            if ~isequal(storedReportHash, currentReportHash)
+                [~, generatedHtmlFileName, generatedHtmlFileExt] = fileparts(generatedHtmlFilePath);
+                msgQuestion = sprintf([ ...
+                    '<i>Hash</i> do arquivo no momento da geração do relatório "%s":<br>' ...
+                    '%s<br><br>' ...
+                    '<i>Hash</i> do arquivo selecionado:<br>' ...
+                    '%s<br><br>' ...
+                    '<b>Continuar mesmo assim?</b>' ...
+                ], [generatedHtmlFileName, generatedHtmlFileExt], textFormatGUI.cellstr2Bullets(strsplit(storedReportHash, ' - ')), textFormatGUI.cellstr2Bullets(strsplit(currentReportHash, ' - ')));
+                userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 2, 2);
+
+                if strcmp(userSelection, 'Não')
+                    return
+                end
+            end
+
+            uploadedFiles = getUploadedFiles(app.projectData, context, system, issue);
+            if ~isempty(uploadedFiles)
+                uploadedStatus = extractAfter({uploadedFiles.status}, 'Documento cadastrado no SEI sob o nº ');
+
+                if isscalar(uploadedStatus)
+                    uploadedStatus = uploadedStatus{1};
+                else                    
+                    uploadedStatus = strjoin([{strjoin(uploadedStatus(1:end-1), ', ')}, uploadedStatus(end)], ' e ');
+                end
+
+                msgQuestion = sprintf([ ...
+                    'Já foi realizado <i>upload</i> para o SEI de relatório relacionado ' ...
+                    'à Atividade de Inspeção nº %d - SEI nº %s.<br><br>' ...
+                    'Deseja realizar um novo <i>upload</i> para o SEI?' ...
+                ], issue, uploadedStatus);
+                userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 2, 2);
+
+                if strcmp(userSelection, 'Não')
+                    return
+                end
+            end
+            % </VALIDAÇÕES>
+
+            % <PROCESSO>
+            reportDispatchOperation(app, 'onUploadArtifacts')
+            % </PROCESSO>
 
         end
 
@@ -1134,6 +1341,16 @@ classdef winECD_exported < matlab.apps.AppBase
         function SheetViewHeightValueChanged(app, event)
             
             app.GridLayout.RowHeight([6,10]) = {sprintf('%dx', app.SheetHeight_First.Value), sprintf('%dx', app.SheetHeight_Second.Value)};
+
+        end
+
+        % Button pushed function: LogButton
+        function LogButtonPushed(app, event)
+            
+            selectedECD = selectedECDObject(app);
+
+            htmlContent = util.HtmlTextGenerator.Warnings(selectedECD);
+            ui.Dialog(app.UIFigure, 'info', htmlContent);
 
         end
 
@@ -1475,126 +1692,6 @@ classdef winECD_exported < matlab.apps.AppBase
             end
             
         end
-
-        % Image clicked function: tool_AccountEdition
-        function ExportButton_2Pushed(app, event)
-            
-            clickedTable = onFocusTable(app);
-            [~, accountColumnIdx] = ismember('COD_CTA', clickedTable.ColumnName);
-            if ~isempty(clickedTable.Selection) && isscalar(unique(clickedTable.Selection(:,1))) && accountColumnIdx
-                selectedRow = unique(clickedTable.Selection(:,1));
-                accountName = clickedTable.Data{selectedRow, accountColumnIdx};
-            else
-                accountName = '';
-            end
-
-            [~, fileIndex] = selectedECDObject(app);
-            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDAccount', app.Context, fileIndex, accountName)
-
-        end
-
-        % Image clicked function: tool_AutoFill
-        function tool_AutoFillImageClicked(app, event)
-            
-            selectedECD = selectedECDObject(app);
-            if ~isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO')
-                return
-            end
-
-            update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'autoFill')
-            forceUpdateTable(app)
-
-        end
-
-        % Button pushed function: OpenFilterModuleButton
-        function OpenFilterModuleButtonPushed(app, event)
-
-            [~, fileIndex]  = selectedECDObject(app);
-            tableIdList     = app.SheetList.Items;
-            selectedTableId = app.SheetList.Value;
-
-            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDFilter', app.Context, fileIndex, tableIdList, selectedTableId)
-
-        end
-
-        % Image clicked function: tool_OpenPopupProject
-        function tool_OpenPopupProjectImageClicked(app, event)
-            
-            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ReportLib', app.Context)
-
-        end
-
-        % Button pushed function: MemoryUsageButton
-        function MemoryUsageButtonPushed(app, event)
-            
-            [~, fileIndex] = selectedECDObject(app);
-            ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDMemoryUsage', app.Context, fileIndex)
-
-        end
-
-        % Image clicked function: tool_UploadFinalFile
-        function tool_UploadFinalFileImageClicked(app, event)
-            
-            % <VALIDAÇÕES>
-            lastHTMLDocFullPath = getGeneratedDocumentFileName(app.projectData, '.html', app.Context);
-
-            msg = '';
-            if isempty(lastHTMLDocFullPath)
-                msg = 'A versão definitiva do relatório ainda não foi gerada.';
-            elseif ~isfile(lastHTMLDocFullPath)
-                msg = sprintf('O arquivo "%s" não foi encontrado.', lastHTMLDocFullPath);
-            elseif ~isfolder(app.mainApp.General.fileFolder.DataHub_POST)
-                msg = 'Pendente mapear pasta do Sharepoint';
-            elseif ~report_checkEFiscalizaIssueId(app.mainApp, app.projectData.modules.(app.Context).ui.issue)
-                msg = sprintf('O número da inspeção "%.0f" é inválido.', app.projectData.modules.(app.Context).ui.issue);
-            elseif isempty(app.projectData.modules.(app.Context).ui.system)
-                msg = 'Ambiente do eFiscaliza precisa ser selecionado.';
-            elseif isempty(app.projectData.modules.(app.Context).ui.unit)
-                msg = 'Unidade geradora do documento precisa ser selecionada.';
-            end
-
-            if ~isempty(msg)
-                ui.Dialog(app.UIFigure, 'warning', msg);
-                return
-            end
-
-            selectedECD   = selectedECDObject(app);
-            uploadReports = ~strcmp({selectedECD.GUI.generatedFiles.status}, '');
-
-            if any(uploadReports)
-                uploadStatus = extractAfter({selectedECD.GUI.generatedFiles(uploadReports).status}, 'Documento cadastrado no SEI sob o nº ');
-
-                if isscalar(uploadStatus)
-                    uploadStatus = uploadStatus{1};
-                else                    
-                    uploadStatus = strjoin([{strjoin(uploadStatus(1:end-1), ', ')}, uploadStatus(end)], ' e ');
-                end
-
-                msgQuestion = sprintf([ ...
-                    'Já foi realizado o <i>upload</i> para o SEI de relatório contendo ' ...
-                    'análise relacionada a este conjunto de dados contábeis - ' ...
-                    'SEI nº %s.\n\n' ...
-                    'Deseja realizar um novo <i>upload</i> para o SEI?' ...
-                ], uploadStatus);
-                userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 2, 2);
-
-                if strcmp(userSelection, 'Não')
-                    return
-                end
-            end
-            % </VALIDAÇÕES>
-
-            % <PROCESSO>
-            if isempty(app.mainApp.eFiscalizaObj) || ~isvalid(app.mainApp.eFiscalizaObj)
-                dialogBox    = struct('id', 'login',    'label', 'Usuário: ', 'type', 'text');
-                dialogBox(2) = struct('id', 'password', 'label', 'Senha: ',   'type', 'password');
-                sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', 'eFiscalizaSignInPage', 'Fields', dialogBox, 'Context', app.Context))
-            else
-                report_uploadInfoController(app.mainApp, [], 'uploadDocument', app.Context)
-            end
-            % </PROCESSO>
-
-        end
     end
 
     % Component initialization
@@ -1727,7 +1824,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create ExportButton
             app.ExportButton = uibutton(app.SubGrid1, 'push');
-            app.ExportButton.ButtonPushedFcn = createCallbackFcn(app, @Toolbar_ExportExportExcelClicked, true);
+            app.ExportButton.ButtonPushedFcn = createCallbackFcn(app, @onPopupModuleRequest, true);
             app.ExportButton.Icon = 'Export_24.png';
             app.ExportButton.IconAlignment = 'top';
             app.ExportButton.BackgroundColor = [0.9608 0.9608 0.9608];
@@ -1746,7 +1843,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create MemoryUsageButton
             app.MemoryUsageButton = uibutton(app.SubGrid1, 'push');
-            app.MemoryUsageButton.ButtonPushedFcn = createCallbackFcn(app, @MemoryUsageButtonPushed, true);
+            app.MemoryUsageButton.ButtonPushedFcn = createCallbackFcn(app, @onPopupModuleRequest, true);
             app.MemoryUsageButton.Icon = 'pool_60_percent.png';
             app.MemoryUsageButton.IconAlignment = 'top';
             app.MemoryUsageButton.BackgroundColor = [0.9608 0.9608 0.9608];
@@ -1758,7 +1855,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create LogButton
             app.LogButton = uibutton(app.SubGrid1, 'push');
-            app.LogButton.ButtonPushedFcn = createCallbackFcn(app, @Toolbar_LOGInfoImageClicked, true);
+            app.LogButton.ButtonPushedFcn = createCallbackFcn(app, @LogButtonPushed, true);
             app.LogButton.Icon = 'LOG_24.png';
             app.LogButton.IconAlignment = 'top';
             app.LogButton.FontSize = 10;
@@ -1864,16 +1961,16 @@ classdef winECD_exported < matlab.apps.AppBase
             app.Tab2Separator1.Layout.Column = 5;
             app.Tab2Separator1.ImageSource = 'LineV.svg';
 
-            % Create OpenFilterModuleButton
-            app.OpenFilterModuleButton = uibutton(app.SubGrid2, 'push');
-            app.OpenFilterModuleButton.ButtonPushedFcn = createCallbackFcn(app, @OpenFilterModuleButtonPushed, true);
-            app.OpenFilterModuleButton.Icon = 'Filter_24.png';
-            app.OpenFilterModuleButton.IconAlignment = 'top';
-            app.OpenFilterModuleButton.FontSize = 10;
-            app.OpenFilterModuleButton.Enable = 'off';
-            app.OpenFilterModuleButton.Layout.Row = [1 2];
-            app.OpenFilterModuleButton.Layout.Column = 6;
-            app.OpenFilterModuleButton.Text = 'Filtro';
+            % Create FilterButton
+            app.FilterButton = uibutton(app.SubGrid2, 'push');
+            app.FilterButton.ButtonPushedFcn = createCallbackFcn(app, @onPopupModuleRequest, true);
+            app.FilterButton.Icon = 'Filter_24.png';
+            app.FilterButton.IconAlignment = 'top';
+            app.FilterButton.FontSize = 10;
+            app.FilterButton.Enable = 'off';
+            app.FilterButton.Layout.Row = [1 2];
+            app.FilterButton.Layout.Column = 6;
+            app.FilterButton.Text = 'Filtro';
 
             % Create Tab2Separator2
             app.Tab2Separator2 = uiimage(app.SubGrid2);
@@ -2176,19 +2273,19 @@ classdef winECD_exported < matlab.apps.AppBase
             app.Toolbar.Layout.Column = [1 9];
             app.Toolbar.BackgroundColor = [0.9412 0.9412 0.9412];
 
-            % Create tool_AccountEdition
-            app.tool_AccountEdition = uiimage(app.Toolbar);
-            app.tool_AccountEdition.ScaleMethod = 'none';
-            app.tool_AccountEdition.ImageClickedFcn = createCallbackFcn(app, @ExportButton_2Pushed, true);
-            app.tool_AccountEdition.Enable = 'off';
-            app.tool_AccountEdition.Tooltip = {'Edita informações das contas movimentadas'};
-            app.tool_AccountEdition.Layout.Row = [1 3];
-            app.tool_AccountEdition.Layout.Column = 1;
-            app.tool_AccountEdition.ImageSource = 'Variable_edit_16.png';
+            % Create tool_AccountButton
+            app.tool_AccountButton = uiimage(app.Toolbar);
+            app.tool_AccountButton.ScaleMethod = 'none';
+            app.tool_AccountButton.ImageClickedFcn = createCallbackFcn(app, @onPopupModuleRequest, true);
+            app.tool_AccountButton.Enable = 'off';
+            app.tool_AccountButton.Tooltip = {'Edita informações das contas movimentadas'};
+            app.tool_AccountButton.Layout.Row = [1 3];
+            app.tool_AccountButton.Layout.Column = 1;
+            app.tool_AccountButton.ImageSource = 'Variable_edit_16.png';
 
             % Create tool_AutoFill
             app.tool_AutoFill = uiimage(app.Toolbar);
-            app.tool_AutoFill.ImageClickedFcn = createCallbackFcn(app, @tool_AutoFillImageClicked, true);
+            app.tool_AutoFill.ImageClickedFcn = createCallbackFcn(app, @Toolbar_AutoFillImageClicked, true);
             app.tool_AutoFill.Enable = 'off';
             app.tool_AutoFill.Tooltip = {'Sugere anotação das contas movimentadas'};
             app.tool_AutoFill.Layout.Row = [1 2];
@@ -2218,7 +2315,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Create tool_OpenPopupProject
             app.tool_OpenPopupProject = uiimage(app.Toolbar);
             app.tool_OpenPopupProject.ScaleMethod = 'none';
-            app.tool_OpenPopupProject.ImageClickedFcn = createCallbackFcn(app, @tool_OpenPopupProjectImageClicked, true);
+            app.tool_OpenPopupProject.ImageClickedFcn = createCallbackFcn(app, @Toolbar_OpenPopupProjectImageClicked, true);
             app.tool_OpenPopupProject.Tooltip = {'Projeto (fiscalizada, arquivo de backup etc)'};
             app.tool_OpenPopupProject.Layout.Row = [1 3];
             app.tool_OpenPopupProject.Layout.Column = 5;
@@ -2236,7 +2333,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create tool_UploadFinalFile
             app.tool_UploadFinalFile = uiimage(app.Toolbar);
-            app.tool_UploadFinalFile.ImageClickedFcn = createCallbackFcn(app, @tool_UploadFinalFileImageClicked, true);
+            app.tool_UploadFinalFile.ImageClickedFcn = createCallbackFcn(app, @Toolbar_UploadFinalFileImageClicked, true);
             app.tool_UploadFinalFile.Enable = 'off';
             app.tool_UploadFinalFile.Tooltip = {'Upload relatório'};
             app.tool_UploadFinalFile.Layout.Row = 2;

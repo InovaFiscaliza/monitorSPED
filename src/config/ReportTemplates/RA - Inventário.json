@@ -145,7 +145,7 @@
                     "Data": {
                         "Editable": "false",
                         "Text": "%s",
-                        "Variable": "cfg_File"
+                        "Variable": "cfg_FILE"
                     }
                 }
             ]

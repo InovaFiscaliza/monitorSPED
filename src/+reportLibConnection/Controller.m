@@ -33,28 +33,30 @@ classdef (Abstract) Controller
 
     methods (Static)
         %-----------------------------------------------------------------%
-        function Run(mainApp, projectData, ecdObj, reportSettings, generalSettings)        
+        function Run(mainApp, callingApp, context, ecdObj)
             arguments
                 mainApp
-                projectData
+                callingApp
+                context {mustBeMember(context, {'FILE', 'ECD'})}
                 ecdObj
-                reportSettings
-                generalSettings
             end
+
+            projectData = mainApp.projectData;
+            generalSettings = mainApp.General;
+            rootFolder = mainApp.rootFolder;
 
             [projectFolder, ...
-             programDataFolder] = appEngine.util.Path(class.Constants.appName, mainApp.rootFolder);
+             programDataFolder] = appEngine.util.Path(class.Constants.appName, rootFolder);
 
-            context    = reportSettings.context;
-            issueId    = num2str(reportSettings.issue);
-            docName    = reportSettings.model;
-            docIndex   = find(strcmp({projectData.report.templates.Name}, docName), 1);
+            issueId = num2str(projectData.modules.(context).ui.issue);
+            docName = projectData.modules.(context).ui.reportModel;
+            docIndex = find(strcmp({projectData.report.templates.Name}, docName), 1);
             if isempty(docIndex)
-                error('Pendente escolha do modelo de relatório')
+                error('Pendente escolha do modelo de relatório.')
             end
 
-            docType    = projectData.report.templates(docIndex).DocumentType;
-            docVersion = reportLibConnection.Controller.docVersion(reportSettings.reportVersion);
+            docType = projectData.report.templates(docIndex).DocumentType;
+            docVersion = reportLibConnection.Controller.docVersion(projectData.modules.(context).ui.reportVersion);
 
             try
                 if ~isdeployed()
@@ -64,7 +66,7 @@ classdef (Abstract) Controller
             catch
                 docScript = jsondecode(fileread(fullfile(projectFolder,     'ReportTemplates', projectData.report.templates(docIndex).File)));
             end
-        
+
             %-------------------------------------------------------------%
             % reportInfo
             %
@@ -74,8 +76,8 @@ classdef (Abstract) Controller
             % "Resultados".
             %-------------------------------------------------------------%
             reportInfo = struct('App',      mainApp,                                                                  ...
-                                'Version',  mainApp.General.AppVersion,                                               ...
-                                'Path',     struct('rootFolder',                 mainApp.rootFolder,                  ...
+                                'Version',  generalSettings.AppVersion,                                               ...
+                                'Path',     struct('rootFolder',                 rootFolder,                          ...
                                                    'userFolder',                 generalSettings.fileFolder.userPath, ...
                                                    'tempFolder',                 generalSettings.fileFolder.tempPath, ...
                                                    'appConnection',              projectFolder,                       ...
@@ -86,20 +88,20 @@ classdef (Abstract) Controller
                                                    'Version',                    docVersion.version),                 ...
                                 'Function', struct(...
                                                    ... % APLICÁVEIS ÀS SEÇÕES GERAIS DO RELATÓRIO
-                                                   'cfg_File',                  'reportLibConnection.Variable.GeneralSettings(reportInfo, "File+ReportTemplate")', ...
+                                                   'cfg_FILE',                  'reportLibConnection.Variable.GeneralSettings(reportInfo, "FILE+ReportTemplate")', ...
                                                    'cfg_ECD',                   'reportLibConnection.Variable.GeneralSettings(reportInfo, "ECD+ReportTemplate")', ...
                                                    'var_Issue',                  issueId, ...
-                                                   'var_Unit',                   reportSettings.unit, ...
-                                                   'eFiscaliza_solicitacaoCode', 'reportLibConnection.Variable.GeneralSettings(reportInfo, "Solicitação de Inspeção", "ECD")', ...
-                                                   'eFiscaliza_acaoCode',       'reportLibConnection.Variable.GeneralSettings(reportInfo, "Ação de Inspeção", "ECD")', ...
-                                                   'eFiscaliza_atividadeCode',  'reportLibConnection.Variable.GeneralSettings(reportInfo, "Atividade de Inspeção", "ECD")', ...
-                                                   'eFiscaliza_requester',      'reportLibConnection.Variable.GeneralSettings(reportInfo, "Unidade Demandante", "ECD")', ...
-                                                   'eFiscaliza_unit',           'reportLibConnection.Variable.GeneralSettings(reportInfo, "Unidade Executante", "ECD")', ...
-                                                   'eFiscaliza_unitCity',       'reportLibConnection.Variable.GeneralSettings(reportInfo, "Sede da Unidade Executante", "ECD")', ...
-                                                   'eFiscaliza_description',    'reportLibConnection.Variable.GeneralSettings(reportInfo, "Descrição da Atividade de Inspeção", "ECD")', ...
-                                                   'eFiscaliza_period',         'reportLibConnection.Variable.GeneralSettings(reportInfo, "Período Previsto da Fiscalização", "ECD")', ...
-                                                   'eFiscaliza_fiscais',        'reportLibConnection.Variable.GeneralSettings(reportInfo, "Lista de Fiscais", "ECD")', ...
-                                                   'eFiscaliza_sei',            'reportLibConnection.Variable.GeneralSettings(reportInfo, "Processo SEI", "ECD")', ...
+                                                   'var_Unit',                   projectData.modules.(context).ui.unit, ...
+                                                   'eFiscaliza_solicitacaoCode', 'reportLibConnection.Variable.GeneralSettings(reportInfo, "Solicitação de Inspeção")', ...
+                                                   'eFiscaliza_acaoCode',       'reportLibConnection.Variable.GeneralSettings(reportInfo, "Ação de Inspeção")', ...
+                                                   'eFiscaliza_atividadeCode',  'reportLibConnection.Variable.GeneralSettings(reportInfo, "Atividade de Inspeção")', ...
+                                                   'eFiscaliza_requester',      'reportLibConnection.Variable.GeneralSettings(reportInfo, "Unidade Demandante")', ...
+                                                   'eFiscaliza_unit',           'reportLibConnection.Variable.GeneralSettings(reportInfo, "Unidade Executante")', ...
+                                                   'eFiscaliza_unitCity',       'reportLibConnection.Variable.GeneralSettings(reportInfo, "Sede da Unidade Executante")', ...
+                                                   'eFiscaliza_description',    'reportLibConnection.Variable.GeneralSettings(reportInfo, "Descrição da Atividade de Inspeção")', ...
+                                                   'eFiscaliza_period',         'reportLibConnection.Variable.GeneralSettings(reportInfo, "Período Previsto da Fiscalização")', ...
+                                                   'eFiscaliza_fiscais',        'reportLibConnection.Variable.GeneralSettings(reportInfo, "Lista de Fiscais")', ...
+                                                   'eFiscaliza_sei',            'reportLibConnection.Variable.GeneralSettings(reportInfo, "Processo SEI")', ...
                                                    'tbl_FileByCompany',         'reportLibConnection.Table.FileByCompany(reportInfo)', ...
                                                    ...
                                                    ... % APLICÁVEIS À SEÇÃO COM RECORRÊNCIA DO RELATÓRIO
@@ -128,7 +130,7 @@ classdef (Abstract) Controller
                                 'Context',  context,     ...
                                 'Object',   ecdObj,      ...                                
                                 'Settings', generalSettings);
-            
+
             fieldsUnnecessary = {'rootFolder', 'entryPointFolder', 'tempSessionFolder', 'ctfRoot'};
             fieldsUnnecessary(cellfun(@(x) ~isfield(reportInfo.Version.application, x), fieldsUnnecessary)) = [];
             if ~isempty(fieldsUnnecessary)
@@ -143,7 +145,7 @@ classdef (Abstract) Controller
             % em "reportInfo.Function.var_Index".
             %-------------------------------------------------------------%
             dataOverview = struct('ID', {}, 'InfoSet', {}, 'HTML', {});
-            
+
             idsList = {ecdObj.CompanyId};
             ids = unique(idsList);
 
@@ -180,7 +182,7 @@ classdef (Abstract) Controller
                 delete(hContainer)
             end
 
-            
+
             %-------------------------------------------------------------%
             % Em sendo a versão "Preliminar", apenas apresenta o html no
             % navegador. Por outro lado, em sendo a versão "Definitiva",
@@ -197,18 +199,18 @@ classdef (Abstract) Controller
                     updateGeneratedFiles(projectData, context)
 
                 case 'final'
-                    generatedFilesId = strjoin(sort({ecdObj.Hash}), ' - ');
-
                     JSONFile = '';
-                    if strcmp(context, 'ECD')
-                        JSONFile = [baseFullFileName '.json'];
-                        JSONContent = reportLibConnection.Table.scarabJsonFile(projectData, context, ecdObj);
-                        writematrix(JSONContent, JSONFile, "FileType", "text", "QuoteStrings", "none", "Encoding", "UTF-8")
-                    end
-
-                    ZIPFile  = ui.Dialog(mainApp.UIFigure, 'uiputfile', '', {'*.zip', 'monitorSPED (*.zip)'}, fullfile(generalSettings.fileFolder.userPath, [baseFileName '.zip']));
+                    XLSXFile = '';
+                    ZIPFile  = ui.Dialog(callingApp.UIFigure, 'uiputfile', '', {'*.zip', 'monitorSPED'}, fullfile(generalSettings.fileFolder.userPath, [baseFileName '.zip']));
                     if isempty(ZIPFile)
                         return
+                    end
+
+                    if strcmp(context, 'ECD')
+                        JSONFile    = [baseFullFileName '.json'];
+                        JSONContent = reportLibConnection.Table.scarabJsonFile(projectData, context, ecdObj);
+
+                        writematrix(JSONContent, JSONFile, "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite", "Encoding", "UTF-8")
                     end
 
                     ZIPFileList = {HTMLFile};
@@ -216,7 +218,14 @@ classdef (Abstract) Controller
                         ZIPFileList{end+1} = JSONFile;
                     end
                     zip(ZIPFile, ZIPFileList)
-                    updateGeneratedFiles(projectData, context, ecdObj, generatedFilesId, {}, HTMLFile, JSONFile, ZIPFile)
+
+                    switch context
+                        case 'FILE'
+                            generatedFileId = model.ProjectBase.computeReportFileInventoryHash(ecdObj);
+                        otherwise % 'ECD'
+                            generatedFileId = model.ProjectBase.computeReportAnalysisResultsHash(ecdObj);
+                    end
+                    updateGeneratedFiles(projectData, context, generatedFileId, {}, HTMLFile, JSONFile, XLSXFile, ZIPFile)
             end
         end
     end
