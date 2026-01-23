@@ -108,34 +108,8 @@ classdef winECD_exported < matlab.apps.AppBase
                     case 'renderer'
                         appEngine.activate(app, app.Role)
 
-                    case 'customForm'
-                        ipcMainJSEventsHandler(app.mainApp, event)
-
-                    case 'getCssPropertyValue'
-                        if ~isempty(event.HTMLEventData.componentName)
-                            if ~isprop(app, 'isDocked') % mainApp (app container)
-                                auxAppTag = event.HTMLEventData.auxAppTag;
-                                if ~isempty(auxAppTag)
-                                    hAuxApp   = getAppHandle(app.mainApp.tabGroupController, auxAppTag);
-                                    objHandle = hAuxApp.(event.HTMLEventData.componentName);
-                                else
-                                    objHandle = eval(['app.' event.HTMLEventData.componentName]);
-                                end
-                            else
-                                objHandle = eval(['app.' event.HTMLEventData.componentName]);
-                            end
-                            
-                            cssProp  = event.HTMLEventData.propertyName;
-                            cssValue = event.HTMLEventData.propertyValue;
-    
-                            if ~isprop(objHandle, 'StyleObservations')
-                                objHandle.addprop('StyleObservations');
-                            end
-                            objHandle.StyleObservations.(cssProp) = cssValue;
-                        end
-
                     otherwise
-                        error('UnexpectedEvent')
+                        ipcMainJSEventsHandler(app.mainApp, event)
                 end
 
             catch ME
@@ -144,11 +118,11 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function ipcSecondaryMatlabCallsHandler(app, callingApp, operationType, varargin)
+        function ipcSecondaryMatlabCallsHandler(app, callingApp, eventName, varargin)
             try
                 switch class(callingApp)
                     case {'winMonitorSPED', 'winMonitorSPED_exported'}
-                        switch operationType
+                        switch eventName
                             case {'FileListChanged:Add', ...
                                   'FileListChanged:Del', ...
                                   'FileListChanged:Merge'}
@@ -189,7 +163,7 @@ classdef winECD_exported < matlab.apps.AppBase
                                 fileIndex = varargin{1};
                                 tableIdList = varargin{2};
                                 update(app.ecdObj(fileIndex), 'Table.NonEssentialFiles', 'onCacheCleanup', tableIdList)
-                                ipcMainMatlabCallsHandler(app.mainApp, app, 'updateTreeView', fileIndex);
+                                ipcMainMatlabCallsHandler(app.mainApp, app, 'onAccountingDataUpdated', fileIndex);
 
                             % auxApp.dockReportLib >> winMonitorSPED >> auxApp.winECD
                             case {'onProjectRestart',        ...
@@ -548,7 +522,7 @@ classdef winECD_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function checkIfTableRead(app, selectedECD, fileIndex, tableIdList)
             if isTableRead(selectedECD, tableIdList, app.mainApp.General)
-                ipcMainMatlabCallsHandler(app.mainApp, app, 'updateTreeView', fileIndex);
+                ipcMainMatlabCallsHandler(app.mainApp, app, 'onAccountingDataUpdated', fileIndex);
             end
 
             updateFinanceFacts(app, selectedECD)

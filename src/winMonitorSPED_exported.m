@@ -125,17 +125,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                     case 'customForm'
                         switch event.HTMLEventData.uuid
-                            case 'onFetchIssueDetails'
+                            case {'onFetchIssueDetails', 'onReportGenerate', 'onUploadArtifacts'}
+                                eventName = event.HTMLEventData.uuid;
                                 context = event.HTMLEventData.context;
-                                reportFetchIssueDetails(app, context, event.HTMLEventData)
-
-                            case 'onReportGenerate'
-                                context = event.HTMLEventData.context;
-                                reportGenerate(app, context, event.HTMLEventData)
-
-                            case 'onUploadArtifacts'
-                                context = event.HTMLEventData.context;
-                                reportUploadArtifacts(app, context, event.HTMLEventData, 'uploadDocument')
+                                reportHandleOperation(app, eventName, context, event.HTMLEventData)
 
                             case 'openDevTools'
                                 if isequal(app.General.operationMode.DevTools, rmfield(event.HTMLEventData, 'uuid'))
@@ -187,11 +180,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function varargout = ipcMainMatlabCallsHandler(app, callingApp, operationType, varargin)
+        function varargout = ipcMainMatlabCallsHandler(app, callingApp, eventName, varargin)
             varargout = {};
 
             try
-                switch operationType
+                switch eventName
                     case 'closeFcn'
                         auxAppTag    = varargin{1};
                         closeModule(app.tabGroupController, auxAppTag, app.General, 'normal')
@@ -204,7 +197,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         switch class(callingApp)
                             % auxApp.winConfig (CONFIG)
                             case {'auxApp.winConfig', 'auxApp.winConfig_exported'}
-                                switch operationType
+                                switch eventName
                                     case 'checkDataHubLampStatus'
                                         updateWarningLampVisibility(app)
         
@@ -237,8 +230,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         
                             % auxApp.winECD (ECD)
                             case {'auxApp.winECD', 'auxApp.winECD_exported'}
-                                switch operationType
-                                    case 'updateTreeView'
+                                switch eventName
+                                    case {'onReportGenerate', 'onUploadArtifacts'}
+                                        reportHandleOperation(app, eventName, callingApp.Context, [])
+
+                                    case 'onAccountingDataUpdated'
                                         if ~isempty(app.file_Tree.SelectedNodes)
                                             nodeData = unique([app.file_Tree.SelectedNodes.NodeData]);
         
@@ -258,7 +254,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                   'auxApp.dockECDAccount',     'auxApp.dockECDAccount_exported', ...
                                   'auxApp.dockECDFilter',      'auxApp.dockECDFilter_exported',  ...
                                   'auxApp.dockECDMemoryUsage', 'auxApp.dockECDMemoryUsage_exported'}
-                                switch operationType
+                                switch eventName
                                     case 'closeFcnCallFromPopupApp'
                                         context = varargin{1};
                                         moduleTag = varargin{2};
@@ -269,7 +265,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                                 app.popupContainer.Parent.Visible = 0;
                                             otherwise
                                                 hApp = getAppHandle(app.tabGroupController, context);
-                                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', operationType)
+                                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', eventName)
                                         end
                                         
                                         if ~isempty(hApp)
@@ -279,38 +275,40 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                     % auxApp.dockReportLib
                                     case {'onProjectRestart', 'onProjectLoad', 'onFinalReportFileChanged'}
                                         context = varargin{1};
-                                        indexes = varargin{2};
         
-                                        delete(callingApp)
-                                        ipcMainMatlabCallsHandler(app, callingApp, 'closeFcn', varargin{:});
-                                        reportGenerate(app, context, indexes)
+                                        switch context
+                                            case {'mainApp', 'FILE'}
+                                                app.popupContainer.Parent.Visible = 0;
+                                            otherwise
+                                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', eventName)
+                                        end
                                         
                                     % auxApp.dockECDExport
                                     case 'onExportECD'
                                         delete(callingApp)
                                         
                                         context  = varargin{1};
-                                        varargin = [{operationType}, varargin(2:end)];
+                                        varargin = [{eventName}, varargin(2:end)];
                                         ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
         
                                     % auxApp.dockECDAccount
                                     case 'onAccountEdited'
                                         context  = varargin{1};
-                                        varargin = [{operationType}, varargin(2:end)];
+                                        varargin = [{eventName}, varargin(2:end)];
                                         ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
                                         return
 
                                     % auxApp.dockECDFilter        
                                     case {'onFilterChanged', 'onTableReadRequired'}
                                         context  = varargin{1};
-                                        varargin = [{operationType}, varargin(2:end)];
+                                        varargin = [{eventName}, varargin(2:end)];
                                         ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
                                         return
 
                                     % auxApp.dockECDMemoryUsage        
                                     case 'onCacheCleanup'
                                         context  = varargin{1};
-                                        varargin = [{operationType}, varargin(2:end)];
+                                        varargin = [{eventName}, varargin(2:end)];
                                         ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
                                         return
         
@@ -727,6 +725,31 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         function createEFiscalizaObject(app, credentials)
             if ~isempty(credentials)
                 app.eFiscalizaObj = ws.eFiscaliza(credentials.login, credentials.password);
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function reportDispatchOperation(app, eventName)
+            if isempty(app.eFiscalizaObj) || ~isvalid(app.eFiscalizaObj)
+                dialogBox    = struct('id', 'login',    'label', 'Usuário: ', 'type', 'text');
+                dialogBox(2) = struct('id', 'password', 'label', 'Senha: ',   'type', 'password');
+                sendEventToHTMLSource(app.jsBackDoor, 'customForm', struct('UUID', eventName, 'Fields', dialogBox, 'Context', app.Context))
+            else
+                reportHandleOperation(app, eventName, app.Context, [])
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function reportHandleOperation(app, eventName, context, credentials)
+            switch eventName
+                case 'onFetchIssueDetails'
+                    reportFetchIssueDetails(app, context, credentials)
+
+                case 'onReportGenerate'
+                    reportGenerate(app, context, credentials);
+        
+                case 'onUploadArtifacts'
+                    reportUploadArtifacts(app, context, credentials, 'uploadDocument');
             end
         end
 
@@ -1160,6 +1183,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         end
 
+        % Image clicked function: tool_OpenPopupProject
+        function Toolbar_OpenPopupProjectImageClicked(app, event)
+
+            ipcMainMatlabOpenPopupApp(app, app, 'ReportLib', app.Context)
+
+        end
+
         % Image clicked function: tool_GenerateReport
         function Toolbar_GenerateReportImageClicked(app, event)
             
@@ -1178,7 +1208,69 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     end
                 end
 
-                ipcMainMatlabOpenPopupApp(app, app, 'ReportLib', obj.Context, indexes)
+                % <VALIDAÇÕES>
+                context = app.Context;
+                issue = app.projectData.modules.(context).ui.issue;
+                reportVersion = app.projectData.modules.(context).ui.reportVersion;
+    
+                if ~validateReportRequirements(app.projectData, context, 'reportModel')
+                    ui.Dialog(app.UIFigure, 'warning', 'Pendente escolha do modelo de relatório.');
+                    return
+                end
+    
+                msgWarning = {};
+                if ~validateReportRequirements(app.projectData, context, 'issue')
+                    msgWarning{end+1} = sprintf('• O número da inspeção "%.0f" é inválido.', issue);
+                end
+    
+                if ~validateReportRequirements(app.projectData, context, 'unit')
+                    msgWarning{end+1} = '• Unidade geradora do documento precisa ser selecionada.';
+                end
+    
+                if isempty(msgWarning)
+                    switch reportVersion
+                        case 'Definitiva'
+                            msgQuestion = sprintf('Confirma que se trata de monitoração relacionada à Atividade de Inspeção nº %.0f?', issue);
+                            userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
+                            if userSelection == "Não"
+                                return
+                            end
+                            
+                        case 'Preliminar'
+                            % ...
+                    end
+    
+                else
+                    switch reportVersion
+                        case 'Definitiva'
+                            msgInfo = sprintf([ ...
+                                    'Foi(ram) identificado(s) a(s) pendência(s):<br>%s' ...
+                                    '<br><br>' ...
+                                    '<b>Essa(s) pendência(s) precisa(m) ser resolvida(s) ' ...
+                                    'antes de ser gerada a versão "Definitiva" do relatório</b>.' ...
+                                ], strjoin(msgWarning, '<br>') ...
+                            );
+                            ui.Dialog(app.UIFigure, 'warning', msgInfo);
+                            return
+    
+                        case 'Preliminar'
+                            msgQuestion = sprintf([ ...
+                                    'Foi(ram) identificado(s) a(s) pendência(s):<br>%s' ...
+                                    '<br><br>' ...
+                                    '<b>Continuar mesmo assim?</b>' ...
+                                ], strjoin(msgWarning, '<br>') ...
+                            );
+                            selection = ui.Dialog(app.UIFigure, "uiconfirm", msgQuestion, {'Sim', 'Não'}, 1, 2);
+                            if strcmp(selection, 'Não')
+                                return
+                            end
+                    end
+                end
+                % </VALIDAÇÕES>
+    
+                % <PROCESSO>
+                reportDispatchOperation(app, 'onReportGenerate')
+                % </PROCESSO>
             end
 
         end
@@ -1252,13 +1344,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 
                 file_ProjectRestart(app, [], 'FileListChanged:Del')
             end
-
-        end
-
-        % Image clicked function: tool_OpenPopupProject
-        function tool_OpenPopupProjectImageClicked(app, event)
-
-            ipcMainMatlabOpenPopupApp(app, app, 'ReportLib', app.Context)
 
         end
     end
@@ -1382,7 +1467,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             % Create tool_OpenPopupProject
             app.tool_OpenPopupProject = uiimage(app.file_toolGrid);
             app.tool_OpenPopupProject.ScaleMethod = 'none';
-            app.tool_OpenPopupProject.ImageClickedFcn = createCallbackFcn(app, @tool_OpenPopupProjectImageClicked, true);
+            app.tool_OpenPopupProject.ImageClickedFcn = createCallbackFcn(app, @Toolbar_OpenPopupProjectImageClicked, true);
             app.tool_OpenPopupProject.Tooltip = {'Projeto (fiscalizada, arquivo de backup etc)'};
             app.tool_OpenPopupProject.Layout.Row = [1 3];
             app.tool_OpenPopupProject.Layout.Column = 8;

@@ -755,6 +755,25 @@ classdef ECD < handle
         end
 
         %-----------------------------------------------------------------%
+        function validFile = checkIfValidPeriod(obj)
+            checkIfScalar(obj)
+
+            yearsCovered = unique(year(obj.Period));
+            if isscalar(yearsCovered)
+                monthsCovered = [];
+                for ii = 1:numel(obj.Sources)
+                    [beginPeriod, endPeriod] = bounds(obj.Sources(ii).period);
+                    monthsCovered = [monthsCovered, month(beginPeriod):month(endPeriod)];
+                end
+                monthsCovered = unique(monthsCovered);
+
+                validFile = isequal(monthsCovered, 1:12);
+            else
+                validFile = false;
+            end
+        end
+
+        %-----------------------------------------------------------------%
         function [validFile, filesStatus] = checkIfValidStatus(obj)
             checkIfScalar(obj)
 
@@ -1223,25 +1242,6 @@ classdef ECD < handle
 
             if ~isempty(expectedI200Rows) && expectedI200Rows > 0 && isfield(obj.Table, 'xI050') && any(strcmp(obj.Table.xI050.('COD_NAT'), '04'))
                 hasTransactions = true;
-            end
-        end
-
-        %-----------------------------------------------------------------%
-        function validFile = checkIfValidPeriod(obj)
-            checkIfScalar(obj)
-
-            yearsCovered = unique(year(obj.Period));
-            if isscalar(yearsCovered)
-                monthsCovered = [];
-                for ii = 1:numel(obj.Sources)
-                    [beginPeriod, endPeriod] = bounds(obj.Sources(ii).period);
-                    monthsCovered = [monthsCovered, month(beginPeriod):month(endPeriod)];
-                end
-                monthsCovered = unique(monthsCovered);
-
-                validFile = isequal(monthsCovered, 1:12);
-            else
-                validFile = false;
             end
         end
 

@@ -2,7 +2,7 @@
     {
         "Name": "Inventário de arquivos (Relatório de Atividades)",
         "File": "RA - Inventário.json",
-        "Module": "File",
+        "Module": "FILE",
         "DocumentType": "Relatório de Atividades",
         "Description": "Relatório de inventário de arquivos contábeis.",
         "Author": "Eric Magalhães Delgado",
