@@ -386,22 +386,22 @@
                         },
                         {
                             "Editable": "false",
-                            "Text": "Cada conta de resultado é então classificada nas categorias: \"Sim\", \"Não\", \"ICMS Telecom\", \"PIS Telecom\" ou \"COFINS Telecom\". As contas classificadas como \"Sim\" representam receitas diretamente vinculadas à prestação de serviços de telecomunicações. Com base nelas, estima-se a Receita Operacional Bruta (ROB) e, assim, estima-se o ICMS. A alíquota aplicada observa a legislação vigente em cada Estado e no Distrito Federal, podendo também ser ajustada por conta e por mês, conforme necessário.",
+                            "Text": "Cada conta de resultado é classificada nas categorias: \"Sim\", \"Não\", \"ICMS Telecom\", \"PIS Telecom\" ou \"COFINS Telecom\". As contas classificadas como \"Sim\" representam receitas diretamente vinculadas à prestação de serviços de telecomunicações. Essas receitas compõem a Receita Operacional Bruta (ROB), utilizada como base para a estimativa do imposto sobre a circulação de mercadorias e serviços (ICMS). A alíquota aplicada observa a legislação vigente em cada Estado e no Distrito Federal, podendo também ser ajustada por conta e por mês, conforme necessário.",
                             "Variable": []
                         },
                         {
                             "Editable": "false",
-                            "Text": "O ICMS estimado é comparado ao ICMS contábil - identificado nas contas classificadas como \"ICMS Telecom\". Para fins de determinação da Base de Cálculo do PIS/COFINS, adota-se o menor valor anual entre o ICMS estimado e o contábil.",
+                            "Text": "O ICMS estimado é comparado ao ICMS contábil - identificado nas contas classificadas como \"ICMS Telecom\". Para fins de determinação da base de cálculo do PIS e da COFINS, adota-se o menor valor anual entre o ICMS estimado e o ICMS contábil.",
                             "Variable": []
                         },
                         {
                             "Editable": "false",
-                            "Text": "Na sequência, estima-se o valor devido de PIS e COFINS, comparando-o aos montantes registrados contabilmente - contas classificadas como \"PIS Telecom\" e \"COFINS Telecom\". Para fins de definição da Base de Cálculo do FUST/FUNTTEL, também se seleciona o menor valor anual entre os tributos estimados e os contábeis.",
+                            "Text": "Na sequência, estima-se os valores devidos ao Programa de Integração Social (PIS) e à Contribuição para Financiamento da Seguridade Social (COFINS), os quais são comparados aos montantes registrados contabilmente nas contas classificadas como \"PIS Telecom\" e \"COFINS Telecom\". Para fins de definição da base de cálculo do FUST e do FUNTTEL, seleciona-se, igualmente, o menor valor anual entre os tributos estimados e os contábeis.",
                             "Variable": []
                         },
                         {
                             "Editable": "false",
-                            "Text": "Por fim, com base nas etapas anteriores, procede-se à apuração dos valores de FUST e FUNTTEL.",
+                            "Text": "Por fim, com base nos resultados das etapas anteriores, realiza-se a apuração dos valores devidos ao FUST e ao FUNTTEL.",
                             "Variable": []
                         }
                     ]
@@ -776,7 +776,7 @@
                                 "TextStyle": " style=\"text-align: right; font-weight: bold;\""
                             }
                         ],
-                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A planilha de apuração, apresentada a seguir, registra a ROB, o ICMS, PIS e COFINS, além dos valores apurados de FUST e FUNTTEL.\"}",
+                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A planilha de apuração, apresentada a seguir, registra ROB, ICMS, PIS e COFINS, além dos valores apurados de FUST e FUNTTEL.\"}",
                         "Error": [],
                         "LineBreak": 0
                     }

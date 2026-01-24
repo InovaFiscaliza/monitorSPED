@@ -136,8 +136,9 @@ classdef (Abstract) Table
         %-----------------------------------------------------------------%
         % TABELAS POR CNPJ
         %-----------------------------------------------------------------%
-        function Table = Raw(analyzedData, tableSettings)
+        function Table = Raw(reportInfo, analyzedData, tableSettings)
             ecdObj = analyzedData.InfoSet.ecdObj;
+            generalSettings = reportInfo.Settings;
 
             parsedSource = strsplit(tableSettings.Source, '+');
             tableSource  = parsedSource{1};
@@ -145,7 +146,7 @@ classdef (Abstract) Table
 
             checkIfScalar(ecdObj)
 
-            isTableRead(ecdObj, {tableId});
+            isTableRead(ecdObj, {tableId}, generalSettings);
             Table = ecdObj.Table.(['x' tableId]);
         end
 

@@ -2,37 +2,33 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure                  matlab.ui.Figure
-        GridLayout                matlab.ui.container.GridLayout
-        Document                  matlab.ui.container.GridLayout
-        Tree                      matlab.ui.container.CheckBoxTree
-        SpecificationPanel        matlab.ui.container.Panel
-        SpecificationGrid         matlab.ui.container.GridLayout
-        value2_TextFree           matlab.ui.control.EditField
-        value2_TextList           matlab.ui.control.DropDown
-        value2_Numeric            matlab.ui.control.NumericEditField
-        value2_Date               matlab.ui.control.DatePicker
-        operation2_List           matlab.ui.control.DropDown
-        operation2_LogicalGrid    matlab.ui.container.ButtonGroup
-        operation2_LogicalOr      matlab.ui.control.RadioButton
-        operation2_LogicalAnd     matlab.ui.control.RadioButton
-        value1_TextFree           matlab.ui.control.EditField
-        value1_TextList           matlab.ui.control.DropDown
-        value1_Numeric            matlab.ui.control.NumericEditField
-        value1_Date               matlab.ui.control.DatePicker
-        operation1_List           matlab.ui.control.DropDown
-        ColumnClass               matlab.ui.control.Label
-        ColumnList                matlab.ui.control.DropDown
-        SpecificationControlGrid  matlab.ui.container.GridLayout
-        CancelNewFilter           matlab.ui.control.Image
-        ConfirmNewFilter          matlab.ui.control.Image
-        AddNewFilter              matlab.ui.control.Image
-        SpecificationLabel        matlab.ui.control.Label
-        TableIdList               matlab.ui.control.DropDown
-        TableIdLabel              matlab.ui.control.Label
-        btnClose                  matlab.ui.control.Image
-        ContextMenu               matlab.ui.container.ContextMenu
-        ExcluirMenu               matlab.ui.container.Menu
+        UIFigure                matlab.ui.Figure
+        GridLayout              matlab.ui.container.GridLayout
+        Document                matlab.ui.container.GridLayout
+        SpecificationLabel      matlab.ui.control.Label
+        SpecificationPanel      matlab.ui.container.Panel
+        SpecificationGrid       matlab.ui.container.GridLayout
+        columnFilterList        matlab.ui.container.CheckBoxTree
+        columnFilterAdd         matlab.ui.control.Image
+        value2_TextFree         matlab.ui.control.EditField
+        value2_TextList         matlab.ui.control.DropDown
+        value2_Numeric          matlab.ui.control.NumericEditField
+        value2_Date             matlab.ui.control.DatePicker
+        operation2_List         matlab.ui.control.DropDown
+        operation2_LogicalGrid  matlab.ui.container.ButtonGroup
+        operation2_LogicalOr    matlab.ui.control.RadioButton
+        operation2_LogicalAnd   matlab.ui.control.RadioButton
+        value1_TextFree         matlab.ui.control.EditField
+        value1_TextList         matlab.ui.control.DropDown
+        value1_Numeric          matlab.ui.control.NumericEditField
+        value1_Date             matlab.ui.control.DatePicker
+        operation1_List         matlab.ui.control.DropDown
+        symbolicNameList        matlab.ui.control.DropDown
+        TableIdList             matlab.ui.control.DropDown
+        TableIdLabel            matlab.ui.control.Label
+        btnClose                matlab.ui.control.Image
+        ContextMenu             matlab.ui.container.ContextMenu
+        ExcluirMenu             matlab.ui.container.Menu
     end
 
     
@@ -60,87 +56,48 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
     
     methods (Access = private)
         %-----------------------------------------------------------------%
-        function initialLayout(app, tableIdList, selectedTableId)
-            app.AddNewFilter.UserData    = false;
-            app.ColumnList.UserData      = struct('class', '', 'array', []);
-            app.operation1_List.UserData = struct('inputHandle', []);
-            app.operation2_List.UserData = struct('inputHandle', []);
+        function updateForm(app, index, tableId)
+            tableIdData    = app.ecdObj(index).Table.(['x' tableId]);
 
-            set(app.TableIdList, 'Items', tableIdList, 'Value', selectedTableId)
-            TableIdListValueChanged(app)
-        end
+            % DROPDOWN "COLUNAS"
+            columnRawNames = tableIdData.Properties.VariableNames;
+            columnRawTypes = matlab.Compatibility.resolveTableVariableTypes(tableIdData);
 
-        %-----------------------------------------------------------------%
-        function [columnClass, columnArray] = checkFilterType(app)
-            if isempty(app.ColumnList.UserData.class)
-                index       = app.inputArgs.index;
-                tableId     = app.TableIdList.Value;
-                columName   = app.ColumnList.Value;
-                columnArray = app.ecdObj(index).Table.(['x' tableId]).(columName);
-    
-                % De forma geral, os dados dos registros ordinários da ECD se
-                % restringem a "double", "cell" ou "datetime". As tabelas criadas 
-                % pelo app - balancetes, contas e tabela de apuração - incluem
-                % "double", "categorical" e "cell".
-    
-                if iscellstr(columnArray)
-                    columnClass = 'cellstr';
-                elseif isnumeric(columnArray)
-                    columnClass = 'numeric';
-                elseif isdatetime(columnArray)
-                    columnClass = 'datetime';
-                elseif iscategorical(columnArray)
-                    columnClass = 'categorical';
-                else
-                    error('UnexpectedDataType')
-                end
-    
-                app.ColumnList.UserData.class = columnClass;
-                app.ColumnList.UserData.array = columnArray;
+            [columnNames, sortedIdxs] = textAnalysis.sort(columnRawNames);
+            columnTypes   = columnRawTypes(sortedIdxs);
             
-            else
-                columnClass = app.ColumnList.UserData.class;
-                columnArray = app.ColumnList.UserData.array;
-            end
+            pseudoClasses = tableFiltering.getPseudoClasses(columnTypes);
+            symbolicNames = tableFiltering.mergedSymbolWithColumnNames(columnNames, columnTypes);
+            
+            % Atualiza componente dropdown com os nomes símbolicos das
+            % colunas, além de armazenar em "UserData" detalhes sobre os
+            % tipos de dados (nome, tipo e pseudo classe de cada coluna).
+            app.symbolicNameList.Items = [{''}; symbolicNames'];
+            
+            app.symbolicNameList.UserData.columnNames   = columnNames;
+            app.symbolicNameList.UserData.columnTypes   = columnTypes;
+            app.symbolicNameList.UserData.pseudoClasses = pseudoClasses;
+
+            updateTree(app, index, tableId)
         end
 
         %-----------------------------------------------------------------%
-        function EditionPanelLayout(app, editionStatus)
-            arguments
-                app 
-                editionStatus char {mustBeMember(editionStatus, {'on', 'off'})}
-            end
-
-            switch editionStatus
-                case 'on'
-                    set(app.AddNewFilter, 'ImageSource', 'addFiles_32Filled.png', 'Tooltip', 'Desabilita painel de inclusão de filtro', 'UserData', true)
-                    
-                    app.Document.RowHeight{4} = 124;
-                    app.SpecificationPanel.Visible = 1;
-                    app.SpecificationControlGrid.ColumnWidth(end-1:end) = {18, 18};
-                    app.ConfirmNewFilter.Enable = 1;
-                    app.CancelNewFilter.Enable  = 1;
-    
-                case 'off'
-                    set(app.AddNewFilter, 'ImageSource', 'addFiles_32.png',       'Tooltip', 'Habilita painel de inclusão de filtro',   'UserData', false)
-    
-                    app.Document.RowHeight{4} = 0;
-                    app.SpecificationControlGrid.ColumnWidth(end-1:end) = {0,0};
-                    app.ConfirmNewFilter.Enable = 0;
-                    app.CancelNewFilter.Enable  = 0;
-            end
+        function restartState(app)
+            % O componente de INPUT do valor do filtro pode ser uidatepicker,
+            % uieditfield (numeric/text) ou uidropdown, a depender da pseudo 
+            % classe da coluna. Guarda-se um handle p/ o elemento ativo.
+            app.operation1_List.UserData.inputHandle = [];
+            app.operation2_List.UserData.inputHandle = [];
         end
 
         %-----------------------------------------------------------------%
-        function TreeUpdate(app)
-            if ~isempty(app.Tree.Children)
-                delete(app.Tree.Children)
+        function updateTree(app, index, tableId)
+            if ~isempty(app.columnFilterList.Children)
+                delete(app.columnFilterList.Children)
             end
 
-            selectedECD  = app.ecdObj(app.inputArgs.index);
-            tableId      = app.TableIdList.Value;
-
-            [filterIndex, filterStatus] = checkTableCustomFilter(app, selectedECD, tableId, 'basic');
+            selectedECD = app.ecdObj(index);
+            [filterIndex, filterStatus] = findCustomTableFilter(app, selectedECD, tableId, 'basic');
 
             if filterStatus
                 filterObj    = selectedECD.GUI.tableView(filterIndex).filter;
@@ -148,19 +105,19 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
                 checkedNodes = [];
 
                 for ii = 1:numel(filterList)
-                    childNode = uitreenode(app.Tree, 'Text', filterList{ii}, 'NodeData', ii);
+                    childNode = uitreenode(app.columnFilterList, 'Text', filterList{ii}, 'NodeData', ii);
 
                     if filterObj.filterRules.Enable(ii)
                         checkedNodes = [checkedNodes, childNode];
                     end
                 end
 
-                app.Tree.CheckedNodes = checkedNodes;
+                app.columnFilterList.CheckedNodes = checkedNodes;
             end
         end
 
         %-----------------------------------------------------------------%
-        function [index, status] = checkTableCustomFilter(app, selectedECD, tableId, statusType)
+        function [index, status] = findCustomTableFilter(app, selectedECD, tableId, statusType)
             arguments
                 app
                 selectedECD
@@ -170,17 +127,33 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
 
             index  = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
             status = ~isempty(index) && ~isempty(selectedECD.GUI.tableView(index).filter);
+
             if strcmp(statusType, 'active')
-                status = status && ~isempty(selectedECD.GUI.tableView(index).filter.filterRules(selectedECD.GUI.tableView(index).filter.filterRules.Enable, :));
+                status = status && any(selectedECD.GUI.tableView(index).filter.filterRules.Enable);
             end
         end
 
         %-----------------------------------------------------------------%
-        function CheckAndAddFilter(app)
+        function [columName, pseudoClass] = inspectColumnData(app)
+            symbolicName = app.symbolicNameList.Value;
+            [~, symbolicIndex] = ismember(symbolicName, app.symbolicNameList.Items);
+            columnIndex = symbolicIndex-1;
+
+            if columnIndex == 0
+                columName   = '';
+                pseudoClass = '';
+            else
+                columName   = app.symbolicNameList.UserData.columnNames{columnIndex};
+                pseudoClass = app.symbolicNameList.UserData.pseudoClasses{columnIndex};
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function validateAndAddTableFilter(app)
             selectedECD  = app.ecdObj(app.inputArgs.index);
             tableId      = app.TableIdList.Value;
             
-            [filterIndex, filterStatus] = checkTableCustomFilter(app, selectedECD, tableId, 'basic');
+            [filterIndex, filterStatus] = findCustomTableFilter(app, selectedECD, tableId, 'basic');
 
             if isempty(filterIndex)
                 filterIndex = numel(selectedECD.GUI.tableView) + 1;
@@ -190,7 +163,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
                 update(selectedECD, 'GUI.TableView.Filter', 'createFilteringObject', tableId, filterIndex)
             end
 
-            fieldName = app.ColumnList.Value;            
+            fieldName = app.symbolicNameList.Value;            
             operators = {app.operation1_List.Value};
             values    = {app.operation1_List.UserData.inputHandle.Value};
             connector = app.operation2_LogicalGrid.SelectedObject.Text;
@@ -215,9 +188,11 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
                 appEngine.boot(app, app.Role, mainApp, callingApp)
 
                 app.inputArgs = struct('context', context, 'index', index);
-                app.ecdObj = mainApp.ecdObj;    
-                initialLayout(app, tableIdList, selectedTableId)
-                
+                app.ecdObj = mainApp.ecdObj;
+
+                set(app.TableIdList, 'Items', tableIdList, 'Value', selectedTableId)
+                onTableIdValueChanged(app)
+
             catch ME
                 ui.Dialog(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
             end
@@ -234,41 +209,51 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             
         end
 
-        % Value changed function: ColumnList
-        function ColumnListValueChanged(app, event)
-
-            app.ColumnList.UserData      = struct('class', '', 'array', []);
-            app.operation1_List.UserData = struct('inputHandle', []);
-            app.operation2_List.UserData = struct('inputHandle', []);
+        % Value changed function: TableIdList
+        function onTableIdValueChanged(app, event)
             
-            columnClass = checkFilterType(app);
-            switch columnClass
-                case 'cellstr'
-                    symbol     = '🔤';
-                    operations = {'=', '≠', 'begins with', 'does not begin with', 'ends with', 'does not end with', 'contains', 'does not contain'};
-                case 'numeric'
-                    symbol     = '🔢';
-                    operations = {'=', '≠', '<', '≤', '>', '≥'};
-                case 'datetime'
-                    symbol     = '📅';
-                    operations = {'=', '≠', '<', '≤', '>', '≥'};
-                case 'categorical'
-                    symbol     = '🏷️';
-                    operations = {'=', '≠', 'begins with', 'does not begin with', 'ends with', 'does not end with', 'contains', 'does not contain'};
+            index = app.inputArgs.index;
+            tableId = app.TableIdList.Value;
+
+            if ~isfield(app.ecdObj(index).Table, ['x' tableId])
+                context = app.inputArgs.context;
+                ipcMainMatlabCallsHandler(app.mainApp, app, 'onTableReadRequired', context, tableId)
             end
-            app.ColumnClass.Text = symbol;
+
+            updateForm(app, index, tableId)
+            onFilterColumnChanged(app)
+            
+        end
+
+        % Value changed function: symbolicNameList
+        function onFilterColumnChanged(app, event)
+
+            restartState(app)
+
+            [columnName, pseudoClass] = inspectColumnData(app);
+            app.symbolicNameList.UserData.selected = struct('columnName', columnName, 'pseudoClass', pseudoClass);
+
+            if isempty(pseudoClass)
+                operations = {};
+            else
+                operations = tableFiltering.getFilterCapabilities(pseudoClass);
+            end
             
             app.operation1_List.Items = operations;
-            app.operation1_List.Value = app.operation1_List.Items{1};
-            OperationValueChanged(app, struct('Source', app.operation1_List))
-
             set(app.operation2_List, 'Items', [{''}, operations], 'Value', '')
-            OperationValueChanged(app, struct('Source', app.operation2_List))
+
+            if ~isempty(operations)
+                app.operation1_List.Value = app.operation1_List.Items{1};
+                onFilterOperatorChanged(app, struct('Source', app.operation1_List))
+                onFilterOperatorChanged(app, struct('Source', app.operation2_List))
+            end
+
+            app.columnFilterAdd.Enable = ~isempty(operations);
             
         end
 
         % Value changed function: operation1_List, operation2_List
-        function OperationValueChanged(app, event)
+        function onFilterOperatorChanged(app, event)
 
             switch event.Source
                 case app.operation1_List
@@ -287,10 +272,13 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
                         app.value2_TextList ...
                     ];
             end
-            tagHandles = arrayfun(@(x) x.Tag, valueHandles, 'UniformOutput', false);
+            tagHandles  = arrayfun(@(x) x.Tag, valueHandles, 'UniformOutput', false);
 
-            [columnClass, columnArray] = checkFilterType(app);
-            switch columnClass
+            columnName  = app.symbolicNameList.UserData.selected.columnName;
+            pseudoClass = app.symbolicNameList.UserData.selected.pseudoClass;
+            categories  = getCategories(app, columnName);
+
+            switch pseudoClass
                 case 'cellstr'
                     [~, tagIndex] = ismember('textFree', tagHandles);
                   % optionalArgs  = {'Value', ''};
@@ -305,9 +293,15 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
                     optionalArgs  = {};
 
                 case 'categorical'
-                    [~, tagIndex] = ismember('textList', tagHandles);
-                    uniqueValues  = unique(cellstr(columnArray));
-                    optionalArgs  = {'Items', [{''}; uniqueValues]};
+                    % Se a coluna tiver mais de 500 categorias, apresenta-se 
+                    % como uieditfield (text) ao invés de dropdown.
+                    if isempty(categories)
+                        [~, tagIndex] = ismember('textFree', tagHandles);
+                        optionalArgs  = {};
+                    else
+                        [~, tagIndex] = ismember('textList', tagHandles);
+                        optionalArgs  = {'Items', [{''}; categories]};
+                    end
             end
 
             event.Source.UserData.inputHandle = valueHandles(tagIndex);
@@ -316,21 +310,60 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
 
         end
 
-        % Menu selected function: ExcluirMenu
-        function ExcluirMenuSelected(app, event)
+        % Image clicked function: columnFilterAdd
+        function onFilterAddImageClicked(app, event)
             
-            selectedNodes = app.Tree.SelectedNodes;
+            columnName = app.symbolicNameList.UserData.selected.columnName;            
+            operators  = {app.operation1_List.Value};
+            values     = {app.operation1_List.UserData.inputHandle.Value};
+            connector  = app.operation2_LogicalGrid.SelectedObject.Text;
+
+            if ~isempty(app.operation2_List.Value) && (~strcmp(app.operation1_List.Value, app.operation2_List.Value) || ~isequal(app.operation1_List.UserData.inputHandle.Value, app.operation2_List.UserData.inputHandle.Value))
+                operators = [operators, {app.operation2_List.Value}];
+                values    = [values, {app.operation2_List.UserData.inputHandle.Value}];
+            end
+
+            try
+                addFilterRule(app.mainApp.filteringObj, columnName, operators, values, connector);
+            catch ME
+                ui.Dialog(app.UIFigure, 'warning', ME.message);
+                return
+            end
+            updateTree(app)
+
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'onColumnFilterChanged')
+
+
+
+            try
+                validateAndAddTableFilter(app)
+                updateTree(app)
+                
+                context = app.inputArgs.context;
+                tableId = app.TableIdList.Value;
+                ipcMainMatlabCallsHandler(app.mainApp, app, 'onFilterChanged', context, tableId)
+
+            catch ME
+                ui.Dialog(app.UIFigure, 'error', ME.message);
+            end
+
+        end
+
+        % Menu selected function: ExcluirMenu
+        function onFilterDelImageClicked(app, event)
+            
+            selectedNodes = app.columnFilterList.SelectedNodes;
 
             if ~isempty(selectedNodes)
                 selectedECD = app.ecdObj(app.inputArgs.index);
                 tableId     = app.TableIdList.Value;
 
-                [filterIndex, filterStatus] = checkTableCustomFilter(app, selectedECD, tableId, 'basic');
+                [filterIndex, filterStatus] = findCustomTableFilter(app, selectedECD, tableId, 'basic');
     
                 if filterStatus
                     filterObj = selectedECD.GUI.tableView(filterIndex).filter;
                     removeFilterRule(filterObj, [selectedNodes.NodeData])
-                    TreeUpdate(app)
+                    updateTree(app)
 
                     context = app.inputArgs.context;
                     ipcMainMatlabCallsHandler(app.mainApp, app, 'onFilterChanged', context, tableId)
@@ -339,73 +372,20 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
 
         end
 
-        % Image clicked function: AddNewFilter, CancelNewFilter, 
-        % ...and 1 other component
-        function EditionModeImageClicked(app, event)
-            
-            switch event.Source
-                case app.AddNewFilter
-                    app.AddNewFilter.UserData = ~app.AddNewFilter.UserData;
-
-                    if app.AddNewFilter.UserData
-                        EditionPanelLayout(app, 'on')
-                        focus(app.ColumnList)
-                    else
-                        EditionModeImageClicked(app, struct('Source', app.CancelNewFilter))
-                    end
-
-                case app.ConfirmNewFilter
-                    try
-                        CheckAndAddFilter(app)
-                        EditionPanelLayout(app, 'off')
-                        TreeUpdate(app)
-                        
-                        context = app.inputArgs.context;
-                        tableId = app.TableIdList.Value;
-                        ipcMainMatlabCallsHandler(app.mainApp, app, 'onFilterChanged', context, tableId)
-
-                    catch ME
-                        ui.Dialog(app.UIFigure, 'error', ME.message);
-                    end
-
-                case app.CancelNewFilter
-                    EditionPanelLayout(app, 'off')
-            end     
-
-        end
-
-        % Value changed function: TableIdList
-        function TableIdListValueChanged(app, event)
-            
-            index = app.inputArgs.index;
-            tableId = app.TableIdList.Value;
-
-            if ~isfield(app.ecdObj(index).Table, ['x' tableId])
-                context = app.inputArgs.context;
-                ipcMainMatlabCallsHandler(app.mainApp, app, 'onTableReadRequired', context, tableId)
-            end
-
-            set(app.ColumnList, 'Items', app.ecdObj(index).Table.(['x' tableId]).Properties.VariableNames)
-            ColumnListValueChanged(app)
-
-            TreeUpdate(app)
-            
-        end
-
-        % Callback function: Tree
-        function TreeCheckedNodesChanged(app, event)
+        % Callback function: columnFilterList
+        function onColumnFilterCheckedNodesChanged(app, event)
             
             selectedECD = app.ecdObj(app.inputArgs.index);
             tableId     = app.TableIdList.Value;
 
-            [filterIndex, filterStatus] = checkTableCustomFilter(app, selectedECD, tableId, 'basic');
+            [filterIndex, filterStatus] = findCustomTableFilter(app, selectedECD, tableId, 'basic');
     
             if filterStatus
                 filterObj = selectedECD.GUI.tableView(filterIndex).filter;
 
                 checkedNodes = [];            
-                if ~isempty(app.Tree.CheckedNodes)
-                    checkedNodes = [app.Tree.CheckedNodes.NodeData];
+                if ~isempty(app.columnFilterList.CheckedNodes)
+                    checkedNodes = [app.columnFilterList.CheckedNodes.NodeData];
                 end
 
                 initialEnableArray = filterObj.filterRules.Enable;
@@ -438,7 +418,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             if isempty(Container)
                 app.UIFigure = uifigure('Visible', 'off');
                 app.UIFigure.AutoResizeChildren = 'off';
-                app.UIFigure.Position = [100 100 640 376];
+                app.UIFigure.Position = [100 100 518 376];
                 app.UIFigure.Name = 'monitorSPED';
                 app.UIFigure.Icon = 'icon_16.png';
                 app.UIFigure.CloseRequestFcn = createCallbackFcn(app, @closeFcn, true);
@@ -480,7 +460,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             % Create Document
             app.Document = uigridlayout(app.GridLayout);
             app.Document.ColumnWidth = {'1x', 63, 22};
-            app.Document.RowHeight = {17, 22, 22, 0, '1x'};
+            app.Document.RowHeight = {17, 22, 22, '1x'};
             app.Document.ColumnSpacing = 5;
             app.Document.RowSpacing = 5;
             app.Document.Padding = [10 10 10 5];
@@ -499,59 +479,12 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             % Create TableIdList
             app.TableIdList = uidropdown(app.Document);
             app.TableIdList.Items = {};
-            app.TableIdList.ValueChangedFcn = createCallbackFcn(app, @TableIdListValueChanged, true);
+            app.TableIdList.ValueChangedFcn = createCallbackFcn(app, @onTableIdValueChanged, true);
             app.TableIdList.FontSize = 11;
             app.TableIdList.BackgroundColor = [1 1 1];
             app.TableIdList.Layout.Row = 2;
             app.TableIdList.Layout.Column = [1 3];
             app.TableIdList.Value = {};
-
-            % Create SpecificationControlGrid
-            app.SpecificationControlGrid = uigridlayout(app.Document);
-            app.SpecificationControlGrid.ColumnWidth = {'1x', 18, 0, 0};
-            app.SpecificationControlGrid.RowHeight = {22};
-            app.SpecificationControlGrid.ColumnSpacing = 5;
-            app.SpecificationControlGrid.Padding = [0 0 0 0];
-            app.SpecificationControlGrid.Layout.Row = 3;
-            app.SpecificationControlGrid.Layout.Column = [1 3];
-            app.SpecificationControlGrid.BackgroundColor = [0.9804 0.9804 0.9804];
-
-            % Create SpecificationLabel
-            app.SpecificationLabel = uilabel(app.SpecificationControlGrid);
-            app.SpecificationLabel.VerticalAlignment = 'bottom';
-            app.SpecificationLabel.FontSize = 10;
-            app.SpecificationLabel.Layout.Row = 1;
-            app.SpecificationLabel.Layout.Column = 1;
-            app.SpecificationLabel.Text = 'FILTRO(S)';
-
-            % Create AddNewFilter
-            app.AddNewFilter = uiimage(app.SpecificationControlGrid);
-            app.AddNewFilter.ImageClickedFcn = createCallbackFcn(app, @EditionModeImageClicked, true);
-            app.AddNewFilter.Tooltip = {'Habilita painel de inclusão de filtro'};
-            app.AddNewFilter.Layout.Row = 1;
-            app.AddNewFilter.Layout.Column = 2;
-            app.AddNewFilter.VerticalAlignment = 'bottom';
-            app.AddNewFilter.ImageSource = 'addFiles_32.png';
-
-            % Create ConfirmNewFilter
-            app.ConfirmNewFilter = uiimage(app.SpecificationControlGrid);
-            app.ConfirmNewFilter.ImageClickedFcn = createCallbackFcn(app, @EditionModeImageClicked, true);
-            app.ConfirmNewFilter.Enable = 'off';
-            app.ConfirmNewFilter.Tooltip = {'Confirma edição'};
-            app.ConfirmNewFilter.Layout.Row = 1;
-            app.ConfirmNewFilter.Layout.Column = 3;
-            app.ConfirmNewFilter.VerticalAlignment = 'bottom';
-            app.ConfirmNewFilter.ImageSource = 'Ok_32Green.png';
-
-            % Create CancelNewFilter
-            app.CancelNewFilter = uiimage(app.SpecificationControlGrid);
-            app.CancelNewFilter.ImageClickedFcn = createCallbackFcn(app, @EditionModeImageClicked, true);
-            app.CancelNewFilter.Enable = 'off';
-            app.CancelNewFilter.Tooltip = {'Cancela edição'};
-            app.CancelNewFilter.Layout.Row = 1;
-            app.CancelNewFilter.Layout.Column = 4;
-            app.CancelNewFilter.VerticalAlignment = 'bottom';
-            app.CancelNewFilter.ImageSource = 'Delete_32Red.png';
 
             % Create SpecificationPanel
             app.SpecificationPanel = uipanel(app.Document);
@@ -561,32 +494,25 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             % Create SpecificationGrid
             app.SpecificationGrid = uigridlayout(app.SpecificationPanel);
             app.SpecificationGrid.ColumnWidth = {130, '1x', 22};
-            app.SpecificationGrid.RowHeight = {22, 22, 22, 22};
+            app.SpecificationGrid.RowHeight = {22, 22, 22, 22, 18, '1x'};
             app.SpecificationGrid.ColumnSpacing = 5;
             app.SpecificationGrid.RowSpacing = 5;
             app.SpecificationGrid.BackgroundColor = [0.9804 0.9804 0.9804];
 
-            % Create ColumnList
-            app.ColumnList = uidropdown(app.SpecificationGrid);
-            app.ColumnList.Items = {};
-            app.ColumnList.ValueChangedFcn = createCallbackFcn(app, @ColumnListValueChanged, true);
-            app.ColumnList.FontSize = 11;
-            app.ColumnList.BackgroundColor = [1 1 1];
-            app.ColumnList.Layout.Row = 1;
-            app.ColumnList.Layout.Column = [1 2];
-            app.ColumnList.Value = {};
-
-            % Create ColumnClass
-            app.ColumnClass = uilabel(app.SpecificationGrid);
-            app.ColumnClass.FontSize = 18;
-            app.ColumnClass.Layout.Row = 1;
-            app.ColumnClass.Layout.Column = 3;
-            app.ColumnClass.Text = '🔤';
+            % Create symbolicNameList
+            app.symbolicNameList = uidropdown(app.SpecificationGrid);
+            app.symbolicNameList.Items = {};
+            app.symbolicNameList.ValueChangedFcn = createCallbackFcn(app, @onFilterColumnChanged, true);
+            app.symbolicNameList.FontSize = 11;
+            app.symbolicNameList.BackgroundColor = [1 1 1];
+            app.symbolicNameList.Layout.Row = 1;
+            app.symbolicNameList.Layout.Column = [1 3];
+            app.symbolicNameList.Value = {};
 
             % Create operation1_List
             app.operation1_List = uidropdown(app.SpecificationGrid);
             app.operation1_List.Items = {};
-            app.operation1_List.ValueChangedFcn = createCallbackFcn(app, @OperationValueChanged, true);
+            app.operation1_List.ValueChangedFcn = createCallbackFcn(app, @onFilterOperatorChanged, true);
             app.operation1_List.FontSize = 11;
             app.operation1_List.BackgroundColor = [1 1 1];
             app.operation1_List.Layout.Row = 2;
@@ -601,7 +527,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             app.value1_Date.BackgroundColor = [0.9804 0.9804 0.9804];
             app.value1_Date.Visible = 'off';
             app.value1_Date.Layout.Row = 2;
-            app.value1_Date.Layout.Column = 2;
+            app.value1_Date.Layout.Column = [2 3];
 
             % Create value1_Numeric
             app.value1_Numeric = uieditfield(app.SpecificationGrid, 'numeric');
@@ -610,7 +536,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             app.value1_Numeric.FontSize = 11;
             app.value1_Numeric.Visible = 'off';
             app.value1_Numeric.Layout.Row = 2;
-            app.value1_Numeric.Layout.Column = 2;
+            app.value1_Numeric.Layout.Column = [2 3];
             app.value1_Numeric.Value = [];
 
             % Create value1_TextList
@@ -622,7 +548,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             app.value1_TextList.FontSize = 11;
             app.value1_TextList.BackgroundColor = [1 1 1];
             app.value1_TextList.Layout.Row = 2;
-            app.value1_TextList.Layout.Column = 2;
+            app.value1_TextList.Layout.Column = [2 3];
             app.value1_TextList.Value = '';
 
             % Create value1_TextFree
@@ -631,7 +557,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             app.value1_TextFree.FontSize = 11;
             app.value1_TextFree.FontColor = [0.149 0.149 0.149];
             app.value1_TextFree.Layout.Row = 2;
-            app.value1_TextFree.Layout.Column = 2;
+            app.value1_TextFree.Layout.Column = [2 3];
 
             % Create operation2_LogicalGrid
             app.operation2_LogicalGrid = uibuttongroup(app.SpecificationGrid);
@@ -657,7 +583,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             % Create operation2_List
             app.operation2_List = uidropdown(app.SpecificationGrid);
             app.operation2_List.Items = {};
-            app.operation2_List.ValueChangedFcn = createCallbackFcn(app, @OperationValueChanged, true);
+            app.operation2_List.ValueChangedFcn = createCallbackFcn(app, @onFilterOperatorChanged, true);
             app.operation2_List.FontSize = 11;
             app.operation2_List.BackgroundColor = [1 1 1];
             app.operation2_List.Layout.Row = 4;
@@ -672,7 +598,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             app.value2_Date.BackgroundColor = [0.9804 0.9804 0.9804];
             app.value2_Date.Visible = 'off';
             app.value2_Date.Layout.Row = 4;
-            app.value2_Date.Layout.Column = 2;
+            app.value2_Date.Layout.Column = [2 3];
 
             % Create value2_Numeric
             app.value2_Numeric = uieditfield(app.SpecificationGrid, 'numeric');
@@ -681,7 +607,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             app.value2_Numeric.FontSize = 11;
             app.value2_Numeric.Visible = 'off';
             app.value2_Numeric.Layout.Row = 4;
-            app.value2_Numeric.Layout.Column = 2;
+            app.value2_Numeric.Layout.Column = [2 3];
             app.value2_Numeric.Value = [];
 
             % Create value2_TextList
@@ -693,7 +619,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             app.value2_TextList.FontSize = 11;
             app.value2_TextList.BackgroundColor = [1 1 1];
             app.value2_TextList.Layout.Row = 4;
-            app.value2_TextList.Layout.Column = 2;
+            app.value2_TextList.Layout.Column = [2 3];
             app.value2_TextList.Value = '';
 
             % Create value2_TextFree
@@ -702,16 +628,33 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             app.value2_TextFree.FontSize = 11;
             app.value2_TextFree.FontColor = [0.149 0.149 0.149];
             app.value2_TextFree.Layout.Row = 4;
-            app.value2_TextFree.Layout.Column = 2;
+            app.value2_TextFree.Layout.Column = [2 3];
 
-            % Create Tree
-            app.Tree = uitree(app.Document, 'checkbox');
-            app.Tree.FontSize = 11;
-            app.Tree.Layout.Row = 5;
-            app.Tree.Layout.Column = [1 3];
+            % Create columnFilterAdd
+            app.columnFilterAdd = uiimage(app.SpecificationGrid);
+            app.columnFilterAdd.ScaleMethod = 'none';
+            app.columnFilterAdd.ImageClickedFcn = createCallbackFcn(app, @onFilterAddImageClicked, true);
+            app.columnFilterAdd.Enable = 'off';
+            app.columnFilterAdd.Layout.Row = 5;
+            app.columnFilterAdd.Layout.Column = 3;
+            app.columnFilterAdd.ImageSource = 'Add_16.png';
+
+            % Create columnFilterList
+            app.columnFilterList = uitree(app.SpecificationGrid, 'checkbox');
+            app.columnFilterList.FontSize = 11;
+            app.columnFilterList.Layout.Row = 6;
+            app.columnFilterList.Layout.Column = [1 3];
 
             % Assign Checked Nodes
-            app.Tree.CheckedNodesChangedFcn = createCallbackFcn(app, @TreeCheckedNodesChanged, true);
+            app.columnFilterList.CheckedNodesChangedFcn = createCallbackFcn(app, @onColumnFilterCheckedNodesChanged, true);
+
+            % Create SpecificationLabel
+            app.SpecificationLabel = uilabel(app.Document);
+            app.SpecificationLabel.VerticalAlignment = 'bottom';
+            app.SpecificationLabel.FontSize = 10;
+            app.SpecificationLabel.Layout.Row = 3;
+            app.SpecificationLabel.Layout.Column = 1;
+            app.SpecificationLabel.Text = 'FILTRO POR COLUNA';
 
             % Create ContextMenu
             app.ContextMenu = uicontextmenu(app.UIFigure);
@@ -719,11 +662,11 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
 
             % Create ExcluirMenu
             app.ExcluirMenu = uimenu(app.ContextMenu);
-            app.ExcluirMenu.MenuSelectedFcn = createCallbackFcn(app, @ExcluirMenuSelected, true);
+            app.ExcluirMenu.MenuSelectedFcn = createCallbackFcn(app, @onFilterDelImageClicked, true);
             app.ExcluirMenu.Text = '❌ Excluir';
             
             % Assign app.ContextMenu
-            app.Tree.ContextMenu = app.ContextMenu;
+            app.columnFilterList.ContextMenu = app.ContextMenu;
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';

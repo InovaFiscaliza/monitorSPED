@@ -755,6 +755,13 @@ classdef ECD < handle
         end
 
         %-----------------------------------------------------------------%
+        function checkIfScalar(obj)
+            if ~isscalar(obj)
+                error('model:ECD:ScalarObjectRequired', 'This method requires a scalar object.');
+            end
+        end
+
+        %-----------------------------------------------------------------%
         function validFile = checkIfValidPeriod(obj)
             checkIfScalar(obj)
 
@@ -834,13 +841,6 @@ classdef ECD < handle
 
 
     methods (Access = protected)
-        %-----------------------------------------------------------------%
-        function checkIfScalar(obj)
-            if ~isscalar(obj)
-                error('model:ECD:ScalarObjectRequired', 'This method requires a scalar object.');
-            end
-        end
-
         %-----------------------------------------------------------------%
         function parseTable(obj, tableId, generalSettings)
             arguments

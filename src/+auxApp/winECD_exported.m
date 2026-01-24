@@ -480,20 +480,18 @@ classdef winECD_exported < matlab.apps.AppBase
             % essa tabela será vazia.
 
             nonEmptyECDObject               = ~isempty(selectedECD);
-            hasSpecificNonEmptyTable        = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);
-            
+            hasSpecificNonEmptyTable        = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);            
             reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(app.Context).generatedFiles.lastHTMLDocFullPath);
-            reportFinalRelatedToSelectedObj = nonEmptyECDObject && isequal(selectedECD.Hash, app.projectData.modules.(app.Context).generatedFiles.id);
 
             tableIdView = {app.SheetList.Value};
             if ~isempty(app.SheetView_Second.Value)
                 tableIdView{end+1} = app.SheetView_Second.Value;
             end
             app.tool_AutoFill.Enable        = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', tableIdView);
-            app.tool_AccountButton.Enable  = hasSpecificNonEmptyTable;
-            app.tool_Separator.Visible     = nonEmptyECDObject;
+            app.tool_AccountButton.Enable   = hasSpecificNonEmptyTable;
+            app.tool_Separator.Visible      = nonEmptyECDObject;
             app.tool_GenerateReport.Enable  = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO');
-            app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated && reportFinalRelatedToSelectedObj;
+            app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated;
         end
 
         %-----------------------------------------------------------------%
@@ -1199,16 +1197,21 @@ classdef winECD_exported < matlab.apps.AppBase
             selectedECD = selectedECDObject(app);
 
             storedReportHash  = app.projectData.modules.(context).generatedFiles.id;
-            currentReportHash = model.ProjectBase.computeReportFileInventoryHash(selectedECD);
+            currentReportHash = model.ProjectBase.computeReportAnalysisResultsHash(selectedECD);
 
             if ~isequal(storedReportHash, currentReportHash)
                 [~, generatedHtmlFileName, generatedHtmlFileExt] = fileparts(generatedHtmlFilePath);
                 msgQuestion = sprintf([ ...
-                    '<i>Hash</i> do arquivo no momento da geração do relatório "%s":<br>' ...
+                    'O relatório indicado a seguir foi gerado com base em ' ...
+                    'um conjunto específico de arquivos e anotações.<br>%s<br><br>' ...
+                    '<i>Hash</i> no momento da geração:<br>' ...
                     '%s<br><br>' ...
-                    '<i>Hash</i> do arquivo selecionado:<br>' ...
+                    '<i>Hash</i> atual (após alterações):<br>' ...
                     '%s<br><br>' ...
-                    '<b>Continuar mesmo assim?</b>' ...
+                    'Isso indica que um arquivo diferente foi selecionado ' ...
+                    'ou que alguma anotação foi modificada desde a geração ' ...
+                    'do relatório.<br><br>' ...
+                    '<b>Deseja continuar com o <i>upload</i> mesmo assim?</b>' ...
                 ], [generatedHtmlFileName, generatedHtmlFileExt], textFormatGUI.cellstr2Bullets(strsplit(storedReportHash, ' - ')), textFormatGUI.cellstr2Bullets(strsplit(currentReportHash, ' - ')));
                 userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 2, 2);
 
