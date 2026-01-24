@@ -385,7 +385,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     screenWidth  = 720;
                     screenHeight = 580;
                 case 'ECDFilter'
-                    screenWidth  = 640;
+                    screenWidth  = 518;
                     screenHeight = 376;
                 case 'ECDMemoryUsage'
                     screenWidth  = 460;
