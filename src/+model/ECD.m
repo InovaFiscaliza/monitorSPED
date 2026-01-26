@@ -372,17 +372,18 @@ classdef ECD < handle
                     end
 
                 case 'Table.x_CONTAS_ANOTACAO'
+                    generalSettings = varargin{1};
+
                     switch updateType
                         case 'startup'
-                            generalSettings = varargin{1};
                             accountList = obj.Table.x_BALANCETE_RESULTADO.('COD_CTA');
                             obj.Table.x_CONTAS_ANOTACAO = model.ECDBase.initializeCustomTable('_CONTAS_ANOTACAO', accountList, generalSettings);
 
                         case 'valueChanged'
-                            rowIndex = varargin{1};
-                            colIndex = varargin{2};
-                            colName  = varargin{3};
-                            newValue = varargin{4};
+                            rowIndex = varargin{2};
+                            colIndex = varargin{3};
+                            colName  = varargin{4};
+                            newValue = varargin{5};
 
                             if isnumeric(obj.Table.x_CONTAS_ANOTACAO{rowIndex, colIndex})
                                 if ~isnumeric(newValue)
@@ -401,12 +402,12 @@ classdef ECD < handle
                             obj.Table.x_CONTAS_ANOTACAO{rowIndex, colIndex} = newValue;
 
                             if strcmp(colName, 'Apurado?  ✎')
-                                update(obj, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Apurado?', rowIndex, newValue)
+                                update(obj, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Apurado?', generalSettings, rowIndex, newValue)
                             end
 
                         case 'valueChanged:Apurado?'
-                            rowIndex = varargin{1};
-                            newValue = varargin{2};
+                            rowIndex = varargin{2};
+                            newValue = varargin{3};
 
                             obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(rowIndex) = newValue;
                             switch newValue
@@ -417,14 +418,14 @@ classdef ECD < handle
                             end
 
                         case 'valueChanged:Alíquota ICMS'
-                            rowIndex = varargin{1};
-                            newValue = varargin{2};
+                            rowIndex = varargin{2};
+                            newValue = varargin{3};
 
                             obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){rowIndex} = newValue;
 
                         case 'valueChanged:Observação'
-                            rowIndex = varargin{1};
-                            newValue = varargin{2};
+                            rowIndex = varargin{2};
+                            newValue = varargin{3};
 
                             obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){rowIndex} = newValue;
 
@@ -486,7 +487,7 @@ classdef ECD < handle
                             error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
                     end
 
-                    update(obj, 'Table.x_TABELA_APURACAO', 'accountValueChanged')
+                    update(obj, 'Table.x_TABELA_APURACAO', 'accountValueChanged', generalSettings)
 
                 case 'Table.x_TABELA_APURACAO'
                     switch updateType
@@ -494,10 +495,11 @@ classdef ECD < handle
                             obj.Table.x_TABELA_APURACAO = model.ECDBase.initializeCustomTable('_TABELA_APURACAO');
 
                         case 'accountValueChanged'
-                            pisDefaultTax     = 0.0065;
-                            cofinsDefaultTax  = 0.03;
-                            fustDefaultTax    = 0.01;
-                            funttelDefaultTax = 0.005;
+                            generalSettings   = varargin{1};
+                            pisDefaultTax     = generalSettings.ECD.taxConfig.PIS;     % 0.0065;
+                            cofinsDefaultTax  = generalSettings.ECD.taxConfig.COFINS;  % 0.03;
+                            fustDefaultTax    = generalSettings.ECD.taxConfig.FUST;    % 0.01;
+                            funttelDefaultTax = generalSettings.ECD.taxConfig.FUNTTEL; % 0.005;
                             
                             robContabilIdx    = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "Sim");
                             icmsContabilIdx   = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "ICMS Telecom");
@@ -572,17 +574,17 @@ classdef ECD < handle
                             funttelApurado         = - funttelDefaultTax .* baseCalculoFustFunttel;
 
                             % ## ATUALIZA TABELA ##                            
-                            obj.Table.x_TABELA_APURACAO('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell([robContabil,            sum(robContabil)]);
-                            obj.Table.x_TABELA_APURACAO('ICMS TELECOM',                   [monthIds, {'TOTAL'}]) = num2cell([icmsEstimado,           sum(icmsEstimado)]);
-                            obj.Table.x_TABELA_APURACAO('ICMS CONTÁBIL',                  [monthIds, {'TOTAL'}]) = num2cell([icmsContabil,           sum(icmsContabil)]);
-                            obj.Table.x_TABELA_APURACAO('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell([baseCalculoPisCofins,   sum(baseCalculoPisCofins)]);
-                            obj.Table.x_TABELA_APURACAO('PIS TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell([pisEstimado,            sum(pisEstimado)]);
-                            obj.Table.x_TABELA_APURACAO('PIS CONTÁBIL',                   [monthIds, {'TOTAL'}]) = num2cell([pisContabil,            sum(pisContabil)]);
-                            obj.Table.x_TABELA_APURACAO('COFINS TELECOM',                 [monthIds, {'TOTAL'}]) = num2cell([cofinsEstimado,         sum(cofinsEstimado)]);
-                            obj.Table.x_TABELA_APURACAO('COFINS CONTÁBIL',                [monthIds, {'TOTAL'}]) = num2cell([cofinsContabil,         sum(cofinsContabil)]);
-                            obj.Table.x_TABELA_APURACAO('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell([baseCalculoFustFunttel, sum(baseCalculoFustFunttel)]);
-                            obj.Table.x_TABELA_APURACAO('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell([fustApurado,            sum(fustApurado)]);                            
-                            obj.Table.x_TABELA_APURACAO('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell([funttelApurado,         sum(funttelApurado)]);
+                            obj.Table.x_TABELA_APURACAO('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell(round([robContabil,            sum(robContabil)],            2));
+                            obj.Table.x_TABELA_APURACAO('ICMS TELECOM',                   [monthIds, {'TOTAL'}]) = num2cell(round([icmsEstimado,           sum(icmsEstimado)],           2));
+                            obj.Table.x_TABELA_APURACAO('ICMS CONTÁBIL',                  [monthIds, {'TOTAL'}]) = num2cell(round([icmsContabil,           sum(icmsContabil)],           2));
+                            obj.Table.x_TABELA_APURACAO('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell(round([baseCalculoPisCofins,   sum(baseCalculoPisCofins)],   2));
+                            obj.Table.x_TABELA_APURACAO('PIS TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell(round([pisEstimado,            sum(pisEstimado)],            2));
+                            obj.Table.x_TABELA_APURACAO('PIS CONTÁBIL',                   [monthIds, {'TOTAL'}]) = num2cell(round([pisContabil,            sum(pisContabil)],            2));
+                            obj.Table.x_TABELA_APURACAO('COFINS TELECOM',                 [monthIds, {'TOTAL'}]) = num2cell(round([cofinsEstimado,         sum(cofinsEstimado)],         2));
+                            obj.Table.x_TABELA_APURACAO('COFINS CONTÁBIL',                [monthIds, {'TOTAL'}]) = num2cell(round([cofinsContabil,         sum(cofinsContabil)],         2));
+                            obj.Table.x_TABELA_APURACAO('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell(round([baseCalculoFustFunttel, sum(baseCalculoFustFunttel)], 2));
+                            obj.Table.x_TABELA_APURACAO('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell(round([fustApurado,            sum(fustApurado)],            2));
+                            obj.Table.x_TABELA_APURACAO('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell(round([funttelApurado,         sum(funttelApurado)],         2));
 
                         otherwise
                             error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
@@ -805,12 +807,13 @@ classdef ECD < handle
         end
 
         %-----------------------------------------------------------------%
-        function outputTable = addAccountDescription(obj, mainTable, mainColumns, accountColumn)
+        function outputTable = addAccountDescription(obj, mainTable, mainColumns, accountColumn, referenceTableId)
             arguments
                 obj
                 mainTable        table
                 mainColumns      cell
-                accountColumn    char {mustBeMember(accountColumn, {'COD_NAT', 'CTA'})} = 'CTA'
+                accountColumn    char {mustBeMember(accountColumn, {'COD_NAT', 'CTA', 'DESCRIÇÃO'})} = 'CTA'
+                referenceTableId char = 'xI050'
             end
 
             if ~ismember('COD_CTA', mainTable.Properties.VariableNames)
@@ -822,7 +825,7 @@ classdef ECD < handle
         
             % Plano de contas (registro "I050") validado, de forma que cada
             % conta apareça uma única vez.
-            planTable = obj.Table.xI050;
+            planTable = obj.Table.(referenceTableId);
             [~, uniqueAccountIdxs] = unique(planTable.('COD_CTA'));
             planTable = planTable(uniqueAccountIdxs, :);
 
@@ -1147,7 +1150,7 @@ classdef ECD < handle
                 'MergeKeys', true, ...
                 'Type', 'left', ...
                 'LeftVariables', mainTableColumns, ...
-                'RightVariables', secundaryTableColumns ...
+                'RightVariables', setdiff(secundaryTableColumns, mainTableColumns) ...
             );
             
             if ismember('_TEMP_KEY', mergedTable.Properties.VariableNames)

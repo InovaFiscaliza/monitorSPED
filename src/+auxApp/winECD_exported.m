@@ -133,13 +133,20 @@ classdef winECD_exported < matlab.apps.AppBase
                             case 'closeFcnCallFromPopupApp'
                                 app.popupContainer.Parent.Visible = 0;
 
+                            % auxApp.winConfig >> winMonitorSPED >> auxApp.winECD
+                            case {'onPISTaxChanged', 'onCOFINSTaxChanged'}
+                                forceUpdateTable(app)
+
+                            % auxApp.dockECDAccount >> winMonitorSPED >> auxApp.winECD
+                            case 'onAccountEdited'
+                                forceUpdateTable(app)
+                                
+                            % auxApp.dockECDExport >> winMonitorSPED >> auxApp.winECD
                             case 'onExportECD'
                                 app.popupContainer.Parent.Visible = 0;
                                 exportFiles(app, varargin{:})
 
-                            case 'onAccountEdited'
-                                forceUpdateTable(app)
-
+                            % auxApp.dockECDFilter >> winMonitorSPED >> auxApp.winECD
                             case 'onFilterChanged'
                                 tableId = varargin{1};
                                 if strcmp(app.SheetList.Value, tableId)
@@ -151,7 +158,7 @@ classdef winECD_exported < matlab.apps.AppBase
                                 end
 
                             case 'onTableReadRequired'
-                                [selectedECD, fileIndex] = selectedECDObject(app);
+                                [selectedECD, fileIndex] = getSelectedECD(app);
                                 tableId = varargin{1};
 
                                 requestVisibilityChange(app.progressDialog, 'visible', 'unlocked')
@@ -160,6 +167,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
                                 requestVisibilityChange(app.progressDialog, 'hidden', 'unlocked')
 
+                            % auxApp.dockECDMemoryUsage >> winMonitorSPED >> auxApp.winECD
                             case 'onCacheCleanup'
                                 fileIndex = varargin{1};
                                 tableIdList = varargin{2};
@@ -173,7 +181,7 @@ classdef winECD_exported < matlab.apps.AppBase
                                 % ...
 
                             case {'onReportGenerate', 'onFinalReportFileChanged'}
-                                selectedECD = selectedECDObject(app);
+                                selectedECD = getSelectedECD(app);
                                 updateToolbar(app, selectedECD)
 
                             case 'onFetchIssueDetails'
@@ -359,7 +367,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 end
             end
 
-            selectedECD = selectedECDObject(app);
+            selectedECD = getSelectedECD(app);
             updateToolbar(app, selectedECD)
         end
     end
@@ -367,19 +375,19 @@ classdef winECD_exported < matlab.apps.AppBase
 
     methods (Access = private)
         %-----------------------------------------------------------------%
-        function companyIndexes = selectedFileIndexByCompany(app)
+        function companyIndexes = getSelectedFileIdxsByCompany(app)
             companyId      = extractBefore(app.CompanyNameList.Value, ' -');
             companyIndexes = cell2mat(app.CompanyNameList.UserData(companyId));
         end
 
         %-----------------------------------------------------------------%
-        function [selectedECD, fileIndex] = selectedECDObject(app)
+        function [selectedECD, fileIndex] = getSelectedECD(app)
             if isempty(app.ecdObj)
                 selectedECD = [];
                 fileIndex   = [];
 
             else
-                companyIndexes  = selectedFileIndexByCompany(app);
+                companyIndexes  = getSelectedFileIdxsByCompany(app);
                  [~, companySortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(companyIndexes)));
                  companyIndexes = companyIndexes(companySortedIndexes);
     
@@ -398,8 +406,18 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
+        function tableId = getSelectedTableId(app, hTable)
+            switch hTable
+                case app.UITable1
+                    tableId = app.SheetList.Value;
+                case app.UITable2
+                    tableId = app.SheetView_Second.Value;
+            end
+        end
+
+        %-----------------------------------------------------------------%
         function updateTimePeriodList(app, fileIndex)
-            companyIndexes = selectedFileIndexByCompany(app);
+            companyIndexes = getSelectedFileIdxsByCompany(app);
             [~, companySortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(companyIndexes)));
             
             companyIndexes = companyIndexes(companySortedIndexes);
@@ -421,7 +439,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function updateSheetList(app)
-            selectedECD = selectedECDObject(app);
+            selectedECD = getSelectedECD(app);
             ordinaryIds = getTableIds(selectedECD);
 
             % Algumas das tabelas customizadas existirão apenas se registros 
@@ -502,8 +520,9 @@ classdef winECD_exported < matlab.apps.AppBase
             for ii = 1:numel(refTable)
                 tableHandle = refTable(ii).handle;
                 controller  = refTable(ii).controller;
+                tableId     = controller.Value;
                 
-                if ismember(controller.Value, {'_CONTAS_ANOTACAO', '_TABELA_APURACAO'})
+                if ismember(tableId, {'_CONTAS_ANOTACAO', '_TABELA_APURACAO'})
                     initialSelection = tableHandle.Selection;
                     controller.ValueChangedFcn(controller, struct('Source', controller))
 
@@ -528,7 +547,7 @@ classdef winECD_exported < matlab.apps.AppBase
         function updateTable(app, hTable, hTableAccountInfo, hTableCountText, hTableFilterText, hTableFilterIcon, tableId)
             requestVisibilityChange(app.progressDialog, 'visible', 'unlocked')
 
-            [selectedECD, fileIndex] = selectedECDObject(app);            
+            [selectedECD, fileIndex] = getSelectedECD(app);            
             checkIfTableRead(app, selectedECD, fileIndex, {tableId})
             tableIdData    = selectedECD.Table.(['x' tableId]);
             
@@ -551,8 +570,9 @@ classdef winECD_exported < matlab.apps.AppBase
             % Inclusão da coluna "CTA", caso habilitado.
             if app.mainApp.General.ui.accountDescriptionScope
                 variableNames = tableIdData.Properties.VariableNames;
-                if ismember('COD_CTA', variableNames) && ~ismember('CTA', variableNames)
-                    tableIdData = addAccountDescription(selectedECD, tableIdData, variableNames, 'CTA');
+                variableToAdd = 'CTA';
+                if ismember('COD_CTA', variableNames) && ~ismember(variableToAdd, variableNames)
+                    tableIdData = addAccountDescription(selectedECD, tableIdData, variableNames, variableToAdd);
                 end
             end
 
@@ -691,7 +711,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 selectedAccountDescription = '';
                 [~, accountColumnIdx] = ismember('COD_CTA', clickedTable.ColumnName);
                 if isscalar(selectedRows) && accountColumnIdx
-                    selectedECD = selectedECDObject(app);
+                    selectedECD = getSelectedECD(app);
 
                     selectedAccount = clickedTable.Data{selectedRows, accountColumnIdx};
                     selectedAccountIndex = find(strcmp(selectedECD.Table.x_CONTAS_DESCRICAO.("COD_CTA"), selectedAccount), 1);
@@ -1041,7 +1061,7 @@ classdef winECD_exported < matlab.apps.AppBase
         function onPopupModuleRequest(app, event)
             
             context = app.Context;
-            [~, fileIndex] = selectedECDObject(app);
+            [~, fileIndex] = getSelectedECD(app);
 
             switch event.Source
                 case app.ExportButton
@@ -1075,12 +1095,12 @@ classdef winECD_exported < matlab.apps.AppBase
         % Image clicked function: tool_AutoFill
         function Toolbar_AutoFillImageClicked(app, event)
             
-            selectedECD = selectedECDObject(app);
+            selectedECD = getSelectedECD(app);
             if ~isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO')
                 return
             end
 
-            update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'autoFill')
+            update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'autoFill', app.mainApp.General)
             forceUpdateTable(app)
 
         end
@@ -1101,7 +1121,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 return
             end
             
-            [~, fileIndex] = selectedECDObject(app);
+            [~, fileIndex] = getSelectedECD(app);
 
             if ~isempty(fileIndex)
                 % <VALIDAÇÕES>
@@ -1194,7 +1214,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 return
             end
 
-            selectedECD = selectedECDObject(app);
+            selectedECD = getSelectedECD(app);
 
             storedReportHash  = app.projectData.modules.(context).generatedFiles.id;
             currentReportHash = model.ProjectBase.computeReportAnalysisResultsHash(selectedECD);
@@ -1262,7 +1282,7 @@ classdef winECD_exported < matlab.apps.AppBase
             
             requestVisibilityChange(app.progressDialog, 'visible', 'locked')
             
-            selectedECD = selectedECDObject(app);
+            selectedECD = getSelectedECD(app);
 
             app.tool_CompanyInfo.Text = sprintf('<font style="font-size: 11px; font-weight: bold;">%s</font> CNPJ %s (%s) \n%s ', ...
                 upper(selectedECD.CompanyName), selectedECD.CompanyId, selectedECD.State, strjoin(string(selectedECD.Period), ' a '));
@@ -1313,7 +1333,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 app.UITable2.Visible = 'on';                
                 rowHeight = {10,2,22};
 
-                selectedECD = selectedECDObject(app);
+                selectedECD = getSelectedECD(app);
                 if ~isempty(selectedECD)
                     SheetViewSecondValueChanged(app)
                 end
@@ -1350,7 +1370,7 @@ classdef winECD_exported < matlab.apps.AppBase
         % Button pushed function: LogButton
         function LogButtonPushed(app, event)
             
-            selectedECD = selectedECDObject(app);
+            selectedECD = getSelectedECD(app);
 
             htmlContent = util.HtmlTextGenerator.Warnings(selectedECD);
             ui.Dialog(app.UIFigure, 'info', htmlContent);
@@ -1420,21 +1440,23 @@ classdef winECD_exported < matlab.apps.AppBase
             if (iscategorical(newData) && isequal(previousData, newData)) || ...
                (ischar(newData)        && isequal(strtrim(previousData), strtrim(newData)))
                 return
-            end            
-
-            % E agora sim analisa a edição da célula...
-            rowIndex = event.Indices(1);
-            colIndex = event.Indices(2);            
-
-            columnNames = event.Source.ColumnName;
-            editedCellColumnName = columnNames{colIndex};
-
-            selectedECD = selectedECDObject(app);
-            if iscell(selectedECD.Table.x_CONTAS_ANOTACAO{rowIndex, colIndex})
-                newData = {strtrim(newData)};
             end
 
-            update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged', rowIndex, colIndex, editedCellColumnName, newData)
+            clickedTable = event.Source;
+            selectedECD = getSelectedECD(app);
+            tableId = getSelectedTableId(app, clickedTable);
+            
+            rowIndex = event.Source.UserData.visibleRows(event.Indices(1));
+            colName = clickedTable.ColumnName{event.Indices(2)};
+            [~, colIndex] = ismember(colName, selectedECD.Table.(['x' tableId]).Properties.VariableNames);
+
+            if colIndex
+                if iscellstr(selectedECD.Table.(['x' tableId]){rowIndex, colIndex})
+                    newData = {strtrim(newData)};
+                end
+    
+                update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged', app.mainApp.General, rowIndex, colIndex, colName, newData)
+            end
             forceUpdateTable(app)
 
         end
@@ -1448,13 +1470,9 @@ classdef winECD_exported < matlab.apps.AppBase
                 return
             end
 
-            switch clickedTable
-                case app.UITable1; tableId = app.SheetList.Value;
-                case app.UITable2; tableId = app.SheetView_Second.Value;
-            end
+            selectedECD = getSelectedECD(app);
+            tableId = getSelectedTableId(app, clickedTable);
 
-            % Lista atual de estilos:
-            selectedECD  = selectedECDObject(app);
             styleIndex = checkTableCustomStyle(app, selectedECD, tableId);
             if isempty(styleIndex)
                 styleIndex = numel(selectedECD.GUI.tableView)+1;
@@ -1555,14 +1573,9 @@ classdef winECD_exported < matlab.apps.AppBase
         % Image clicked function: StyleDelete, StyleRefresh
         function TableStyleDeleteOrRefresh(app, event)
             
-            selectedECD  = selectedECDObject(app);            
             clickedTable = onFocusTable(app);
-            switch clickedTable
-                case app.UITable1
-                    tableId = app.SheetList.Value;
-                case app.UITable2
-                    tableId = app.SheetView_Second.Value;
-            end
+            selectedECD = getSelectedECD(app);
+            tableId = getSelectedTableId(app, clickedTable);
 
             % Lista atual de estilos:
             [styleIndex, styleStatus] = checkTableCustomStyle(app, selectedECD, tableId);

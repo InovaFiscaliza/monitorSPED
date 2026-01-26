@@ -19,6 +19,7 @@ classdef winConfig_exported < matlab.apps.AppBase
         SubGrid2                     matlab.ui.container.GridLayout
         configAnalysisPanel2         matlab.ui.container.Panel
         configAnalysisGrid2          matlab.ui.container.GridLayout
+        AddAccountDescription        matlab.ui.control.CheckBox
         Cofins                       matlab.ui.control.Spinner
         CofinsLabel                  matlab.ui.control.Label
         PIS                          matlab.ui.control.Spinner
@@ -141,9 +142,11 @@ classdef winConfig_exported < matlab.apps.AppBase
             projectFilePath   = fullfile(projectFolder, 'GeneralSettings.json');
             projectGeneral    = jsondecode(fileread(projectFilePath));
 
-            app.defaultValues = struct('FILE',   projectGeneral.FILE, ...
-                                       'ECD',    projectGeneral.ECD, ...
-                                       'Report', projectGeneral.Report);
+            app.defaultValues = struct( ...
+                'FILE',   projectGeneral.FILE, ...
+                'ECD',    projectGeneral.ECD, ...
+                'Report', struct('Report', projectGeneral.Report, 'ui', projectGeneral.ui) ...
+            );
         end
 
         %-----------------------------------------------------------------%
@@ -190,6 +193,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % ECD
             app.PIS.Value = 100 * app.mainApp.General.ECD.taxConfig.PIS;
             app.Cofins.Value = 100 * app.mainApp.General.ECD.taxConfig.COFINS;
+            app.AddAccountDescription.Value = app.mainApp.General.ui.accountDescriptionScope;
 
             app.configAnalysisRefresh.Visible = checkEdition(app, 'ANALYSIS');
         end
@@ -220,9 +224,11 @@ classdef winConfig_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function editionFlag = checkEdition(app, tabName)
             editionFlag   = false;
-            currentValues = struct('FILE',   app.mainApp.General.FILE, ...
-                                   'ECD',    app.mainApp.General.ECD,  ...
-                                   'Report', app.mainApp.General.Report);
+            currentValues = struct( ...
+                'FILE',   app.mainApp.General.FILE, ...
+                'ECD',    app.mainApp.General.ECD,  ...
+                'Report', struct('Report', app.mainApp.General.Report, 'ui', app.mainApp.General.ui) ...
+            );
 
             switch tabName
                 case 'ANALYSIS'
@@ -372,8 +378,8 @@ classdef winConfig_exported < matlab.apps.AppBase
 
         end
 
-        % Value changed function: CheckStatus, Cofins, InputType, PIS, 
-        % ...and 1 other component
+        % Value changed function: AddAccountDescription, CheckStatus, 
+        % ...and 4 other components
         function Config_AnalysisParameterValueChanged(app, event)
             
             switch event.Source
@@ -389,15 +395,19 @@ classdef winConfig_exported < matlab.apps.AppBase
 
                 case app.PIS
                     app.mainApp.General.ECD.taxConfig.PIS    = app.PIS.Value / 100;
-                    ipcMainMatlabCallsHandler(app.mainApp, app, 'PISValueChanged')
+                    ipcMainMatlabCallsHandler(app.mainApp, app, 'onPISTaxChanged')
 
                 case app.Cofins
                     app.mainApp.General.ECD.taxConfig.COFINS = app.Cofins.Value / 100;
-                    ipcMainMatlabCallsHandler(app.mainApp, app, 'COFINSValueChanged')
+                    ipcMainMatlabCallsHandler(app.mainApp, app, 'onCOFINSTaxChanged')
+
+                case app.AddAccountDescription
+                    app.mainApp.General.ui.accountDescriptionScope = app.AddAccountDescription.Value;
             end
 
             app.mainApp.General_I.FILE = app.mainApp.General.FILE;
             app.mainApp.General_I.ECD  = app.mainApp.General.ECD;
+            app.mainApp.General_I.ui   = app.mainApp.General.ui;
 
             updatePanel_Analysis(app)
             saveGeneralSettings(app)
@@ -754,8 +764,8 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create configAnalysisGrid2
             app.configAnalysisGrid2 = uigridlayout(app.configAnalysisPanel2);
-            app.configAnalysisGrid2.ColumnWidth = {350, 110};
-            app.configAnalysisGrid2.RowHeight = {22, 22};
+            app.configAnalysisGrid2.ColumnWidth = {350, 110, '1x'};
+            app.configAnalysisGrid2.RowHeight = {22, 22, 22};
             app.configAnalysisGrid2.RowSpacing = 5;
             app.configAnalysisGrid2.BackgroundColor = [1 1 1];
 
@@ -794,6 +804,14 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.Cofins.Layout.Row = 2;
             app.Cofins.Layout.Column = 2;
             app.Cofins.Value = 3;
+
+            % Create AddAccountDescription
+            app.AddAccountDescription = uicheckbox(app.configAnalysisGrid2);
+            app.AddAccountDescription.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
+            app.AddAccountDescription.Text = 'Habilita a inclusão da descrição da conta (coluna "CTA") sempre que o registro em análise possuir a coluna "COD_CTA".';
+            app.AddAccountDescription.FontSize = 11;
+            app.AddAccountDescription.Layout.Row = 3;
+            app.AddAccountDescription.Layout.Column = [1 3];
 
             % Create SubTab3
             app.SubTab3 = uitab(app.SubTabGroup);

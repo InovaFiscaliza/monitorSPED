@@ -245,17 +245,18 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             
             fileIndex    = app.inputArgs.index;
             selectedECD  = app.mainApp.ecdObj(fileIndex);
-            accountIndex = app.currentAccount.index;            
+            accountIndex = app.currentAccount.index;
+            generalSettings = app.mainApp.General;
 
             switch event.Source
                 case app.taxType
-                    update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Apurado?', accountIndex, app.taxType.Value)
+                    update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Apurado?', generalSettings, accountIndex, app.taxType.Value)
                 
                 case app.icmsType
                     updateRatePanelStatus(app, strcmp(app.icmsType.Value, 'manual'))
 
                     rateJsonInfo = createRateJsonInfo(app);
-                    update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Alíquota ICMS', accountIndex, jsonencode(rateJsonInfo))
+                    update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Alíquota ICMS', generalSettings, accountIndex, jsonencode(rateJsonInfo))
 
                 case {app.icmsMonth1, ...
                       app.icmsMonth2, ...
@@ -271,11 +272,11 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
                       app.icmsMonth12}
 
                     rateJsonInfo = createRateJsonInfo(app);
-                    update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Alíquota ICMS', accountIndex, jsonencode(rateJsonInfo))
+                    update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Alíquota ICMS', generalSettings, accountIndex, jsonencode(rateJsonInfo))
 
                 case app.freenote
                     newFreeNote = textFormatGUI.cellstr2TextField(app.freenote.Value);
-                    update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Observação', accountIndex, newFreeNote)
+                    update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Observação', generalSettings, accountIndex, newFreeNote)
             end
 
             updateLayout(app, fileIndex, app.accountList.Value)

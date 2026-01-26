@@ -230,8 +230,15 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                             onFileSortMethodValueChanged(app)
                                         end
         
-                                    case {'PISValueChanged', 'COFINSValueChanged'}
-                                        error('Pendente de implementação! :(')
+                                    case {'onPISTaxChanged', 'onCOFINSTaxChanged'}
+                                        for ii = 1:numel(app.ecdObj)
+                                            if isfield(app.ecdObj(ii).Table, 'x_TABELA_APURACAO')
+                                                update(app.ecdObj(ii), 'Table.x_TABELA_APURACAO', 'accountValueChanged', app.General)
+                                            end
+                                        end
+
+                                        context = 'ECD';
+                                        ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', eventName)
         
                                     otherwise
                                         error('UnexpectedCall')
@@ -861,9 +868,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             ui.Dialog(callingApp.UIFigure, icon1, msg1);
 
             callingApp.progressDialog.Visible = 'hidden';
-
+            
             if status1 && strcmp(app.projectData.modules.(context).ui.system, 'eFiscaliza')
-                [status2, msg2] = reportUploadJsonToSharepoint(app);
+                [status2, msg2] = reportUploadJsonToSharepoint(app, context);
 
                 if ~status2
                     ui.Dialog(callingApp.UIFigure, 'error', msg2);
@@ -927,7 +934,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %------------------------------------------------------------------------%
-        function [status, msg] = reportUploadJsonToSharepoint(app)
+        function [status, msg] = reportUploadJsonToSharepoint(app, context)
             JSONFile = getGeneratedDocumentFileName(app.projectData, '.json', context);
             [status, msg] = copyfile(JSONFile, app.General.fileFolder.DataHub_POST, 'f');
         end

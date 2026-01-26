@@ -1,5 +1,5 @@
 {
-    "version": 0.73,
+    "version": 0.75,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -42,8 +42,10 @@
             "cacheEnabled": false,
             "cacheColumns": {
                 "I200": [
-                    "REG", 
+                    "REG",
+                    "NUM_LCTO",
                     "DT_LCTO", 
+                    "VL_LCTO",
                     "IND_LCTO"
                 ],
                 "I250": [
@@ -51,7 +53,6 @@
                     "COD_CTA", 
                     "VL_DC", 
                     "IND_DC", 
-                    "COD_HIST_PAD", 
                     "HIST"
                 ]
             }

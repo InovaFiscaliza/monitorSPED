@@ -357,7 +357,7 @@ classdef Project < handle
         function fileName = getGeneratedDocumentFileName(obj, fileExt, context)
             arguments
                 obj
-                fileExt (1,:) char {mustBeMember(fileExt, {'.html', '.xlsx', '.zip'})}
+                fileExt (1,:) char {mustBeMember(fileExt, {'.html', '.json', '.xlsx', '.zip'})}
                 context (1,:) char {mustBeMember(context, {'FILE', 'ECD'})}
             end
 
