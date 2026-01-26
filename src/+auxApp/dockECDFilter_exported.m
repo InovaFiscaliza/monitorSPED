@@ -149,6 +149,18 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
+        function cats = getCategories(app, columnName)
+            index = app.inputArgs.index;
+            tableId = app.TableIdList.Value;
+            tableIdData = app.ecdObj(index).Table.(['x' tableId]);
+
+            cats = {};
+            if iscategorical(tableIdData.(columnName))
+                cats = categories(tableIdData.(columnName));
+            end
+        end
+
+        %-----------------------------------------------------------------%
         function validateAndAddTableFilter(app)
             selectedECD  = app.ecdObj(app.inputArgs.index);
             tableId      = app.TableIdList.Value;
@@ -163,17 +175,17 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
                 update(selectedECD, 'GUI.TableView.Filter', 'createFilteringObject', tableId, filterIndex)
             end
 
-            fieldName = app.symbolicNameList.Value;            
-            operators = {app.operation1_List.Value};
-            values    = {app.operation1_List.UserData.inputHandle.Value};
-            connector = app.operation2_LogicalGrid.SelectedObject.Text;
+            columnName = inspectColumnData(app);
+            operators  = {app.operation1_List.Value};
+            values     = {app.operation1_List.UserData.inputHandle.Value};
+            connector  = app.operation2_LogicalGrid.SelectedObject.Text;
 
             if ~isempty(app.operation2_List.Value) && (~strcmp(app.operation1_List.Value, app.operation2_List.Value) || ~isequal(app.operation1_List.UserData.inputHandle.Value, app.operation2_List.UserData.inputHandle.Value))
                 operators = [operators, {app.operation2_List.Value}];
                 values    = [values, {app.operation2_List.UserData.inputHandle.Value}];
             end
 
-            addFilterRule(selectedECD.GUI.tableView(filterIndex).filter, fieldName, operators, values, connector)
+            addFilterRule(selectedECD.GUI.tableView(filterIndex).filter, columnName, operators, values, connector)
         end
     end
     
@@ -313,34 +325,14 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
         % Image clicked function: columnFilterAdd
         function onFilterAddImageClicked(app, event)
             
-            columnName = app.symbolicNameList.UserData.selected.columnName;            
-            operators  = {app.operation1_List.Value};
-            values     = {app.operation1_List.UserData.inputHandle.Value};
-            connector  = app.operation2_LogicalGrid.SelectedObject.Text;
-
-            if ~isempty(app.operation2_List.Value) && (~strcmp(app.operation1_List.Value, app.operation2_List.Value) || ~isequal(app.operation1_List.UserData.inputHandle.Value, app.operation2_List.UserData.inputHandle.Value))
-                operators = [operators, {app.operation2_List.Value}];
-                values    = [values, {app.operation2_List.UserData.inputHandle.Value}];
-            end
-
-            try
-                addFilterRule(app.mainApp.filteringObj, columnName, operators, values, connector);
-            catch ME
-                ui.Dialog(app.UIFigure, 'warning', ME.message);
-                return
-            end
-            updateTree(app)
-
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'onColumnFilterChanged')
-
-
-
             try
                 validateAndAddTableFilter(app)
-                updateTree(app)
+                
+                index   = app.inputArgs.index;
+                tableId = app.TableIdList.Value;
+                updateTree(app, index, tableId)
                 
                 context = app.inputArgs.context;
-                tableId = app.TableIdList.Value;
                 ipcMainMatlabCallsHandler(app.mainApp, app, 'onFilterChanged', context, tableId)
 
             catch ME
@@ -355,7 +347,8 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             selectedNodes = app.columnFilterList.SelectedNodes;
 
             if ~isempty(selectedNodes)
-                selectedECD = app.ecdObj(app.inputArgs.index);
+                index       = app.inputArgs.index;
+                selectedECD = app.ecdObj(index);
                 tableId     = app.TableIdList.Value;
 
                 [filterIndex, filterStatus] = findCustomTableFilter(app, selectedECD, tableId, 'basic');
@@ -363,7 +356,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
                 if filterStatus
                     filterObj = selectedECD.GUI.tableView(filterIndex).filter;
                     removeFilterRule(filterObj, [selectedNodes.NodeData])
-                    updateTree(app)
+                    updateTree(app, index, tableId)
 
                     context = app.inputArgs.context;
                     ipcMainMatlabCallsHandler(app.mainApp, app, 'onFilterChanged', context, tableId)

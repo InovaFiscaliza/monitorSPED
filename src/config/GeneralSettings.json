@@ -1,5 +1,5 @@
 {
-    "version": 0.72,
+    "version": 0.73,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -94,7 +94,9 @@
         ],
         "taxConfig": {
             "PIS": 0.0065,
-            "COFINS": 0.03
+            "COFINS": 0.03,
+            "FUST": 0.01,
+            "FUNTTEL": 0.005
         }
     },
     "ui": {

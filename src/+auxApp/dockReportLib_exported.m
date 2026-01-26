@@ -183,10 +183,11 @@ classdef dockReportLib_exported < matlab.apps.AppBase
         % Image clicked function: prjOpenFileButton
         function onProjectLoad(app, event)
             
+            appName  = class.Constants.appName;
             context  = app.inputArgs.context;
             varargin = app.inputArgs.varargin;
             
-            [fileFullPath, fileFolder] = ui.Dialog(app.UIFigure, 'uigetfile', '', {'*.mat', 'SCH'}, app.mainApp.General.fileFolder.lastVisited, {'MultiSelect', 'off'});
+            [fileFullPath, fileFolder] = ui.Dialog(app.UIFigure, 'uigetfile', '', {'*.mat', appName}, app.mainApp.General.fileFolder.lastVisited, {'MultiSelect', 'off'});
             if isempty(fileFullPath)
                 return
             end
@@ -214,6 +215,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
         % Image clicked function: prjSaveButton
         function onProjectSave(app, event)
             
+            appName  = class.Constants.appName;
             context  = app.inputArgs.context;
             varargin = app.inputArgs.varargin;
 
@@ -229,11 +231,11 @@ classdef dockReportLib_exported < matlab.apps.AppBase
                 [defaultPath, defaultFile] = fileparts(app.projectData.file);
                 defaultName = fullfile(defaultPath, defaultFile);
             else
-                defaultName = appEngine.util.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'SCH_ProjectData', -1);
+                defaultName = appEngine.util.DefaultFileName(app.mainApp.General.fileFolder.userPath, [appName '_ProjectData'], -1);
             end
             
             projectName = app.projectData.name;
-            projectFile = ui.Dialog(app.UIFigure, 'uiputfile', '', {'*.mat', 'SCH (*.mat)'}, defaultName);
+            projectFile = ui.Dialog(app.UIFigure, 'uiputfile', '', {'*.mat', appName}, defaultName);
             if isempty(projectFile)
                 return
             end
