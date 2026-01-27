@@ -513,6 +513,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     % meio de chamada a uiputfile. 
                     app.General_I.fileFolder.userPath = tempDir;
 
+                    if ~strcmp(app.General_I.FILE.input, 'file')
+                        app.General_I.FILE.input = 'file';
+                    end
+
                 otherwise    
                     % Resgata a pasta de trabalho do usuário (configurável).
                     userPaths = appEngine.util.UserPaths(app.General_I.fileFolder.userPath);

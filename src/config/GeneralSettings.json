@@ -1,5 +1,5 @@
 {
-    "version": 0.75,
+    "version": 0.76,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -53,6 +53,7 @@
                     "COD_CTA", 
                     "VL_DC", 
                     "IND_DC", 
+                    "COD_HIST_PAD",
                     "HIST"
                 ]
             }

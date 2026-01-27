@@ -121,6 +121,9 @@ classdef winConfig_exported < matlab.apps.AppBase
                     end
 
                 case 2
+                    if ~strcmp(app.mainApp.executionMode, 'webApp')
+                        app.InputType.Enable = "on";
+                    end
                     updatePanel_Analysis(app)
 
                 case 3
@@ -707,6 +710,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.InputType = uidropdown(app.configAnalysisGrid1);
             app.InputType.Items = {'file', 'folder'};
             app.InputType.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
+            app.InputType.Enable = 'off';
             app.InputType.FontSize = 11;
             app.InputType.BackgroundColor = [1 1 1];
             app.InputType.Layout.Row = 1;

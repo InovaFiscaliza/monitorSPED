@@ -53,11 +53,6 @@ classdef ECD < handle
                 'type', 'auto', ...
                 'rate', [] ...
             ), ...
-            'generatedFiles', struct( ...
-                'context', {}, ...
-                'files', {}, ...
-                'status', {} ...
-            ), ...
             'tableView', struct( ...
                 'id', {}, ...
                 'filter', {}, ...
@@ -285,8 +280,7 @@ classdef ECD < handle
         function update(obj, propertyName, updateType, varargin)
             arguments
                 obj
-                propertyName char {mustBeMember(propertyName, { 'GUI.GeneratedFiles';
-                                                                'GUI.TableView.Filter';
+                propertyName char {mustBeMember(propertyName, { 'GUI.TableView.Filter';
                                                                 'GUI.TableView.Style';
                                                                 'Table.NonEssentialFiles';
                                                                 'Table.x_CONTAS_ANOTACAO';
@@ -301,32 +295,6 @@ classdef ECD < handle
             checkIfScalar(obj)
 
             switch propertyName
-                case 'GUI.GeneratedFiles'
-                    switch updateType
-                        case 'addFinalReportFiles'
-                            projectData  = varargin{1};
-                            context      = varargin{2};
-                            createdFiles = struct2cell(rmfield(projectData.modules.(context).generatedFiles, {'id', 'rawFiles'}));
-
-                            obj.GUI.generatedFiles(end+1) = struct('context', context, 'files', {createdFiles}, 'status', '');
-
-                        case 'updateFinalReportStatus'
-                            projectData  = varargin{1};
-                            context      = varargin{2};
-                            uploadStatus = varargin{3};
-                            uploadFiles  = struct2cell(rmfield(projectData.modules.(context).generatedFiles, {'id', 'rawFiles'}));
-
-                            uploadIndex = find(cellfun(@(x) isequal(uploadFiles, x), {obj.GUI.generatedFiles.files}), 1);
-                            if ~isempty(uploadIndex) && isempty(obj.GUI.generatedFiles(uploadIndex).status)
-                                obj.GUI.generatedFiles(uploadIndex).status = uploadStatus;
-                            else
-                                obj.GUI.generatedFiles(end+1) = struct('context', context, 'files', {uploadFiles}, 'status', uploadStatus);
-                            end
-
-                        otherwise
-                            error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
-                    end
-
                 case 'GUI.TableView.Filter'
                     switch updateType
                         case 'createFilteringObject'
