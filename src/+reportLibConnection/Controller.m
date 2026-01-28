@@ -41,12 +41,13 @@ classdef (Abstract) Controller
                 ecdObj
             end
 
+            appName = class.Constants.appName;
             projectData = mainApp.projectData;
             generalSettings = mainApp.General;
             rootFolder = mainApp.rootFolder;
 
             [projectFolder, ...
-             programDataFolder] = appEngine.util.Path(class.Constants.appName, rootFolder);
+             programDataFolder] = appEngine.util.Path(appName, rootFolder);
 
             issueId = num2str(projectData.modules.(context).ui.issue);
             docName = projectData.modules.(context).ui.reportModel;
@@ -206,14 +207,14 @@ classdef (Abstract) Controller
                 case 'final'
                     JSONFile = '';
                     XLSXFile = '';
-                    ZIPFile  = ui.Dialog(callingApp.UIFigure, 'uiputfile', '', {'*.zip', 'monitorSPED'}, fullfile(generalSettings.fileFolder.userPath, [baseFileName '.zip']));
+                    ZIPFile  = ui.Dialog(callingApp.UIFigure, 'uiputfile', '', {'*.zip', [appName ' (*.zip)']}, fullfile(generalSettings.fileFolder.userPath, [baseFileName '.zip']));
                     if isempty(ZIPFile)
                         return
                     end
 
                     if strcmp(context, 'ECD')
                         JSONFile    = [baseFullFileName '.json'];
-                        JSONContent = reportLibConnection.Table.scarabJsonFile(projectData, context, ecdObj);
+                        JSONContent = reportLibConnection.Table.scarabJsonFile(projectData, context, ecdObj, mainApp.eFiscalizaObj);
 
                         writematrix(JSONContent, JSONFile, "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite", "Encoding", "UTF-8")
                     end

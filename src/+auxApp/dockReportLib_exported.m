@@ -187,7 +187,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
             context  = app.inputArgs.context;
             varargin = app.inputArgs.varargin;
             
-            [fileFullPath, fileFolder] = ui.Dialog(app.UIFigure, 'uigetfile', '', {'*.mat', appName}, app.mainApp.General.fileFolder.lastVisited, {'MultiSelect', 'off'});
+            [fileFullPath, fileFolder] = ui.Dialog(app.UIFigure, 'uigetfile', '', {'*.mat', [appName ' (*.mat)']}, app.mainApp.General.fileFolder.lastVisited, {'MultiSelect', 'off'});
             if isempty(fileFullPath)
                 return
             end
@@ -235,7 +235,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
             end
             
             projectName = app.projectData.name;
-            projectFile = ui.Dialog(app.UIFigure, 'uiputfile', '', {'*.mat', appName}, defaultName);
+            projectFile = ui.Dialog(app.UIFigure, 'uiputfile', '', {'*.mat', [appName ' (*.mat)']}, defaultName);
             if isempty(projectFile)
                 return
             end

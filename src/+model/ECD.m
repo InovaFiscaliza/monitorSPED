@@ -1171,7 +1171,7 @@ classdef ECD < handle
                     accountBalanceByMonth(jj) = sum(accountTable.("VL_DC_COM_SINAL")(monthIndexes));
                 end
 
-                trialBalance(ii, :) = [{'', accountId}, num2cell([accountBalanceByMonth, sum(accountBalanceByMonth)])];
+                trialBalance(ii, :) = [{'', accountId}, num2cell(round([accountBalanceByMonth, sum(accountBalanceByMonth)], 2))];
             end
 
             % Valida-se se o valor total de transações entre as contas por 

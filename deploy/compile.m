@@ -149,17 +149,20 @@ function desktopPostCompilation(finalFolder, matlabRuntimeFolder, githubReleaseF
         % portanto, confirmar que todos os módulos serão contemplados
         % nesse versão customizada.
         if isfolder(matlabRuntimeFolder)
-            fileContent  = strsplit(strtrim(fileread(fullfile(deployApp, 'requiredMCRProducts.txt'))), '\t');
-            mcrProducts  = cellfun(@(x) int64(str2double(x)), fileContent);
-        
-            cacheContent = dir(fullfile(matlabRuntimeFolder, '*.zip'));
-            for ii = 1:numel(cacheContent)
-                cacheFileString  = char(extractBetween(cacheContent(ii).name, 'InstallAgent_', '.zip'));
-                cacheFileProduts = compiler.internal.utils.hexString2RuntimeProducts(cacheFileString);
-        
-                if any(~ismember(mcrProducts, cacheFileProduts))
-                    warning('Necessário atualizar a versão customizada do MATLAB Runtime.')
+            try
+                fileContent  = strsplit(strtrim(fileread(fullfile(deployApp, 'requiredMCRProducts.txt'))), '\t');
+                mcrProducts  = cellfun(@(x) int64(str2double(x)), fileContent);
+            
+                cacheContent = dir(fullfile(matlabRuntimeFolder, '*.zip'));
+                for ii = 1:numel(cacheContent)
+                    cacheFileString  = char(extractBetween(cacheContent(ii).name, 'InstallAgent_', '.zip'));
+                    cacheFileProduts = compiler.internal.utils.hexString2RuntimeProducts(cacheFileString);
+            
+                    if any(~ismember(mcrProducts, cacheFileProduts))
+                        warning('Necessário atualizar a versão customizada do MATLAB Runtime.')
+                    end
                 end
+            catch
             end
         end
 
