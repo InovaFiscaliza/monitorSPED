@@ -194,7 +194,7 @@ classdef (Abstract) Controller
             % navegador. Por outro lado, em sendo a versão "Definitiva",
             % salva-se o arquivo ZIP em pasta local.
             %-------------------------------------------------------------%
-            [baseFullFileName, baseFileName] = appEngine.util.DefaultFileName(generalSettings.fileFolder.tempPath, 'monitorSPED_FinalReport', issueId);
+            [baseFullFileName, baseFileName] = appEngine.util.DefaultFileName(generalSettings.fileFolder.tempPath, [appName '_FinalReport'], issueId);
             HTMLFile = [baseFullFileName '.html'];
             
             writematrix(HTMLDocContent, HTMLFile, 'QuoteStrings', 'none', 'FileType', 'text', 'Encoding', docVersion.encoding)
@@ -213,8 +213,9 @@ classdef (Abstract) Controller
                     end
 
                     if strcmp(context, 'ECD')
-                        JSONFile    = [baseFullFileName '.json'];
-                        JSONContent = reportLibConnection.Table.scarabJsonFile(projectData, context, ecdObj, mainApp.eFiscalizaObj);
+                        correlationKey = char(matlab.lang.internal.uuid());
+                        JSONFile = fullfile(generalSettings.fileFolder.tempPath, sprintf('%s_%s_%s.json', appName, datestr(now, 'yyyymmdd'), correlationKey));
+                        JSONContent = reportLibConnection.Table.scarabJsonFile(projectData, context, ecdObj, mainApp.eFiscalizaObj, correlationKey);
 
                         writematrix(JSONContent, JSONFile, "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite", "Encoding", "UTF-8")
                     end
