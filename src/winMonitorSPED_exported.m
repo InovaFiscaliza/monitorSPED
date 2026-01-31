@@ -225,8 +225,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                         end
         
                                     case 'fileSortMethodChanged'
-                                        if ~strcmp(app.FileSortMethodSelector.Value, app.General.FILE.sortMethod)
-                                            app.FileSortMethodSelector.Value = app.General.FILE.sortMethod;
+                                        if ~strcmp(app.FileSortMethodSelector.Value, app.General.context.FILE.sortMethod)
+                                            app.FileSortMethodSelector.Value = app.General.context.FILE.sortMethod;
                                             onFileSortMethodValueChanged(app)
                                         end
         
@@ -437,33 +437,41 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 case 1
                     appName = class(app);
                     elToModify = {
-                        app.FileTree; 
-                        app.FileMetadata;
                         app.Tab1Button;
                         app.Tab2Button;
-                        app.Tab3Button
+                        app.Tab3Button;
+                        app.FileModuleLegend;
+                        app.FileTree; 
+                        app.FileMetadata;
+                        app.tool_SelectFilesToRead;
+                        app.tool_ReadFiles;
+                        app.tool_MergeFiles;
+                        app.tool_CheckRFB;
+                        app.tool_OpenPopupProject;
+                        app.tool_GenerateReport;
+                        app.tool_UploadFinalFile
                     };
                     ui.CustomizationBase.getElementsDataTag(elToModify);
 
                     try
-                        sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
-                            struct('appName', appName, 'dataTag', elToModify{1}.UserData.id, 'listener', struct('componentName', 'mainApp.file_Tree', 'keyEvents', {{'Delete', 'Backspace'}})) ...
-                        });
-                    catch ME
-                        ui.Dialog(app.UIFigure, 'error', getReport(ME));
-                    end
-
-                    try
-                        ui.TextView.startup(app.jsBackDoor, elToModify{2}, appName);
-                    catch ME
-                        ui.Dialog(app.UIFigure, 'error', getReport(ME));
+                        ui.TextView.startup(app.jsBackDoor, app.FileMetadata, appName);
+                    catch
                     end
 
                     try
                         sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
-                            struct('appName', appName, 'dataTag', elToModify{3}.UserData.id, 'generation', 1, 'class', 'tab-navigator-button'), ...
-                            struct('appName', appName, 'dataTag', elToModify{4}.UserData.id, 'generation', 1, 'class', 'tab-navigator-button'), ...
-                            struct('appName', appName, 'dataTag', elToModify{5}.UserData.id, 'generation', 1, 'class', 'tab-navigator-button') ...
+                            struct('appName', appName, 'dataTag', app.FileModuleLegend.UserData.id,       'tooltip', struct('defaultPosition', 'top', 'textContent', 'Mostra legenda de símbolos')), ...
+                            struct('appName', appName, 'dataTag', app.tool_SelectFilesToRead.UserData.id, 'tooltip', struct('defaultPosition', 'top', 'textContent', 'Seleciona arquivos')), ...
+                            struct('appName', appName, 'dataTag', app.tool_ReadFiles.UserData.id,         'tooltip', struct('defaultPosition', 'top', 'textContent', 'Leitura de todos os registros ordinários')), ...
+                            struct('appName', appName, 'dataTag', app.tool_MergeFiles.UserData.id,        'tooltip', struct('defaultPosition', 'top', 'textContent', 'Mescla informação contábil')), ...
+                            struct('appName', appName, 'dataTag', app.tool_CheckRFB.UserData.id,          'tooltip', struct('defaultPosition', 'top', 'textContent', 'Consulta à Receita Federal')), ...
+                            struct('appName', appName, 'dataTag', app.tool_OpenPopupProject.UserData.id,  'tooltip', struct('defaultPosition', 'top', 'textContent', 'Edita informações do projeto<br>(fiscalizada, arquivo de backup etc)')), ...
+                            struct('appName', appName, 'dataTag', app.tool_GenerateReport.UserData.id,    'tooltip', struct('defaultPosition', 'top', 'textContent', 'Gera relatório')), ...
+                            struct('appName', appName, 'dataTag', app.tool_UploadFinalFile.UserData.id,   'tooltip', struct('defaultPosition', 'top', 'textContent', 'Upload relatório')), ...
+                            struct('appName', appName, 'dataTag', app.Tab1Button.UserData.id,             'generation', 1, 'class', 'tab-navigator-button'), ...
+                            struct('appName', appName, 'dataTag', app.Tab2Button.UserData.id,             'generation', 1, 'class', 'tab-navigator-button'), ...
+                            struct('appName', appName, 'dataTag', app.Tab3Button.UserData.id,             'generation', 1, 'class', 'tab-navigator-button'), ...
+                            struct('appName', appName, 'dataTag', app.FileTree.UserData.id,               'listener', struct('componentName', 'mainApp.file_Tree', 'keyEvents', {{'Delete', 'Backspace'}})) ...
                         });
                     catch
                     end
@@ -489,16 +497,16 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.General_I.fileFolder.tempPath  = tempDir;
             app.General_I.fileFolder.MFilePath = MFilePath;
 
-            if ~ismember(app.General_I.FILE.input, {'file', 'folder'})
-                app.General_I.FILE.input = 'file';
+            if ~ismember(app.General_I.context.FILE.input, {'file', 'folder'})
+                app.General_I.context.FILE.input = 'file';
             end
 
-            if ~ismember(app.General_I.FILE.sortMethod, {'CNPJ', 'PERÍODO FISCAL', 'RECEITA FEDERAL'})
-                app.General_I.FILE.sortMethod = 'CNPJ';
+            if ~ismember(app.General_I.context.FILE.sortMethod, {'CNPJ', 'PERÍODO FISCAL', 'RECEITA FEDERAL'})
+                app.General_I.context.FILE.sortMethod = 'CNPJ';
             end
 
-            if ~ismember(app.General_I.FILE.checkStatus, {'OnlyCache', 'Cache+RealTime', 'RealTime'})
-                app.General_I.File.checkStatus = 'Cache+RealTime';
+            if ~ismember(app.General_I.context.FILE.checkStatus, {'OnlyCache', 'Cache+RealTime', 'RealTime'})
+                app.General_I.context.FILE.checkStatus = 'Cache+RealTime';
             end
 
             switch app.executionMode
@@ -513,8 +521,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     % meio de chamada a uiputfile. 
                     app.General_I.fileFolder.userPath = tempDir;
 
-                    if ~strcmp(app.General_I.FILE.input, 'file')
-                        app.General_I.FILE.input = 'file';
+                    if ~strcmp(app.General_I.context.FILE.input, 'file')
+                        app.General_I.context.FILE.input = 'file';
                     end
 
                 otherwise    
@@ -555,7 +563,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function applyInitialLayout(app)
             updateWarningLampVisibility(app)
-            app.FileSortMethodSelector.Value = app.General.FILE.sortMethod;
+            app.FileSortMethodSelector.Value = app.General.context.FILE.sortMethod;
         end
     end
 
@@ -994,13 +1002,20 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             
         end
 
-        % Callback function: AppInfo, FigurePosition, Tab1Button, 
-        % ...and 2 other components
+        % Callback function: AppInfo, DataHubLamp, FigurePosition, 
+        % ...and 3 other components
         function onTabNavigatorButtonPushed(app, event)
 
             switch event.Source
                 case {app.Tab1Button, app.Tab2Button, app.Tab3Button}
                     openModule(app.tabGroupController, event.Source, event.PreviousValue, app.General, app)
+
+                case app.DataHubLamp
+                    msg = [ ...
+                        'Pendente mapear a pasta POST do SharePoint, de modo a viabilizar:<br>' ...
+                        '•&thinsp;Upload do relatório final para o SEI.' ...
+                    ];
+                    ui.Dialog(app.UIFigure, 'error', msg);
 
                 case app.FigurePosition
                     app.UIFigure.Position(3:4) = class.Constants.windowSize;
@@ -1081,7 +1096,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 end
 
             else
-                switch app.General.FILE.input
+                switch app.General.context.FILE.input
                     case 'file'
                         [~, filePath, ~, fileName] = ui.Dialog( ...
                             app.UIFigure, ...
@@ -1233,7 +1248,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 app.progressDialog.Visible = 'visible';
 
-                checkFileFlag = checkFileStatus(app.ecdObj(indexes), app.receitaFederalObj, app.General.FILE.encodingList, app.General.FILE.checkStatus);
+                checkFileFlag = checkFileStatus(app.ecdObj(indexes), app.receitaFederalObj, app.General.context.FILE.encodingList, app.General.context.FILE.checkStatus);
                 if checkFileFlag
                     refreshProjectFiles(app, indexes, 'FileStatusChecked')
                 end
@@ -1468,12 +1483,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.GridLayout = uigridlayout(app.UIFigure);
             app.GridLayout.ColumnWidth = {'1x'};
             app.GridLayout.RowHeight = {54, '1x'};
-            app.GridLayout.ColumnSpacing = 0;
             app.GridLayout.RowSpacing = 0;
             app.GridLayout.Padding = [0 0 0 0];
-            app.GridLayout.Tag = 'winMonitorSPED';
-            app.GridLayout.Tooltip = {''};
-            app.GridLayout.BackgroundColor = [0.9412 0.9412 0.9412];
 
             % Create TabGroup
             app.TabGroup = uitabgroup(app.GridLayout);
@@ -1511,8 +1522,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_SelectFilesToRead = uiimage(app.tool_Grid);
             app.tool_SelectFilesToRead.ScaleMethod = 'none';
             app.tool_SelectFilesToRead.ImageClickedFcn = createCallbackFcn(app, @Toolbar_SelectFileToReadImageClicked, true);
-            app.tool_SelectFilesToRead.Tooltip = {'Seleciona arquivos'};
-            app.tool_SelectFilesToRead.Layout.Row = 2;
+            app.tool_SelectFilesToRead.Layout.Row = [1 3];
             app.tool_SelectFilesToRead.Layout.Column = 1;
             app.tool_SelectFilesToRead.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Import_16.png');
 
@@ -1529,8 +1539,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_ReadFiles.ScaleMethod = 'none';
             app.tool_ReadFiles.ImageClickedFcn = createCallbackFcn(app, @Toolbar_ReadFilesImageClicked, true);
             app.tool_ReadFiles.Enable = 'off';
-            app.tool_ReadFiles.Tooltip = {'Leitura de todos os registros ordinários'};
-            app.tool_ReadFiles.Layout.Row = 2;
+            app.tool_ReadFiles.Layout.Row = [1 3];
             app.tool_ReadFiles.Layout.Column = 3;
             app.tool_ReadFiles.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'run_all_tests_16.png');
 
@@ -1539,7 +1548,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_MergeFiles.ScaleMethod = 'none';
             app.tool_MergeFiles.ImageClickedFcn = createCallbackFcn(app, @Toolbar_MergeFilesImageClicked, true);
             app.tool_MergeFiles.Enable = 'off';
-            app.tool_MergeFiles.Tooltip = {'Mescla informação contábil'};
             app.tool_MergeFiles.Layout.Row = [1 3];
             app.tool_MergeFiles.Layout.Column = 4;
             app.tool_MergeFiles.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Merge_18.png');
@@ -1554,9 +1562,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create tool_CheckRFB
             app.tool_CheckRFB = uiimage(app.tool_Grid);
+            app.tool_CheckRFB.ScaleMethod = 'fill';
             app.tool_CheckRFB.ImageClickedFcn = createCallbackFcn(app, @Toolbar_CheckStatusImageClicked, true);
             app.tool_CheckRFB.Enable = 'off';
-            app.tool_CheckRFB.Tooltip = {'Consulta à Receita Federal'};
             app.tool_CheckRFB.Layout.Row = [1 3];
             app.tool_CheckRFB.Layout.Column = 6;
             app.tool_CheckRFB.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'receita-federal-novo-logo-png_seeklogo-203693.png');
@@ -1565,7 +1573,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_OpenPopupProject = uiimage(app.tool_Grid);
             app.tool_OpenPopupProject.ScaleMethod = 'none';
             app.tool_OpenPopupProject.ImageClickedFcn = createCallbackFcn(app, @Toolbar_OpenPopupProjectImageClicked, true);
-            app.tool_OpenPopupProject.Tooltip = {'Projeto (fiscalizada, arquivo de backup etc)'};
             app.tool_OpenPopupProject.Layout.Row = [1 3];
             app.tool_OpenPopupProject.Layout.Column = 8;
             app.tool_OpenPopupProject.ImageSource = 'organization-20px-black.svg';
@@ -1575,19 +1582,18 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_GenerateReport.ScaleMethod = 'none';
             app.tool_GenerateReport.ImageClickedFcn = createCallbackFcn(app, @Toolbar_GenerateReportImageClicked, true);
             app.tool_GenerateReport.Enable = 'off';
-            app.tool_GenerateReport.Tooltip = {'Gera relatório'; '(estado escrituração na Receita Federal)'};
             app.tool_GenerateReport.Layout.Row = [1 3];
             app.tool_GenerateReport.Layout.Column = 9;
             app.tool_GenerateReport.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Publish_HTML_16.png');
 
             % Create tool_UploadFinalFile
             app.tool_UploadFinalFile = uiimage(app.tool_Grid);
+            app.tool_UploadFinalFile.ScaleMethod = 'none';
             app.tool_UploadFinalFile.ImageClickedFcn = createCallbackFcn(app, @Toolbar_UploadFinalFileImageClicked, true);
             app.tool_UploadFinalFile.Enable = 'off';
-            app.tool_UploadFinalFile.Tooltip = {'Upload relatório'};
-            app.tool_UploadFinalFile.Layout.Row = 2;
+            app.tool_UploadFinalFile.Layout.Row = [1 3];
             app.tool_UploadFinalFile.Layout.Column = 10;
-            app.tool_UploadFinalFile.ImageSource = 'Up_24.png';
+            app.tool_UploadFinalFile.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'up-20px.png');
 
             % Create SubTabGroup
             app.SubTabGroup = uitabgroup(app.file_Grid);
@@ -1641,7 +1647,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.FileModuleLegend = uiimage(app.SubGrid1);
             app.FileModuleLegend.ScaleMethod = 'none';
             app.FileModuleLegend.ImageClickedFcn = createCallbackFcn(app, @Toolbar_ShowLegendFileModuleLegendClicked, true);
-            app.FileModuleLegend.Tooltip = {'Legenda de símbolos'};
             app.FileModuleLegend.Layout.Row = 2;
             app.FileModuleLegend.Layout.Column = 4;
             app.FileModuleLegend.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Legend_16.png');
@@ -1709,11 +1714,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab1Button = uibutton(app.NavBar, 'state');
             app.Tab1Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.Tab1Button.Tag = 'FILE';
-            app.Tab1Button.Tooltip = {'Leitura de arquivos'};
             app.Tab1Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'folder-active-24px-yellow.svg');
             app.Tab1Button.Text = '';
             app.Tab1Button.BackgroundColor = [0.2 0.2 0.2];
-            app.Tab1Button.FontSize = 11;
             app.Tab1Button.Layout.Row = [2 4];
             app.Tab1Button.Layout.Column = 4;
             app.Tab1Button.Value = true;
@@ -1722,11 +1725,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab2Button = uibutton(app.NavBar, 'state');
             app.Tab2Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.Tab2Button.Tag = 'ECD';
-            app.Tab2Button.Tooltip = {'Escrituração Contábil Digital'};
             app.Tab2Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'graph-24px-white.svg');
             app.Tab2Button.Text = '';
             app.Tab2Button.BackgroundColor = [0.2 0.2 0.2];
-            app.Tab2Button.FontSize = 11;
             app.Tab2Button.Layout.Row = [2 4];
             app.Tab2Button.Layout.Column = 5;
 
@@ -1742,11 +1743,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab3Button = uibutton(app.NavBar, 'state');
             app.Tab3Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.Tab3Button.Tag = 'CONFIG';
-            app.Tab3Button.Tooltip = {'Configurações gerais'};
             app.Tab3Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'gear-24px-white.svg');
             app.Tab3Button.Text = '';
             app.Tab3Button.BackgroundColor = [0.2 0.2 0.2];
-            app.Tab3Button.FontSize = 11;
             app.Tab3Button.Layout.Row = [2 4];
             app.Tab3Button.Layout.Column = 7;
 
@@ -1757,8 +1756,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create DataHubLamp
             app.DataHubLamp = uiimage(app.NavBar);
+            app.DataHubLamp.ScaleMethod = 'fill';
+            app.DataHubLamp.ImageClickedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.DataHubLamp.Visible = 'off';
-            app.DataHubLamp.Tooltip = {'Pendente mapear o Sharepoint'};
             app.DataHubLamp.Layout.Row = 3;
             app.DataHubLamp.Layout.Column = 10;
             app.DataHubLamp.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'red-circle-blink.gif');
@@ -1768,7 +1768,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.FigurePosition.ScaleMethod = 'none';
             app.FigurePosition.ImageClickedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.FigurePosition.Visible = 'off';
-            app.FigurePosition.Tooltip = {'Reposiciona janela'};
             app.FigurePosition.Layout.Row = 3;
             app.FigurePosition.Layout.Column = 12;
             app.FigurePosition.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'screen-normal-24px-white.svg');
@@ -1777,7 +1776,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.AppInfo = uiimage(app.NavBar);
             app.AppInfo.ScaleMethod = 'none';
             app.AppInfo.ImageClickedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
-            app.AppInfo.Tooltip = {'Informações gerais'};
             app.AppInfo.Layout.Row = 3;
             app.AppInfo.Layout.Column = 13;
             app.AppInfo.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'kebab-vertical-24px-white.svg');

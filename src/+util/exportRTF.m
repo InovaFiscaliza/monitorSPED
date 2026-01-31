@@ -1,11 +1,11 @@
-function [rtfFiles, msgError] = exportRTF(ecdObj, generalSettins)
+function [rtfFiles, msgError] = exportRTF(ecdObj, generalSettings)
     rtfFiles    = {};
     msgError    = {};
     
     rtfTableIds = {'J800', 'J801'};
     parseTableAndAddToCache(ecdObj, rtfTableIds)
     
-    tempName    = appEngine.util.DefaultFileName(generalSettins.fileFolder.tempPath, 'monitorSPED');
+    tempName    = appEngine.util.DefaultFileName(generalSettings.fileFolder.tempPath, 'monitorSPED');
     fileCount   = 0;
     
     for ii = 1:numel(rtfTableIds)

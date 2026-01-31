@@ -41,7 +41,7 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
             if ~isempty(selectedRow)
                 tableId = app.UITable.Data.("REGISTRO"){selectedRow};
                 
-                if ~ismember(tableId, app.mainApp.General.ECD.cacheTables)
+                if ~ismember(tableId, app.mainApp.General.context.ECD.cacheTables)
                     context = app.inputArgs.context;
                     index = app.inputArgs.index;
                     ipcMainMatlabCallsHandler(app.mainApp, app, 'onCacheCleanup', context, index, {tableId})
@@ -69,7 +69,7 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
                 tableData = app.mainApp.ecdObj(index).Table.(['x' tableId]);
                 tableInfo = whos('tableData');
 
-                if ismember(tableId, app.mainApp.General.ECD.cacheTables)
+                if ismember(tableId, app.mainApp.General.context.ECD.cacheTables)
                     deletableRowsText = '🔒︎';
                 else
                     deletableRowsText = sprintf('<a href="matlab:evalin(''base'', ''deleteSelectedTables(%s)'')">❌</a>', app.appHandleNameInBase);

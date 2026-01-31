@@ -1,5 +1,5 @@
 {
-    "version": 0.76,
+    "version": 0.78,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -22,87 +22,93 @@
         "DataHub_POST": "",
         "lastVisited": ""
     },
-    "FILE": {
-        "input": "file",
-        "sortMethod": "CNPJ",
-        "checkStatus": "Cache+RealTime",
-        "encodingList": [
-            "ISO-8859-1",
-            "UTF-8"
-        ],
-        "terminator": {
-            "options": [
-                "CRLF",
-                "LF"
-                ],
-            "value": "CRLF"
-        },
-        "largeTable": {
-            "minRowCount": 100000,
-            "cacheEnabled": false,
-            "cacheColumns": {
-                "I200": [
-                    "REG",
-                    "NUM_LCTO",
-                    "DT_LCTO", 
-                    "VL_LCTO",
-                    "IND_LCTO"
-                ],
-                "I250": [
-                    "REG", 
-                    "COD_CTA", 
-                    "VL_DC", 
-                    "IND_DC", 
-                    "COD_HIST_PAD",
-                    "HIST"
-                ]
+    "context": {
+        "FILE": {
+            "input": "file",
+            "sortMethod": "CNPJ",
+            "checkStatus": "Cache+RealTime",
+            "encodingList": [
+                "ISO-8859-1",
+                "UTF-8"
+            ],
+            "terminator": {
+                "options": [
+                    "CRLF",
+                    "LF"
+                    ],
+                "value": "CRLF"
+            },
+            "largeTable": {
+                "minRowCount": 100000,
+                "cacheEnabled": false,
+                "cacheColumns": {
+                    "I200": [
+                        "REG",
+                        "NUM_LCTO",
+                        "DT_LCTO", 
+                        "VL_LCTO",
+                        "IND_LCTO"
+                    ],
+                    "I250": [
+                        "REG", 
+                        "COD_CTA", 
+                        "VL_DC", 
+                        "IND_DC", 
+                        "COD_HIST_PAD",
+                        "HIST"
+                    ]
+                }
             }
-        }
-    },
-    "ECD": {
-        "customTables": {
-            "expected": [
+        },
+        "ECD": {
+            "customTables": {
+                "expected": [
+                    "_BALANCETE_GERAL",
+                    "_BALANCETE_RESULTADO",
+                    "_CONTAS_ANOTACAO",
+                    "_CONTAS_DESCRICAO",
+                    "_TABELA_APURACAO",
+                    "C050_C051_C052",
+                    "I050_I051_I052",
+                    "I200_I250"
+                ],
+                "autoload": [
+                    "_CONTAS_DESCRICAO",
+                    "_TABELA_APURACAO"
+                ]
+            },
+            "cacheTables": [
+                "0000",
+                "9900",
+                "I050",
                 "_BALANCETE_GERAL",
                 "_BALANCETE_RESULTADO",
                 "_CONTAS_ANOTACAO",
                 "_CONTAS_DESCRICAO",
-                "_TABELA_APURACAO",
-                "C050_C051_C052",
-                "I050_I051_I052",
-                "I200_I250"
-            ],
-            "autoload": [
-                "_CONTAS_DESCRICAO",
                 "_TABELA_APURACAO"
-            ]
-        },
-        "cacheTables": [
-            "0000",
-            "9900",
-            "I050",
-            "_BALANCETE_GERAL",
-            "_BALANCETE_RESULTADO",
-            "_CONTAS_ANOTACAO",
-            "_CONTAS_DESCRICAO",
-            "_TABELA_APURACAO"
-        ],
-        "accountOptions": [
-            "-",
-            "Não",
-            "Sim",
-            "ICMS Telecom",
-            "PIS Telecom",
-            "COFINS Telecom"
-        ],
-        "taxConfig": {
-            "PIS": 0.0065,
-            "COFINS": 0.03,
-            "FUST": 0.01,
-            "FUNTTEL": 0.005
+            ],
+            "accountOptions": [
+                "-",
+                "Não",
+                "Sim",
+                "ICMS Telecom",
+                "PIS Telecom",
+                "COFINS Telecom"
+            ],
+            "taxConfig": {
+                "PIS": 0.0065,
+                "COFINS": 0.03,
+                "FUST": 0.01,
+                "FUNTTEL": 0.005
+            },
+            "accountDescriptionScope": true
         }
     },
-    "ui": {
-        "typeOfEntity": {
+    "reportLib": {
+        "system": "eFiscaliza",
+        "unit": "",
+        "outputCompressionMode": "Sim",
+        "entityType": {
             "default": "",
             "options": [
                 "",
@@ -111,17 +117,6 @@
                 "Fornecedor",
                 "Usuário"
             ]
-        },
-        "accountDescriptionScope": true
-    },
-    "Report": {
-        "system": "eFiscaliza",
-        "unit": "",
-        "Document": "Relatório de Atividades",
-        "outputCompressionMode": "Sim",
-        "indexedDBCache": {
-            "status": false,
-            "intervalMinutes": 1
         }
     },
     "eFiscaliza": {

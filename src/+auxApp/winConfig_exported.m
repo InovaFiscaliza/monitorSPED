@@ -5,8 +5,8 @@ classdef winConfig_exported < matlab.apps.AppBase
         UIFigure                     matlab.ui.Figure
         GridLayout                   matlab.ui.container.GridLayout
         DockModule                   matlab.ui.container.GridLayout
-        dockModule_Undock            matlab.ui.control.Image
         dockModule_Close             matlab.ui.control.Image
+        dockModule_Undock            matlab.ui.control.Image
         SubTabGroup                  matlab.ui.container.TabGroup
         SubTab1                      matlab.ui.container.Tab
         SubGrid1                     matlab.ui.container.GridLayout
@@ -41,8 +41,6 @@ classdef winConfig_exported < matlab.apps.AppBase
         reportGrid                   matlab.ui.container.GridLayout
         prjFileCompressionMode       matlab.ui.control.DropDown
         prjFileCompressionModeLabel  matlab.ui.control.Label
-        reportDocType                matlab.ui.control.DropDown
-        reportDocTypeLabel           matlab.ui.control.Label
         reportLabel                  matlab.ui.control.Label
         eFiscalizaPanel              matlab.ui.container.Panel
         eFiscalizaGrid               matlab.ui.container.GridLayout
@@ -61,8 +59,8 @@ classdef winConfig_exported < matlab.apps.AppBase
         DataHubPOST                  matlab.ui.control.EditField
         DATAHUBPOSTLabel             matlab.ui.control.Label
         Toolbar                      matlab.ui.container.GridLayout
-        tool_simulationMode          matlab.ui.control.Image
         tool_openDevTools            matlab.ui.control.Image
+        tool_simulationMode          matlab.ui.control.Image
     end
 
     
@@ -115,9 +113,29 @@ classdef winConfig_exported < matlab.apps.AppBase
             
             switch tabIndex
                 case 1
-                    elDataTag = ui.CustomizationBase.getElementsDataTag({app.versionInfo});
-                    if ~isempty(elDataTag)
-                        ui.TextView.startup(app.jsBackDoor, app.versionInfo, class(app));
+                    appName = class(app);
+                    elToModify = {
+                        app.versionInfo;
+                        app.tool_simulationMode;
+                        app.tool_openDevTools;
+                        app.dockModule_Undock;
+                        app.dockModule_Close
+                    };
+                    ui.CustomizationBase.getElementsDataTag(elToModify);
+
+                    try
+                        ui.TextView.startup(app.jsBackDoor, app.versionInfo, appName);
+                    catch
+                    end
+
+                    try
+                        sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
+                            struct('appName', appName, 'dataTag', app.tool_simulationMode.UserData.id, 'tooltip', struct('defaultPosition', 'top',    'textContent', 'Leitura arquivos de simulação')), ...
+                            struct('appName', appName, 'dataTag', app.tool_openDevTools.UserData.id,   'tooltip', struct('defaultPosition', 'top',    'textContent', 'Abre DevTools')), ...
+                            struct('appName', appName, 'dataTag', app.dockModule_Undock.UserData.id,   'tooltip', struct('defaultPosition', 'bottom', 'textContent', 'Reabre módulo em outra janela')), ...
+                            struct('appName', appName, 'dataTag', app.dockModule_Close.UserData.id,    'tooltip', struct('defaultPosition', 'bottom', 'textContent', 'Fecha módulo')) ...
+                        });
+                    catch
                     end
 
                 case 2
@@ -141,14 +159,14 @@ classdef winConfig_exported < matlab.apps.AppBase
         function initializeAppProperties(app)
             % Lê a versão de "GeneralSettings.json" que vem junto ao
             % projeto (e não a versão armazenada em "ProgramData").
-            projectFolder     = appEngine.util.Path(class.Constants.appName, app.mainApp.rootFolder);
-            projectFilePath   = fullfile(projectFolder, 'GeneralSettings.json');
-            projectGeneral    = jsondecode(fileread(projectFilePath));
+            projectFolder   = appEngine.util.Path(class.Constants.appName, app.mainApp.rootFolder);
+            projectFilePath = fullfile(projectFolder, 'GeneralSettings.json');
+            projectGeneral  = jsondecode(fileread(projectFilePath));
 
             app.defaultValues = struct( ...
-                'FILE',   projectGeneral.FILE, ...
-                'ECD',    projectGeneral.ECD, ...
-                'Report', struct('Report', projectGeneral.Report, 'ui', projectGeneral.ui) ...
+                'FILE',      projectGeneral.context.FILE, ...
+                'ECD',       projectGeneral.context.ECD, ...
+                'reportLib', projectGeneral.reportLib ...
             );
         end
 
@@ -189,26 +207,25 @@ classdef winConfig_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function updatePanel_Analysis(app)
             % FILE
-            app.InputType.Value   = app.mainApp.General.FILE.input;
-            app.SortMethod.Value  = app.mainApp.General.FILE.sortMethod;
-            app.CheckStatus.Value = app.mainApp.General.FILE.checkStatus;
+            app.InputType.Value   = app.mainApp.General.context.FILE.input;
+            app.SortMethod.Value  = app.mainApp.General.context.FILE.sortMethod;
+            app.CheckStatus.Value = app.mainApp.General.context.FILE.checkStatus;
 
             % ECD
-            app.PIS.Value = 100 * app.mainApp.General.ECD.taxConfig.PIS;
-            app.Cofins.Value = 100 * app.mainApp.General.ECD.taxConfig.COFINS;
-            app.AddAccountDescription.Value = app.mainApp.General.ui.accountDescriptionScope;
+            app.PIS.Value = 100 * app.mainApp.General.context.ECD.taxConfig.PIS;
+            app.Cofins.Value = 100 * app.mainApp.General.context.ECD.taxConfig.COFINS;
+            app.AddAccountDescription.Value = app.mainApp.General.context.ECD.accountDescriptionScope;
 
             app.configAnalysisRefresh.Visible = checkEdition(app, 'ANALYSIS');
         end
 
         %-----------------------------------------------------------------%
         function updatePanel_Report(app)
-            app.reportSystem.Value  = app.mainApp.General.Report.system;
-            set(app.reportUnit, 'Items', app.mainApp.General.eFiscaliza.defaultValues.unit, 'Value', app.mainApp.General.Report.unit)
-            app.reportDocType.Value = app.mainApp.General.Report.Document;
+            app.reportSystem.Value  = app.mainApp.General.reportLib.system;
+            set(app.reportUnit, 'Items', app.mainApp.General.eFiscaliza.defaultValues.unit, 'Value', app.mainApp.General.reportLib.unit)
             
-            if ismember(app.mainApp.General.Report.outputCompressionMode, app.prjFileCompressionMode.Items)
-                app.prjFileCompressionMode.Value = app.mainApp.General.Report.outputCompressionMode;
+            if ismember(app.mainApp.General.reportLib.outputCompressionMode, app.prjFileCompressionMode.Items)
+                app.prjFileCompressionMode.Value = app.mainApp.General.reportLib.outputCompressionMode;
             end
 
             app.eFiscalizaRefresh.Visible = checkEdition(app, 'REPORT');
@@ -228,18 +245,18 @@ classdef winConfig_exported < matlab.apps.AppBase
         function editionFlag = checkEdition(app, tabName)
             editionFlag   = false;
             currentValues = struct( ...
-                'FILE',   app.mainApp.General.FILE, ...
-                'ECD',    app.mainApp.General.ECD,  ...
-                'Report', struct('Report', app.mainApp.General.Report, 'ui', app.mainApp.General.ui) ...
+                'FILE',      app.mainApp.General.context.FILE, ...
+                'ECD',       app.mainApp.General.context.ECD, ...
+                'reportLib', app.mainApp.General.reportLib ...
             );
 
             switch tabName
                 case 'ANALYSIS'
-                    if ~isequal(rmfield(currentValues, 'Report'), rmfield(app.defaultValues, 'Report'))
+                    if ~isequal(rmfield(currentValues, 'reportLib'), rmfield(app.defaultValues, 'reportLib'))
                         editionFlag = true;
                     end
                 case 'REPORT'
-                    if ~isequal(currentValues.Report, app.defaultValues.Report)
+                    if ~isequal(currentValues.reportLib, app.defaultValues.reportLib)
                         editionFlag = true;
                     end
             end
@@ -365,15 +382,15 @@ classdef winConfig_exported < matlab.apps.AppBase
                 return
 
             else
-                app.mainApp.General.FILE   = app.defaultValues.FILE;
-                app.mainApp.General.ECD    = app.defaultValues.ECD;
+                app.mainApp.General.context.FILE = app.defaultValues.FILE;
+                app.mainApp.General.context.ECD  = app.defaultValues.ECD;
 
-                if ~isequal(app.mainApp.General.FILE.sortMethod, app.SortMethod.Value)
+                if ~isequal(app.mainApp.General.context.FILE.sortMethod, app.SortMethod.Value)
                     ipcMainMatlabCallsHandler(app.mainApp, app, 'fileSortMethodChanged')
                 end
 
-                app.mainApp.General_I.FILE = app.mainApp.General.FILE;
-                app.mainApp.General_I.ECD  = app.mainApp.General.ECD;
+                app.mainApp.General_I.context.FILE = app.mainApp.General.context.FILE;
+                app.mainApp.General_I.context.ECD  = app.mainApp.General.context.ECD;
 
                 updatePanel_Analysis(app)
                 saveGeneralSettings(app)
@@ -387,30 +404,29 @@ classdef winConfig_exported < matlab.apps.AppBase
             
             switch event.Source
                 case app.InputType
-                    app.mainApp.General.FILE.input           = app.InputType.Value;
+                    app.mainApp.General.context.FILE.input = app.InputType.Value;
 
                 case app.SortMethod
-                    app.mainApp.General.FILE.sortMethod      = app.SortMethod.Value;
+                    app.mainApp.General.context.FILE.sortMethod = app.SortMethod.Value;
                     ipcMainMatlabCallsHandler(app.mainApp, app, 'fileSortMethodChanged')
 
                 case app.CheckStatus
-                    app.mainApp.General.FILE.checkStatus     = app.CheckStatus.Value;
+                    app.mainApp.General.context.FILE.checkStatus = app.CheckStatus.Value;
 
                 case app.PIS
-                    app.mainApp.General.ECD.taxConfig.PIS    = app.PIS.Value / 100;
+                    app.mainApp.General.context.ECD.taxConfig.PIS = app.PIS.Value / 100;
                     ipcMainMatlabCallsHandler(app.mainApp, app, 'onPISTaxChanged')
 
                 case app.Cofins
-                    app.mainApp.General.ECD.taxConfig.COFINS = app.Cofins.Value / 100;
+                    app.mainApp.General.context.ECD.taxConfig.COFINS = app.Cofins.Value / 100;
                     ipcMainMatlabCallsHandler(app.mainApp, app, 'onCOFINSTaxChanged')
 
                 case app.AddAccountDescription
-                    app.mainApp.General.ui.accountDescriptionScope = app.AddAccountDescription.Value;
+                    app.mainApp.General.context.ECD.accountDescriptionScope = app.AddAccountDescription.Value;
             end
 
-            app.mainApp.General_I.FILE = app.mainApp.General.FILE;
-            app.mainApp.General_I.ECD  = app.mainApp.General.ECD;
-            app.mainApp.General_I.ui   = app.mainApp.General.ui;
+            app.mainApp.General_I.context.FILE = app.mainApp.General.context.FILE;
+            app.mainApp.General_I.context.ECD  = app.mainApp.General.context.ECD;
 
             updatePanel_Analysis(app)
             saveGeneralSettings(app)
@@ -425,8 +441,8 @@ classdef winConfig_exported < matlab.apps.AppBase
                 return
             
             else
-                app.mainApp.General.Report   = app.defaultValues.Report;
-                app.mainApp.General_I.Report = app.mainApp.General.Report;
+                app.mainApp.General.reportLib   = app.defaultValues.reportLib;
+                app.mainApp.General_I.reportLib = app.mainApp.General.reportLib;
                 
                 updatePanel_Report(app)
                 saveGeneralSettings(app)
@@ -434,25 +450,22 @@ classdef winConfig_exported < matlab.apps.AppBase
 
         end
 
-        % Value changed function: prjFileCompressionMode, reportDocType, 
-        % ...and 2 other components
+        % Value changed function: prjFileCompressionMode, reportSystem, 
+        % ...and 1 other component
         function Config_ProjectParameterValueChanged(app, event)
             
             switch event.Source
                 case app.reportSystem
-                    app.mainApp.General.Report.system   = event.Value;
+                    app.mainApp.General.reportLib.system = event.Value;
 
                 case app.reportUnit
-                    app.mainApp.General.Report.unit     = event.Value;
-
-                case app.reportDocType
-                    app.mainApp.General.Report.Document = event.Value;
+                    app.mainApp.General.reportLib.unit = event.Value;
 
                 case app.prjFileCompressionMode
-                    app.mainApp.General.Report.outputCompressionMode = event.Value;
+                    app.mainApp.General.reportLib.outputCompressionMode = event.Value;
             end
 
-            app.mainApp.General_I.Report = app.mainApp.General.Report;
+            app.mainApp.General_I.reportLib = app.mainApp.General.reportLib;
 
             updatePanel_Report(app)
             saveGeneralSettings(app)
@@ -566,24 +579,22 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.Toolbar.Layout.Column = [1 5];
             app.Toolbar.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
 
+            % Create tool_simulationMode
+            app.tool_simulationMode = uiimage(app.Toolbar);
+            app.tool_simulationMode.ScaleMethod = 'none';
+            app.tool_simulationMode.ImageClickedFcn = createCallbackFcn(app, @Toolbar_SimulationModeButtonPushed, true);
+            app.tool_simulationMode.Layout.Row = [1 3];
+            app.tool_simulationMode.Layout.Column = 1;
+            app.tool_simulationMode.ImageSource = 'Import_16.png';
+
             % Create tool_openDevTools
             app.tool_openDevTools = uiimage(app.Toolbar);
             app.tool_openDevTools.ScaleMethod = 'none';
             app.tool_openDevTools.ImageClickedFcn = createCallbackFcn(app, @Toolbar_OpenDevToolsClicked, true);
             app.tool_openDevTools.Enable = 'off';
-            app.tool_openDevTools.Tooltip = {'Abre DevTools'};
-            app.tool_openDevTools.Layout.Row = 2;
+            app.tool_openDevTools.Layout.Row = [1 3];
             app.tool_openDevTools.Layout.Column = 3;
             app.tool_openDevTools.ImageSource = 'Debug_18.png';
-
-            % Create tool_simulationMode
-            app.tool_simulationMode = uiimage(app.Toolbar);
-            app.tool_simulationMode.ScaleMethod = 'none';
-            app.tool_simulationMode.ImageClickedFcn = createCallbackFcn(app, @Toolbar_SimulationModeButtonPushed, true);
-            app.tool_simulationMode.Tooltip = {'Leitura arquivos de simulação'};
-            app.tool_simulationMode.Layout.Row = 2;
-            app.tool_simulationMode.Layout.Column = 1;
-            app.tool_simulationMode.ImageSource = 'Import_16.png';
 
             % Create SubTabGroup
             app.SubTabGroup = uitabgroup(app.GridLayout);
@@ -643,6 +654,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.openAuxiliarAppAsDocked.FontSize = 11;
             app.openAuxiliarAppAsDocked.Layout.Row = 6;
             app.openAuxiliarAppAsDocked.Layout.Column = [1 2];
+            app.openAuxiliarAppAsDocked.Value = true;
 
             % Create openAuxiliarApp2Debug
             app.openAuxiliarApp2Debug = uicheckbox(app.SubGrid1);
@@ -914,34 +926,16 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create reportGrid
             app.reportGrid = uigridlayout(app.reportPanel);
-            app.reportGrid.ColumnWidth = {350, 110, 110};
-            app.reportGrid.RowHeight = {22, 22};
+            app.reportGrid.ColumnWidth = {350, 110};
+            app.reportGrid.RowHeight = {22};
             app.reportGrid.RowSpacing = 5;
             app.reportGrid.BackgroundColor = [1 1 1];
-
-            % Create reportDocTypeLabel
-            app.reportDocTypeLabel = uilabel(app.reportGrid);
-            app.reportDocTypeLabel.WordWrap = 'on';
-            app.reportDocTypeLabel.FontSize = 11;
-            app.reportDocTypeLabel.Layout.Row = 1;
-            app.reportDocTypeLabel.Layout.Column = 1;
-            app.reportDocTypeLabel.Text = 'Tipo de documento a gerar:';
-
-            % Create reportDocType
-            app.reportDocType = uidropdown(app.reportGrid);
-            app.reportDocType.Items = {'Relatório de Atividades'};
-            app.reportDocType.ValueChangedFcn = createCallbackFcn(app, @Config_ProjectParameterValueChanged, true);
-            app.reportDocType.FontSize = 11;
-            app.reportDocType.BackgroundColor = [1 1 1];
-            app.reportDocType.Layout.Row = 1;
-            app.reportDocType.Layout.Column = [2 3];
-            app.reportDocType.Value = 'Relatório de Atividades';
 
             % Create prjFileCompressionModeLabel
             app.prjFileCompressionModeLabel = uilabel(app.reportGrid);
             app.prjFileCompressionModeLabel.WordWrap = 'on';
             app.prjFileCompressionModeLabel.FontSize = 11;
-            app.prjFileCompressionModeLabel.Layout.Row = 2;
+            app.prjFileCompressionModeLabel.Layout.Row = 1;
             app.prjFileCompressionModeLabel.Layout.Column = 1;
             app.prjFileCompressionModeLabel.Text = 'Compressão aplicada ao arquivo de saída do projeto?';
 
@@ -951,7 +945,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.prjFileCompressionMode.ValueChangedFcn = createCallbackFcn(app, @Config_ProjectParameterValueChanged, true);
             app.prjFileCompressionMode.FontSize = 11;
             app.prjFileCompressionMode.BackgroundColor = [1 1 1];
-            app.prjFileCompressionMode.Layout.Row = 2;
+            app.prjFileCompressionMode.Layout.Row = 1;
             app.prjFileCompressionMode.Layout.Column = 2;
             app.prjFileCompressionMode.Value = 'Sim';
 
@@ -1029,26 +1023,22 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.DockModule.Layout.Column = [3 4];
             app.DockModule.BackgroundColor = [0.2 0.2 0.2];
 
-            % Create dockModule_Close
-            app.dockModule_Close = uiimage(app.DockModule);
-            app.dockModule_Close.ScaleMethod = 'none';
-            app.dockModule_Close.ImageClickedFcn = createCallbackFcn(app, @DockModuleGroup_ButtonPushed, true);
-            app.dockModule_Close.Tag = 'DRIVETEST';
-            app.dockModule_Close.Tooltip = {'Fecha módulo'};
-            app.dockModule_Close.Layout.Row = 1;
-            app.dockModule_Close.Layout.Column = 2;
-            app.dockModule_Close.ImageSource = 'Delete_12SVG_white.svg';
-
             % Create dockModule_Undock
             app.dockModule_Undock = uiimage(app.DockModule);
             app.dockModule_Undock.ScaleMethod = 'none';
             app.dockModule_Undock.ImageClickedFcn = createCallbackFcn(app, @DockModuleGroup_ButtonPushed, true);
-            app.dockModule_Undock.Tag = 'DRIVETEST';
             app.dockModule_Undock.Enable = 'off';
-            app.dockModule_Undock.Tooltip = {'Reabre módulo em outra janela'};
             app.dockModule_Undock.Layout.Row = 1;
             app.dockModule_Undock.Layout.Column = 1;
             app.dockModule_Undock.ImageSource = 'Undock_18White.png';
+
+            % Create dockModule_Close
+            app.dockModule_Close = uiimage(app.DockModule);
+            app.dockModule_Close.ScaleMethod = 'none';
+            app.dockModule_Close.ImageClickedFcn = createCallbackFcn(app, @DockModuleGroup_ButtonPushed, true);
+            app.dockModule_Close.Layout.Row = 1;
+            app.dockModule_Close.Layout.Column = 2;
+            app.dockModule_Close.ImageSource = 'Delete_12SVG_white.svg';
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';

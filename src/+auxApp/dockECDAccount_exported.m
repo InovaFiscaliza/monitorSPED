@@ -100,7 +100,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             end
 
             % Tipos de conta:
-            app.taxType.Items = app.mainApp.General.ECD.accountOptions;
+            app.taxType.Items = app.mainApp.General.context.ECD.accountOptions;
         end
 
         %-----------------------------------------------------------------%

@@ -5,8 +5,8 @@ classdef winECD_exported < matlab.apps.AppBase
         UIFigure               matlab.ui.Figure
         GridLayout             matlab.ui.container.GridLayout
         DockModule             matlab.ui.container.GridLayout
-        dockModule_Undock      matlab.ui.control.Image
         dockModule_Close       matlab.ui.control.Image
+        dockModule_Undock      matlab.ui.control.Image
         Toolbar                matlab.ui.container.GridLayout
         tool_UploadFinalFile   matlab.ui.control.Image
         tool_GenerateReport    matlab.ui.control.Image
@@ -217,12 +217,52 @@ classdef winECD_exported < matlab.apps.AppBase
             end
             app.SubTabGroup.UserData.isTabInitialized(tabIndex) = true;
             
+            appName = class(app);
             switch tabIndex
                 case 1
-                    ui.CustomizationBase.getElementsDataTag({app.UITable1, app.UITable2});
+                    elToModify = {
+                        app.UITable1;
+                        app.UITable2;
+                        app.tool_AccountButton;
+                        app.tool_AutoFill;
+                        app.tool_OpenPopupProject;
+                        app.tool_GenerateReport;
+                        app.tool_UploadFinalFile;
+                        app.dockModule_Undock;
+                        app.dockModule_Close
+                    };
+                    ui.CustomizationBase.getElementsDataTag(elToModify);
+
+                    try
+                        sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
+                            struct('appName', appName, 'dataTag', app.tool_AccountButton.UserData.id,    'tooltip', struct('defaultPosition', 'top',    'textContent', 'Edita, em formulário, informações das contas movimentadas')), ...
+                            struct('appName', appName, 'dataTag', app.tool_AutoFill.UserData.id,         'tooltip', struct('defaultPosition', 'top',    'textContent', 'Sugere anotação das contas movimentadas')), ...
+                            struct('appName', appName, 'dataTag', app.tool_OpenPopupProject.UserData.id, 'tooltip', struct('defaultPosition', 'top',    'textContent', 'Edita informações do projeto<br>(fiscalizada, arquivo de backup etc)')), ...
+                            struct('appName', appName, 'dataTag', app.tool_GenerateReport.UserData.id,   'tooltip', struct('defaultPosition', 'top',    'textContent', 'Gera relatório')), ...
+                            struct('appName', appName, 'dataTag', app.tool_UploadFinalFile.UserData.id,  'tooltip', struct('defaultPosition', 'top',    'textContent', 'Upload relatório')), ...
+                            struct('appName', appName, 'dataTag', app.dockModule_Undock.UserData.id,     'tooltip', struct('defaultPosition', 'bottom', 'textContent', 'Reabre módulo em outra janela')), ...
+                            struct('appName', appName, 'dataTag', app.dockModule_Close.UserData.id,      'tooltip', struct('defaultPosition', 'bottom', 'textContent', 'Fecha módulo')) ...
+                        });
+                    catch
+                    end
 
                 case 2
-                    app.SubTab2.UserData.rendered = true;
+                    elToModify = {
+                        app.SheetOnFocus;
+                        app.StyleDelete;
+                        app.StyleRefresh
+                    };
+                    ui.CustomizationBase.getElementsDataTag(elToModify);
+
+                    try
+                        sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
+                            struct('appName', appName, 'dataTag', app.SheetOnFocus.UserData.id,          'tooltip', struct('defaultPosition', 'top',    'textContent', 'Tabela ativa')), ...
+                            struct('appName', appName, 'dataTag', app.StyleDelete.UserData.id,           'tooltip', struct('defaultPosition', 'top',    'textContent', 'Remove o estilo aplicado às células selecionadas da tabela ativa')), ...
+                            struct('appName', appName, 'dataTag', app.StyleRefresh.UserData.id,          'tooltip', struct('defaultPosition', 'top',    'textContent', 'Remove o estilo aplicado à tabela ativa')) ...
+                        });
+                    catch
+                    end
+
                     applyInitialLayout(app, 'keepCurrent')
                     app.FontFamily.Items = [{''}; listfonts];
             end
@@ -239,10 +279,6 @@ classdef winECD_exported < matlab.apps.AppBase
             if ~strcmp(app.mainApp.executionMode, 'webApp')
                 app.dockModule_Undock.Enable = 1;
             end
-
-            % TabGroup:
-          % app.SubTab1.UserData.rendered = true;
-            app.SubTab2.UserData.rendered = false;
 
             % Tabelas:
             app.UITable1.RowName = 'numbered';
@@ -266,7 +302,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 app.LogButton
             };
 
-            if app.SubTab2.UserData.rendered
+            if app.SubTabGroup.UserData.isTabInitialized(2)
                 renderedElements = [renderedElements; {
                     app.FilterButton;
                     app.RowHeight;
@@ -445,7 +481,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Algumas das tabelas customizadas existirão apenas se registros 
             % ordinários estiverem presentes na escrituração. Por exemplo,
             % "I200_I250" existe apenas se o registro "I200" existe.
-            customIds = app.mainApp.General.ECD.customTables.expected;
+            customIds = app.mainApp.General.context.ECD.customTables.expected;
             notappplicableIds = {};
             if isfield(selectedECD.Table, 'x9900') && ~isempty(selectedECD.Table.x9900)
                 for ii = 1:numel(customIds)
@@ -476,7 +512,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % Atualiza dropdowns apenas se a Tab2 já estiver sido renderizada, 
             % evitando erros no console de tentativa de atualização de um 
             % componente incompleto.
-            if app.SubTab2.UserData.rendered
+            if app.SubTabGroup.UserData.isTabInitialized(2)
                 selection2 = app.SheetView_Second.Value;
                 if isempty(selection2) || ~ismember(selection2, sheetsSorted) || ~isfield(selectedECD.Table, ['x' selection2])
                     selection2 = sheetsSorted{1};
@@ -568,7 +604,7 @@ classdef winECD_exported < matlab.apps.AppBase
             numVisibleRows = numel(visibleRows);
 
             % Inclusão da coluna "CTA", caso habilitado.
-            if app.mainApp.General.ui.accountDescriptionScope
+            if app.mainApp.General.context.ECD.accountDescriptionScope
                 variableNames = tableIdData.Properties.VariableNames;
                 variableToAdd = 'CTA';
                 if ismember('COD_CTA', variableNames) && ~ismember(variableToAdd, variableNames)
@@ -746,7 +782,7 @@ classdef winECD_exported < matlab.apps.AppBase
             hTable.UserData.Selection = [];
             hTable.UserData.SelectionType = 'none';
 
-            if hTable == app.UITable2 && app.SubTab2.UserData.rendered
+            if hTable == app.UITable2 && app.SubTabGroup.UserData.isTabInitialized(2)
                 hTableAccountInfo.Text = '';
                 hTableCountText.Text   = ' CONTAGEM: 0';
             end
@@ -1300,7 +1336,7 @@ classdef winECD_exported < matlab.apps.AppBase
             
             switch event.Source
                 case app.SheetList
-                    if app.SubTab2.UserData.rendered
+                    if app.SubTabGroup.UserData.isTabInitialized(2)
                         app.SheetView_First.Value = app.SheetList.Value;
                     end
                 case app.SheetView_First
@@ -1965,10 +2001,9 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create SheetOnFocus
             app.SheetOnFocus = uilamp(app.SubGrid2);
-            app.SheetOnFocus.Tooltip = {'Tabela em evidência'};
             app.SheetOnFocus.Layout.Row = 1;
             app.SheetOnFocus.Layout.Column = 4;
-            app.SheetOnFocus.Color = [0.7059 0.8706 1];
+            app.SheetOnFocus.Color = [0.7098 0.8706 1];
 
             % Create Tab2Separator1
             app.Tab2Separator1 = uiimage(app.SubGrid2);
@@ -2048,7 +2083,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontFamily.Items = {};
             app.FontFamily.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontFamily.Enable = 'off';
-            app.FontFamily.Tooltip = {'Fonte'};
             app.FontFamily.FontSize = 11;
             app.FontFamily.BackgroundColor = [1 1 1];
             app.FontFamily.Layout.Row = 1;
@@ -2082,7 +2116,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign1.ScaleMethod = 'none';
             app.FontAlign1.ImageClickedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontAlign1.Enable = 'off';
-            app.FontAlign1.Tooltip = {'Sublinhado'};
             app.FontAlign1.Layout.Row = 2;
             app.FontAlign1.Layout.Column = 13;
             app.FontAlign1.ImageSource = 'aligned-left-16px.png';
@@ -2092,7 +2125,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign2.ScaleMethod = 'none';
             app.FontAlign2.ImageClickedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontAlign2.Enable = 'off';
-            app.FontAlign2.Tooltip = {'Sublinhado'};
             app.FontAlign2.Layout.Row = 2;
             app.FontAlign2.Layout.Column = 14;
             app.FontAlign2.ImageSource = 'aligned-center-16px.png';
@@ -2102,7 +2134,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontAlign3.ScaleMethod = 'none';
             app.FontAlign3.ImageClickedFcn = createCallbackFcn(app, @TableStyleChanged, true);
             app.FontAlign3.Enable = 'off';
-            app.FontAlign3.Tooltip = {'Sublinhado'};
             app.FontAlign3.Layout.Row = 2;
             app.FontAlign3.Layout.Column = 15;
             app.FontAlign3.ImageSource = 'aligned-right-16px.png';
@@ -2159,7 +2190,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.StyleDelete.ScaleMethod = 'none';
             app.StyleDelete.ImageClickedFcn = createCallbackFcn(app, @TableStyleDeleteOrRefresh, true);
             app.StyleDelete.Enable = 'off';
-            app.StyleDelete.Tooltip = {'Exclui estilo relacionado às células selecionadas'};
             app.StyleDelete.Layout.Row = 2;
             app.StyleDelete.Layout.Column = 21;
             app.StyleDelete.ImageSource = 'clear_all_outputs_16-3d3c482971dfdb6852db717989f585fa.png';
@@ -2169,7 +2199,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.StyleRefresh.ScaleMethod = 'none';
             app.StyleRefresh.ImageClickedFcn = createCallbackFcn(app, @TableStyleDeleteOrRefresh, true);
             app.StyleRefresh.Enable = 'off';
-            app.StyleRefresh.Tooltip = {'Retorna às configurações iniciais de estilo'};
             app.StyleRefresh.Layout.Row = 2;
             app.StyleRefresh.Layout.Column = 22;
             app.StyleRefresh.ImageSource = 'Refresh_18.png';
@@ -2294,17 +2323,16 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_AccountButton.ScaleMethod = 'none';
             app.tool_AccountButton.ImageClickedFcn = createCallbackFcn(app, @onPopupModuleRequest, true);
             app.tool_AccountButton.Enable = 'off';
-            app.tool_AccountButton.Tooltip = {'Edita informações das contas movimentadas'};
             app.tool_AccountButton.Layout.Row = [1 3];
             app.tool_AccountButton.Layout.Column = 1;
             app.tool_AccountButton.ImageSource = 'Variable_edit_16.png';
 
             % Create tool_AutoFill
             app.tool_AutoFill = uiimage(app.Toolbar);
+            app.tool_AutoFill.ScaleMethod = 'fill';
             app.tool_AutoFill.ImageClickedFcn = createCallbackFcn(app, @Toolbar_AutoFillImageClicked, true);
             app.tool_AutoFill.Enable = 'off';
-            app.tool_AutoFill.Tooltip = {'Sugere anotação das contas movimentadas'};
-            app.tool_AutoFill.Layout.Row = [1 2];
+            app.tool_AutoFill.Layout.Row = [1 3];
             app.tool_AutoFill.Layout.Column = 2;
             app.tool_AutoFill.ImageSource = 'AutoFill_36Blue.png';
 
@@ -2332,7 +2360,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_OpenPopupProject = uiimage(app.Toolbar);
             app.tool_OpenPopupProject.ScaleMethod = 'none';
             app.tool_OpenPopupProject.ImageClickedFcn = createCallbackFcn(app, @Toolbar_OpenPopupProjectImageClicked, true);
-            app.tool_OpenPopupProject.Tooltip = {'Projeto (fiscalizada, arquivo de backup etc)'};
             app.tool_OpenPopupProject.Layout.Row = [1 3];
             app.tool_OpenPopupProject.Layout.Column = 5;
             app.tool_OpenPopupProject.ImageSource = 'organization-20px-black.svg';
@@ -2342,19 +2369,18 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_GenerateReport.ScaleMethod = 'none';
             app.tool_GenerateReport.ImageClickedFcn = createCallbackFcn(app, @Toolbar_ReportImageClicked, true);
             app.tool_GenerateReport.Enable = 'off';
-            app.tool_GenerateReport.Tooltip = {'Gera relatório análise'};
             app.tool_GenerateReport.Layout.Row = [1 3];
             app.tool_GenerateReport.Layout.Column = 6;
             app.tool_GenerateReport.ImageSource = 'Publish_HTML_16.png';
 
             % Create tool_UploadFinalFile
             app.tool_UploadFinalFile = uiimage(app.Toolbar);
+            app.tool_UploadFinalFile.ScaleMethod = 'none';
             app.tool_UploadFinalFile.ImageClickedFcn = createCallbackFcn(app, @Toolbar_UploadFinalFileImageClicked, true);
             app.tool_UploadFinalFile.Enable = 'off';
-            app.tool_UploadFinalFile.Tooltip = {'Upload relatório'};
-            app.tool_UploadFinalFile.Layout.Row = 2;
+            app.tool_UploadFinalFile.Layout.Row = [1 3];
             app.tool_UploadFinalFile.Layout.Column = 7;
-            app.tool_UploadFinalFile.ImageSource = 'Up_24.png';
+            app.tool_UploadFinalFile.ImageSource = 'up-20px.png';
 
             % Create DockModule
             app.DockModule = uigridlayout(app.GridLayout);
@@ -2366,26 +2392,22 @@ classdef winECD_exported < matlab.apps.AppBase
             app.DockModule.Layout.Column = [6 8];
             app.DockModule.BackgroundColor = [0.2 0.2 0.2];
 
-            % Create dockModule_Close
-            app.dockModule_Close = uiimage(app.DockModule);
-            app.dockModule_Close.ScaleMethod = 'none';
-            app.dockModule_Close.ImageClickedFcn = createCallbackFcn(app, @DockModuleGroup_ButtonPushed, true);
-            app.dockModule_Close.Tag = 'DRIVETEST';
-            app.dockModule_Close.Tooltip = {'Fecha módulo'};
-            app.dockModule_Close.Layout.Row = 1;
-            app.dockModule_Close.Layout.Column = 2;
-            app.dockModule_Close.ImageSource = 'Delete_12SVG_white.svg';
-
             % Create dockModule_Undock
             app.dockModule_Undock = uiimage(app.DockModule);
             app.dockModule_Undock.ScaleMethod = 'none';
             app.dockModule_Undock.ImageClickedFcn = createCallbackFcn(app, @DockModuleGroup_ButtonPushed, true);
-            app.dockModule_Undock.Tag = 'DRIVETEST';
             app.dockModule_Undock.Enable = 'off';
-            app.dockModule_Undock.Tooltip = {'Reabre módulo em outra janela'};
             app.dockModule_Undock.Layout.Row = 1;
             app.dockModule_Undock.Layout.Column = 1;
             app.dockModule_Undock.ImageSource = 'Undock_18White.png';
+
+            % Create dockModule_Close
+            app.dockModule_Close = uiimage(app.DockModule);
+            app.dockModule_Close.ScaleMethod = 'none';
+            app.dockModule_Close.ImageClickedFcn = createCallbackFcn(app, @DockModuleGroup_ButtonPushed, true);
+            app.dockModule_Close.Layout.Row = 1;
+            app.dockModule_Close.Layout.Column = 2;
+            app.dockModule_Close.ImageSource = 'Delete_12SVG_white.svg';
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';

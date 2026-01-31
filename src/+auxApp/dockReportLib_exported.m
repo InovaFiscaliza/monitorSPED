@@ -77,17 +77,17 @@ classdef dockReportLib_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function updatePanel(app, context)
             % PROJECT INITIALIZATION
-            if isempty(app.projectData.modules.(context).ui.system) && ~isequal(app.projectData.modules.(context).ui.system, app.mainApp.General.Report.system)
-                updateUiInfo(app.projectData, context, 'system', app.mainApp.General.Report.system)
+            if isempty(app.projectData.modules.(context).ui.system) && ~isequal(app.projectData.modules.(context).ui.system, app.mainApp.General.reportLib.system)
+                updateUiInfo(app.projectData, context, 'system', app.mainApp.General.reportLib.system)
             end
             
-            if isempty(app.projectData.modules.(context).ui.unit) && ~isequal(app.projectData.modules.(context).ui.unit, app.mainApp.General.Report.unit)
-                updateUiInfo(app.projectData, context, 'unit', app.mainApp.General.Report.unit)
+            if isempty(app.projectData.modules.(context).ui.unit) && ~isequal(app.projectData.modules.(context).ui.unit, app.mainApp.General.reportLib.unit)
+                updateUiInfo(app.projectData, context, 'unit', app.mainApp.General.reportLib.unit)
             end
 
             if isempty(app.projectData.modules.(context).ui.entityTypes)
-                updateUiInfo(app.projectData, context, 'entityTypes', app.mainApp.General.ui.typeOfEntity.options)
-                app.projectData.modules.(context).ui.entity.type = app.mainApp.General.ui.typeOfEntity.default;
+                updateUiInfo(app.projectData, context, 'entityTypes', app.mainApp.General.reportLib.entityType.options)
+                app.projectData.modules.(context).ui.entity.type = app.mainApp.General.reportLib.entityType.default;
             end
 
             % PROJECT PANEL
@@ -240,7 +240,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
                 return
             end
 
-            save(app.projectData, context, projectName, projectFile, app.mainApp.General.Report.outputCompressionMode, varargin{:})
+            save(app.projectData, context, projectName, projectFile, app.mainApp.General.reportLib.outputCompressionMode, varargin{:})
             updatePanel(app, context)
 
         end

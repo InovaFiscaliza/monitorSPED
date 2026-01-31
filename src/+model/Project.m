@@ -517,8 +517,8 @@ classdef Project < handle
                     ) ...
                 );
 
-                obj.modules.(context).ui.entityTypes = generalSettings.ui.typeOfEntity.options;
-                obj.modules.(context).ui.entity.type = generalSettings.ui.typeOfEntity.default;
+                obj.modules.(context).ui.entityTypes = generalSettings.reportLib.entityType.options;
+                obj.modules.(context).ui.entity.type = generalSettings.reportLib.entityType.default;
             end
 
             readReportTemplatesFile(obj, obj.rootFolder)

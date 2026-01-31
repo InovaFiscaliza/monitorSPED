@@ -32,9 +32,9 @@
                         "Editable": "false",
                         "Text": "%s, inscrita no CNPJ sob o nº %s (%s)",
                         "Variable": [
-                            "var_CompanyName",
-                            "var_CompanyId",
-                            "var_CompanyUF"
+                            "var_EntityName",
+                            "var_EntityId",
+                            "var_EntityState"
                         ]
                     }
                 }
@@ -412,8 +412,8 @@
                         "Editable": "false",
                         "Text": "Na tabela apresentada a seguir consta detalhes do(s) arquivo(s) sob análise relacionado(s) à empresa <b>%s</b>, inscrita no CNPJ sob o nº %s, contendo informações do período %s.",
                         "Variable": [
-                            "var_CompanyName",
-                            "var_CompanyId",                            
+                            "var_EntityName",
+                            "var_EntityId",                            
                             "var_Period"
                         ]
                     }
@@ -505,8 +505,8 @@
                         "Editable": "false",
                         "Text": "A empresa <b>%s</b>, inscrita no CNPJ sob o nº %s, movimentou %s. O resultado deste período foi igual a %s.",
                         "Variable": [
-                            "var_CompanyName",
-                            "var_CompanyId",
+                            "var_EntityName",
+                            "var_EntityId",
                             "var_NumAccount",
                             "var_TotalValue"
                         ]

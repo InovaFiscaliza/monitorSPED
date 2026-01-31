@@ -41,7 +41,7 @@ classdef (Abstract) Variable
                         ], fieldNames{1}, reportLibConnection.Variable.GeneralSettings(reportInfo, fieldNames{1}), reportLibConnection.Variable.GeneralSettings(reportInfo, 'ReportTemplate'));
 
                 case {'FILE', 'ECD'}
-                    fieldValue = jsonencode(generalSettings.(fieldName));
+                    fieldValue = jsonencode(generalSettings.context.(fieldName));
 
                 case 'ReportTemplate'
                      fieldValue = jsonencode(struct('Name', reportInfo.Model.Name, 'DocumentType', reportInfo.Model.DocumentType, 'Version', reportInfo.Model.Version));

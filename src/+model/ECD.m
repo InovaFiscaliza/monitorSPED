@@ -108,7 +108,7 @@ classdef ECD < handle
                      obj(idx).Size, ...
                      obj(idx).Encoding, ...
                      obj(idx).EncodingInfo, ...
-                     obj(idx).Hash, bigFileWarning] = util.fileread(fileFullName, generalSettings.FILE.encodingList);
+                     obj(idx).Hash, bigFileWarning] = util.fileread(fileFullName, generalSettings.context.FILE.encodingList);
 
                     if numel(obj) > 1 && ismember(obj(idx).Hash, {obj(1:end-1).Hash})
                         error('model:ECD:FileAlreadyRead', 'File content has already been read.')
@@ -164,7 +164,7 @@ classdef ECD < handle
 
                     % Leitura de outros registros essenciais de identificação
                     % ("0000" e "I030") e plano de contas ("I050").
-                    parseTableAndAddToCache(obj(idx), [{'0000', 'I030', 'I050'}, generalSettings.ECD.customTables.autoload'], generalSettings)
+                    parseTableAndAddToCache(obj(idx), [{'0000', 'I030', 'I050'}, generalSettings.context.ECD.customTables.autoload'], generalSettings)
 
                     if isfield(obj(idx).Table, 'x0000') && ~isempty(obj(idx).Table.x0000)
                         obj(idx).CompanyName    = upper(strtrim(obj(idx).Table.x0000.NOME{1}));
@@ -206,7 +206,7 @@ classdef ECD < handle
                     end
 
                     if ~isempty(receitaFederalObj)
-                        checkFileStatus(obj(idx), receitaFederalObj, generalSettings.FILE.encodingList);
+                        checkFileStatus(obj(idx), receitaFederalObj, generalSettings.context.FILE.encodingList);
                     end
 
                     obj(idx).GUI.hasTransactions = checkIfHasTransactions(obj(idx));
@@ -464,10 +464,10 @@ classdef ECD < handle
 
                         case 'accountValueChanged'
                             generalSettings   = varargin{1};
-                            pisDefaultTax     = generalSettings.ECD.taxConfig.PIS;     % 0.0065;
-                            cofinsDefaultTax  = generalSettings.ECD.taxConfig.COFINS;  % 0.03;
-                            fustDefaultTax    = generalSettings.ECD.taxConfig.FUST;    % 0.01;
-                            funttelDefaultTax = generalSettings.ECD.taxConfig.FUNTTEL; % 0.005;
+                            pisDefaultTax     = generalSettings.context.ECD.taxConfig.PIS;     % 0.0065;
+                            cofinsDefaultTax  = generalSettings.context.ECD.taxConfig.COFINS;  % 0.03;
+                            fustDefaultTax    = generalSettings.context.ECD.taxConfig.FUST;    % 0.01;
+                            funttelDefaultTax = generalSettings.context.ECD.taxConfig.FUNTTEL; % 0.005;
                             
                             robContabilIdx    = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "Sim");
                             icmsContabilIdx   = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "ICMS Telecom");
@@ -905,27 +905,27 @@ classdef ECD < handle
                             obj.Table.xI050_I051_I052 = mergeTables(obj, 'I050', {'I051', 'I052'}, generalSettings);
 
                         case 'I200_I250'
-                            MIN_ROW_COUNT = generalSettings.FILE.largeTable.minRowCount; % 100000
+                            MIN_ROW_COUNT = generalSettings.context.FILE.largeTable.minRowCount; % 100000
                             expectedRows = expectedRowsByTableId(obj, 'I250');
 
                             mainTableColumns = {}; 
                             secondaryTableColumns = {};
 
                             if ~isempty(expectedRows) && expectedRows > MIN_ROW_COUNT
-                                if isfield(generalSettings.FILE.largeTable.cacheColumns, 'I200')
-                                    mainTableColumns = generalSettings.FILE.largeTable.cacheColumns.('I200');
+                                if isfield(generalSettings.context.FILE.largeTable.cacheColumns, 'I200')
+                                    mainTableColumns = generalSettings.context.FILE.largeTable.cacheColumns.('I200');
                                 end
 
-                                if isfield(generalSettings.FILE.largeTable.cacheColumns, 'I250')
-                                    secondaryTableColumns = generalSettings.FILE.largeTable.cacheColumns.('I250');
+                                if isfield(generalSettings.context.FILE.largeTable.cacheColumns, 'I250')
+                                    secondaryTableColumns = generalSettings.context.FILE.largeTable.cacheColumns.('I250');
                                 end
                             end
 
                             obj.Table.xI200_I250 = mergeTables(obj, 'I200', {'I250'}, generalSettings, mainTableColumns, secondaryTableColumns);
                     end
 
-                    if ~generalSettings.FILE.largeTable.cacheEnabled
-                        tablesToDeleteFromCache = setdiff(strsplit(tableId, '_'), generalSettings.ECD.cacheTables);
+                    if ~generalSettings.context.FILE.largeTable.cacheEnabled
+                        tablesToDeleteFromCache = setdiff(strsplit(tableId, '_'), generalSettings.context.ECD.cacheTables);
                         update(obj, 'Table.NonEssentialFiles', 'onCacheCleanup', tablesToDeleteFromCache)
                     end
 
@@ -952,13 +952,6 @@ classdef ECD < handle
 
                 obj.Table.(['x' tableId]) = tableOut;
             end
-
-            % if generalSettings.ui.accountDescriptionScope
-            %     variableNames = obj.Table.(['x' tableId]).Properties.VariableNames;
-            %     if ismember('COD_CTA', variableNames) && ~ismember('CTA', variableNames)
-            %         obj.Table.(['x' tableId]) = addAccountDescription(obj, obj.Table.(['x' tableId]), variableNames, 'CTA');
-            %     end
-            % end
         end
 
         %-----------------------------------------------------------------%
@@ -972,12 +965,12 @@ classdef ECD < handle
 
             checkIfScalar(obj)
 
-            MIN_ROW_COUNT = generalSettings.FILE.largeTable.minRowCount; % 100000
+            MIN_ROW_COUNT = generalSettings.context.FILE.largeTable.minRowCount; % 100000
             expectedRows  = expectedRowsByTableId(obj, columnsSpec.id);
 
             if ~isempty(expectedRows) && expectedRows > MIN_ROW_COUNT
-                if isfield(generalSettings.FILE.largeTable.cacheColumns, columnsSpec.id)
-                    variableNames = generalSettings.FILE.largeTable.cacheColumns.(columnsSpec.id);
+                if isfield(generalSettings.context.FILE.largeTable.cacheColumns, columnsSpec.id)
+                    variableNames = generalSettings.context.FILE.largeTable.cacheColumns.(columnsSpec.id);
                 else
                     variableNames = columnsSpec.complete;
                 end
