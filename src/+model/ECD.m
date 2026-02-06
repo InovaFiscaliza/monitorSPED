@@ -911,7 +911,7 @@ classdef ECD < handle
                     % Identifica apenas registros relacionados às contas de
                     % resultado.
                     xI200_I250_I075 = outerjoin( ...
-                        obj.Table.xI200_I250, ...
+                        unique(obj.Table.xI200_I250(:, {'COD_CTA', 'COD_HIST_PAD', 'HIST'}), 'rows'), ...
                         obj.Table.xI075, ...
                         "LeftKeys", "COD_HIST_PAD", ...
                         "RightKeys", "COD_HIST", ...
@@ -1125,7 +1125,6 @@ classdef ECD < handle
                 mergedTable = [];
                 return
             end
-            mainTable = unique(mainTable, 'rows', 'stable');
 
             % Converte conteúdo de arquivo em lista de células, orientada à
             % quebra de linha. Identifica o número da linha de cada um dos
@@ -1155,7 +1154,6 @@ classdef ECD < handle
                     'RightVariables', setdiff(secondaryTables{2}.Properties.VariableNames, secondaryTables{1}.Properties.VariableNames) ...
                 );
             end
-            secondaryTable = unique(secondaryTable, 'rows', 'stable');
 
             % Abrindo caminho p/ diminuir informação resultado da mesclagem
             % de tabelas, deixando apenas o essencial.
@@ -1176,7 +1174,6 @@ classdef ECD < handle
                 'LeftVariables', mainTableColumns, ...
                 'RightVariables', setdiff(secondaryTableColumns, mainTableColumns) ...
             );
-            mergedTable = unique(mergedTable, 'rows', 'stable');
             
             if ismember('_TEMP_KEY', mergedTable.Properties.VariableNames)
                 mergedTable = removevars(mergedTable, '_TEMP_KEY');
