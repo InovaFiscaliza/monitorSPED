@@ -27,7 +27,7 @@ classdef (Abstract) Controller
         %-----------------------------------------------------------------%
         docVersion = dictionary( ...
             ["Preliminar", "Definitiva"], ...
-            [struct('version', 'preview', 'encoding', 'UTF-8'), struct('version', 'final', 'encoding', 'ISO-8859-1')] ...
+            ["preview", "final"] ...
         )
     end
 
@@ -53,7 +53,7 @@ classdef (Abstract) Controller
             docName = projectData.modules.(context).ui.reportModel;
             docIndex = find(strcmp({projectData.report.templates.Name}, docName), 1);
             if isempty(docIndex)
-                error('Pendente escolha do modelo de relatório.')
+                error('reportLibConnection:Controller', 'Pendente escolha do modelo de relatório.')
             end
 
             docType = projectData.report.templates(docIndex).DocumentType;
@@ -61,7 +61,7 @@ classdef (Abstract) Controller
 
             try
                 if ~isdeployed()
-                    error('ForceDebugMode')
+                    error('reportLibConnection:Controller', 'ForceDebugMode')
                 end
                 docScript = jsondecode(fileread(fullfile(programDataFolder, 'ReportTemplates', projectData.report.templates(docIndex).File)));
             catch
@@ -86,7 +86,7 @@ classdef (Abstract) Controller
                                 'Model',    struct('Name',                       docName,                             ...
                                                    'DocumentType',               docType,                             ...
                                                    'Script',                     docScript,                           ...
-                                                   'Version',                    docVersion.version),                 ...
+                                                   'Version',                    docVersion),                         ...
                                 'Function', struct(...
                                                    ... % APLICÁVEIS ÀS SEÇÕES GERAIS DO RELATÓRIO
                                                    'cfg_FILE',                  'reportLibConnection.Variable.GeneralSettings(reportInfo, "FILE+ReportTemplate")', ...
@@ -134,7 +134,7 @@ classdef (Abstract) Controller
                                                    'tbl_TabelaAnotacao_On',     'reportLibConnection.Table.TabelaAnotacao(analyzedData, "on")'), ...
                                 'Project',  projectData, ...
                                 'Context',  context,     ...
-                                'Object',   ecdObj,      ...                                
+                                'Object',   ecdObj,      ...
                                 'Settings', generalSettings);
 
             fieldsUnnecessary = {'rootFolder', 'entryPointFolder', 'tempSessionFolder', 'ctfRoot'};
@@ -172,12 +172,10 @@ classdef (Abstract) Controller
                                              'HTML',    struct('Component', {}, 'Source', {}, 'Value', {}));
             end
 
-
             %-------------------------------------------------------------%
             % Conexão com reportLib, parte do repositório "SupportPackages"
             %-------------------------------------------------------------%
             HTMLDocContent = reportLib.Controller(reportInfo, dataOverview);
-
 
             %-------------------------------------------------------------%
             % Exclui container criado para os plots, caso aplicável.
@@ -188,7 +186,6 @@ classdef (Abstract) Controller
                 delete(hContainer)
             end
 
-
             %-------------------------------------------------------------%
             % Em sendo a versão "Preliminar", apenas apresenta o html no
             % navegador. Por outro lado, em sendo a versão "Definitiva",
@@ -197,16 +194,22 @@ classdef (Abstract) Controller
             [baseFullFileName, baseFileName] = appEngine.util.DefaultFileName(generalSettings.fileFolder.tempPath, [appName '_FinalReport'], issueId);
             HTMLFile = [baseFullFileName '.html'];
             
-            writematrix(HTMLDocContent, HTMLFile, 'QuoteStrings', 'none', 'FileType', 'text', 'Encoding', docVersion.encoding)
+            writematrix(HTMLDocContent, HTMLFile, 'QuoteStrings', 'none', 'FileType', 'text', 'Encoding', 'UTF-8')
 
-            switch docVersion.version
+            switch docVersion
                 case 'preview'
                     web(HTMLFile, '-new')
                     updateGeneratedFiles(projectData, context)
 
                 case 'final'
+                    [issueDetails, msgError] = getOrFetchIssueDetails(projectData, projectData.modules.(context).ui.system, projectData.modules.(context).ui.issue, mainApp.eFiscalizaObj);
+                    if ~isempty(msgError)
+                        error('reportLibConnection:Controller', msgError)
+                    end
+
                     JSONFile = '';
                     XLSXFile = '';
+                    RAWFiles = {};
                     ZIPFile  = ui.Dialog(callingApp.UIFigure, 'uiputfile', '', {'*.zip', [appName ' (*.zip)']}, fullfile(generalSettings.fileFolder.userPath, [baseFileName '.zip']));
                     if isempty(ZIPFile)
                         return
@@ -215,7 +218,7 @@ classdef (Abstract) Controller
                     if strcmp(context, 'ECD')
                         correlationKey = char(matlab.lang.internal.uuid());
                         JSONFile = fullfile(generalSettings.fileFolder.tempPath, sprintf('%s_%s_%s.json', appName, datestr(now, 'yyyymmdd'), correlationKey));
-                        JSONContent = reportLibConnection.Table.scarabJsonFile(projectData, context, ecdObj, mainApp.eFiscalizaObj, correlationKey);
+                        JSONContent = reportLibConnection.Table.scarabJsonFile(projectData, context, ecdObj, correlationKey, mainApp.executionMode, issueDetails);
 
                         writematrix(JSONContent, JSONFile, "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite", "Encoding", "UTF-8")
                     end
@@ -229,10 +232,10 @@ classdef (Abstract) Controller
                     switch context
                         case 'FILE'
                             generatedFileId = model.ProjectBase.computeReportFileInventoryHash(ecdObj);
-                        otherwise % 'ECD'
+                        case 'ECD'
                             generatedFileId = model.ProjectBase.computeReportAnalysisResultsHash(ecdObj);
                     end
-                    updateGeneratedFiles(projectData, context, generatedFileId, {}, HTMLFile, JSONFile, XLSXFile, ZIPFile)
+                    updateGeneratedFiles(projectData, context, generatedFileId, RAWFiles, HTMLFile, JSONFile, XLSXFile, ZIPFile)
             end
         end
     end

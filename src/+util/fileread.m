@@ -1,17 +1,17 @@
-function [content, filesize, encoding, encodingJson, hashHex, bigFileWarning] = fileread(fileFullName, encodingList)
+function [content, fileSize, encoding, encodingJson, hashHex, largeFileWarning] = fileread(fileFullName, generalSettings)
     arguments
         fileFullName (1,:) char
-        encodingList (1,:) cell = {'ISO-8859-1', 'UTF-8'}
+        generalSettings
     end
 
     fileID = fopen(fileFullName, 'r');
     if fileID == -1
-        error('File not found.');
+        error('util:fileread:FileNotFound', 'File not found')
     end    
     byteArray = fread(fileID, [1, inf], 'uint8=>uint8');
     fclose(fileID);
 
-    % HASH
+    % Hash
     hashEndMarker = regexp(char(byteArray), '\|9999\|[^\r\n]*(?:\r?\n)?', 'match');
     if ~isempty(hashEndMarker)
         hashEndMarkerPosition = strfind(byteArray, hashEndMarker{end}) + numel(hashEndMarker{end}) - 1;
@@ -19,22 +19,31 @@ function [content, filesize, encoding, encodingJson, hashHex, bigFileWarning] = 
     end
     hashHex = Hash.sha1(byteArray);
 
-    % Encoding detection
+    % A função native2unicode é limitada em 2^30-1 elementos...
+    fileSize = numel(byteArray);
+    native2unicodeLimit = 2^30-1; % bytes
+
+    largeFileWarning = '';
+    if fileSize > native2unicodeLimit
+        largeFileWarning = sprintf([ ...
+            'O arquivo excede %.0f bytes e, por isso, é tratado como grande, ' ...
+            'com leitura e processamento realizados de forma diferenciada.' ...
+        ], native2unicodeLimit);
+    end
+
+    % Infere codificação de texto por meio da identificação dos principais dos
+    % caracteres especiais do Português: "ç", "ã", "á", "é", "í", "ó" e "ú'".
     encodingInfo = table( ...
         'Size', [0, 3], ...
         'VariableTypes', {'cell', 'double', 'double'}, ...
         'VariableNames', {'encoding', 'numSpecialCharsType', 'numSpecialChars'} ...
     );
 
-    % A função native2unicode é limitada em 2^30-1 elementos.
-    filesize = numel(byteArray);
-    bigFileWarning = '';
-    if filesize > 2^30-1
-        bigFileWarning = sprintf('[native2unicode] Error using native2unicode. Input must contain fewer than 2^30 elements. %.0f elements ⇒ %.0f', numel(byteArray), 2^30-1);
-    end
+    encodingList = generalSettings.context.FILE.encodingList;
+    encodingDetectionBytes = min([fileSize, generalSettings.context.FILE.encodingDetectionBytes, native2unicodeLimit]);
 
     for ii = 1:numel(encodingList)
-        rawDecoded = lower(native2unicode(byteArray(1:min(filesize, 2^30-1)), encodingList{ii}));
+        rawDecoded = lower(native2unicode(byteArray(1:encodingDetectionBytes), encodingList{ii}));
         numSpecialChars = cellfun(@(x) numel(strfind(rawDecoded, x)), textAnalysis.specialMain);
         encodingInfo(end+1, :) = {encodingList{ii}, sum(numSpecialChars > 0), sum(numSpecialChars)};
     end
@@ -43,7 +52,7 @@ function [content, filesize, encoding, encodingJson, hashHex, bigFileWarning] = 
     encoding = encodingInfo.encoding{1};
     encodingJson = jsonencode(encodingInfo);
 
-    if isempty(bigFileWarning)
+    if isempty(largeFileWarning)
         content = native2unicode(byteArray, encoding);
     else
         content = fileread(fileFullName, 'Encoding', encoding);

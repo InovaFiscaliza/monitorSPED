@@ -1,5 +1,5 @@
 {
-    "version": 0.78,
+    "version": 0.80,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -31,6 +31,7 @@
                 "ISO-8859-1",
                 "UTF-8"
             ],
+            "encodingDetectionBytes": 10000000,
             "terminator": {
                 "options": [
                     "CRLF",
@@ -107,6 +108,11 @@
     "reportLib": {
         "system": "eFiscaliza",
         "unit": "",
+        "tablesToClearBeforeSave": [
+            "C050_C051_C052",
+            "I050_I051_I052",
+            "I200_I250"
+        ],
         "outputCompressionMode": "Sim",
         "entityType": {
             "default": "",

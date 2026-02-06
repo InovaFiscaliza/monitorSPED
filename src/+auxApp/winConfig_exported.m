@@ -13,7 +13,7 @@ classdef winConfig_exported < matlab.apps.AppBase
         openAuxiliarApp2Debug        matlab.ui.control.CheckBox
         openAuxiliarAppAsDocked      matlab.ui.control.CheckBox
         versionInfo                  matlab.ui.control.Label
-        tool_versionInfoRefresh      matlab.ui.control.Image
+        versionInfoRefresh           matlab.ui.control.Image
         versionInfoLabel             matlab.ui.control.Label
         SubTab2                      matlab.ui.container.Tab
         SubGrid2                     matlab.ui.container.GridLayout
@@ -111,11 +111,12 @@ classdef winConfig_exported < matlab.apps.AppBase
             end
             app.SubTabGroup.UserData.isTabInitialized(tabIndex) = true;
             
+            appName = class(app);
             switch tabIndex
                 case 1
-                    appName = class(app);
                     elToModify = {
                         app.versionInfo;
+                        app.versionInfoRefresh;
                         app.tool_simulationMode;
                         app.tool_openDevTools;
                         app.dockModule_Undock;
@@ -130,6 +131,7 @@ classdef winConfig_exported < matlab.apps.AppBase
 
                     try
                         sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
+                            struct('appName', appName, 'dataTag', app.versionInfoRefresh.UserData.id,  'tooltip', struct('defaultPosition', 'top',    'textContent', 'Verifica atualizações')), ...
                             struct('appName', appName, 'dataTag', app.tool_simulationMode.UserData.id, 'tooltip', struct('defaultPosition', 'top',    'textContent', 'Leitura arquivos de simulação')), ...
                             struct('appName', appName, 'dataTag', app.tool_openDevTools.UserData.id,   'tooltip', struct('defaultPosition', 'top',    'textContent', 'Abre DevTools')), ...
                             struct('appName', appName, 'dataTag', app.dockModule_Undock.UserData.id,   'tooltip', struct('defaultPosition', 'bottom', 'textContent', 'Reabre módulo em outra janela')), ...
@@ -139,12 +141,36 @@ classdef winConfig_exported < matlab.apps.AppBase
                     end
 
                 case 2
+                    elToModify = {
+                        app.configAnalysisRefresh
+                    };
+                    ui.CustomizationBase.getElementsDataTag(elToModify);
+
+                    try
+                        sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
+                            struct('appName', appName, 'dataTag', app.configAnalysisRefresh.UserData.id, 'tooltip', struct('defaultPosition', 'top', 'textContent', 'Retorna às configurações iniciais')) ...
+                        });
+                    catch
+                    end
+
                     if ~strcmp(app.mainApp.executionMode, 'webApp')
                         app.InputType.Enable = "on";
                     end
                     updatePanel_Analysis(app)
 
                 case 3
+                    elToModify = {
+                        app.eFiscalizaRefresh
+                    };
+                    ui.CustomizationBase.getElementsDataTag(elToModify);
+
+                    try
+                        sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
+                            struct('appName', appName, 'dataTag', app.eFiscalizaRefresh.UserData.id, 'tooltip', struct('defaultPosition', 'top', 'textContent', 'Retorna às configurações iniciais')) ...
+                        });
+                    catch
+                    end
+
                     updatePanel_Report(app)
 
                 case 4
@@ -175,7 +201,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             if ~strcmp(app.mainApp.executionMode, 'webApp')
                 app.dockModule_Undock.Enable       = 1;
                 app.tool_openDevTools.Enable       = 1;                
-                app.tool_versionInfoRefresh.Enable = 1;
+                app.versionInfoRefresh.Enable      = 1;
                 app.openAuxiliarAppAsDocked.Enable = 1;
             end
 
@@ -323,7 +349,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             
         end
 
-        % Image clicked function: tool_versionInfoRefresh
+        % Image clicked function: versionInfoRefresh
         function Toolbar_AppEnvRefreshButtonPushed(app, event)
             
             app.progressDialog.Visible = 'visible';
@@ -624,16 +650,14 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.versionInfoLabel.Layout.Column = 1;
             app.versionInfoLabel.Text = 'AMBIENTE:';
 
-            % Create tool_versionInfoRefresh
-            app.tool_versionInfoRefresh = uiimage(app.SubGrid1);
-            app.tool_versionInfoRefresh.ScaleMethod = 'none';
-            app.tool_versionInfoRefresh.ImageClickedFcn = createCallbackFcn(app, @Toolbar_AppEnvRefreshButtonPushed, true);
-            app.tool_versionInfoRefresh.Enable = 'off';
-            app.tool_versionInfoRefresh.Tooltip = {'Verifica atualizações'};
-            app.tool_versionInfoRefresh.Layout.Row = 1;
-            app.tool_versionInfoRefresh.Layout.Column = 2;
-            app.tool_versionInfoRefresh.VerticalAlignment = 'bottom';
-            app.tool_versionInfoRefresh.ImageSource = 'Refresh_18.png';
+            % Create versionInfoRefresh
+            app.versionInfoRefresh = uiimage(app.SubGrid1);
+            app.versionInfoRefresh.ScaleMethod = 'none';
+            app.versionInfoRefresh.ImageClickedFcn = createCallbackFcn(app, @Toolbar_AppEnvRefreshButtonPushed, true);
+            app.versionInfoRefresh.Enable = 'off';
+            app.versionInfoRefresh.Layout.Row = 1;
+            app.versionInfoRefresh.Layout.Column = 2;
+            app.versionInfoRefresh.ImageSource = 'Refresh_18.png';
 
             % Create versionInfo
             app.versionInfo = uilabel(app.SubGrid1);
@@ -691,10 +715,8 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.configAnalysisRefresh.ScaleMethod = 'none';
             app.configAnalysisRefresh.ImageClickedFcn = createCallbackFcn(app, @Config_AnalysisRefreshImageClicked, true);
             app.configAnalysisRefresh.Visible = 'off';
-            app.configAnalysisRefresh.Tooltip = {'Retorna às configurações iniciais'};
             app.configAnalysisRefresh.Layout.Row = 1;
             app.configAnalysisRefresh.Layout.Column = 2;
-            app.configAnalysisRefresh.VerticalAlignment = 'bottom';
             app.configAnalysisRefresh.ImageSource = 'Refresh_18.png';
 
             % Create configAnalysisPanel1
@@ -854,10 +876,8 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.eFiscalizaRefresh.ScaleMethod = 'none';
             app.eFiscalizaRefresh.ImageClickedFcn = createCallbackFcn(app, @Config_ProjectRefreshImageClicked, true);
             app.eFiscalizaRefresh.Visible = 'off';
-            app.eFiscalizaRefresh.Tooltip = {'Retorna às configurações iniciais'};
             app.eFiscalizaRefresh.Layout.Row = 1;
             app.eFiscalizaRefresh.Layout.Column = 2;
-            app.eFiscalizaRefresh.VerticalAlignment = 'bottom';
             app.eFiscalizaRefresh.ImageSource = 'Refresh_18.png';
 
             % Create eFiscalizaPanel

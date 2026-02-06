@@ -66,7 +66,7 @@ classdef Project < handle
             version   = 1;
             userData  = [];
 
-            prjHash  = model.ProjectBase.computeProjectHash(prjName, prjFile, ecdObj, obj.issueDetails, obj.entityDetails);
+            prjHash   = model.ProjectBase.computeProjectHash(prjName, prjFile, ecdObj, obj.issueDetails, obj.entityDetails);
             variables = struct( ...
                 'name',    prjName, ...
                 'hash',    prjHash, ...
@@ -76,12 +76,12 @@ classdef Project < handle
                 'ecdData', ecdObj ...
             );
 
-            compressionMode = '';
+            compressionMode = {};
             if strcmp(outputFileCompressionMode, 'Não')
-                compressionMode = '-nocompression';
+                compressionMode = {'-nocompression'};
             end
 
-            save(prjFile, 'source', 'type', 'version', 'variables', 'userData', '-mat', '-v7', compressionMode)
+            save(prjFile, 'source', 'type', 'version', 'variables', 'userData', '-mat', '-v7', compressionMode{:})
 
             obj.name = prjName;
             obj.file = prjFile;
@@ -474,9 +474,6 @@ classdef Project < handle
     methods (Access = private)
         %-----------------------------------------------------------------%
         function contextInitialization(obj, contextList, generalSettings)
-            % O "id", do "generatedFiles", é a lista ordenada de "hashs" dos registros 
-            % que compõem "inspectedProducts".
-
             obj.name = '';
             obj.file = '';
             obj.hash = '';

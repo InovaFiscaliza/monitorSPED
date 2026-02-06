@@ -108,14 +108,29 @@ classdef ECD < handle
                      obj(idx).Size, ...
                      obj(idx).Encoding, ...
                      obj(idx).EncodingInfo, ...
-                     obj(idx).Hash, bigFileWarning] = util.fileread(fileFullName, generalSettings.context.FILE.encodingList);
+                     obj(idx).Hash, largeFileWarning] = util.fileread(fileFullName, generalSettings);
 
                     if numel(obj) > 1 && ismember(obj(idx).Hash, {obj(1:end-1).Hash})
                         error('model:ECD:FileAlreadyRead', 'File content has already been read.')
                     end
 
-                    if ~isempty(bigFileWarning)
-                        obj(idx).GUI.warnings{end+1} = jsonencode(bigFileWarning);
+                    if ~isempty(largeFileWarning)
+                        obj(idx).GUI.warnings{end+1} = jsonencode(struct( ...
+                            'id', 'LargeFile', ...
+                            'message', largeFileWarning ...
+                        ));
+                    end
+
+                    if ~contains(fileName, obj(idx).Hash, "IgnoreCase", true)
+                        obj(idx).GUI.warnings{end+1} = jsonencode(struct( ...
+                            'id', 'FileHash', ...
+                            'message', [ ...
+                                'O arquivo não segue o padrão de nomenclatura da ' ...
+                                'Receita Federal, que inclui o hash. Essa diferença ' ...
+                                'pode indicar uma alteração no nome do arquivo ou no ' ...
+                                'seu conteúdo.' ...
+                            ] ...
+                        ));
                     end
 
                     % Leitura do registro "I010", identificando o layout do
@@ -195,7 +210,10 @@ classdef ECD < handle
                         end
 
                         if ~isempty(rateErrorMsg)
-                            obj(idx).GUI.warnings{end+1} = jsonencode(strjoin(rateErrorMsg, '<br>'));
+                            obj(idx).GUI.warnings{end+1} = jsonencode(struct( ...
+                                'id', 'RateError', ...
+                                'message', strjoin(rateErrorMsg, '<br>') ...
+                            ));
                         end
 
                         obj(idx).GUI.icmsDefaultRate.rate = periodRate;
@@ -265,7 +283,10 @@ classdef ECD < handle
                     if ~isempty(expectedRows) && expectedRows > 0
                         readRows = height(obj(ii).Table.(['x' tableId]));                            
                         if expectedRows ~= readRows
-                            obj(ii).GUI.warnings{end+1} = jsonencode(struct('id', tableId, 'expectedRows', expectedRows, 'readRows', readRows));
+                            obj(ii).GUI.warnings{end+1} = jsonencode(struct( ...
+                                'id', tableId, ...
+                                'message', sprintf('expectedRows: %d, readRows: %d', expectedRows, readRows) ...
+                            ));
                         end
                     end
                 end
@@ -332,8 +353,10 @@ classdef ECD < handle
                 case 'Table.NonEssentialFiles'
                     switch updateType
                         case 'onCacheCleanup'
-                            tableIdList = varargin{1};
-                            obj.Table = rmfield(obj.Table, strcat('x', tableIdList));
+                            tableIdList = strcat({'x'}, varargin{1});
+                            tableIdList = tableIdList(isfield(obj.Table, tableIdList));
+
+                            obj.Table = rmfield(obj.Table, tableIdList);
 
                         otherwise
                             error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
@@ -1032,20 +1055,20 @@ classdef ECD < handle
         end
 
         %-----------------------------------------------------------------%
-        function mergedTable = mergeTables(obj, mainId, secundaryIds, generalSettings, mainTableColumns, secundaryTableColumns)
+        function mergedTable = mergeTables(obj, mainId, secondaryIds, generalSettings, mainTableColumns, secondaryTableColumns)
             arguments
                 obj
                 mainId          (1,:) char {mustBeMember(mainId, {'I050', 'I200', 'C050'})}
-                secundaryIds    (1,:) cell % {'I051', 'I052'} | {'I250'} | {'C051', 'C052'}
+                secondaryIds    (1,:) cell % {'I051', 'I052'} | {'I250'} | {'C051', 'C052'}
                 generalSettings
                 mainTableColumns      cell = {}
-                secundaryTableColumns cell = {}
+                secondaryTableColumns cell = {}
             end
 
             checkIfScalar(obj)
 
             % Verifica se os registros ordinários foram lidos.
-            tableIdList = [mainId, secundaryIds];
+            tableIdList = [mainId, secondaryIds];
             
             % Verifica se a tabela mesclada já foi criada.
             mergedTableId = ['x' strjoin(tableIdList, '_')];
@@ -1064,10 +1087,11 @@ classdef ECD < handle
                 mergedTable = [];
                 return
             end
+            mainTable = unique(mainTable, 'rows', 'stable');
 
             % Converte conteúdo de arquivo em lista de células, orientada à
             % quebra de linha. Identifica o número da linha de cada um dos
-            % registros sob análise - "mainId" e "secundaryIds".
+            % registros sob análise - "mainId" e "secondaryIds".
             splitContent = splitlines(obj.Content);
             fileIndexes  = cellfun(@(x) find(startsWith(splitContent, x)), strcat('|', tableIdList, '|'), 'UniformOutput', false);
 
@@ -1077,22 +1101,23 @@ classdef ECD < handle
             % Em relação às tabelas auxiliares:            
             edges = [fileIndexes{1}; inf];
             tempIdColumn = {};            
-            for ii = 1:numel(secundaryIds)
+            for ii = 1:numel(secondaryIds)
                 tempIdColumn{ii} = discretize(fileIndexes{ii+1}, edges);
             end
-            secundaryTables = cellfun(@(x,y) addvars(x, y, 'NewVariableName', '_TEMP_KEY'), cellfun(@(x) obj.Table.(['x' x]), secundaryIds, "UniformOutput", false), tempIdColumn, 'UniformOutput', false);
+            secondaryTables = cellfun(@(x,y) addvars(x, y, 'NewVariableName', '_TEMP_KEY'), cellfun(@(x) obj.Table.(['x' x]), secondaryIds, "UniformOutput", false), tempIdColumn, 'UniformOutput', false);
 
-            if isscalar(secundaryTables)
-                secundaryTable = secundaryTables{1};                
+            if isscalar(secondaryTables)
+                secondaryTable = secondaryTables{1};                
             else
-                secundaryTable = outerjoin( ...
-                    removevars(secundaryTables{1}, 'REG'), ...
-                    removevars(secundaryTables{2}, 'REG'), ...
+                secondaryTable = outerjoin( ...
+                    removevars(secondaryTables{1}, 'REG'), ...
+                    removevars(secondaryTables{2}, 'REG'), ...
                     "Keys", '_TEMP_KEY', ...
                     "MergeKeys", true, ...
-                    'RightVariables', setdiff(secundaryTables{2}.Properties.VariableNames, secundaryTables{1}.Properties.VariableNames) ...
+                    'RightVariables', setdiff(secondaryTables{2}.Properties.VariableNames, secondaryTables{1}.Properties.VariableNames) ...
                 );
             end
+            secondaryTable = unique(secondaryTable, 'rows', 'stable');
 
             % Abrindo caminho p/ diminuir informação resultado da mesclagem
             % de tabelas, deixando apenas o essencial.
@@ -1100,19 +1125,20 @@ classdef ECD < handle
                 mainTableColumns = mainTable.Properties.VariableNames;
             end
 
-            if isempty(secundaryTableColumns)
-                secundaryTableColumns = setdiff(secundaryTable.Properties.VariableNames, mainTable.Properties.VariableNames);
+            if isempty(secondaryTableColumns)
+                secondaryTableColumns = setdiff(secondaryTable.Properties.VariableNames, mainTable.Properties.VariableNames);
             end
 
             mergedTable = outerjoin( ...
                 mainTable, ...
-                secundaryTable, ...
+                secondaryTable, ...
                 'Keys', '_TEMP_KEY', ...
                 'MergeKeys', true, ...
                 'Type', 'left', ...
                 'LeftVariables', mainTableColumns, ...
-                'RightVariables', setdiff(secundaryTableColumns, mainTableColumns) ...
+                'RightVariables', setdiff(secondaryTableColumns, mainTableColumns) ...
             );
+            mergedTable = unique(mergedTable, 'rows', 'stable');
             
             if ismember('_TEMP_KEY', mergedTable.Properties.VariableNames)
                 mergedTable = removevars(mergedTable, '_TEMP_KEY');
@@ -1171,7 +1197,10 @@ classdef ECD < handle
             % mês é igual a zero.
             FLOAT_DIFF_TOLERANCE = 1e-5;
             if any(cellfun(@(x) sum(trialBalance.(x)) > FLOAT_DIFF_TOLERANCE, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}))
-                obj.GUI.warnings{end+1} = jsonencode(struct('id', 'mBALANCETE_GERAL', 'message', 'Ao menos um dos meses apresentou um balanço diferente de zero, o que evidencia erro no arquivo contábil ou na análise dos seus dados.'));
+                obj.GUI.warnings{end+1} = jsonencode(struct( ...
+                    'id', 'mBALANCETE_GERAL', ...
+                    'message', 'Ao menos um dos meses apresentou um balanço diferente de zero, o que evidencia erro no arquivo contábil ou na análise dos seus dados.' ...
+                ));
             end
             
             trialBalance = addAccountDescription(obj, trialBalance, setdiff(trialBalance.Properties.VariableNames, 'COD_NAT', 'stable'), 'COD_NAT');
