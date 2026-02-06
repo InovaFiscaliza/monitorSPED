@@ -915,6 +915,16 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
+        function applyDefaultBackgroundToUiColorPicker(app, evtSource)
+            switch evtSource
+                case app.FontBackground
+                    app.FontBackground.Value = [1 0 0.0118];
+                case app.FontColor
+                    app.FontColor.Value = [0 0 0.0118];
+            end
+        end
+
+        %-----------------------------------------------------------------%
         function exportFiles(app, fileIndex, rawTableIdFields)
             selectedECD     = app.ecdObj(fileIndex);
 
@@ -1500,9 +1510,12 @@ classdef winECD_exported < matlab.apps.AppBase
         % Callback function: FontAlign1, FontAlign2, FontAlign3, 
         % ...and 6 other components
         function TableStyleChanged(app, event)
-                        
+
+            evtSource = event.Source;
             clickedTable = onFocusTable(app);
+
             if isempty(clickedTable.Selection)
+                applyDefaultBackgroundToUiColorPicker(app, evtSource)
                 return
             end
 
@@ -1515,7 +1528,7 @@ classdef winECD_exported < matlab.apps.AppBase
             end
             
             % Estilo novo:
-            switch event.Source
+            switch evtSource
                 case app.FontFamily
                     fieldName  = 'FontName';
                     fieldValue = {app.FontFamily.Value};
@@ -1531,7 +1544,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
                 case {app.FontAlign1, app.FontAlign2, app.FontAlign3}
                     fieldName  = 'HorizontalAlignment';
-                    switch event.Source
+                    switch evtSource
                         case app.FontAlign1; fieldValue = {'left'};
                         case app.FontAlign2; fieldValue = {'center'};
                         case app.FontAlign3; fieldValue = {'right'};
@@ -1540,12 +1553,12 @@ classdef winECD_exported < matlab.apps.AppBase
                 case app.FontBackground
                     fieldName  = 'BackgroundColor';
                     fieldValue = {event.Value};
-                    app.FontBackground.Value = [1 0 0.0118];
+                    applyDefaultBackgroundToUiColorPicker(app, event.Source)
 
                 case app.FontColor
                     fieldName  = 'FontColor';
                     fieldValue = {event.Value};
-                    app.FontColor.Value = [0 0 0.0118];
+                    applyDefaultBackgroundToUiColorPicker(app, event.Source)
 
                 case app.FontIcon
                     fieldName  = 'Icon';
@@ -1585,7 +1598,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 s.(fieldName) = fieldValue{1};
             end
 
-            if event.Source == app.FontIcon
+            if evtSource == app.FontIcon
                 s.("IconAlignment") = 'leftmargin';
             end
 

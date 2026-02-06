@@ -263,6 +263,7 @@ classdef Project < handle
                 context   (1,:) char {mustBeMember(context, {'FILE', 'ECD'})} 
                 requirement {mustBeMember(requirement, {'issue', 'unit', 'reportModel', 'entity'})}
             end
+
             switch requirement
                 case 'issue'
                     issue  = obj.modules.(context).ui.issue;
@@ -422,7 +423,7 @@ classdef Project < handle
             details  = getIssueDetailsFromCache(obj, system, issue);
             msgError = '';
 
-            if isempty(details)
+            if isempty(details) && (issue > 0) && (issue < inf)
                 try
                     env = strsplit(system);
                     if isscalar(env)

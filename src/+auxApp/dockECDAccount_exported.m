@@ -77,12 +77,14 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         function applyJSCustomizations(app)
             drawnow
 
-            elToModify = {app.accountInfo};
-            elDataTag  = ui.CustomizationBase.getElementsDataTag(elToModify);
+            elToModify = {
+                app.accountInfo
+            };
+            ui.CustomizationBase.getElementsDataTag(elToModify);
     
-            if ~isempty(elDataTag)
-                appName = class.Constants.appName;
-                ui.TextView.startup(app.jsBackDoor, elToModify{1}, appName);
+            try
+                ui.TextView.startup(app.jsBackDoor, app.accountInfo, class.Constants.appName);
+            catch
             end
         end
 
@@ -109,7 +111,8 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             [accountTable, index, htmlContent] = util.HtmlTextGenerator.AccountInfo(selectedECD, accountName, app.mainApp.General);
             
             % Árvore de descrição da conta:
-            app.accountInfo.Text = htmlContent;
+            % app.accountInfo.Text = htmlContent;
+            ui.TextView.setLabelInnerHTMLBypassingText(app.jsBackDoor, app.accountInfo, htmlContent)
             
             % Valores iniciais dos campos passíveis de anotação:
             app.taxType.Value  = char(accountTable.('Apurado?  ✎')(index));
@@ -140,6 +143,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             cla(app.UIAxes)
             plotHandle = bar(app.UIAxes, accountTable{index, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}}, 'FaceColor', '#ffff12', 'LineStyle', 'none');
             plot.datatip.Template(plotHandle, "Value")
+            drawnow
         end
 
         %-----------------------------------------------------------------%

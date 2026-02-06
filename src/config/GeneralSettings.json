@@ -1,5 +1,5 @@
 {
-    "version": 0.80,
+    "version": 0.82,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -68,10 +68,13 @@
                     "_BALANCETE_RESULTADO",
                     "_CONTAS_ANOTACAO",
                     "_CONTAS_DESCRICAO",
+                    "_CONTAS_HISTORICO",
                     "_TABELA_APURACAO",
                     "C050_C051_C052",
                     "I050_I051_I052",
-                    "I200_I250"
+                    "I150_I155",
+                    "I200_I250",
+                    "I350_I355"
                 ],
                 "autoload": [
                     "_CONTAS_DESCRICAO",
@@ -86,6 +89,7 @@
                 "_BALANCETE_RESULTADO",
                 "_CONTAS_ANOTACAO",
                 "_CONTAS_DESCRICAO",
+                "_CONTAS_HISTORICO",
                 "_TABELA_APURACAO"
             ],
             "accountOptions": [

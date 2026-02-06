@@ -720,30 +720,13 @@ classdef ECD < handle
 
         %-----------------------------------------------------------------%
         function hist = getAccountHistoric(obj, accountName, generalSettings)
-            isTableRead(obj, {'I075', 'I200_I250'}, generalSettings);
+            isTableRead(obj, {'_CONTAS_HISTORICO'}, generalSettings);
 
-            hist  = {'(não identificado)'};
-            index = find(strcmp(obj.Table.xI200_I250.("COD_CTA"), accountName));
-
+            index = find(strcmp(obj.Table.x_CONTAS_HISTORICO.("COD_CTA"), accountName), 1);
             if ~isempty(index)
-                relatedTable = outerjoin( ...
-                    obj.Table.xI200_I250(index, :), ...
-                    obj.Table.xI075, ...
-                    "LeftKeys", "COD_HIST_PAD", ...
-                    "RightKeys", "COD_HIST", ...
-                    "LeftVariables", {'COD_CTA', 'HIST'}, ...
-                    "RightVariables", {'DESCR_HIST'}, ...
-                    "Type", "left" ...
-                );
-
-                tmpHist = strcat(relatedTable.("DESCR_HIST"), {' ↳ '}, relatedTable.("HIST"));
-                
-                indexEqualHist = cellfun(@isempty, relatedTable.("DESCR_HIST")) | strcmp(relatedTable.("DESCR_HIST"), relatedTable.("HIST"));
-                if any(indexEqualHist)
-                    tmpHist(indexEqualHist) = relatedTable.("HIST")(indexEqualHist);
-                end
-
-                hist = unique(tmpHist, 'stable');
+                hist = obj.Table.x_CONTAS_HISTORICO.("HISTÓRICO"){index};
+            else
+                hist  = {'(não identificado)'};
             end
         end
 
@@ -867,7 +850,7 @@ classdef ECD < handle
 
                     update(obj, 'Table.x_CONTAS_ANOTACAO', 'startup', generalSettings)
 
-                case '_CONTAS_DESCRICAO'        
+                case '_CONTAS_DESCRICAO'
                     % Esse reordenamento é essencial quando se trata de registros
                     % mesclados, tendo em vista que os planos de contas estão
                     % replicados. Ao reordenar, registra-se o última estado de
@@ -916,17 +899,72 @@ classdef ECD < handle
 
                     obj.Table.x_CONTAS_DESCRICAO = x_CONTAS_DESCRICAO;
 
+                case '_CONTAS_HISTORICO'
+                    isTableRead(obj, {'I075', 'I200_I250', '_CONTAS_ANOTACAO'}, generalSettings);
+
+                    accountIds = obj.Table.x_CONTAS_ANOTACAO.("COD_CTA");
+                    numAccounts = numel(accountIds);
+
+                    % Prealoca, viabilizando operação em modo paralelo...
+                    x_CONTAS_HISTORICO = model.ECDBase.initializeCustomTable('_CONTAS_HISTORICO', numAccounts);
+
+                    % Identifica apenas registros relacionados às contas de
+                    % resultado.
+                    xI200_I250_I075 = outerjoin( ...
+                        obj.Table.xI200_I250, ...
+                        obj.Table.xI075, ...
+                        "LeftKeys", "COD_HIST_PAD", ...
+                        "RightKeys", "COD_HIST", ...
+                        "LeftVariables", {'COD_CTA', 'HIST'}, ...
+                        "RightVariables", {'DESCR_HIST'}, ...
+                        "Type", "left" ...
+                    );
+                    
+                    xI200_I250_I075  = unique(xI200_I250_I075, 'rows', 'sorted');
+                    [~, accountIdxs] = ismember(xI200_I250_I075.("COD_CTA"), accountIds);
+                    xI200_I250_I075(~accountIdxs, :) = [];
+
+                    parpoolCheck()
+                    parfor ii = 1:numAccounts
+                        accountId = accountIds{ii};
+                        index = find(strcmp(xI200_I250_I075.("COD_CTA"), accountId));
+            
+                        if ~isempty(index)
+                            tmpHist = xI200_I250_I075.("HIST")(index);
+                            description = xI200_I250_I075.("DESCR_HIST")(index);
+            
+                            mergeIdxs = ~cellfun(@isempty, description) & ~strcmp(description, tmpHist);
+                            if any(mergeIdxs)
+                                tmpHist(mergeIdxs) = strcat(description(mergeIdxs), {' ↳ '}, tmpHist(mergeIdxs));
+                            end
+            
+                            hist = unique(tmpHist, 'stable');
+                        else
+                            hist = {'(não identificado)'};
+                        end
+
+                        if isscalar(hist)
+                            hist = {hist};
+                        end
+
+                        x_CONTAS_HISTORICO(ii, :) = {accountId, hist};
+                    end
+
+                    obj.Table.x_CONTAS_HISTORICO = x_CONTAS_HISTORICO;
+
                 case '_TABELA_APURACAO'
                     update(obj, 'Table.x_TABELA_APURACAO', 'startup')
 
-                case {'C050_C051_C052', 'I050_I051_I052', 'I200_I250'}
+                case {'C050_C051_C052', 'I050_I051_I052', 'I150_I155', 'I350_I355', 'I200_I250'}
                     switch tableId
                         case 'C050_C051_C052'
-                            obj.Table.xC050_C051_C052 = mergeTables(obj, 'C050', {'C051', 'C052'}, generalSettings);
-                        
+                            obj.Table.xC050_C051_C052 = mergeTables(obj, 'C050', {'C051', 'C052'}, generalSettings);                        
                         case 'I050_I051_I052'
                             obj.Table.xI050_I051_I052 = mergeTables(obj, 'I050', {'I051', 'I052'}, generalSettings);
-
+                        case 'I150_I155'
+                            obj.Table.xI150_I155      = mergeTables(obj, 'I150', {'I155'},         generalSettings);
+                        case 'I350_I355'
+                            obj.Table.xI350_I355      = mergeTables(obj, 'I350', {'I355'},         generalSettings);
                         case 'I200_I250'
                             MIN_ROW_COUNT = generalSettings.context.FILE.largeTable.minRowCount; % 100000
                             expectedRows = expectedRowsByTableId(obj, 'I250');
@@ -1058,8 +1096,8 @@ classdef ECD < handle
         function mergedTable = mergeTables(obj, mainId, secondaryIds, generalSettings, mainTableColumns, secondaryTableColumns)
             arguments
                 obj
-                mainId          (1,:) char {mustBeMember(mainId, {'I050', 'I200', 'C050'})}
-                secondaryIds    (1,:) cell % {'I051', 'I052'} | {'I250'} | {'C051', 'C052'}
+                mainId          (1,:) char {mustBeMember(mainId, {'C050', 'I050', 'I150', 'I200', 'I350'})}
+                secondaryIds    (1,:) cell
                 generalSettings
                 mainTableColumns      cell = {}
                 secondaryTableColumns cell = {}
