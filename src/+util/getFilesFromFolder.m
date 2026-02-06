@@ -11,6 +11,7 @@ function [fList, fNames] = getFilesFromFolder(folder, extension, tempFolder)
 
     % OUTPUT FILE LIST
     fList = {};
+    fNames = {};
 
     for ii = 1:numel(d)
         current = fullfile(d(ii).folder, d(ii).name);
@@ -34,13 +35,15 @@ function [fList, fNames] = getFilesFromFolder(folder, extension, tempFolder)
     end
 
     % KEEP ONLY UNIQUE VALUES
-    fList = util.getFilesFromCompressedFile(fList);
-
-    [~, fNames, fExt] = fileparts(fList);
-    fNames = strcat(fNames, fExt);
-
-    [fNames, fIndexes] = unique(fNames, 'stable');
-    fList = fList(fIndexes);    
+    if ~isempty(fList)
+        fList = util.getFilesFromCompressedFile(fList);
+    
+        [~, fNames, fExt] = fileparts(fList);
+        fNames = strcat(fNames, fExt);
+    
+        [fNames, fIndexes] = unique(fNames, 'stable');
+        fList = fList(fIndexes);
+    end
 end
 
 %-------------------------------------------------------------------------%

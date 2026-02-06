@@ -167,13 +167,6 @@ classdef winECD_exported < matlab.apps.AppBase
 
                                 requestVisibilityChange(app.progressDialog, 'hidden', 'unlocked')
 
-                            % auxApp.dockECDMemoryUsage >> winMonitorSPED >> auxApp.winECD
-                            case 'onCacheCleanup'
-                                fileIndex = varargin{1};
-                                tableIdList = varargin{2};
-                                update(app.ecdObj(fileIndex), 'Table.NonEssentialFiles', 'onCacheCleanup', tableIdList)
-                                ipcMainMatlabCallsHandler(app.mainApp, app, 'onAccountingDataUpdated', fileIndex);
-
                             % auxApp.dockReportLib >> winMonitorSPED >> auxApp.winECD
                             case {'onProjectRestart',        ...
                                   'onProjectLoad',           ...
@@ -1585,13 +1578,17 @@ classdef winECD_exported < matlab.apps.AppBase
             if ~isempty(previousStyleIndex)
                 previousStyleIndex = previousStyleIndex(end);
                 s = clickedTable.StyleConfigurations.Style(previousStyleIndex);                
-                removeStyle(clickedTable, previousStyleIndex)
             else
                 s = uistyle();
             end
 
             if ~isempty(s.(fieldName))
                 previousValue = s.(fieldName);
+                if isequal({previousValue}, fieldValue)
+                    return
+                end
+
+                removeStyle(clickedTable, previousStyleIndex)
                 previouValueIndex = find(cellfun(@(x) isequal(x, previousValue), fieldValue));
                 s.(fieldName) = fieldValue{setdiff(1:numel(fieldValue), previouValueIndex)};
             else

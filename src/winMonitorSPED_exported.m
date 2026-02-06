@@ -245,7 +245,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                 end
         
                             % auxApp.winECD (ECD)
-                            case {'auxApp.winECD', 'auxApp.winECD_exported'}
+                            case {'winMonitorSPED', 'winMonitorSPED_exported', ...
+                                  'auxApp.winECD',  'auxApp.winECD_exported'}
                                 switch eventName
                                     case 'getSelectedFileIndex'
                                         fileIndex = 1;
@@ -319,25 +320,21 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                         ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
         
                                     % auxApp.dockECDAccount
-                                    case 'onAccountEdited'
-                                        context  = varargin{1};
-                                        varargin = [{eventName}, varargin(2:end)];
-                                        ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
-                                        return
-
                                     % auxApp.dockECDFilter        
-                                    case {'onFilterChanged', 'onTableReadRequired'}
+                                    case {'onAccountEdited', 'onFilterChanged', 'onTableReadRequired'}
                                         context  = varargin{1};
                                         varargin = [{eventName}, varargin(2:end)];
                                         ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
-                                        return
 
-                                    % auxApp.dockECDMemoryUsage        
+                                    % auxApp.dockECDMemoryUsage
                                     case 'onCacheCleanup'
-                                        context  = varargin{1};
-                                        varargin = [{eventName}, varargin(2:end)];
-                                        ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
-                                        return
+                                        fileIndexes = varargin{1};
+                                        tableIdList = varargin{2};
+                                        
+                                        for fileIndex = fileIndexes
+                                            update(app.ecdObj(fileIndex), 'Table.NonEssentialFiles', 'onCacheCleanup', tableIdList)
+                                            ipcMainMatlabCallsHandler(app, app, 'onAccountingDataUpdated', fileIndex);
+                                        end
         
                                     otherwise
                                         error('UnexpectedCall')
@@ -837,6 +834,17 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             if app ~= callingApp
                 ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', 'onFetchIssueDetails', system, issue, details, msgError)
+
+            else
+                if isempty(msgError)
+                    msg = util.HtmlTextGenerator.issueDetails(system, issue, details);
+                    icon = 'info';
+                else
+                    app.eFiscalizaObj = [];
+                    msg = msgError;
+                    icon = 'error';
+                end
+                ui.Dialog(app.UIFigure, icon, msg);
             end
 
             callingApp.progressDialog.Visible = 'hidden';
@@ -859,7 +867,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 else
                     ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', 'onReportGenerate')
                 end
+
             catch ME
+                app.eFiscalizaObj = [];
                 ui.Dialog(callingApp.UIFigure, 'error', getReport(ME));
             end
 
@@ -1089,12 +1099,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     end
                 end
 
-                if isempty(fileFullName)
-                    msgWarning = 'Nenhum arquivo de simulação foi identificado.';
-                    ui.Dialog(app.UIFigure, "warning", msgWarning);
-                    return
-                end
-
             else
                 switch app.General.context.FILE.input
                     case 'file'
@@ -1102,7 +1106,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             app.UIFigure, ...
                             'uigetfile', ...
                             '', ...
-                            {'*.txt;*.sped;*.mat', 'monitorSPED (*.txt,*.sped,*.mat)'}, ...
+                            {'*.txt;*.sped;*.zip;*.mat', 'monitorSPED (*.txt,*.sped,*.zip,*.mat)'}, ...
                             app.General.fileFolder.lastVisited, ...
                             {'MultiSelect', 'on'} ...
                         );
@@ -1113,7 +1117,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             fileName = {fileName};
                         end
 
-                        fileFullName = util.getFilesFromCompressedFile(fullfile(filePath, fileName), app.General.fileFolder.tempPath);
+                        [fileFullName, fileName] = util.getFilesFromCompressedFile(fullfile(filePath, fileName), app.General.fileFolder.tempPath);
     
                     case 'folder'
                         filePath = uigetdir(app.General.fileFolder.lastVisited);
@@ -1127,6 +1131,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         [fileFullName, fileName] = util.getFilesFromFolder(filePath, {'.txt', '.sped'}, app.General.fileFolder.tempPath);
                 end
                 updateLastVisitedFolder(app, filePath)
+            end
+
+            if isempty(fileFullName)
+                msgWarning = 'Não foi identificado arquivo em um dos formatos esperados (.txt, .sped ou .mat).';
+                ui.Dialog(app.UIFigure, "warning", msgWarning);
+                return
             end
 
             if isempty(d)
@@ -1144,10 +1154,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     [~, ~, fileExt] = fileparts(fileFullName{ii});
                     switch fileExt
                         case {'.txt', '.sped'}
-                            [app.ecdObj, msg] = addFiles(app.ecdObj, app.projectData, app.General, fileFullName{ii}, [], app.receitaFederalObj);
-                        
+                            [app.ecdObj, msg] = addFiles(app.ecdObj, app.projectData, app.General, fileFullName{ii}, [], app.receitaFederalObj);                        
                         case '.mat'
                             [app.ecdObj, msg] = load(app.projectData, app.Context, fileFullName{ii}, app.General, app.ecdObj);
+                        otherwise
+                            continue
                     end
 
                     if ~isempty(msg)

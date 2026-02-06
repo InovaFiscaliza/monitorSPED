@@ -242,7 +242,7 @@ classdef dockReportLib_exported < matlab.apps.AppBase
 
             if ~isempty(app.mainApp.ecdObj)
                 tablesToClearBeforeSave = app.mainApp.General.reportLib.tablesToClearBeforeSave;
-                ipcMainMatlabCallsHandler(app.mainApp, app, 'onCacheCleanup', context, 1:numel(app.mainApp.ecdObj), tablesToClearBeforeSave)
+                ipcMainMatlabCallsHandler(app.mainApp, app, 'onCacheCleanup', 1:numel(app.mainApp.ecdObj), tablesToClearBeforeSave)
             end
 
             save(app.projectData, context, projectName, projectFile, app.mainApp.General.reportLib.outputCompressionMode, varargin{:})
