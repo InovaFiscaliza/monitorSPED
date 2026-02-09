@@ -216,20 +216,26 @@ classdef (Abstract) Controller
                         end
                     end
 
-                    JSONFile = '';
-                    XLSXFile = '';
-                    RAWFiles = {};
-                    ZIPFile  = ui.Dialog(callingApp.UIFigure, 'uiputfile', '', {'*.zip', [appName ' (*.zip)']}, fullfile(generalSettings.fileFolder.userPath, [baseFileName '.zip']));
+                    JSONFile  = '';
+                    TEAMSFile = '';
+                    XLSXFile  = '';
+                    RAWFiles  = {};
+                    ZIPFile   = ui.Dialog(callingApp.UIFigure, 'uiputfile', '', {'*.zip', [appName ' (*.zip)']}, fullfile(generalSettings.fileFolder.userPath, [baseFileName '.zip']));
                     if isempty(ZIPFile)
                         return
                     end
 
                     if strcmp(context, 'ECD')
                         correlationKey = char(matlab.lang.internal.uuid());
-                        JSONFile = fullfile(generalSettings.fileFolder.tempPath, sprintf('%s_%s_%s.json', appName, datestr(now, 'yyyymmdd'), correlationKey));
-                        JSONContent = reportLibConnection.Table.scarabJsonFile(projectData, context, ecdObj, correlationKey, mainApp.executionMode, issueDetails);
+                        JSONBaseName   = sprintf('%s_%s_%s',  appName, datestr(now, 'yyyymmdd'), correlationKey);                        
+                        JSONFile       = fullfile(generalSettings.fileFolder.tempPath, [JSONBaseName '.json']);
+                        TEAMSFile      = fullfile(generalSettings.fileFolder.tempPath, [JSONBaseName '.teams']);
 
-                        writematrix(JSONContent, JSONFile, "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite", "Encoding", "UTF-8")
+                        JSONContent    = reportLibConnection.Table.scarabJsonFile(projectData, context, ecdObj, correlationKey, mainApp.executionMode, issueDetails);
+                        TEAMSContent   = reportLibConnection.Table.scarabTeamsFileContent(issueDetails, JSONBaseName);
+
+                        writematrix(JSONContent,  JSONFile,  "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite", "Encoding", "UTF-8")
+                        writematrix(TEAMSContent, TEAMSFile, "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite", "Encoding", "UTF-8")
                     end
 
                     ZIPFileList = {HTMLFile};
@@ -244,7 +250,7 @@ classdef (Abstract) Controller
                         case 'ECD'
                             generatedFileId = model.ProjectBase.computeReportAnalysisResultsHash(ecdObj);
                     end
-                    updateGeneratedFiles(projectData, context, generatedFileId, RAWFiles, HTMLFile, JSONFile, XLSXFile, ZIPFile)
+                    updateGeneratedFiles(projectData, context, generatedFileId, RAWFiles, HTMLFile, JSONFile, XLSXFile, TEAMSFile, ZIPFile)
             end
         end
     end

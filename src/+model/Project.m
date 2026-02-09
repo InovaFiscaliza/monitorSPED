@@ -147,6 +147,8 @@ classdef Project < handle
                                                 obj.modules.(context).generatedFiles.lastJSONFullPath    = unzipFiles{jj};
                                             case '.xlsx'
                                                 obj.modules.(context).generatedFiles.lastTableFullPath   = unzipFiles{jj};
+                                            case '.teams'
+                                                obj.modules.(context).generatedFiles.lastTEAMSFullPath   = unzipFiles{jj};
                                         end
                                     end
                                     
@@ -281,7 +283,7 @@ classdef Project < handle
         %-----------------------------------------------------------------%
         % ## UPDATE ##
         %-----------------------------------------------------------------%
-        function updateGeneratedFiles(obj, context, id, rawFiles, htmlFile, jsonFile, tableFile, zipFile)
+        function updateGeneratedFiles(obj, context, id, rawFiles, htmlFile, jsonFile, tableFile, teamsFile, zipFile)
             arguments
                 obj
                 context   (1,:) char {mustBeMember(context, {'FILE', 'ECD'})}
@@ -290,6 +292,7 @@ classdef Project < handle
                 htmlFile  char = ''
                 jsonFile  char = ''
                 tableFile char = ''
+                teamsFile char = ''
                 zipFile   char = ''
             end
 
@@ -298,6 +301,7 @@ classdef Project < handle
             obj.modules.(context).generatedFiles.lastHTMLDocFullPath = htmlFile;
             obj.modules.(context).generatedFiles.lastJSONFullPath    = jsonFile;
             obj.modules.(context).generatedFiles.lastTableFullPath   = tableFile;
+            obj.modules.(context).generatedFiles.lastTEAMSFullPath   = teamsFile;
             obj.modules.(context).generatedFiles.lastZIPFullPath     = zipFile;
         end
 
@@ -358,7 +362,7 @@ classdef Project < handle
         function fileName = getGeneratedDocumentFileName(obj, fileExt, context)
             arguments
                 obj
-                fileExt (1,:) char {mustBeMember(fileExt, {'.html', '.json', '.xlsx', '.zip'})}
+                fileExt (1,:) char {mustBeMember(fileExt, {'.html', '.json', '.xlsx', '.teams', '.zip'})}
                 context (1,:) char {mustBeMember(context, {'FILE', 'ECD'})}
             end
 
@@ -369,6 +373,8 @@ classdef Project < handle
                     fileName = obj.modules.(context).generatedFiles.lastJSONFullPath;
                 case '.xlsx'
                     fileName = obj.modules.(context).generatedFiles.lastTableFullPath;
+                case '.teams'
+                    fileName = obj.modules.(context).generatedFiles.lastTEAMSFullPath;
                 case '.zip'
                     fileName = obj.modules.(context).generatedFiles.lastZIPFullPath;
             end
@@ -489,6 +495,7 @@ classdef Project < handle
                         'lastHTMLDocFullPath', '', ...
                         'lastJSONFullPath', '', ...
                         'lastTableFullPath', '', ...
+                        'lastTEAMSFullPath', '', ...
                         'lastZIPFullPath', '' ...
                     ), ...
                     'uploadedFiles', struct( ...
