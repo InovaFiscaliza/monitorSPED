@@ -285,9 +285,14 @@ classdef (Abstract) HtmlTextGenerator
 
             [~, index]    = ismember(accountName, accountTable.("COD_CTA"));
             [entryHistoryCount, entryHistoryUniqueValues] = getAccountHistoric(ecdObj, accountName, generalSettings);
+            if isscalar(entryHistoryUniqueValues)
+                entryHistorySummary = sprintf('%d lançamentos agrupados em um único grupo após normalização e deduplicação', entryHistoryCount);
+            else
+                entryHistorySummary = sprintf('%d lançamentos agrupados em %d grupos após normalização e deduplicação', entryHistoryCount, numel(entryHistoryUniqueValues));
+            end
 
             dataStruct(1) = struct('group', 'FullDescription', 'value', ['•&thinsp;' accountTable.('DESCRIÇÃO'){index}]);
-            dataStruct(2) = struct('group', 'AccountEntryHistoryCount', 'value', entryHistoryCount);
+            dataStruct(2) = struct('group', 'AccountEntryHistoryCount', 'value', entryHistorySummary);
             dataStruct(3) = struct('group', 'AccountEntryHistoryUniqueValues', 'value', textFormatGUI.cellstr2Bullets(entryHistoryUniqueValues));
             htmlContent   = textFormatGUI.struct2PrettyPrintList(dataStruct, 'delete', '');
         end
