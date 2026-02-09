@@ -284,10 +284,11 @@ classdef (Abstract) HtmlTextGenerator
             accountTable  = innerjoin(accountTable,                   ecdObj.Table.x_CONTAS_DESCRICAO,    'Keys', 'COD_CTA', 'RightVariables', 'DESCRIÇÃO');
 
             [~, index]    = ismember(accountName, accountTable.("COD_CTA"));
-            accountHist   = getAccountHistoric(ecdObj, accountName, generalSettings);
+            [entryHistoryCount, entryHistoryUniqueValues] = getAccountHistoric(ecdObj, accountName, generalSettings);
 
             dataStruct(1) = struct('group', 'FullDescription', 'value', ['•&thinsp;' accountTable.('DESCRIÇÃO'){index}]);
-            dataStruct(2) = struct('group', 'AccountHistoric', 'value', textFormatGUI.cellstr2Bullets(accountHist));
+            dataStruct(2) = struct('group', 'AccountEntryHistoryCount', 'value', entryHistoryCount);
+            dataStruct(3) = struct('group', 'AccountEntryHistoryUniqueValues', 'value', textFormatGUI.cellstr2Bullets(entryHistoryUniqueValues));
             htmlContent   = textFormatGUI.struct2PrettyPrintList(dataStruct, 'delete', '');
         end
 

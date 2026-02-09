@@ -719,15 +719,13 @@ classdef ECD < handle
         end
 
         %-----------------------------------------------------------------%
-        function hist = getAccountHistoric(obj, accountName, generalSettings)
+        function [entryHistoryCount, entryHistoryUniqueValues] = getAccountHistoric(obj, accountName, generalSettings)
             isTableRead(obj, {'_CONTAS_HISTORICO'}, generalSettings);
 
             index = find(strcmp(obj.Table.x_CONTAS_HISTORICO.("COD_CTA"), accountName), 1);
-            if ~isempty(index)
-                hist = obj.Table.x_CONTAS_HISTORICO.("HISTÓRICO"){index};
-            else
-                hist  = {'(não identificado)'};
-            end
+            
+            entryHistoryCount = obj.Table.x_CONTAS_HISTORICO.('TOTAL DE LANÇAMENTOS')(index);
+            entryHistoryUniqueValues = obj.Table.x_CONTAS_HISTORICO.('LANÇAMENTOS NORMALIZADOS DEDUPLICADOS'){index};
         end
 
         %-----------------------------------------------------------------%
@@ -834,20 +832,11 @@ classdef ECD < handle
                     obj.Table.x_BALANCETE_GERAL = createTrialBalanceTable(obj, generalSettings);
 
                 case '_BALANCETE_RESULTADO'
-                    if ~isfield(obj.Table, 'x_BALANCETE_GERAL')
-                        parseTable(obj, '_BALANCETE_GERAL', generalSettings)
-                    end
+                    isTableRead(obj, {'_BALANCETE_GERAL'}, generalSettings);
                     obj.Table.x_BALANCETE_RESULTADO = filterTrialBalanceByAccountType(obj, '04');
 
                 case '_CONTAS_ANOTACAO'
-                    if ~isfield(obj.Table, 'x_BALANCETE_RESULTADO')
-                        parseTable(obj, '_BALANCETE_RESULTADO', generalSettings)
-                    end
-
-                    if ~isfield(obj.Table, '_TABELA_APURACAO')
-                        parseTable(obj, '_TABELA_APURACAO', generalSettings)
-                    end
-
+                    isTableRead(obj, {'_BALANCETE_RESULTADO',  '_CONTAS_HISTORICO', '_TABELA_APURACAO'}, generalSettings);
                     update(obj, 'Table.x_CONTAS_ANOTACAO', 'startup', generalSettings)
 
                 case '_CONTAS_DESCRICAO'
@@ -857,15 +846,15 @@ classdef ECD < handle
                     % cada conta.
                     xI050 = flip(obj.Table.xI050(:, {'NIVEL', 'COD_CTA', 'COD_CTA_SUP', 'CTA'}));
 
-                    [accountIds, accountIdxs] = unique(xI050.("COD_CTA"), "sorted");
-                    numAccounts = numel(accountIds);
+                    [accountList, accountIdxs] = unique(xI050.("COD_CTA"), "sorted");
+                    numAccounts = numel(accountList);
 
                     % Prealoca, viabilizando operação em modo paralelo...
                     x_CONTAS_DESCRICAO = model.ECDBase.initializeCustomTable('_CONTAS_DESCRICAO', numAccounts);
 
                     parpoolCheck()
                     parfor ii = 1:numAccounts
-                        accountId = accountIds{ii};
+                        accountId = accountList{ii};
                         accountDescription = strtrim(xI050.("CTA"){accountIdxs(ii)});
                         accountNumLevel = str2double(xI050.("NIVEL"){accountIdxs(ii)});
         
@@ -900,10 +889,10 @@ classdef ECD < handle
                     obj.Table.x_CONTAS_DESCRICAO = x_CONTAS_DESCRICAO;
 
                 case '_CONTAS_HISTORICO'
-                    isTableRead(obj, {'I075', 'I200_I250', '_CONTAS_ANOTACAO'}, generalSettings);
+                    isTableRead(obj, {'_BALANCETE_RESULTADO', 'I075'}, generalSettings);
 
-                    accountIds = obj.Table.x_CONTAS_ANOTACAO.("COD_CTA");
-                    numAccounts = numel(accountIds);
+                    accountList = obj.Table.x_BALANCETE_RESULTADO.('COD_CTA');
+                    numAccounts = numel(accountList);
 
                     % Prealoca, viabilizando operação em modo paralelo...
                     x_CONTAS_HISTORICO = model.ECDBase.initializeCustomTable('_CONTAS_HISTORICO', numAccounts);
@@ -921,12 +910,12 @@ classdef ECD < handle
                     );
                     
                     xI200_I250_I075  = unique(xI200_I250_I075, 'rows', 'sorted');
-                    [~, accountIdxs] = ismember(xI200_I250_I075.("COD_CTA"), accountIds);
+                    [~, accountIdxs] = ismember(xI200_I250_I075.("COD_CTA"), accountList);
                     xI200_I250_I075(~accountIdxs, :) = [];
 
                     parpoolCheck()
                     parfor ii = 1:numAccounts
-                        accountId = accountIds{ii};
+                        accountId = accountList{ii};
                         index = find(strcmp(xI200_I250_I075.("COD_CTA"), accountId));
             
                         if ~isempty(index)
@@ -938,16 +927,17 @@ classdef ECD < handle
                                 tmpHist(mergeIdxs) = strcat(description(mergeIdxs), {' ↳ '}, tmpHist(mergeIdxs));
                             end
             
-                            hist = unique(tmpHist, 'stable');
+                            % hist = unique(tmpHist, 'stable');
+                            hist = util.deduplicateAccountEntryHistory(tmpHist);
                         else
-                            hist = {'(não identificado)'};
+                            hist = {'-'};
                         end
 
                         if isscalar(hist)
                             hist = {hist};
                         end
 
-                        x_CONTAS_HISTORICO(ii, :) = {accountId, hist};
+                        x_CONTAS_HISTORICO(ii, :) = {accountId, numel(index), hist};
                     end
 
                     obj.Table.x_CONTAS_HISTORICO = x_CONTAS_HISTORICO;

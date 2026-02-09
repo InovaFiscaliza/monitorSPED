@@ -108,6 +108,7 @@ classdef (Abstract) Controller
                                                    'eFiscaliza_period',         'reportLibConnection.Variable.GeneralSettings(reportInfo, "Período Previsto da Fiscalização")', ...
                                                    'eFiscaliza_fiscais',        'reportLibConnection.Variable.GeneralSettings(reportInfo, "Lista de Fiscais")', ...
                                                    'eFiscaliza_sei',            'reportLibConnection.Variable.GeneralSettings(reportInfo, "Processo SEI")', ...
+                                                   ...
                                                    'tbl_FileByCompany',         'reportLibConnection.Table.FileByCompany(reportInfo)', ...
                                                    ...
                                                    ... % APLICÁVEIS À SEÇÃO COM RECORRÊNCIA DO RELATÓRIO
@@ -202,9 +203,17 @@ classdef (Abstract) Controller
                     updateGeneratedFiles(projectData, context)
 
                 case 'final'
-                    [issueDetails, msgError] = getOrFetchIssueDetails(projectData, projectData.modules.(context).ui.system, projectData.modules.(context).ui.issue, mainApp.eFiscalizaObj);
-                    if ~isempty(msgError)
-                        error('reportLibConnection:Controller', msgError)
+                    try
+                        [issueDetails, msgError] = getOrFetchIssueDetails(projectData, projectData.modules.(context).ui.system, projectData.modules.(context).ui.issue, mainApp.eFiscalizaObj);
+                        if ~isempty(msgError)
+                            error('reportLibConnection:Controller', msgError)
+                        end
+                    catch ME
+                        if ~isdeployed()
+                            issueDetails = struct('usuario', struct('nome', 'NOME_FISCAL', 'email', 'EMAIL_FISCAL@anatel.gov.br', 'unidade', 'LOTACAO_FISCAL', 'funcao', 'FISCAL'));
+                        else
+                            rethrow(ME)
+                        end
                     end
 
                     JSONFile = '';

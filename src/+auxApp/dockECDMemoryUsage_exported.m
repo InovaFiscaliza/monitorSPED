@@ -42,9 +42,8 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
                 tableId = app.UITable.Data.("REGISTRO"){selectedRow};
                 
                 if ~ismember(tableId, app.mainApp.General.context.ECD.cacheTables)
-                    context = app.inputArgs.context;
                     index = app.inputArgs.index;
-                    ipcMainMatlabCallsHandler(app.mainApp, app, 'onCacheCleanup', context, index, {tableId})
+                    ipcMainMatlabCallsHandler(app.mainApp, app, 'onCacheCleanup', index, {tableId})
 
                     updateTable(app, index)
                 end
