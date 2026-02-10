@@ -4,7 +4,7 @@ classdef (Abstract) Constants
         %-----------------------------------------------------------------%
         appName       = 'monitorSPED'
         appRelease    = 'R2024a'
-        appVersion    = 'beta_2.02.9'
+        appVersion    = 'beta_2.02.10'
 
         windowSize    = [1244, 660]
         windowMinSize = [ 950, 660]

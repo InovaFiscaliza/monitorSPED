@@ -333,6 +333,7 @@ classdef (Abstract) Table
             jsonFileContent = jsonencode(jsonFileContent, 'PrettyPrint', true);
         end
 
+        %-----------------------------------------------------------------%
         function teamsFileContent = scarabTeamsFileContent(issueDetails, JSONBaseName)
             teamsFileContent = struct( ...
                 'schemaVersion', 1, ...

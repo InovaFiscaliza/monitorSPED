@@ -225,9 +225,11 @@ classdef (Abstract) Controller
                         return
                     end
 
+                    ZIPFileList = {HTMLFile};
+
                     if strcmp(context, 'ECD')
                         correlationKey = char(matlab.lang.internal.uuid());
-                        JSONBaseName   = sprintf('%s_%s_%s',  appName, datestr(now, 'yyyymmdd'), correlationKey);                        
+                        JSONBaseName   = sprintf('%s_%s_%s',  appName, datestr(now, 'yyyymmdd'), correlationKey);
                         JSONFile       = fullfile(generalSettings.fileFolder.tempPath, [JSONBaseName '.json']);
                         TEAMSFile      = fullfile(generalSettings.fileFolder.tempPath, [JSONBaseName '.teams']);
 
@@ -236,12 +238,10 @@ classdef (Abstract) Controller
 
                         writematrix(JSONContent,  JSONFile,  "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite", "Encoding", "UTF-8")
                         writematrix(TEAMSContent, TEAMSFile, "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite", "Encoding", "UTF-8")
-                    end
 
-                    ZIPFileList = {HTMLFile};
-                    if ~isempty(JSONFile)
-                        ZIPFileList{end+1} = JSONFile;
+                        ZIPFileList = [ZIPFileList, {JSONFile, TEAMSFile}];
                     end
+                    
                     zip(ZIPFile, ZIPFileList)
 
                     switch context
