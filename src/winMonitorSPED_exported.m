@@ -892,7 +892,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             callingApp.progressDialog.Visible = 'hidden';
             
             if status1 && strcmp(app.projectData.modules.(context).ui.system, 'eFiscaliza')
-                [status2, msg2] = reportUploadJsonToSharepoint(app, context);
+                [status2, msg2] = reportUploadFilesToSharepoint(app, context);
 
                 if ~status2
                     ui.Dialog(callingApp.UIFigure, 'error', msg2);
@@ -956,17 +956,17 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %------------------------------------------------------------------------%
-        function [status, msg] = reportUploadJsonToSharepoint(app, context)        
-            JSONFiles = { ...
+        function [status, msg] = reportUploadFilesToSharepoint(app, context)        
+            sharepointFileList = { ...
                 getGeneratedDocumentFileName(app.projectData, '.json',  context), ...
                 getGeneratedDocumentFileName(app.projectData, '.teams', context)  ...
             };
         
-            statusList = false(1, numel(JSONFiles));
+            statusList = false(1, numel(sharepointFileList));
             msgList = {};
         
-            for ii = 1:numel(JSONFiles)
-                [statusList(ii), msgWarning] = copyfile(JSONFiles{ii}, app.General.fileFolder.DataHub_POST, 'f');
+            for ii = 1:numel(sharepointFileList)
+                [statusList(ii), msgWarning] = copyfile(sharepointFileList{ii}, app.General.fileFolder.DataHub_POST, 'f');
         
                 if ~statusList(ii)
                     msgList{end+1} = msgWarning;

@@ -192,9 +192,11 @@ classdef (Abstract) Controller
             % navegador. Por outro lado, em sendo a versão "Definitiva",
             % salva-se o arquivo ZIP em pasta local.
             %-------------------------------------------------------------%
-            [baseFullFileName, baseFileName] = appEngine.util.DefaultFileName(generalSettings.fileFolder.tempPath, [appName '_FinalReport'], issueId);
-            HTMLFile = [baseFullFileName '.html'];
-            
+            correlationKey     = char(matlab.lang.internal.uuid());
+            sharepointFileBase = sprintf('%s_%s_%s',  appName, datestr(now, 'yyyymmdd'), correlationKey);
+            [~, zipFileBase]   = appEngine.util.DefaultFileName('', [appName '_FinalReport'], issueId);
+
+            HTMLFile = fullfile(generalSettings.fileFolder.tempPath, [sharepointFileBase '.html']);
             writematrix(HTMLDocContent, HTMLFile, 'QuoteStrings', 'none', 'FileType', 'text', 'Encoding', 'UTF-8')
 
             switch docVersion
@@ -220,7 +222,7 @@ classdef (Abstract) Controller
                     TEAMSFile = '';
                     XLSXFile  = '';
                     RAWFiles  = {};
-                    ZIPFile   = ui.Dialog(callingApp.UIFigure, 'uiputfile', '', {'*.zip', [appName ' (*.zip)']}, fullfile(generalSettings.fileFolder.userPath, [baseFileName '.zip']));
+                    ZIPFile   = ui.Dialog(callingApp.UIFigure, 'uiputfile', '', {'*.zip', [appName ' (*.zip)']}, fullfile(generalSettings.fileFolder.userPath, [zipFileBase '.zip']));
                     if isempty(ZIPFile)
                         return
                     end
@@ -228,13 +230,11 @@ classdef (Abstract) Controller
                     ZIPFileList = {HTMLFile};
 
                     if strcmp(context, 'ECD')
-                        correlationKey = char(matlab.lang.internal.uuid());
-                        JSONBaseName   = sprintf('%s_%s_%s',  appName, datestr(now, 'yyyymmdd'), correlationKey);
-                        JSONFile       = fullfile(generalSettings.fileFolder.tempPath, [JSONBaseName '.json']);
-                        TEAMSFile      = fullfile(generalSettings.fileFolder.tempPath, [JSONBaseName '.teams']);
+                        JSONFile     = fullfile(generalSettings.fileFolder.tempPath, [sharepointFileBase '.json']);
+                        TEAMSFile    = fullfile(generalSettings.fileFolder.tempPath, [sharepointFileBase '.teams']);
 
-                        JSONContent    = reportLibConnection.Table.scarabJsonFile(projectData, context, ecdObj, correlationKey, mainApp.executionMode, issueDetails);
-                        TEAMSContent   = reportLibConnection.Table.scarabTeamsFileContent(issueDetails, JSONBaseName);
+                        JSONContent  = reportLibConnection.Table.scarabJsonFile(projectData, context, ecdObj, correlationKey, mainApp.executionMode, issueDetails);
+                        TEAMSContent = reportLibConnection.Table.scarabTeamsFileContent(issueDetails, sharepointFileBase);
 
                         writematrix(JSONContent,  JSONFile,  "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite", "Encoding", "UTF-8")
                         writematrix(TEAMSContent, TEAMSFile, "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite", "Encoding", "UTF-8")

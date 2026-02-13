@@ -31,11 +31,6 @@ classdef (Abstract) ProjectBase
         end
 
         %-----------------------------------------------------------------%
-        function hash = computeUploadedFileHash(system, issue, status)
-            hash = Hash.sha1(strjoin({system, num2str(issue), status}, ' - '));
-        end
-
-        %-----------------------------------------------------------------%
         function hash = computeReportFileInventoryHash(ecdObj)
             hash = strjoin(sort({ecdObj.Hash}), ' - ');
         end
