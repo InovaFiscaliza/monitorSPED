@@ -414,7 +414,7 @@
                 {
                     "Type": "ItemN2",
                     "Data": {
-                        "Editable": "false",
+                        "Editable": "true",
                         "Text": "<b>RESULTADOS</b>",
                         "Variable": []
                     }
