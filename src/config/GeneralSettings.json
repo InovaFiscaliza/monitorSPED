@@ -1,5 +1,5 @@
 {
-    "version": 0.82,
+    "version": 0.85,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -70,6 +70,7 @@
                     "_CONTAS_DESCRICAO",
                     "_CONTAS_HISTORICO",
                     "_TABELA_APURACAO",
+                    "_TABELA_APURACAO_INTERCONEXAO",
                     "C050_C051_C052",
                     "I050_I051_I052",
                     "I150_I155",
@@ -78,7 +79,8 @@
                 ],
                 "autoload": [
                     "_CONTAS_DESCRICAO",
-                    "_TABELA_APURACAO"
+                    "_TABELA_APURACAO",
+                    "_TABELA_APURACAO_INTERCONEXAO"
                 ]
             },
             "cacheTables": [
@@ -90,7 +92,8 @@
                 "_CONTAS_ANOTACAO",
                 "_CONTAS_DESCRICAO",
                 "_CONTAS_HISTORICO",
-                "_TABELA_APURACAO"
+                "_TABELA_APURACAO",
+                "_TABELA_APURACAO_INTERCONEXAO"
             ],
             "accountOptions": [
                 "-",
@@ -99,6 +102,12 @@
                 "ICMS Telecom",
                 "PIS Telecom",
                 "COFINS Telecom"
+            ],
+            "interconnectionOptions": [
+                "-",
+                "Não",
+                "ITX",
+                "EILD"
             ],
             "taxConfig": {
                 "PIS": 0.0065,

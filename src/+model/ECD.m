@@ -305,7 +305,8 @@ classdef ECD < handle
                                                                 'GUI.TableView.Style';
                                                                 'Table.NonEssentialFiles';
                                                                 'Table.x_CONTAS_ANOTACAO';
-                                                                'Table.x_TABELA_APURACAO' })}
+                                                                'Table.x_TABELA_APURACAO'; ...
+                                                                'Table.x_TABELA_APURACAO_INTERCONEXAO' })}
                 updateType
             end
 
@@ -576,6 +577,18 @@ classdef ECD < handle
                             obj.Table.x_TABELA_APURACAO('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell(round([baseCalculoFustFunttel, sum(baseCalculoFustFunttel)], 2));
                             obj.Table.x_TABELA_APURACAO('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell(round([fustApurado,            sum(fustApurado)],            2));
                             obj.Table.x_TABELA_APURACAO('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell(round([funttelApurado,         sum(funttelApurado)],         2));
+
+                        otherwise
+                            error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
+                    end
+
+                case 'Table.x_TABELA_APURACAO_INTERCONEXAO'
+                    switch updateType
+                        case 'startup'
+                            obj.Table.x_TABELA_APURACAO_INTERCONEXAO = model.ECDBase.initializeCustomTable('_TABELA_APURACAO_INTERCONEXAO');
+
+                        case 'accountValueChanged'
+                            % ...
 
                         otherwise
                             error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
@@ -943,6 +956,9 @@ classdef ECD < handle
 
                 case '_TABELA_APURACAO'
                     update(obj, 'Table.x_TABELA_APURACAO', 'startup')
+
+                case '_TABELA_APURACAO_INTERCONEXAO'
+                    update(obj, 'Table.x_TABELA_APURACAO_INTERCONEXAO', 'startup')
 
                 case {'C050_C051_C052', 'I050_I051_I052', 'I150_I155', 'I350_I355', 'I200_I250'}
                     switch tableId
