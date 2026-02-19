@@ -208,6 +208,8 @@ classdef (Abstract) HtmlTextGenerator
                     dataStruct(end+1) = struct('group', 'REGISTROS LIDOS OU CRIADOS', 'value', strjoin(readOrdinaryIds, ', '));
                 end
 
+                dataStruct(end+1) = struct('group', 'ALÍQUOTA GLOBAL DE REFERÊNCIA DO ICMS', 'value', jsonencode(ecdObj.GUI.icmsRate));
+
                 if ~isempty(ecdObj.GUI.warnings)
                     dataStruct(end+1) = struct('group', ['ALERTAS ' util.HtmlTextGenerator.unicodeToHtmlHexMap.('ExclamationMark').unicode], 'value', ['<font style="color: red;">' strjoin(ecdObj.GUI.warnings, '<br>') '</font>']);
                 end
@@ -373,6 +375,18 @@ classdef (Abstract) HtmlTextGenerator
             dataStruct      = struct('group', 'CADASTRO', 'value', details);
             freeInitialText = sprintf('<font style="font-size: 16px;"><b>%s</b></font><br><br>', id);
             htmlContent     = textFormatGUI.struct2PrettyPrintList(dataStruct, 'delete', freeInitialText, 'popup');
+        end
+
+        %-----------------------------------------------------------------%
+        % AUXAPP.DOCKICMSRATE
+        %-----------------------------------------------------------------%
+        function htmlContent = icmsRateDetails(ecdObj)
+            dataStruct      = struct('group', 'ICMS', 'value', jsonencode(ecdObj.GUI.icmsRate));
+            freeInitialText = [sprintf('<font style="font-size: 16px; "><b>%s</b></font><br>', ecdObj.CompanyName) ...
+                               sprintf('<font style="font-size: 11px;">CNPJ nº %s (%s)<br>', ecdObj.CompanyId, ecdObj.State) ...
+                               sprintf('%s</font><br><br>', strjoin(string(ecdObj.Period), ' a '))];
+
+            htmlContent     = textFormatGUI.struct2PrettyPrintList(dataStruct, 'print -1', freeInitialText, 'popup');
         end
     end
 

@@ -277,6 +277,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                             % DOCKS:OTHERS
                             case {'auxApp.dockReportLib',      'auxApp.dockReportLib_exported',  ...
+                                  'auxApp.dockIcmsRate',       'auxApp.dockIcmsRate_exported',   ...
                                   'auxApp.dockECDExport',      'auxApp.dockECDExport_exported',  ...
                                   'auxApp.dockECDAccount',     'auxApp.dockECDAccount_exported', ...
                                   'auxApp.dockECDFilter',      'auxApp.dockECDFilter_exported',  ...
@@ -310,6 +311,17 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                     case 'onFetchIssueDetails'
                                         context  = varargin{1};
                                         reportFetchIssueDetails(app, context, [])
+
+                                    % auxApp.dockIcmsRate
+                                    case 'onIcmsRateChanged'
+                                        if ~isempty(app.FileTree.SelectedNodes)
+                                            nodeData = unique([app.FileTree.SelectedNodes.NodeData]);
+        
+                                            if isequal(nodeData, varargin{1})
+                                                app.FileMetadata.UserData = [];
+                                                onTreeSelectionChanged(app)
+                                            end
+                                        end
                                         
                                     % auxApp.dockECDExport
                                     case 'onExportECD'
@@ -371,7 +383,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             arguments
                 app
                 callingApp
-                auxAppName char {mustBeMember(auxAppName, {'ReportLib', 'ECDExport', 'ECDAccount', 'ECDFilter', 'ECDMemoryUsage'})}
+                auxAppName char {mustBeMember(auxAppName, {'ReportLib', 'IcmsRate', 'ECDExport', 'ECDAccount', 'ECDFilter', 'ECDMemoryUsage'})}
             end
 
             arguments (Repeating)
@@ -382,6 +394,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 case 'ReportLib'
                     screenWidth  = 460;
                     screenHeight = 602;
+                case 'IcmsRate'
+                    screenWidth  = 448;
+                    screenHeight = 320;
                 case 'ECDExport'
                     screenWidth  = 460;
                     screenHeight = 404;

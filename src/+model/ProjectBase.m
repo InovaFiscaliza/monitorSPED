@@ -14,11 +14,11 @@ classdef (Abstract) ProjectBase
 
     methods (Static = true)
         %-----------------------------------------------------------------%
-        function data = readInssReferenceData(rootFolder)
+        function data = readIcmsReferenceData(rootFolder)
             [projectFolder, ...
              localCacheFolder] = appEngine.util.Path(class.Constants.appName, rootFolder);
-            projectFilePath    = fullfile(projectFolder,    'DataBase', 'INSS.xlsx');
-            localCacheFilePath = fullfile(localCacheFolder, 'DataBase', 'INSS.xlsx');
+            projectFilePath    = fullfile(projectFolder,    'DataBase', 'ICMS.xlsx');
+            localCacheFilePath = fullfile(localCacheFolder, 'DataBase', 'ICMS.xlsx');
 
             try
                 if ~isdeployed()

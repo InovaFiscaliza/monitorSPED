@@ -49,9 +49,10 @@ classdef ECD < handle
             'hasValidStatus', false, ...
             'hasValidPeriod', false, ...
             'warnings', {{}}, ...
-            'icmsDefaultRate', struct( ...
-                'type', 'auto', ...
-                'rate', [] ...
+            'icmsRate', struct( ...
+                'source', 'default', ... % 'default' | 'manual'
+                'default', struct('mode', 'auto', 'rate', []), ...
+                'current', struct('mode', 'auto', 'rate', []) ...
             ), ...
             'tableView', struct( ...
                 'id', {}, ...
@@ -199,7 +200,7 @@ classdef ECD < handle
                         periodRate = zeros(1, 12);
                         rateErrorMsg = {};
                         for periodMonth = 1:12
-                            [periodRate(periodMonth), msgError] = calculateInssRate(projectData, obj(idx).CompanyInfo.UF, datetime([periodYear, periodMonth, 1]), 'mean', 3);
+                            [periodRate(periodMonth), msgError] = calculateIcmsRate(projectData, obj(idx).CompanyInfo.UF, datetime([periodYear, periodMonth, 1]), 'mean', 3);
                             if ~isempty(msgError)
                                 rateErrorMsg{end+1} = msgError;
                             end
@@ -216,7 +217,8 @@ classdef ECD < handle
                             ));
                         end
 
-                        obj(idx).GUI.icmsDefaultRate.rate = periodRate;
+                        obj(idx).GUI.icmsRate.default.rate = periodRate;
+                        obj(idx).GUI.icmsRate.current = obj(idx).GUI.icmsRate.default;
                     end
 
                     if isfield(obj(idx).Table, 'xI030') && ~isempty(obj(idx).Table.xI030)
@@ -303,6 +305,7 @@ classdef ECD < handle
                 obj
                 propertyName char {mustBeMember(propertyName, { 'GUI.TableView.Filter';
                                                                 'GUI.TableView.Style';
+                                                                'GUI.IcmsRate';
                                                                 'Table.NonEssentialFiles';
                                                                 'Table.x_CONTAS_ANOTACAO';
                                                                 'Table.x_TABELA_APURACAO'; ...
@@ -346,6 +349,24 @@ classdef ECD < handle
                         case 'removeTableStyle'
                             styleIndex = varargin{1};                            
                             obj.GUI.tableView(styleIndex).style = {};
+
+                        otherwise
+                            error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
+                    end
+
+                case 'GUI.IcmsRate'
+                    switch updateType
+                        case 'valueChanged'
+                            obj.GUI.icmsRate.current = varargin{1};
+                            if isequal(obj.GUI.icmsRate.default, obj.GUI.icmsRate.current)
+                                obj.GUI.icmsRate.source = 'default';
+                            else
+                                obj.GUI.icmsRate.source = 'manual';
+                            end
+
+                        case 'refresh'
+                            obj.GUI.icmsRate.current = obj.GUI.icmsRate.default;
+                            obj.GUI.icmsRate.source  = 'default';
 
                         otherwise
                             error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
@@ -404,7 +425,7 @@ classdef ECD < handle
                             obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(rowIndex) = newValue;
                             switch newValue
                                 case 'Sim'
-                                    obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){rowIndex} = jsonencode(obj.GUI.icmsDefaultRate);
+                                    obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){rowIndex} = jsonencode(obj.GUI.icmsRate.current);
                                 otherwise
                                     obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){rowIndex} = '-';
                             end
@@ -470,10 +491,16 @@ classdef ECD < handle
 
                                 elseif accountTotal > 0                                    
                                     obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "Sim";
-                                    obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){ii}  = jsonencode(obj.GUI.icmsDefaultRate);
+                                    obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){ii}  = jsonencode(obj.GUI.icmsRate.current);
                                     obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Saldo anual positivo';
                                 end
                             end
+
+                        case 'deleteAnnotation'
+                            rowIndex = varargin{2};
+                            accountList = obj.Table.x_BALANCETE_RESULTADO.('COD_CTA')(rowIndex);
+                            annotationAccountTemplate = model.ECDBase.initializeCustomTable('_CONTAS_ANOTACAO', accountList, generalSettings);
+                            obj.Table.x_CONTAS_ANOTACAO(rowIndex, :) = annotationAccountTemplate;
 
                         otherwise
                             error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);

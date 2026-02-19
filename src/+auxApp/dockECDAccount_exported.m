@@ -38,8 +38,8 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         icmsMonth2Label    matlab.ui.control.Label
         icmsMonth1         matlab.ui.control.Spinner
         icmsMonth1Label    matlab.ui.control.Label
-        icmsType           matlab.ui.control.DropDown
-        icmsTypeLabel      matlab.ui.control.Label
+        IcmsRateMode       matlab.ui.control.DropDown
+        IcmsRateModeLabel  matlab.ui.control.Label
         taxType            matlab.ui.control.DropDown
         taxTypeLabel       matlab.ui.control.Label
         accountList        matlab.ui.control.DropDown
@@ -120,16 +120,16 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
 
             switch accountTable.('Alíquota ICMS'){index}
                 case '-'
-                    app.currentAccount = struct('type', 'n/a', 'rate', 0, 'index', index);
-                    icmsTypeItems = {'n/a'};
+                    app.currentAccount = struct('mode', 'n/a', 'rate', 0, 'index', index);
+                    icmsModeItems = {'n/a'};
                 otherwise
                     app.currentAccount = jsondecode(accountTable.('Alíquota ICMS'){index});
                     app.currentAccount.index = index;
-                    icmsTypeItems = {'auto', 'manual'};
+                    icmsModeItems = {'auto', 'manual'};
             end
-            set(app.icmsType, 'Items', icmsTypeItems, 'Value', app.currentAccount.type)
+            set(app.IcmsRateMode, 'Items', icmsModeItems, 'Value', app.currentAccount.mode)
 
-            updateRatePanelStatus(app, strcmp(app.currentAccount.type, 'manual'))
+            updateRatePanelStatus(app, strcmp(app.currentAccount.mode, 'manual'))
             updateRatePanelValue(app, app.currentAccount.rate)
 
             % Plot:
@@ -151,9 +151,9 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             fileIndex    = app.inputArgs.index;
             selectedECD  = app.mainApp.ecdObj(fileIndex);
 
-            switch app.icmsType.Value
+            switch app.IcmsRateMode.Value
                 case 'auto'
-                    rateList = selectedECD.GUI.icmsDefaultRate.rate;
+                    rateList = selectedECD.GUI.icmsRate.current.rate;
 
                 case 'manual'
                     rateList = round([ ...
@@ -177,7 +177,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             end
 
             rateJsonInfo = struct( ...
-                'type', app.icmsType.Value, ...
+                'mode', app.IcmsRateMode.Value, ...
                 'rate', rateList ...
             );
         end
@@ -243,7 +243,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             
         end
 
-        % Value changed function: freenote, icmsMonth1, icmsMonth10, 
+        % Value changed function: IcmsRateMode, freenote, icmsMonth1, 
         % ...and 12 other components
         function parameterValueChanged(app, event)
             
@@ -256,8 +256,8 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
                 case app.taxType
                     update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Apurado?', generalSettings, accountIndex, app.taxType.Value)
                 
-                case app.icmsType
-                    updateRatePanelStatus(app, strcmp(app.icmsType.Value, 'manual'))
+                case app.IcmsRateMode
+                    updateRatePanelStatus(app, strcmp(app.IcmsRateMode.Value, 'manual'))
 
                     rateJsonInfo = createRateJsonInfo(app);
                     update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Alíquota ICMS', generalSettings, accountIndex, jsonencode(rateJsonInfo))
@@ -412,23 +412,23 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.taxType.Layout.Column = [1 3];
             app.taxType.Value = '-';
 
-            % Create icmsTypeLabel
-            app.icmsTypeLabel = uilabel(app.Document);
-            app.icmsTypeLabel.VerticalAlignment = 'bottom';
-            app.icmsTypeLabel.FontSize = 11;
-            app.icmsTypeLabel.Layout.Row = 4;
-            app.icmsTypeLabel.Layout.Column = 4;
-            app.icmsTypeLabel.Text = 'Alíquota ICMS ✎';
+            % Create IcmsRateModeLabel
+            app.IcmsRateModeLabel = uilabel(app.Document);
+            app.IcmsRateModeLabel.VerticalAlignment = 'bottom';
+            app.IcmsRateModeLabel.FontSize = 11;
+            app.IcmsRateModeLabel.Layout.Row = 4;
+            app.IcmsRateModeLabel.Layout.Column = 4;
+            app.IcmsRateModeLabel.Text = 'Alíquota ICMS ✎';
 
-            % Create icmsType
-            app.icmsType = uidropdown(app.Document);
-            app.icmsType.Items = {'auto', 'manual'};
-            app.icmsType.ValueChangedFcn = createCallbackFcn(app, @parameterValueChanged, true);
-            app.icmsType.FontSize = 11;
-            app.icmsType.BackgroundColor = [1 1 1];
-            app.icmsType.Layout.Row = 5;
-            app.icmsType.Layout.Column = 4;
-            app.icmsType.Value = 'auto';
+            % Create IcmsRateMode
+            app.IcmsRateMode = uidropdown(app.Document);
+            app.IcmsRateMode.Items = {'auto', 'manual'};
+            app.IcmsRateMode.ValueChangedFcn = createCallbackFcn(app, @parameterValueChanged, true);
+            app.IcmsRateMode.FontSize = 11;
+            app.IcmsRateMode.BackgroundColor = [1 1 1];
+            app.IcmsRateMode.Layout.Row = 5;
+            app.IcmsRateMode.Layout.Column = 4;
+            app.IcmsRateMode.Value = 'auto';
 
             % Create icmsMonthsPanel
             app.icmsMonthsPanel = uipanel(app.Document);

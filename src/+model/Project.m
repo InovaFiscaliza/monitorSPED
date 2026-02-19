@@ -4,7 +4,7 @@ classdef Project < model.ProjectCommon
     % PUBLIC
     %   ├── Project
     %   |   |── restart
-    %   |   └── model.ProjectBase.readInssReferenceData
+    %   |   └── model.ProjectBase.readIcmsReferenceData
     %   ├── restart
     %   │   └── initialization (SuperClass)
     %   ├── checkIfUpdateNeeded
@@ -13,11 +13,11 @@ classdef Project < model.ProjectCommon
     %   │   └── model.ProjectBase.computeProjectHash
     %   ├── load
     %   │   └── restart
-    %   └── calculateInssRate
+    %   └── calculateIcmsRate
 
     properties
         %-----------------------------------------------------------------%
-        inss
+        icms
     end
 
 
@@ -27,7 +27,7 @@ classdef Project < model.ProjectCommon
             obj@model.ProjectCommon(mainApp, rootFolder);
 
             restart(obj)
-            obj.inss = model.ProjectBase.readInssReferenceData(rootFolder);
+            obj.icms = model.ProjectBase.readIcmsReferenceData(rootFolder);
         end
 
         %-----------------------------------------------------------------%
@@ -199,9 +199,9 @@ classdef Project < model.ProjectCommon
         end
 
         %-----------------------------------------------------------------%
-        % ## INSS ##
+        % ## ICMS ##
         %-----------------------------------------------------------------%
-        function [rate, msgError] = calculateInssRate(obj, state, period, rateType, numDecimals)
+        function [rate, msgError] = calculateIcmsRate(obj, state, period, rateType, numDecimals)
             arguments
                 obj
                 state    char {mustBeMember(state, {'AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO'})}
@@ -220,19 +220,19 @@ classdef Project < model.ProjectCommon
 
             try    
                 % Identifica registros relacionados à UF indicada:
-                indexes = find(strcmp(obj.inss.("UF"), state) & obj.inss.("Vigência") <= endOfPeriod);            
+                indexes = find(strcmp(obj.icms.("UF"), state) & obj.icms.("Vigência") <= endOfPeriod);            
                 if isempty(indexes)
-                    error('Não identificado registro que possibilite calcular a alíquota vigente de INSS')
+                    error('Não identificado registro que possibilite calcular a alíquota vigente de ICMS')
                 end
     
-                refINSSTable = obj.inss(indexes, :);
+                refICMSTable = obj.icms(indexes, :);
                 switch rateType
                     case 'mean'
                         refNumDays = endOfMonthDay;            
                         rate = 0;
-                        for ii = height(refINSSTable):-1:1
-                            numDays    = refNumDays - day(max(refINSSTable.("Vigência")(ii), beginOfPeriod)) + 1;
-                            rate   = rate + numDays * refINSSTable.("Alíquota máxima")(ii);
+                        for ii = height(refICMSTable):-1:1
+                            numDays = refNumDays - day(max(refICMSTable.("Vigência")(ii), beginOfPeriod)) + 1;
+                            rate = rate + numDays * refICMSTable.("Alíquota máxima")(ii);
                             refNumDays = refNumDays - numDays;
                             if refNumDays <= 0
                                 break
@@ -241,14 +241,14 @@ classdef Project < model.ProjectCommon
                         rate = rate/endOfMonthDay;
     
                     case 'eomonth'
-                        rate = refINSSTable.("Alíquota máxima")(end);
+                        rate = refICMSTable.("Alíquota máxima")(end);
                 end
                 msgError = '';
 
             catch ME
-                index = find(strcmp(obj.inss.("UF"), state), 1);
-                rate = obj.inss.("Alíquota máxima")(index);
-                msgError = sprintf('[INSS Fallback] ∄ alíquota no domínio (%s, %s) ⇒ %.1f%%', state, endOfPeriod, 100 * rate);
+                index = find(strcmp(obj.icms.("UF"), state), 1);
+                rate = obj.icms.("Alíquota máxima")(index);
+                msgError = sprintf('[ICMS Fallback] ∄ alíquota no domínio (%s, %s) ⇒ %.1f%%', state, endOfPeriod, 100 * rate);
             end
 
             rate = round(rate, numDecimals);
