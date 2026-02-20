@@ -4,15 +4,18 @@
         "Recurrence": 0,
         "Data": {
             "Editable": "false",
-            "Text": "DESCRIÇÃO DA AÇÃO DE FISCALIZAÇÃO",
+            "Text": "DESCRIÇÃO DA AÇÃO",
             "Variable": [],
             "Component": [
                 {
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "Assegurar o correto recolhimento das contribuições ao Fundo de Universalização dos Serviços de Telecomunicações (FUST) e ao Fundo para o Desenvolvimento Tecnológico das Telecomunicações (FUNTTEL), atendendo ao que consta na descrição da demanda: \"%s\"",
-                        "Variable": "eFiscaliza_acaoDescricao"
+                        "Text": "Apurar os valores devidos ao \"%s\", assegurando o correto recolhimento das contribuições ao fundo sobre as receitas auferidas com a prestação de serviços de telecomunicações no exercício fiscal de %s.",
+                        "Variable": [
+                            "eFiscaliza_solicitacaoSubtema",
+                            "var_Year"
+                            ]
                     }
                 }
             ]
@@ -23,7 +26,7 @@
         "Recurrence": 0,
         "Data": {
             "Editable": "false",
-            "Text": "IDENTIFICAÇÃO DO OBJETO DA FISCALIZAÇÃO",
+            "Text": "OBJETO",
             "Variable": [],
             "Component": [
                 {
@@ -46,7 +49,7 @@
         "Recurrence": 0,
         "Data": {
             "Editable": "false",
-            "Text": "LOCAL E PERÍODO DA FISCALIZAÇÃO",
+            "Text": "LOCAL E PERÍODO",
             "Variable": [],
             "Component": [
                 {
@@ -111,7 +114,7 @@
         "Recurrence": 0,
         "Data": {
             "Editable": "false",
-            "Text": "UNIDADE(S) EXECUTANTE(S) DA AÇÃO DE FISCALIZAÇÃO",
+            "Text": "UNIDADE EXECUTANTE",
             "Variable": [],
             "Component": [
                 {
@@ -120,6 +123,22 @@
                         "Editable": "true",
                         "Text": "%s",
                         "Variable": "eFiscaliza_UnidadeExecutante"
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "Fiscal responsável: %s",
+                        "Variable": "eFiscaliza_acaoResponsavel"
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "Equipe de fiscais: %s",
+                        "Variable": "eFiscaliza_ListaFiscais"
                     }
                 }
             ]
@@ -130,7 +149,7 @@
         "Recurrence": 0,
         "Data": {
             "Editable": "false",
-            "Text": "DISPOSITIVOS LEGAIS E REGULAMENTARES",
+            "Text": "FUNDAMENTAÇÃO",
             "Variable": [],
             "Component": [
                 {
@@ -161,7 +180,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "<a href=\"http://www.planalto.gov.br/ccivil_03/leis/l9998.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Lei nº 9.998, de 17 de agosto de 2000</a>, que institui o Fundo de Universalização dos Serviços de Telecomunicações (Fust).",
+                        "Text": "<a href=\"http://www.planalto.gov.br/ccivil_03/leis/l9998.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Lei nº 9.998, de 17 de agosto de 2000</a>, que institui o Fundo de Universalização dos Serviços de Telecomunicações (FUST).",
                         "Variable": []
                     }
                 },
@@ -185,7 +204,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "<a href=\"https://www.planalto.gov.br/ccivil_03/decreto/2001/d3737.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Decreto nº 3.737, de 30 de janeiro de 2001</a>, dispõe sobre a regulamentação do Fundo para o Desenvolvimento Tecnológico das Telecomunicações - FUNTTEL, e dá outras providências.",
+                        "Text": "<a href=\"https://www.planalto.gov.br/ccivil_03/decreto/2001/d3737.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Decreto nº 3.737, de 30 de janeiro de 2001</a>, dispõe sobre a regulamentação do Fundo para o Desenvolvimento Tecnológico das Telecomunicações (FUNTTEL), e dá outras providências.",
                         "Variable": []
                     }
                 },
@@ -193,7 +212,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "<a href=\"https://www.planalto.gov.br/ccivil_03/_Ato2019-2022/2022/Decreto/D11004.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Decreto nº 11.004, de 21 de março de 2022</a>, que dispõe sobre a regulamentação do Fundo de Universalização dos Serviços de Telecomunicações (Fust).",
+                        "Text": "<a href=\"https://www.planalto.gov.br/ccivil_03/_Ato2019-2022/2022/Decreto/D11004.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Decreto nº 11.004, de 21 de março de 2022</a>, que dispõe sobre a regulamentação do Fundo de Universalização dos Serviços de Telecomunicações (FUST).",
                         "Variable": []
                     }
                 },
@@ -209,7 +228,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "<a href=\"https://informacoes.anatel.gov.br/legislacao/index.php/component/content/article?id=61\" target=\"_blank\" rel=\"noopener noreferrer\">Súmula nº 7, de 15 de dezembro de 2005</a>, que trata do recolhimento do Fust sobre serviços de telecomunicações a título de remuneração de interconexão e pelo uso de recursos integrantes de redes.",
+                        "Text": "<a href=\"https://informacoes.anatel.gov.br/legislacao/index.php/component/content/article?id=61\" target=\"_blank\" rel=\"noopener noreferrer\">Súmula nº 7, de 15 de dezembro de 2005</a>, que trata do recolhimento do FUST sobre serviços de telecomunicações a título de remuneração de interconexão e pelo uso de recursos integrantes de redes.",
                         "Variable": []
                     }
                 },
@@ -225,7 +244,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "<a href=\"https://informacoes.anatel.gov.br/legislacao/procedimentos-de-fiscalizacao/1958-portaria-2817\" target=\"_blank\" rel=\"noopener noreferrer\">Portaria nº 2817, de 06 de maio de 2024</a>, que aprova o Procedimento de Fiscalização para verificação do cumprimento das obrigações relativas ao recolhimento das contribuições ao Fust e ao Funttel.",
+                        "Text": "<a href=\"https://informacoes.anatel.gov.br/legislacao/procedimentos-de-fiscalizacao/1958-portaria-2817\" target=\"_blank\" rel=\"noopener noreferrer\">Portaria nº 2817, de 06 de maio de 2024</a>, que aprova o Procedimento de Fiscalização para verificação do cumprimento das obrigações relativas ao recolhimento das contribuições ao FUST e ao FUNTTEL.",
                         "Variable": []
                     }
                 }
@@ -237,7 +256,7 @@
         "Recurrence": 1,
         "Data": {
             "Editable": "false",
-            "Text": "DESCRIÇÃO DA EXECUÇÃO",
+            "Text": "RELATO DA EXECUÇÃO",
             "Variable": [],
             "Component": [
                 {
@@ -276,7 +295,7 @@
                     "Type": "Paragraph",
                     "Data": {
                         "Editable": "true",
-                        "Text": "A fiscalização tributária tem início com a coleta, junto à empresa fiscalizada, dos arquivos contábeis necessários à apuração dos valores devidos ao FUST e ao FUNTTEL.",
+                        "Text": "A fiscalização tributária tem início com a coleta, junto à empresa fiscalizada, dos documentos e esclarecimentos necessários à apuração dos valores devidos ao FUST e ao FUNTTEL.",
                         "Variable": []
                     }
                 },
@@ -284,7 +303,15 @@
                     "Type": "Paragraph",
                     "Data": {
                         "Editable": "true",
-                        "Text": "Em seguida, verifica-se a integridade e a autenticidade de cada arquivo. Para isso, calcula-se o respectivo <i>hash</i> e realiza-se a validação por meio do <i>webservice</i> disponibilizado pela Receita Federal, a fim de confirmar sua correspondência com o arquivo registrado na base de dados do órgão. Por se tratar de uma fotografia no tempo, poderá ser feita nova verificação mediante a inserção do <i>hash</i> do arquivo <a href=\"http://www.sped.fazenda.gov.br/appConsultaSituacaoContabil/\" target=\"_blank\" rel=\"noopener noreferrer\">aqui</a>.",
+                        "Text": "Uma vez obtida a Escrituração Contábil Digital (ECD), módulo do Sistema Público de Escrituração Digital (SPED), os dados são processados para análise.",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "Nesse processamento, verifica-se a integridade e a autenticidade de cada arquivo. Para tanto, calcula-se o respectivo <i>hash</i> e realiza-se a validação por meio do <i>webservice</i> disponibilizado pela Receita Federal, a fim de confirmar sua correspondência com o arquivo registrado na base de dados do órgão. Caso seja necessário verificar eventuais atualizações após a análise inicial, pode-se proceder a nova validação mediante a inserção do <i>hash</i> do arquivo <a href=\"http://www.sped.fazenda.gov.br/appConsultaSituacaoContabil/\" target=\"_blank\" rel=\"noopener noreferrer\">aqui</a>.",
                         "Variable": []
                     }
                 },
@@ -301,30 +328,51 @@
                     "Data": [
                         {
                             "Editable": "true",
-                            "Text": "Os fatos contábeis são identificados nos registros I200 e I250. Após a consolidação desses registros, procede-se ao agrupamento por contas contábeis, resultando em um balancete validado no qual o somatório mensal de todos os lançamentos é igual a zero. A partir desse balancete, filtram-se apenas as contas analíticas cuja natureza é igual a 4 - as \"contas de resultado\" -, formando o balancete de resultados.",
+                            "Text": "Os fatos contábeis são identificados nos registros I200 e I250. Após a consolidação desses registros, procede-se ao agrupamento por contas contábeis, resultando em balancete validado, no qual o somatório mensal dos lançamentos é igual a zero. A partir desse balancete, filtram-se apenas as contas analíticas cuja natureza é igual a 4 – as \"contas de resultado\" –, formando o balancete de resultados.",
                             "Variable": []
                         },
                         {
                             "Editable": "true",
-                            "Text": "Cada conta de resultado é classificada nas categorias: \"Sim\", \"Não\", \"ICMS Telecom\", \"PIS Telecom\" ou \"COFINS Telecom\". As contas classificadas como \"Sim\" representam receitas diretamente vinculadas à prestação de serviços de telecomunicações. Essas receitas compõem a Receita Operacional Bruta (ROB), utilizada como base para a estimativa do imposto sobre a circulação de mercadorias e serviços (ICMS). A alíquota aplicada observa a legislação vigente em cada Estado e no Distrito Federal, podendo também ser ajustada por conta e por mês, conforme necessário.",
+                            "Text": "Cada conta de resultado é avaliada individualmente e classificada quanto à pertinência de compor a base de cálculo da Contribuição de Intervenção no Domínio Econômico (CIDE), nas seguintes categorias: \"Sim\", \"Não\", \"ICMS Telecom\", \"PIS Telecom\" ou \"COFINS Telecom\". As contas classificadas como \"Sim\" correspondem a receitas decorrentes da prestação de serviços de telecomunicações, fato gerador da CIDE. Tais receitas compõem a Receita Operacional Bruta de Telecomunicações (ROB TELECOM), utilizada como base para a estimativa dos tributos dedutíveis (ICMS, PIS e COFINS).",
                             "Variable": []
                         },
                         {
                             "Editable": "true",
-                            "Text": "O ICMS estimado é comparado ao ICMS contábil - identificado nas contas classificadas como \"ICMS Telecom\". Para fins de determinação da base de cálculo do PIS e da COFINS, adota-se o menor valor anual entre o ICMS estimado e o ICMS contábil.",
+                            "Text": "Na estimativa dos tributos dedutíveis, aplicam-se as alíquotas legais vigentes à época dos fatos – e, no caso do ICMS, as alíquotas correspondentes a cada Unidade da Federação, quando aplicável – podendo haver ajustes por conta e por mês, conforme o caso concreto.",
                             "Variable": []
                         },
                         {
                             "Editable": "true",
-                            "Text": "Na sequência, estima-se os valores devidos ao Programa de Integração Social (PIS) e à Contribuição para Financiamento da Seguridade Social (COFINS), os quais são comparados aos montantes registrados contabilmente nas contas classificadas como \"PIS Telecom\" e \"COFINS Telecom\". Para fins de definição da base de cálculo do FUST e do FUNTTEL, seleciona-se, igualmente, o menor valor anual entre os tributos estimados e os contábeis.",
+                            "Text": "Os valores estimados de ICMS, PIS e COFINS incidentes sobre a ROB TELECOM são limitados aos respectivos saldos contabilizados nos balancetes.",
                             "Variable": []
                         },
                         {
                             "Editable": "true",
-                            "Text": "Por fim, com base nos resultados das etapas anteriores, realiza-se a apuração dos valores devidos ao FUST e ao FUNTTEL.",
+                            "Text": "Ressalta-se que o valor de ICMS é excluído da base de cálculo do PIS e da COFINS, em consonância com a decisão do Supremo Tribunal Federal (STF) no julgamento o Recurso Extraordinário nº 574.706, que fixou a tese de repercussão geral de que \"o ICMS não compõe a base de cálculo para fins de incidência do PIS e da COFINS\".",
+                            "Variable": []
+                        },
+                        {
+                            "Editable": "true",
+                            "Text": "Por fim, com base nos resultados das etapas anteriores, definem-se a base de cálculo e os valores devidos ao FUST e ao FUNTTEL.",
                             "Variable": []
                         }
                     ]
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "&nbsp;",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "<b>RESULTADOS</b>",
+                        "Variable": []
+                    }
                 },
                 {
                     "Type": "Paragraph",
@@ -406,27 +454,10 @@
                 {
                     "Type": "Paragraph",
                     "Data": {
-                        "Editable": "false",
-                        "Text": "&nbsp;",
-                        "Variable": []
-                    }
-                },
-                {
-                    "Type": "ItemN2",
-                    "Data": {
                         "Editable": "true",
-                        "Text": "<b>RESULTADOS</b>",
-                        "Variable": []
-                    }
-                },
-                {
-                    "Type": "Paragraph",
-                    "Data": {
-                        "Editable": "true",
-                        "Text": "A empresa <b>%s</b>, inscrita no CNPJ sob o nº %s, movimentou %s. O resultado deste período foi igual a %s.",
+                        "Text": "A empresa %s, durante o período sob análise, movimentou %s, registrando na ECD resultado contábil líquido de %s.",
                         "Variable": [
                             "var_EntityName",
-                            "var_EntityId",
                             "var_NumAccount",
                             "var_TotalValue"
                         ]
@@ -555,7 +586,7 @@
                                 "Width": "auto"
                             }
                         ],
-                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A tabela a seguir apresenta as contas de resultado classificadas como \\\"Sim\\\", \\\"ICMS Telecom\\\", \\\"PIS Telecom\\\" ou \\\"COFINS Telecom\\\", acompanhadas de sua descrição completa, incluindo as descrições das contas sintéticas superiores, a alíquota aplicável do ICMS e uma observação livre, eventualmente inserida pelo fiscal.\"}",
+                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A tabela a seguir apresenta as contas de resultado identificadas como relevantes para a definição da base de cálculo da CIDE devida. Também são indicadas a respectiva classificação contábil, correspondente às contas sintéticas aglutinadoras, as alíquotas de ICMS aplicáveis e eventual observação registrada pela equipe de fiscais.\"}",
                         "Error": [],
                         "LineBreak": 1
                     }
@@ -733,6 +764,25 @@
                     "Data": {
                         "Editable": "true",
                         "Text": "Ante o exposto, conclui-se este relatório de fiscalização.",
+                        "Variable": []
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "true",
+            "Text": "DOCUMENTOS REFERENCIADOS",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "... (texto livre) ...",
                         "Variable": []
                     }
                 }

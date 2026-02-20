@@ -944,6 +944,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         docSpec = app.General.eFiscaliza;
                         docSpec.originId = docSpec.internal.originId;
                         docSpec.typeId = app.General.eFiscaliza.internal.typeIdMapping(docTypeIdx).id;
+                        docSpec.nomeArvore = ['[' class.Constants.appName ']'];
+
+                        if app.projectData.modules.(context).ui.entity.status
+                            docSpec.interessados = {struct( ...
+                                'sigla', app.projectData.modules.(context).ui.entity.id, ...
+                                'nome', app.projectData.modules.(context).ui.entity.name ...
+                            )};
+                        end                        
 
                         response = run(app.eFiscalizaObj, env, operation, issueInfo, unit, docSpec, HTMLFile);
 

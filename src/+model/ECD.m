@@ -594,12 +594,12 @@ classdef ECD < handle
 
                             % ## ATUALIZA TABELA ##                            
                             obj.Table.x_TABELA_APURACAO('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell(round([robContabil,            sum(robContabil)],            2));
-                            obj.Table.x_TABELA_APURACAO('ICMS TELECOM',                   [monthIds, {'TOTAL'}]) = num2cell(round([icmsEstimado,           sum(icmsEstimado)],           2));
+                            obj.Table.x_TABELA_APURACAO('ICMS ESTIMADO',                  [monthIds, {'TOTAL'}]) = num2cell(round([icmsEstimado,           sum(icmsEstimado)],           2));
                             obj.Table.x_TABELA_APURACAO('ICMS CONTÁBIL',                  [monthIds, {'TOTAL'}]) = num2cell(round([icmsContabil,           sum(icmsContabil)],           2));
                             obj.Table.x_TABELA_APURACAO('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell(round([baseCalculoPisCofins,   sum(baseCalculoPisCofins)],   2));
-                            obj.Table.x_TABELA_APURACAO('PIS TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell(round([pisEstimado,            sum(pisEstimado)],            2));
+                            obj.Table.x_TABELA_APURACAO('PIS ESTIMADO',                   [monthIds, {'TOTAL'}]) = num2cell(round([pisEstimado,            sum(pisEstimado)],            2));
                             obj.Table.x_TABELA_APURACAO('PIS CONTÁBIL',                   [monthIds, {'TOTAL'}]) = num2cell(round([pisContabil,            sum(pisContabil)],            2));
-                            obj.Table.x_TABELA_APURACAO('COFINS TELECOM',                 [monthIds, {'TOTAL'}]) = num2cell(round([cofinsEstimado,         sum(cofinsEstimado)],         2));
+                            obj.Table.x_TABELA_APURACAO('COFINS ESTIMADO',                [monthIds, {'TOTAL'}]) = num2cell(round([cofinsEstimado,         sum(cofinsEstimado)],         2));
                             obj.Table.x_TABELA_APURACAO('COFINS CONTÁBIL',                [monthIds, {'TOTAL'}]) = num2cell(round([cofinsContabil,         sum(cofinsContabil)],         2));
                             obj.Table.x_TABELA_APURACAO('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell(round([baseCalculoFustFunttel, sum(baseCalculoFustFunttel)], 2));
                             obj.Table.x_TABELA_APURACAO('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell(round([fustApurado,            sum(fustApurado)],            2));

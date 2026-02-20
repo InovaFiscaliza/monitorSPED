@@ -170,13 +170,17 @@ classdef (Abstract) Table
         % TABELAS PARA SHAREPOINT (SCARAB)
         %-----------------------------------------------------------------%
         function jsonFileContent = scarabJsonFile(projectData, context, ecdObj, correlationKey, executionMode, issueDetails)
-            entityGroupName = projectData.modules.(context).ui.entity.name;
-            entityGroupId = projectData.modules.(context).ui.entity.id;
             if isscalar(ecdObj)
-                entityGroupName = ecdObj(1).CompanyName;
-                entityGroupId = ecdObj(1).CompanyId;
+                [entityId, status] = checkCNPJOrCPF(ecdObj(1).CompanyId, 'NumberValidation');
+
+                projectData.modules.(context).ui.entity.name   = ecdObj(1).CompanyName;
+                projectData.modules.(context).ui.entity.id     = entityId;
+                projectData.modules.(context).ui.entity.status = status;
             end
 
+            entityGroupName = projectData.modules.(context).ui.entity.name;
+            entityGroupId = projectData.modules.(context).ui.entity.id;
+            
             jsonFileContent = struct( ...
                 'schemaVersion', 1, ...
                 'clientName', class.Constants.appName, ...

@@ -31,5 +31,16 @@
         "Version": "1.00",
         "Release": "14/11/2025",
         "UserData": []
+    },
+    {
+        "Name": "Análise contábil (Relatório de Fiscalização) (FIGF)",
+        "File": "RF - Análise contábil (FIGF).json",
+        "Module": "ECD",
+        "DocumentType": "Relatório de Fiscalização",
+        "Description": "Relatório de análise de arquivos contábeis para fins de apuração dos valores devidos de FUST e FUNTTEL.",
+        "Author": "Enilsio Pereira Luiz Filho",
+        "Version": "1.00",
+        "Release": "19/02/2026",
+        "UserData": []
     }
 ]
