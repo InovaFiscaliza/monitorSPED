@@ -407,19 +407,19 @@ classdef (Abstract) ECDBase
             'Apurado?  ✎',             'categorical', [],  'Campo da tabela customizada "x_CONTAS_ANOTACAO"';
             'Alíquota ICMS',            'cell',     [],     'Campo da tabela customizada "x_CONTAS_ANOTACAO"';
             'Observação  ✎',           'cell',     [],     'Campo da tabela customizada "x_CONTAS_ANOTACAO"';
-            '01',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE_GERAL", "x_BALANCETE_RESULTADO" e "x_TABELA_APURACAO"';
-            '02',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE_GERAL", "x_BALANCETE_RESULTADO" e "x_TABELA_APURACAO"';
-            '03',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE_GERAL", "x_BALANCETE_RESULTADO" e "x_TABELA_APURACAO"';
-            '04',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE_GERAL", "x_BALANCETE_RESULTADO" e "x_TABELA_APURACAO"';
-            '05',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE_GERAL", "x_BALANCETE_RESULTADO" e "x_TABELA_APURACAO"';
-            '06',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE_GERAL", "x_BALANCETE_RESULTADO" e "x_TABELA_APURACAO"';
-            '07',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE_GERAL", "x_BALANCETE_RESULTADO" e "x_TABELA_APURACAO"';
-            '08',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE_GERAL", "x_BALANCETE_RESULTADO" e "x_TABELA_APURACAO"';
-            '09',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE_GERAL", "x_BALANCETE_RESULTADO" e "x_TABELA_APURACAO"';
-            '10',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE_GERAL", "x_BALANCETE_RESULTADO" e "x_TABELA_APURACAO"';
-            '11',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE_GERAL", "x_BALANCETE_RESULTADO" e "x_TABELA_APURACAO"';
-            '12',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE_GERAL", "x_BALANCETE_RESULTADO" e "x_TABELA_APURACAO"';
-            'TOTAL',                    'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE_GERAL", "x_BALANCETE_RESULTADO" e "x_TABELA_APURACAO"' ...
+            '01',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE" e "x_APURACAO"';
+            '02',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE" e "x_APURACAO"';
+            '03',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE" e "x_APURACAO"';
+            '04',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE" e "x_APURACAO"';
+            '05',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE" e "x_APURACAO"';
+            '06',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE" e "x_APURACAO"';
+            '07',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE" e "x_APURACAO"';
+            '08',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE" e "x_APURACAO"';
+            '09',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE" e "x_APURACAO"';
+            '10',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE" e "x_APURACAO"';
+            '11',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE" e "x_APURACAO"';
+            '12',                       'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE" e "x_APURACAO"';
+            'TOTAL',                    'double',   'bank', 'Campo das tabelas customizadas "x_BALANCETE" e "x_APURACAO"' ...
         }, 'VariableNames', {'Field','DataType','Format','Description'});
     end
 
@@ -535,7 +535,7 @@ classdef (Abstract) ECDBase
         %-----------------------------------------------------------------%
         function tableOut = initializeCustomTable(tableId, varargin)
             arguments
-                tableId {mustBeMember(tableId, {'_BALANCETE_GERAL', '_CONTAS_ANOTACAO', '_CONTAS_DESCRICAO', '_CONTAS_HISTORICO', '_TABELA_APURACAO', '_TABELA_APURACAO_INTERCONEXAO'})}
+                tableId {mustBeMember(tableId, {'_BALANCETE_GERAL', '_CONTAS_ANOTACAO', '_CONTAS_DESCRICAO', '_CONTAS_HISTORICO', '_APURACAO_GERAL', '_APURACAO_INTERCONEXAO'})}
             end
 
             arguments (Repeating)
@@ -566,7 +566,7 @@ classdef (Abstract) ECDBase
 
                     tableOut = table( ...
                         accountList, ...
-                        repmat(categorical("-", generalSettings.context.ECD.accountOptions, 'Protected', true), numAccounts, 1), ...
+                        repmat(categorical("-", generalSettings.context.ECD.accountOptions,         'Protected', true), numAccounts, 1), ...
                         repmat(categorical("-", generalSettings.context.ECD.interconnectionOptions, 'Protected', true), numAccounts, 1), ...
                         repmat({'-'}, numAccounts, 1), ...
                         repmat({''}, numAccounts, 1), ...
@@ -589,12 +589,20 @@ classdef (Abstract) ECDBase
                         'VariableTypes', {'cell', 'double', 'cell'} ...
                     );
 
-                case {'_TABELA_APURACAO', '_TABELA_APURACAO_INTERCONEXAO'}
+                case '_APURACAO_GERAL'
                     tableOut = table( ...
                         'Size', [11, 13], ...
                         'VariableNames', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
                         'VariableTypes', {'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'}, ...
                         'RowNames', {'ROB TELECOM', 'ICMS ESTIMADO', 'ICMS CONTÁBIL', 'BÁSE DE CÁLCULO (PIS/COFINS)', 'PIS ESTIMADO', 'PIS CONTÁBIL', 'COFINS ESTIMADO', 'COFINS CONTÁBIL', 'BÁSE DE CÁLCULO (FUST/FUNTTEL)', 'VALOR APURADO FUST', 'VALOR APURADO FUNTTEL'} ...
+                    );
+
+                case '_APURACAO_INTERCONEXAO'
+                    tableOut = table( ...
+                        'Size', [8, 13], ...
+                        'VariableNames', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
+                        'VariableTypes', {'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'}, ...
+                        'RowNames', {'ROB TELECOM', 'ICMS ESTIMADO', 'BÁSE DE CÁLCULO (PIS/COFINS)', 'PIS ESTIMADO', 'COFINS ESTIMADO', 'BÁSE DE CÁLCULO (FUST/FUNTTEL)', 'VALOR APURADO FUST', 'VALOR APURADO FUNTTEL'} ...
                     );
             end
         end

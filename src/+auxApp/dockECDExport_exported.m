@@ -2,26 +2,27 @@ classdef dockECDExport_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure            matlab.ui.Figure
-        GridLayout          matlab.ui.container.GridLayout
-        Document            matlab.ui.container.GridLayout
-        btnOK               matlab.ui.control.Button
-        Tree                matlab.ui.container.CheckBoxTree
-        GeneralAspects      matlab.ui.container.TreeNode
-        x0000               matlab.ui.container.TreeNode
-        xI030               matlab.ui.container.TreeNode
-        x9900               matlab.ui.container.TreeNode
-        AccountBook         matlab.ui.container.TreeNode
-        xI050_I051_I052     matlab.ui.container.TreeNode
-        AccountDescription  matlab.ui.container.TreeNode
-        AccountSummary      matlab.ui.container.TreeNode
-        xI200_I250          matlab.ui.container.TreeNode
-        SummaryGeneral      matlab.ui.container.TreeNode
-        SummaryResults      matlab.ui.container.TreeNode
-        PlanilhaApuracao    matlab.ui.container.TreeNode
-        RTFFiles            matlab.ui.container.TreeNode
-        eFiscalizaLabel     matlab.ui.control.Label
-        btnClose            matlab.ui.control.Image
+        UIFigure              matlab.ui.Figure
+        GridLayout            matlab.ui.container.GridLayout
+        Document              matlab.ui.container.GridLayout
+        btnOK                 matlab.ui.control.Button
+        Tree                  matlab.ui.container.CheckBoxTree
+        GeneralAspects        matlab.ui.container.TreeNode
+        x0000                 matlab.ui.container.TreeNode
+        xI030                 matlab.ui.container.TreeNode
+        x9900                 matlab.ui.container.TreeNode
+        AccountBook           matlab.ui.container.TreeNode
+        xI050_I051_I052       matlab.ui.container.TreeNode
+        AccountDescription    matlab.ui.container.TreeNode
+        AccountSummary        matlab.ui.container.TreeNode
+        xI200_I250            matlab.ui.container.TreeNode
+        SummaryGeneral        matlab.ui.container.TreeNode
+        SummaryResults        matlab.ui.container.TreeNode
+        ApuracaoGeral         matlab.ui.container.TreeNode
+        ApuracaoInterconexao  matlab.ui.container.TreeNode
+        RTFFiles              matlab.ui.container.TreeNode
+        eFiscalizaLabel       matlab.ui.control.Label
+        btnClose              matlab.ui.control.Image
     end
 
     
@@ -114,7 +115,7 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             if isempty(Container)
                 app.UIFigure = uifigure('Visible', 'off');
                 app.UIFigure.AutoResizeChildren = 'off';
-                app.UIFigure.Position = [92 92 460 404];
+                app.UIFigure.Position = [92 92 460 419];
                 app.UIFigure.Name = 'monitorSPED';
                 app.UIFigure.Icon = 'icon_16.png';
                 app.UIFigure.CloseRequestFcn = createCallbackFcn(app, @closeFcn, true);
@@ -228,10 +229,15 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             app.SummaryResults.Tag = 'x_BALANCETE_RESULTADO';
             app.SummaryResults.Text = 'Balancete Resultado';
 
-            % Create PlanilhaApuracao
-            app.PlanilhaApuracao = uitreenode(app.AccountSummary);
-            app.PlanilhaApuracao.Tag = 'x_TABELA_APURACAO';
-            app.PlanilhaApuracao.Text = 'Tabela Apuração';
+            % Create ApuracaoGeral
+            app.ApuracaoGeral = uitreenode(app.AccountSummary);
+            app.ApuracaoGeral.Tag = 'x_APURACAO_GERAL';
+            app.ApuracaoGeral.Text = 'Apuração Geral';
+
+            % Create ApuracaoInterconexao
+            app.ApuracaoInterconexao = uitreenode(app.AccountSummary);
+            app.ApuracaoInterconexao.Tag = 'x_APURACAO_INTERCONEXAO';
+            app.ApuracaoInterconexao.Text = 'Apuração Interconexão';
 
             % Create RTFFiles
             app.RTFFiles = uitreenode(app.Tree);

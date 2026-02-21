@@ -1,5 +1,5 @@
 {
-    "version": 0.92,
+    "version": 0.97,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -69,8 +69,8 @@
                     "_CONTAS_ANOTACAO",
                     "_CONTAS_DESCRICAO",
                     "_CONTAS_HISTORICO",
-                    "_TABELA_APURACAO",
-                    "_TABELA_APURACAO_INTERCONEXAO",
+                    "_APURACAO_GERAL",
+                    "_APURACAO_INTERCONEXAO",
                     "C050_C051_C052",
                     "I050_I051_I052",
                     "I150_I155",
@@ -79,8 +79,8 @@
                 ],
                 "autoload": [
                     "_CONTAS_DESCRICAO",
-                    "_TABELA_APURACAO",
-                    "_TABELA_APURACAO_INTERCONEXAO"
+                    "_APURACAO_GERAL",
+                    "_APURACAO_INTERCONEXAO"
                 ]
             },
             "cacheTables": [
@@ -92,8 +92,8 @@
                 "_CONTAS_ANOTACAO",
                 "_CONTAS_DESCRICAO",
                 "_CONTAS_HISTORICO",
-                "_TABELA_APURACAO",
-                "_TABELA_APURACAO_INTERCONEXAO"
+                "_APURACAO_GERAL",
+                "_APURACAO_INTERCONEXAO"
             ],
             "accountOptions": [
                 "-",
@@ -110,6 +110,7 @@
                 "EILD"
             ],
             "taxConfig": {
+                "ICMS_INTERCONEXAO": 0,
                 "PIS": 0.0065,
                 "COFINS": 0.03,
                 "FUST": 0.01,

@@ -24,6 +24,8 @@ classdef winConfig_exported < matlab.apps.AppBase
         CofinsLabel                  matlab.ui.control.Label
         PIS                          matlab.ui.control.Spinner
         PISLabel                     matlab.ui.control.Label
+        ICMS                         matlab.ui.control.Spinner
+        ICMSLabel                    matlab.ui.control.Label
         configAnalysisPanel2Label    matlab.ui.control.Label
         configAnalysisPanel1         matlab.ui.container.Panel
         configAnalysisGrid1          matlab.ui.container.GridLayout
@@ -238,7 +240,8 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.CheckStatus.Value = app.mainApp.General.context.FILE.checkStatus;
 
             % ECD
-            app.PIS.Value = 100 * app.mainApp.General.context.ECD.taxConfig.PIS;
+            app.ICMS.Value   = 100 * app.mainApp.General.context.ECD.taxConfig.ICMS_INTERCONEXAO;
+            app.PIS.Value    = 100 * app.mainApp.General.context.ECD.taxConfig.PIS;
             app.Cofins.Value = 100 * app.mainApp.General.context.ECD.taxConfig.COFINS;
             app.AddAccountDescription.Value = app.mainApp.General.context.ECD.accountDescriptionScope;
 
@@ -438,6 +441,10 @@ classdef winConfig_exported < matlab.apps.AppBase
 
                 case app.CheckStatus
                     app.mainApp.General.context.FILE.checkStatus = app.CheckStatus.Value;
+
+                case app.ICMS
+                    app.mainApp.General.context.ECD.taxConfig.ICMS_INTERCONEXAO = app.ICMS.Value / 100;
+                    ipcMainMatlabCallsHandler(app.mainApp, app, 'onICMSTaxChanged')
 
                 case app.PIS
                     app.mainApp.General.context.ECD.taxConfig.PIS = app.PIS.Value / 100;
@@ -803,14 +810,30 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create configAnalysisGrid2
             app.configAnalysisGrid2 = uigridlayout(app.configAnalysisPanel2);
             app.configAnalysisGrid2.ColumnWidth = {350, 110, '1x'};
-            app.configAnalysisGrid2.RowHeight = {22, 22, 22};
+            app.configAnalysisGrid2.RowHeight = {22, 22, 22, 22};
             app.configAnalysisGrid2.RowSpacing = 5;
             app.configAnalysisGrid2.BackgroundColor = [1 1 1];
+
+            % Create ICMSLabel
+            app.ICMSLabel = uilabel(app.configAnalysisGrid2);
+            app.ICMSLabel.FontSize = 11;
+            app.ICMSLabel.Layout.Row = 1;
+            app.ICMSLabel.Layout.Column = 1;
+            app.ICMSLabel.Text = 'Valor padrão ICMS INTERCONEXÃO (%):';
+
+            % Create ICMS
+            app.ICMS = uispinner(app.configAnalysisGrid2);
+            app.ICMS.Step = 0.1;
+            app.ICMS.Limits = [0 Inf];
+            app.ICMS.ValueDisplayFormat = '%.2f';
+            app.ICMS.FontSize = 11;
+            app.ICMS.Layout.Row = 1;
+            app.ICMS.Layout.Column = 2;
 
             % Create PISLabel
             app.PISLabel = uilabel(app.configAnalysisGrid2);
             app.PISLabel.FontSize = 11;
-            app.PISLabel.Layout.Row = 1;
+            app.PISLabel.Layout.Row = 2;
             app.PISLabel.Layout.Column = 1;
             app.PISLabel.Text = 'Valor padrão PIS (%):';
 
@@ -821,14 +844,14 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.PIS.ValueDisplayFormat = '%.2f';
             app.PIS.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
             app.PIS.FontSize = 11;
-            app.PIS.Layout.Row = 1;
+            app.PIS.Layout.Row = 2;
             app.PIS.Layout.Column = 2;
             app.PIS.Value = 0.65;
 
             % Create CofinsLabel
             app.CofinsLabel = uilabel(app.configAnalysisGrid2);
             app.CofinsLabel.FontSize = 11;
-            app.CofinsLabel.Layout.Row = 2;
+            app.CofinsLabel.Layout.Row = 3;
             app.CofinsLabel.Layout.Column = 1;
             app.CofinsLabel.Text = 'Valor padrão COFINS (%):';
 
@@ -839,7 +862,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.Cofins.ValueDisplayFormat = '%.2f';
             app.Cofins.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
             app.Cofins.FontSize = 11;
-            app.Cofins.Layout.Row = 2;
+            app.Cofins.Layout.Row = 3;
             app.Cofins.Layout.Column = 2;
             app.Cofins.Value = 3;
 
@@ -848,7 +871,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.AddAccountDescription.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
             app.AddAccountDescription.Text = 'Habilita a inclusão da descrição da conta (coluna "CTA") sempre que o registro em análise possuir a coluna "COD_CTA".';
             app.AddAccountDescription.FontSize = 11;
-            app.AddAccountDescription.Layout.Row = 3;
+            app.AddAccountDescription.Layout.Row = 4;
             app.AddAccountDescription.Layout.Column = [1 3];
 
             % Create SubTab3

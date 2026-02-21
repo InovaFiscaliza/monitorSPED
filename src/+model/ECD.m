@@ -308,8 +308,7 @@ classdef ECD < handle
                                                                 'GUI.IcmsRate';
                                                                 'Table.NonEssentialFiles';
                                                                 'Table.x_CONTAS_ANOTACAO';
-                                                                'Table.x_TABELA_APURACAO'; ...
-                                                                'Table.x_TABELA_APURACAO_INTERCONEXAO' })}
+                                                                'Table.x_APURACAO_GERAL' })}
                 updateType
             end
 
@@ -506,27 +505,32 @@ classdef ECD < handle
                             error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
                     end
 
-                    update(obj, 'Table.x_TABELA_APURACAO', 'accountValueChanged', generalSettings)
+                    update(obj, 'Table.x_APURACAO_GERAL', 'accountValueChanged', generalSettings)
 
-                case 'Table.x_TABELA_APURACAO'
+                case 'Table.x_APURACAO_GERAL'
                     switch updateType
                         case 'startup'
-                            obj.Table.x_TABELA_APURACAO = model.ECDBase.initializeCustomTable('_TABELA_APURACAO');
+                            obj.Table.x_APURACAO_GERAL        = model.ECDBase.initializeCustomTable('_APURACAO_GERAL');
+                            obj.Table.x_APURACAO_INTERCONEXAO = model.ECDBase.initializeCustomTable('_APURACAO_INTERCONEXAO');
 
                         case 'accountValueChanged'
                             generalSettings   = varargin{1};
-                            pisDefaultTax     = generalSettings.context.ECD.taxConfig.PIS;     % 0.0065;
-                            cofinsDefaultTax  = generalSettings.context.ECD.taxConfig.COFINS;  % 0.03;
-                            fustDefaultTax    = generalSettings.context.ECD.taxConfig.FUST;    % 0.01;
-                            funttelDefaultTax = generalSettings.context.ECD.taxConfig.FUNTTEL; % 0.005;
                             
+                            itxIcmsDefaultTax = generalSettings.context.ECD.taxConfig.ICMS_INTERCONEXAO; % 0;
+                            pisDefaultTax     = generalSettings.context.ECD.taxConfig.PIS;               % 0.0065;
+                            cofinsDefaultTax  = generalSettings.context.ECD.taxConfig.COFINS;            % 0.03;
+                            fustDefaultTax    = generalSettings.context.ECD.taxConfig.FUST;              % 0.01;
+                            funttelDefaultTax = generalSettings.context.ECD.taxConfig.FUNTTEL;           % 0.005;
+                            monthIds          = {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'};
+                            
+                            
+                            % ## _APURACAO_GERAL ## 
                             robContabilIdx    = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "Sim");
                             icmsContabilIdx   = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "ICMS Telecom");
                             pisContabilIdx    = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "PIS Telecom");
                             cofinsContabilIdx = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "COFINS Telecom");
 
-                            % ## ROB / ICMS ##
-                            monthIds          = {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'};
+                            % (a) ROB / ICMS
                             robContabil       = zeros(1, 12);
                             robContabilTable  = innerjoin(obj.Table.x_CONTAS_ANOTACAO(robContabilIdx, {'COD_CTA', 'Alíquota ICMS'}), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
                             if ~isempty(robContabilTable)
@@ -557,8 +561,7 @@ classdef ECD < handle
                                 icmsEscolhido = icmsContabil;
                             end
 
-
-                            % ## PIS/COFINS ##
+                            % (b) PIS/COFINS
                             baseCalculoPisCofins = robContabil + icmsEscolhido;                            
                             
                             pisEstimado          = - pisDefaultTax    .* baseCalculoPisCofins;
@@ -587,35 +590,57 @@ classdef ECD < handle
                                 cofinsEscolhido  = cofinsContabil;
                             end
 
-                            % ## FUST/FUNTTEL ##
+                            % (c) FUST/FUNTTEL
                             baseCalculoFustFunttel = baseCalculoPisCofins + pisEscolhido + cofinsEscolhido;
                             fustApurado            = - fustDefaultTax    .* baseCalculoFustFunttel;
                             funttelApurado         = - funttelDefaultTax .* baseCalculoFustFunttel;
 
-                            % ## ATUALIZA TABELA ##                            
-                            obj.Table.x_TABELA_APURACAO('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell(round([robContabil,            sum(robContabil)],            2));
-                            obj.Table.x_TABELA_APURACAO('ICMS ESTIMADO',                  [monthIds, {'TOTAL'}]) = num2cell(round([icmsEstimado,           sum(icmsEstimado)],           2));
-                            obj.Table.x_TABELA_APURACAO('ICMS CONTÁBIL',                  [monthIds, {'TOTAL'}]) = num2cell(round([icmsContabil,           sum(icmsContabil)],           2));
-                            obj.Table.x_TABELA_APURACAO('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell(round([baseCalculoPisCofins,   sum(baseCalculoPisCofins)],   2));
-                            obj.Table.x_TABELA_APURACAO('PIS ESTIMADO',                   [monthIds, {'TOTAL'}]) = num2cell(round([pisEstimado,            sum(pisEstimado)],            2));
-                            obj.Table.x_TABELA_APURACAO('PIS CONTÁBIL',                   [monthIds, {'TOTAL'}]) = num2cell(round([pisContabil,            sum(pisContabil)],            2));
-                            obj.Table.x_TABELA_APURACAO('COFINS ESTIMADO',                [monthIds, {'TOTAL'}]) = num2cell(round([cofinsEstimado,         sum(cofinsEstimado)],         2));
-                            obj.Table.x_TABELA_APURACAO('COFINS CONTÁBIL',                [monthIds, {'TOTAL'}]) = num2cell(round([cofinsContabil,         sum(cofinsContabil)],         2));
-                            obj.Table.x_TABELA_APURACAO('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell(round([baseCalculoFustFunttel, sum(baseCalculoFustFunttel)], 2));
-                            obj.Table.x_TABELA_APURACAO('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell(round([fustApurado,            sum(fustApurado)],            2));
-                            obj.Table.x_TABELA_APURACAO('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell(round([funttelApurado,         sum(funttelApurado)],         2));
+                            % (d) ATUALIZA TABELA
+                            obj.Table.x_APURACAO_GERAL('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell(round([robContabil,            sum(robContabil)],            2));
+                            obj.Table.x_APURACAO_GERAL('ICMS ESTIMADO',                  [monthIds, {'TOTAL'}]) = num2cell(round([icmsEstimado,           sum(icmsEstimado)],           2));
+                            obj.Table.x_APURACAO_GERAL('ICMS CONTÁBIL',                  [monthIds, {'TOTAL'}]) = num2cell(round([icmsContabil,           sum(icmsContabil)],           2));
+                            obj.Table.x_APURACAO_GERAL('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell(round([baseCalculoPisCofins,   sum(baseCalculoPisCofins)],   2));
+                            obj.Table.x_APURACAO_GERAL('PIS ESTIMADO',                   [monthIds, {'TOTAL'}]) = num2cell(round([pisEstimado,            sum(pisEstimado)],            2));
+                            obj.Table.x_APURACAO_GERAL('PIS CONTÁBIL',                   [monthIds, {'TOTAL'}]) = num2cell(round([pisContabil,            sum(pisContabil)],            2));
+                            obj.Table.x_APURACAO_GERAL('COFINS ESTIMADO',                [monthIds, {'TOTAL'}]) = num2cell(round([cofinsEstimado,         sum(cofinsEstimado)],         2));
+                            obj.Table.x_APURACAO_GERAL('COFINS CONTÁBIL',                [monthIds, {'TOTAL'}]) = num2cell(round([cofinsContabil,         sum(cofinsContabil)],         2));
+                            obj.Table.x_APURACAO_GERAL('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell(round([baseCalculoFustFunttel, sum(baseCalculoFustFunttel)], 2));
+                            obj.Table.x_APURACAO_GERAL('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell(round([fustApurado,            sum(fustApurado)],            2));
+                            obj.Table.x_APURACAO_GERAL('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell(round([funttelApurado,         sum(funttelApurado)],         2));
 
-                        otherwise
-                            error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
-                    end
+                            
+                            % ## _APURACAO_INTERCONEXÃO ## 
+                            itxRobContabilIdx   = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "Sim" & ismember(obj.Table.x_CONTAS_ANOTACAO.('Interconexão?  ✎'), ["ITX", "EILD"]));
+                            
+                            % (a) ROB / ICMS INTERCONEXÃO
+                            itxRobContabil      = zeros(1, 12);
+                            itxIcmsEstimado     = zeros(1, 12);
 
-                case 'Table.x_TABELA_APURACAO_INTERCONEXAO'
-                    switch updateType
-                        case 'startup'
-                            obj.Table.x_TABELA_APURACAO_INTERCONEXAO = model.ECDBase.initializeCustomTable('_TABELA_APURACAO_INTERCONEXAO');
+                            itxRobContabilTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO(itxRobContabilIdx, {'COD_CTA', 'Alíquota ICMS'}), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
+                            if ~isempty(itxRobContabilTable)
+                                itxRobContabil  = sum(itxRobContabilTable{:, monthIds}, 1);
+                                itxIcmsEstimado = - itxIcmsDefaultTax .* itxRobContabil;
+                            end
 
-                        case 'accountValueChanged'
-                            % ...
+                            % (b) PIS/COFINS INTERCONEXÃO
+                            itxBaseCalculoPisCofins   = itxRobContabil + itxIcmsEstimado;
+                            itxPisEstimado            = - pisDefaultTax    .* itxBaseCalculoPisCofins;
+                            itxCofinsEstimado         = - cofinsDefaultTax .* itxBaseCalculoPisCofins;
+
+                            % (c) FUST/FUNTTEL INTERCONEXÃO
+                            itxBaseCalculoFustFunttel = itxBaseCalculoPisCofins + itxPisEstimado + itxCofinsEstimado;
+                            itxFustApurado            = - fustDefaultTax    .* itxBaseCalculoFustFunttel;
+                            itxFunttelApurado         = - funttelDefaultTax .* itxBaseCalculoFustFunttel;
+
+                            % (d) ATUALIZA TABELA INTERCONEXÃO
+                            obj.Table.x_APURACAO_INTERCONEXAO('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell(round([itxRobContabil,            sum(itxRobContabil)],            2));
+                            obj.Table.x_APURACAO_INTERCONEXAO('ICMS ESTIMADO',                  [monthIds, {'TOTAL'}]) = num2cell(round([itxIcmsEstimado,           sum(itxIcmsEstimado)],           2));
+                            obj.Table.x_APURACAO_INTERCONEXAO('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell(round([itxBaseCalculoPisCofins,   sum(itxBaseCalculoPisCofins)],   2));
+                            obj.Table.x_APURACAO_INTERCONEXAO('PIS ESTIMADO',                   [monthIds, {'TOTAL'}]) = num2cell(round([itxPisEstimado,            sum(itxPisEstimado)],            2));
+                            obj.Table.x_APURACAO_INTERCONEXAO('COFINS ESTIMADO',                [monthIds, {'TOTAL'}]) = num2cell(round([itxCofinsEstimado,         sum(itxCofinsEstimado)],         2));
+                            obj.Table.x_APURACAO_INTERCONEXAO('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell(round([itxBaseCalculoFustFunttel, sum(itxBaseCalculoFustFunttel)], 2));
+                            obj.Table.x_APURACAO_INTERCONEXAO('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell(round([itxFustApurado,            sum(itxFustApurado)],            2));
+                            obj.Table.x_APURACAO_INTERCONEXAO('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell(round([itxFunttelApurado,         sum(itxFunttelApurado)],         2));
 
                         otherwise
                             error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
@@ -852,6 +877,43 @@ classdef ECD < handle
         
             outputTable = movevars(outputTable, accountColumn, 'After', 'COD_CTA');
         end
+
+        %-----------------------------------------------------------------%
+        function [status, msg] = validateReportGenerationRequirements(obj)
+            checkIfScalar(obj)
+        
+            status = true;
+            msg = {};
+        
+            cacheTableIds = {
+                'x_APURACAO_GERAL';
+                'x_APURACAO_INTERCONEXAO';
+                'x_BALANCETE_RESULTADO';
+                'x_CONTAS_ANOTACAO'
+            };
+        
+            % Confirma que tabelas foram criadas e estão em cache...
+            for ii = 1:numel(cacheTableIds)
+                if ~isfield(obj.Table, cacheTableIds{ii})
+                    status = false;
+                    msg{end+1} = sprintf('• Tabela %s não está disponível em cache.', cacheTableIds{ii});
+                end
+            end
+        
+            % Verifica coerência entre ROB e ITX/EILD...
+            if isfield(obj.Table, 'x_CONTAS_ANOTACAO')
+                robAccountIdxs = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "Sim");
+                itxAccountIdxs = find(ismember(obj.Table.x_CONTAS_ANOTACAO.('Interconexão?  ✎'), ["ITX", "EILD"]));
+            
+                invalidAnnotationIdxs = setdiff(itxAccountIdxs, robAccountIdxs);            
+                if ~isempty(invalidAnnotationIdxs)
+                    status = false;
+                    msg{end+1} = '• Existe ao menos uma conta identificada como ITX/EILD que não consta como "Sim" na coluna "Apurado?".';
+                end
+            end
+
+            msg = strjoin(msg, '<br>');
+        end
     end
 
 
@@ -876,7 +938,7 @@ classdef ECD < handle
                     obj.Table.x_BALANCETE_RESULTADO = filterTrialBalanceByAccountType(obj, '04');
 
                 case '_CONTAS_ANOTACAO'
-                    isTableRead(obj, {'_BALANCETE_RESULTADO',  '_CONTAS_HISTORICO', '_TABELA_APURACAO'}, generalSettings);
+                    isTableRead(obj, {'_BALANCETE_RESULTADO',  '_CONTAS_HISTORICO', '_APURACAO_GERAL'}, generalSettings);
                     update(obj, 'Table.x_CONTAS_ANOTACAO', 'startup', generalSettings)
 
                 case '_CONTAS_DESCRICAO'
@@ -981,11 +1043,8 @@ classdef ECD < handle
 
                     obj.Table.x_CONTAS_HISTORICO = x_CONTAS_HISTORICO;
 
-                case '_TABELA_APURACAO'
-                    update(obj, 'Table.x_TABELA_APURACAO', 'startup')
-
-                case '_TABELA_APURACAO_INTERCONEXAO'
-                    update(obj, 'Table.x_TABELA_APURACAO_INTERCONEXAO', 'startup')
+                case {'_APURACAO_GERAL', '_APURACAO_INTERCONEXAO'}
+                    update(obj, 'Table.x_APURACAO_GERAL', 'startup')
 
                 case {'C050_C051_C052', 'I050_I051_I052', 'I150_I155', 'I350_I355', 'I200_I250'}
                     switch tableId

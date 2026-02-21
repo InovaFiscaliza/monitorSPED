@@ -230,10 +230,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                             onFileSortMethodValueChanged(app)
                                         end
         
-                                    case {'onPISTaxChanged', 'onCOFINSTaxChanged'}
+                                    case {'onICMSTaxChanged', 'onPISTaxChanged', 'onCOFINSTaxChanged'}
                                         for ii = 1:numel(app.ecdObj)
-                                            if isfield(app.ecdObj(ii).Table, 'x_TABELA_APURACAO')
-                                                update(app.ecdObj(ii), 'Table.x_TABELA_APURACAO', 'accountValueChanged', app.General)
+                                            if isfield(app.ecdObj(ii).Table, 'x_APURACAO_GERAL')
+                                                update(app.ecdObj(ii), 'Table.x_APURACAO_GERAL', 'accountValueChanged', app.General)
                                             end
                                         end
 

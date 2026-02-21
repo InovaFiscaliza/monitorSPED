@@ -137,7 +137,7 @@ classdef winECD_exported < matlab.apps.AppBase
                                 app.popupContainer.Parent.Visible = 0;
 
                             % auxApp.winConfig >> winMonitorSPED >> auxApp.winECD
-                            case {'onPISTaxChanged', 'onCOFINSTaxChanged'}
+                            case {'onICMSTaxChanged', 'onPISTaxChanged', 'onCOFINSTaxChanged'}
                                 forceUpdateTable(app)
 
                             % auxApp.dockECDAccount >> winMonitorSPED >> auxApp.winECD
@@ -561,7 +561,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 controller  = refTable(ii).controller;
                 tableId     = controller.Value;
                 
-                if ismember(tableId, {'_CONTAS_ANOTACAO', '_TABELA_APURACAO'})
+                if ismember(tableId, {'_CONTAS_ANOTACAO', '_APURACAO_GERAL', '_APURACAO_INTERCONEXAO'})
                     initialSelection = tableHandle.Selection;
                     controller.ValueChangedFcn(controller, struct('Source', controller))
 
@@ -1206,6 +1206,11 @@ classdef winECD_exported < matlab.apps.AppBase
                 reportVersion = app.projectData.modules.(context).ui.reportVersion;
     
                 msgWarning = {};
+                [auditorValidationStatus, auditorValidationMessage] = validateReportGenerationRequirements(app.ecdObj(fileIndex));
+                if ~auditorValidationStatus
+                    msgWarning{end+1} = auditorValidationMessage;
+                end
+
                 if ~validateReportRequirements(app.projectData, context, 'issue')
                     msgWarning{end+1} = sprintf('• O número da inspeção "%.0f" é inválido.', issue);
                 end

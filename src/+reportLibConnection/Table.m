@@ -132,13 +132,62 @@ classdef (Abstract) Table
         end
 
         %-----------------------------------------------------------------%
-        function Table = TabelaApuracao(analyzedData)
-            ecdObj = analyzedData.InfoSet.ecdObj;
+        function Table = TabelaApuracao(analyzedData, tableIdSuffix, layoutType)
+            arguments
+                analyzedData
+                tableIdSuffix char {mustBeMember(tableIdSuffix, {'GERAL', 'INTERCONEXAO'})}
+                layoutType    char {mustBeMember(layoutType,    {'normal', 'summary'})} = 'normal'
+            end
 
+            ecdObj = analyzedData.InfoSet.ecdObj;
             checkIfScalar(ecdObj)
 
-            rawTable = ecdObj.Table.x_TABELA_APURACAO;
-            Table = [table(rawTable.Properties.RowNames, 'VariableName', {'TIPO'}), rawTable];
+            rawTable = ecdObj.Table.(['x_APURACAO_' tableIdSuffix]);
+            switch tableIdSuffix
+                case 'GERAL'
+                    if strcmp(layoutType, 'summary')
+                        icmsEscolhido   = 'ICMS CONTÁBIL';
+                        pisEscolhido    = 'PIS CONTÁBIL';
+                        cofinsEscolhido = 'COFINS CONTÁBIL';
+
+                        if abs(rawTable{"ICMS ESTIMADO",   "TOTAL"}) < abs(rawTable{"ICMS CONTÁBIL",   "TOTAL"})
+                            icmsEscolhido = 'ICMS ESTIMADO';
+                        end
+
+                        if abs(rawTable{"PIS ESTIMADO",    "TOTAL"}) < abs(rawTable{"PIS CONTÁBIL",    "TOTAL"})
+                            pisEscolhido = 'PIS ESTIMADO';
+                        end
+
+                        if abs(rawTable{"COFINS ESTIMADO", "TOTAL"}) < abs(rawTable{"COFINS CONTÁBIL", "TOTAL"})
+                            cofinsEscolhido = 'COFINS ESTIMADO';
+                        end
+
+                        rawTable(setdiff(rawTable.Properties.RowNames, {'ROB TELECOM', icmsEscolhido, pisEscolhido, cofinsEscolhido, 'VALOR APURADO FUST', 'VALOR APURADO FUNTTEL'}), :) = [];
+                        rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, {icmsEscolhido, pisEscolhido, cofinsEscolhido}, {'ICMS', 'PIS', 'COFINS'});
+                    end
+
+
+                case 'INTERCONEXAO'
+                    rawTable(contains(rawTable.Properties.RowNames, 'BÁSE DE CÁLCULO'), :) = [];
+                    rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, {'ICMS ESTIMADO', 'PIS ESTIMADO', 'COFINS ESTIMADO'}, {'ICMS', 'PIS', 'COFINS'});
+            end
+
+            switch layoutType
+                case 'normal'
+                    switch tableIdSuffix
+                        case 'GERAL'
+                            rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, 'ROB TELECOM', 'ROB TELECOM (GERAL)');
+
+                        case 'INTERCONEXAO'
+                            rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, 'ROB TELECOM', 'ROB TELECOM (INTERCONEXÃO)');
+                    end
+
+                    Table = [table(rawTable.Properties.RowNames, 'VariableName', {'TIPO'}), rawTable];
+
+                case 'summary'
+                    rawTable = cell2table(table2cell(rawTable)', 'VariableNames', rawTable.Properties.RowNames, 'RowNames', rawTable.Properties.VariableNames);
+                    Table = [table(rawTable.Properties.RowNames, 'VariableName', {'MÊS'}), rawTable];
+            end
         end
 
         %-----------------------------------------------------------------%
@@ -149,7 +198,6 @@ classdef (Abstract) Table
             end
 
             ecdObj = analyzedData.InfoSet.ecdObj;
-
             checkIfScalar(ecdObj)
 
             rawTable = ecdObj.Table.x_CONTAS_ANOTACAO;
@@ -204,7 +252,7 @@ classdef (Abstract) Table
                 'accounts', [] ...
             );
 
-            taxEstimateSummary = struct('correlationKey', {}, 'entityName', {}, 'entityId', {}, 'entityState', {}, 'periodStart', {}, 'periodEnd', {}, 'robTelecom', {}, 'icmsTelecom', {}, 'icmsContabil', {}, 'baseCalculoPisCofins', {}, 'pisTelecom', {}, 'pisContabil', {}, 'cofinsTelecom', {}, 'cofinsContabil', {}, 'baseCalculoFustFunttel', {}, 'valorApuradoFust', {}, 'valorApuradoFunttel', {});
+            taxEstimateSummary = struct('correlationKey', {}, 'entityName', {}, 'entityId', {}, 'entityState', {}, 'periodStart', {}, 'periodEnd', {}, 'robTelecom', {}, 'icmsEstimado', {}, 'icmsContabil', {}, 'baseCalculoPisCofins', {}, 'pisEstimado', {}, 'pisContabil', {}, 'cofinsEstimado', {}, 'cofinsContabil', {}, 'baseCalculoFustFunttel', {}, 'valorApuradoFust', {}, 'valorApuradoFunttel', {});
             files = struct('correlationKey', {}, 'entityName', {}, 'entityId', {}, 'entityState', {}, 'fileName', {}, 'fileHash', {}, 'fileEncoding', {}, 'fileSentAt', {}, 'periodStart', {}, 'periodEnd', {}, 'validationCheckedAt', {}, 'validationStatus', {}, 'validationMessage', {});
             accounts = [];
 
@@ -221,17 +269,17 @@ classdef (Abstract) Table
                     'entityState',            entityState, ...
                     'periodStart',            datestr(ecdObj(ii).Period(1), 'yyyymmdd'), ...
                     'periodEnd',              datestr(ecdObj(ii).Period(2), 'yyyymmdd'), ...
-                    'robTelecom',             ecdObj(ii).Table.x_TABELA_APURACAO{'ROB TELECOM', 'TOTAL'}, ...
-                    'icmsTelecom',            ecdObj(ii).Table.x_TABELA_APURACAO{'ICMS TELECOM', 'TOTAL'}, ...
-                    'icmsContabil',           ecdObj(ii).Table.x_TABELA_APURACAO{'ICMS CONTÁBIL', 'TOTAL'}, ...
-                    'baseCalculoPisCofins',   ecdObj(ii).Table.x_TABELA_APURACAO{'BÁSE DE CÁLCULO (PIS/COFINS)', 'TOTAL'}, ...
-                    'pisTelecom',             ecdObj(ii).Table.x_TABELA_APURACAO{'PIS TELECOM', 'TOTAL'}, ...
-                    'pisContabil',            ecdObj(ii).Table.x_TABELA_APURACAO{'PIS CONTÁBIL', 'TOTAL'}, ...
-                    'cofinsTelecom',          ecdObj(ii).Table.x_TABELA_APURACAO{'COFINS TELECOM', 'TOTAL'}, ...
-                    'cofinsContabil',         ecdObj(ii).Table.x_TABELA_APURACAO{'COFINS CONTÁBIL', 'TOTAL'}, ...
-                    'baseCalculoFustFunttel', ecdObj(ii).Table.x_TABELA_APURACAO{'BÁSE DE CÁLCULO (FUST/FUNTTEL)', 'TOTAL'}, ...
-                    'valorApuradoFust',       ecdObj(ii).Table.x_TABELA_APURACAO{'VALOR APURADO FUST', 'TOTAL'}, ...
-                    'valorApuradoFunttel',    ecdObj(ii).Table.x_TABELA_APURACAO{'VALOR APURADO FUNTTEL', 'TOTAL'} ...
+                    'robTelecom',             ecdObj(ii).Table.x_APURACAO_GERAL{'ROB TELECOM', 'TOTAL'}, ...
+                    'icmsEstimado',           ecdObj(ii).Table.x_APURACAO_GERAL{'ICMS ESTIMADO', 'TOTAL'}, ...
+                    'icmsContabil',           ecdObj(ii).Table.x_APURACAO_GERAL{'ICMS CONTÁBIL', 'TOTAL'}, ...
+                    'baseCalculoPisCofins',   ecdObj(ii).Table.x_APURACAO_GERAL{'BÁSE DE CÁLCULO (PIS/COFINS)', 'TOTAL'}, ...
+                    'pisEstimado',            ecdObj(ii).Table.x_APURACAO_GERAL{'PIS ESTIMADO', 'TOTAL'}, ...
+                    'pisContabil',            ecdObj(ii).Table.x_APURACAO_GERAL{'PIS CONTÁBIL', 'TOTAL'}, ...
+                    'cofinsEstimado',         ecdObj(ii).Table.x_APURACAO_GERAL{'COFINS ESTIMADO', 'TOTAL'}, ...
+                    'cofinsContabil',         ecdObj(ii).Table.x_APURACAO_GERAL{'COFINS CONTÁBIL', 'TOTAL'}, ...
+                    'baseCalculoFustFunttel', ecdObj(ii).Table.x_APURACAO_GERAL{'BÁSE DE CÁLCULO (FUST/FUNTTEL)', 'TOTAL'}, ...
+                    'valorApuradoFust',       ecdObj(ii).Table.x_APURACAO_GERAL{'VALOR APURADO FUST', 'TOTAL'}, ...
+                    'valorApuradoFunttel',    ecdObj(ii).Table.x_APURACAO_GERAL{'VALOR APURADO FUNTTEL', 'TOTAL'} ...
                 );
 
                 % FILES
