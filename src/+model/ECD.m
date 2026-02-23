@@ -180,7 +180,7 @@ classdef ECD < handle
 
                     % Leitura de outros registros essenciais de identificação
                     % ("0000" e "I030") e plano de contas ("I050").
-                    parseTableAndAddToCache(obj(idx), [{'0000', 'I030', 'I050'}, generalSettings.context.ECD.customTables.autoload'], generalSettings)
+                    parseTableAndAddToCache(obj(idx), generalSettings.context.ECD.customTables.autoload, generalSettings)
 
                     if isfield(obj(idx).Table, 'x0000') && ~isempty(obj(idx).Table.x0000)
                         obj(idx).CompanyName    = upper(strtrim(obj(idx).Table.x0000.NOME{1}));
@@ -260,7 +260,7 @@ classdef ECD < handle
         function parseTableAndAddToCache(obj, tableIdList, generalSettings)
             arguments
                 obj
-                tableIdList (1,:) cell {mustBeText}
+                tableIdList cell {mustBeText}
                 generalSettings
             end
 
@@ -389,7 +389,8 @@ classdef ECD < handle
                     switch updateType
                         case 'startup'
                             accountList = obj.Table.x_BALANCETE_RESULTADO.('COD_CTA');
-                            obj.Table.x_CONTAS_ANOTACAO = model.ECDBase.initializeCustomTable('_CONTAS_ANOTACAO', accountList, generalSettings);
+                            annotationAccountTemplate = innerjoin(model.ECDBase.initializeCustomTable('_CONTAS_ANOTACAO', accountList, generalSettings), obj.Table.x_CONTAS_DESCRICAO, 'Keys', 'COD_CTA', 'RightVariables', 'DESCRIÇÃO');
+                            obj.Table.x_CONTAS_ANOTACAO = movevars(annotationAccountTemplate, 'DESCRIÇÃO', 'After', 'COD_CTA');                            
 
                         case 'valueChanged'
                             rowIndex = varargin{2};
@@ -427,7 +428,17 @@ classdef ECD < handle
                                     obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){rowIndex} = jsonencode(obj.GUI.icmsRate.current);
                                 otherwise
                                     obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){rowIndex} = '-';
+                                    
+                                    if ismember(obj.Table.x_CONTAS_ANOTACAO.('Interconexão?  ✎')(rowIndex), ["ITX", "EILD"])
+                                        obj.Table.x_CONTAS_ANOTACAO.('Interconexão?  ✎')(rowIndex) = "-";
+                                    end
                             end
+
+                        case 'valueChanged:Interconexão?'
+                            rowIndex = varargin{2};
+                            newValue = varargin{3};
+
+                            obj.Table.x_CONTAS_ANOTACAO.('Interconexão?  ✎')(rowIndex) = newValue;
 
                         case 'valueChanged:Alíquota ICMS'
                             rowIndex = varargin{2};
@@ -440,13 +451,13 @@ classdef ECD < handle
                             newValue = varargin{3};
 
                             obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){rowIndex} = newValue;
+                            return
 
                         case 'autoFill'
-                            % Edição automática limita aos registros que ainda 
+                            % Edição automática limitada aos registros que ainda 
                             % não foram editados e, por isso, possuem valor '-'.
 
                             accountTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO, obj.Table.x_BALANCETE_RESULTADO, 'Keys', 'COD_CTA', 'RightVariables', 'TOTAL');
-                            accountTable = innerjoin(accountTable,                obj.Table.x_CONTAS_DESCRICAO,    'Keys', 'COD_CTA', 'RightVariables', 'DESCRIÇÃO');
 
                             for ii = 1:height(accountTable)
                                 if accountTable.('Apurado?  ✎')(ii) ~= "-"
@@ -498,8 +509,9 @@ classdef ECD < handle
                         case 'deleteAnnotation'
                             rowIndex = varargin{2};
                             accountList = obj.Table.x_BALANCETE_RESULTADO.('COD_CTA')(rowIndex);
-                            annotationAccountTemplate = model.ECDBase.initializeCustomTable('_CONTAS_ANOTACAO', accountList, generalSettings);
-                            obj.Table.x_CONTAS_ANOTACAO(rowIndex, :) = annotationAccountTemplate;
+                            
+                            annotationAccountTemplate = innerjoin(model.ECDBase.initializeCustomTable('_CONTAS_ANOTACAO', accountList, generalSettings), obj.Table.x_CONTAS_DESCRICAO, 'Keys', 'COD_CTA', 'RightVariables', 'DESCRIÇÃO');
+                            obj.Table.x_CONTAS_ANOTACAO(rowIndex, :) = movevars(annotationAccountTemplate, 'DESCRIÇÃO', 'After', 'COD_CTA');
 
                         otherwise
                             error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
@@ -548,6 +560,7 @@ classdef ECD < handle
 
                                 icmsEstimado  = icmsEstimado - icmsRate .* robContabilTable{ii, monthIds};
                             end
+                            icmsEstimado      = round(icmsEstimado, 2);
                             
                             icmsContabil      = zeros(1, 12);
                             icmsContabilTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO(icmsContabilIdx, 'COD_CTA'), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);                            
@@ -564,14 +577,14 @@ classdef ECD < handle
                             % (b) PIS/COFINS
                             baseCalculoPisCofins = robContabil + icmsEscolhido;                            
                             
-                            pisEstimado          = - pisDefaultTax    .* baseCalculoPisCofins;
+                            pisEstimado          = - round(pisDefaultTax    .* baseCalculoPisCofins, 2);
                             pisContabil          = zeros(1, 12);
                             pisContabilTable     = innerjoin(obj.Table.x_CONTAS_ANOTACAO(pisContabilIdx,    'COD_CTA'), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
                             if ~isempty(pisContabilTable)
                                 pisContabil      = sum(pisContabilTable{:, monthIds}, 1);
                             end
                             
-                            cofinsEstimado       = - cofinsDefaultTax .* baseCalculoPisCofins;
+                            cofinsEstimado       = - round(cofinsDefaultTax .* baseCalculoPisCofins, 2);
                             cofinsContabil       = zeros(1, 12);
                             cofinsContabilTable  = innerjoin(obj.Table.x_CONTAS_ANOTACAO(cofinsContabilIdx, 'COD_CTA'), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
                             if ~isempty(cofinsContabilTable)
@@ -619,13 +632,13 @@ classdef ECD < handle
                             itxRobContabilTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO(itxRobContabilIdx, {'COD_CTA', 'Alíquota ICMS'}), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
                             if ~isempty(itxRobContabilTable)
                                 itxRobContabil  = sum(itxRobContabilTable{:, monthIds}, 1);
-                                itxIcmsEstimado = - itxIcmsDefaultTax .* itxRobContabil;
+                                itxIcmsEstimado = - round(itxIcmsDefaultTax .* itxRobContabil, 2);
                             end
 
                             % (b) PIS/COFINS INTERCONEXÃO
                             itxBaseCalculoPisCofins   = itxRobContabil + itxIcmsEstimado;
-                            itxPisEstimado            = - pisDefaultTax    .* itxBaseCalculoPisCofins;
-                            itxCofinsEstimado         = - cofinsDefaultTax .* itxBaseCalculoPisCofins;
+                            itxPisEstimado            = - round(pisDefaultTax    .* itxBaseCalculoPisCofins, 2);
+                            itxCofinsEstimado         = - round(cofinsDefaultTax .* itxBaseCalculoPisCofins, 2);
 
                             % (c) FUST/FUNTTEL INTERCONEXÃO
                             itxBaseCalculoFustFunttel = itxBaseCalculoPisCofins + itxPisEstimado + itxCofinsEstimado;

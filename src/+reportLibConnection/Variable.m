@@ -141,6 +141,14 @@ classdef (Abstract) Variable
                         fieldValue = sprintf('R$ %.2f', fieldValue);
                     end
 
+                case 'FUST'
+                    fustValue    = abs(ecdObj.Table.('x_APURACAO_GERAL'){'VALOR APURADO FUST', 'TOTAL'});
+                    fieldValue   = sprintf('R$ %.2f (%s)', fustValue, util.numberToPortugueseCurrency(fustValue));
+
+                case 'FUNTTEL'
+                    funttelValue = abs(ecdObj.Table.('x_APURACAO_GERAL'){'VALOR APURADO FUNTTEL', 'TOTAL'});
+                    fieldValue   = sprintf('R$ %.2f (%s)', funttelValue, util.numberToPortugueseCurrency(funttelValue));
+
                 otherwise
                     error('UnexpectedFieldName')
             end

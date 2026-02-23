@@ -48,23 +48,31 @@
                 {
                     "Type": "ItemN2",
                     "Data": {
-                        "Editable": "false",
-                        "Text": "A fiscalização tributária tem início com a coleta, junto à empresa fiscalizada, dos arquivos contábeis necessários à apuração dos valores devidos ao FUST e ao FUNTTEL.",
+                        "Editable": "true",
+                        "Text": "A fiscalização tributária tem início com a coleta, junto à empresa fiscalizada, dos documentos e esclarecimentos necessários à apuração dos valores devidos ao FUST e ao FUNTTEL.",
                         "Variable": []
                     }
                 },
                 {
                     "Type": "ItemN2",
                     "Data": {
-                        "Editable": "false",
-                        "Text": "Em seguida, verifica-se a integridade e a autenticidade de cada arquivo. Para isso, calcula-se o respectivo <i>hash</i> e realiza-se a validação por meio do <i>webservice</i> disponibilizado pela Receita Federal, a fim de confirmar sua correspondência com o arquivo registrado na base de dados do órgão. Por se tratar de uma fotografia no tempo, poderá ser feita nova verificação mediante a inserção do <i>hash</i> do arquivo <a href=\"http://www.sped.fazenda.gov.br/appConsultaSituacaoContabil/\" target=\"_blank\" rel=\"noopener noreferrer\">aqui</a>.",
+                        "Editable": "true",
+                        "Text": "Uma vez obtida a Escrituração Contábil Digital (ECD), módulo do Sistema Público de Escrituração Digital (SPED), os dados são processados para análise.",
                         "Variable": []
                     }
                 },
                 {
                     "Type": "ItemN2",
                     "Data": {
-                        "Editable": "false",
+                        "Editable": "true",
+                        "Text": "Nesse processamento, verifica-se a integridade e a autenticidade de cada arquivo. Para tanto, calcula-se o respectivo <i>hash</i> e realiza-se a validação por meio do <i>webservice</i> disponibilizado pela Receita Federal, a fim de confirmar sua correspondência com o arquivo registrado na base de dados do órgão. Caso seja necessário verificar eventuais atualizações após a análise inicial, pode-se proceder a nova validação mediante a inserção do <i>hash</i> do arquivo <a href=\"http://www.sped.fazenda.gov.br/appConsultaSituacaoContabil/\" target=\"_blank\" rel=\"noopener noreferrer\">aqui</a>.",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
                         "Text": "Após confirmada a validade, passa-se à análise do conteúdo de cada arquivo, conforme os procedimentos descritos a seguir:",
                         "Variable": []
                     }
@@ -73,28 +81,33 @@
                     "Type": "List",
                     "Data": [
                         {
-                            "Editable": "false",
-                            "Text": "Os fatos contábeis são identificados nos registros I200 e I250. Após a consolidação desses registros, procede-se ao agrupamento por contas contábeis, resultando em um balancete validado no qual o somatório mensal de todos os lançamentos é igual a zero. A partir desse balancete, filtram-se apenas as contas analíticas cuja natureza é igual a 4 - as \"contas de resultado\" -, formando o balancete de resultados.",
+                            "Editable": "true",
+                            "Text": "Os fatos contábeis são identificados nos registros I200 e I250. Após a consolidação desses registros, procede-se ao agrupamento por contas contábeis, resultando em balancete validado, no qual o somatório mensal dos lançamentos é igual a zero. A partir desse balancete, filtram-se apenas as contas analíticas cuja natureza é igual a 4 &ndash; as \"contas de resultado\" &ndash;, formando o balancete de resultados.",
                             "Variable": []
                         },
                         {
-                            "Editable": "false",
-                            "Text": "Cada conta de resultado é classificada nas categorias: \"Sim\", \"Não\", \"ICMS Telecom\", \"PIS Telecom\" ou \"COFINS Telecom\". As contas classificadas como \"Sim\" representam receitas diretamente vinculadas à prestação de serviços de telecomunicações. Essas receitas compõem a Receita Operacional Bruta (ROB), utilizada como base para a estimativa do imposto sobre a circulação de mercadorias e serviços (ICMS). A alíquota aplicada observa a legislação vigente em cada Estado e no Distrito Federal, podendo também ser ajustada por conta e por mês, conforme necessário.",
+                            "Editable": "true",
+                            "Text": "Cada conta de resultado é avaliada individualmente e classificada quanto à pertinência de compor a base de cálculo da Contribuição de Intervenção no Domínio Econômico (CIDE), nas seguintes categorias: \"Sim\", \"Não\", \"ICMS Telecom\", \"PIS Telecom\" ou \"COFINS Telecom\". As contas classificadas como \"Sim\" correspondem a receitas decorrentes da prestação de serviços de telecomunicações, fato gerador da CIDE. Tais receitas compõem a Receita Operacional Bruta de Telecomunicações (ROB TELECOM), utilizada como base para a estimativa dos tributos dedutíveis (ICMS, PIS e COFINS).",
                             "Variable": []
                         },
                         {
-                            "Editable": "false",
-                            "Text": "O ICMS estimado é comparado ao ICMS contábil - identificado nas contas classificadas como \"ICMS Telecom\". Para fins de determinação da base de cálculo do PIS e da COFINS, adota-se o menor valor anual entre o ICMS estimado e o ICMS contábil.",
+                            "Editable": "true",
+                            "Text": "Na estimativa dos tributos dedutíveis, aplicam-se as alíquotas legais vigentes à época dos fatos &ndash; e, no caso do ICMS, as alíquotas correspondentes a cada Unidade da Federação (UF), quando aplicável &ndash; podendo haver ajustes por conta e por mês, conforme o caso concreto.",
                             "Variable": []
                         },
                         {
-                            "Editable": "false",
-                            "Text": "Na sequência, estima-se os valores devidos ao Programa de Integração Social (PIS) e à Contribuição para Financiamento da Seguridade Social (COFINS), os quais são comparados aos montantes registrados contabilmente nas contas classificadas como \"PIS Telecom\" e \"COFINS Telecom\". Para fins de definição da base de cálculo do FUST e do FUNTTEL, seleciona-se, igualmente, o menor valor anual entre os tributos estimados e os contábeis.",
+                            "Editable": "true",
+                            "Text": "Os valores estimados de ICMS, PIS e COFINS incidentes sobre a ROB TELECOM são limitados aos respectivos saldos contabilizados nos balancetes.",
                             "Variable": []
                         },
                         {
-                            "Editable": "false",
-                            "Text": "Por fim, com base nos resultados das etapas anteriores, realiza-se a apuração dos valores devidos ao FUST e ao FUNTTEL.",
+                            "Editable": "true",
+                            "Text": "Ressalta-se que o valor de ICMS é excluído da base de cálculo do PIS e da COFINS, em consonância com a decisão do Supremo Tribunal Federal (STF) no julgamento o Recurso Extraordinário nº 574.706, que fixou a tese de repercussão geral de que \"o ICMS não compõe a base de cálculo para fins de incidência do PIS e da COFINS\".",
+                            "Variable": []
+                        },
+                        {
+                            "Editable": "true",
+                            "Text": "Por fim, com base nos resultados das etapas anteriores, definem-se a base de cálculo e os valores devidos ao FUST e ao FUNTTEL.",
                             "Variable": []
                         }
                     ]
@@ -191,7 +204,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "false",
-                        "Text": "A empresa <b>%s</b>, inscrita no CNPJ sob o nº %s, movimentou %s. O resultado deste período foi igual a %s.",
+                        "Text": "A empresa %s, inscrita no CNPJ sob o nº %s, movimentou %s, registrando na ECD resultado contábil líquido de %s.",
                         "Variable": [
                             "var_EntityName",
                             "var_EntityId",
@@ -206,7 +219,6 @@
                         "Origin": "FunctionEvaluation",
                         "Source": "tbl_Raw+0000",
                         "Columns": [
-                            "REG", 
                             "DT_INI", 
                             "DT_FIN", 
                             "NOME", 
@@ -218,12 +230,6 @@
                         ],
                         "Caption": "Registro \"0000\".",
                         "Settings": [
-                            {
-                                "Editable": "false",
-                                "ColumnName": "REG",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
                             {
                                 "Editable": "false",
                                 "ColumnName": "DT_INI",
@@ -287,10 +293,11 @@
                             "COD_CTA", 
                             "DESCRIÇÃO", 
                             "Apurado?  ✎", 
+                            "Interconexão?  ✎", 
                             "Alíquota ICMS", 
                             "Observação  ✎"
                         ],
-                        "Caption": "Contas de resultado classificadas como \"Sim\", \"ICMS Telecom\", \"PIS Telecom\" ou \"COFINS Telecom\".",
+                        "Caption": "Contas de resultado consideradas relevantes para a definição da base de cálculo da CIDE.",
                         "Settings": [
                             {
                                 "Editable": "false",
@@ -300,13 +307,19 @@
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Descrição",
+                                "ColumnName": "Classificação Contábil",
                                 "Precision": "%s",
                                 "Width": "auto"
                             },
                             {
                                 "Editable": "false",
                                 "ColumnName": "Apurado?",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Interconexão?",
                                 "Precision": "%s",
                                 "Width": "auto"
                             },
@@ -323,7 +336,7 @@
                                 "Width": "auto"
                             }
                         ],
-                        "Intro": "{\"Type\":\"ItemN2\",\"Text\":\"A tabela a seguir apresenta as contas de resultado classificadas como \\\"Sim\\\", \\\"ICMS Telecom\\\", \\\"PIS Telecom\\\" ou \\\"COFINS Telecom\\\", acompanhadas de sua descrição completa, incluindo as descrições das contas sintéticas superiores, a alíquota aplicável do ICMS e uma observação livre, eventualmente inserida pelo fiscal.\"}",
+                        "Intro": "{\"Type\":\"ItemN2\",\"Text\":\"A tabela a seguir apresenta as contas de resultado identificadas como relevantes para a definição da base de cálculo da CIDE devida. Também são indicadas a respectiva classificação contábil, correspondente às contas sintéticas aglutinadoras, as alíquotas de ICMS aplicáveis e eventual observação registrada pela equipe de fiscais.\"}",
                         "Error": [],
                         "LineBreak": 1
                     }
@@ -332,7 +345,7 @@
                     "Type": "Table",
                     "Data": {
                         "Origin": "FunctionEvaluation",
-                        "Source": "tbl_TabelaApuracao",
+                        "Source": "tbl_ApuracaoGeralCompleta",
                         "Columns": [
                             "TIPO",
                             "01", 
@@ -464,7 +477,7 @@
                                 "TextStyle": " style=\"text-align: right; font-weight: bold;\""
                             }
                         ],
-                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A planilha de apuração, apresentada a seguir, registra ROB, ICMS, PIS e COFINS, além dos valores apurados de FUST e FUNTTEL.\"}",
+                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A planilha de apuração apresentada a seguir registra a ROB, o ICMS, o PIS e a COFINS, bem como os valores apurados de FUST e FUNTTEL, considerando os saldos das contas analíticas classificadas como receitas de prestação de serviços de telecomunicações.\"}",
                         "Error": [],
                         "LineBreak": 0
                     }

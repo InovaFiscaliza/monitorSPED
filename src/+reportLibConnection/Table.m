@@ -132,60 +132,68 @@ classdef (Abstract) Table
         end
 
         %-----------------------------------------------------------------%
-        function Table = TabelaApuracao(analyzedData, tableIdSuffix, layoutType)
+        function [Table, rawTable] = TabelaApuracao(analyzedData, tableType)
             arguments
                 analyzedData
-                tableIdSuffix char {mustBeMember(tableIdSuffix, {'GERAL', 'INTERCONEXAO'})}
-                layoutType    char {mustBeMember(layoutType,    {'normal', 'summary'})} = 'normal'
+                tableType char {mustBeMember(tableType, {'APURAÇÃO GERAL COMPLETA', ...
+                                                         'APURAÇÃO GERAL RESUMIDA', ...
+                                                         'APURAÇÃO SOMENTE INTERCONEXÃO', ...
+                                                         'APURAÇÃO EXCLUINDO INTERCONEXÃO'})}
             end
 
             ecdObj = analyzedData.InfoSet.ecdObj;
             checkIfScalar(ecdObj)
 
-            rawTable = ecdObj.Table.(['x_APURACAO_' tableIdSuffix]);
-            switch tableIdSuffix
-                case 'GERAL'
-                    if strcmp(layoutType, 'summary')
-                        icmsEscolhido   = 'ICMS CONTÁBIL';
-                        pisEscolhido    = 'PIS CONTÁBIL';
-                        cofinsEscolhido = 'COFINS CONTÁBIL';
-
-                        if abs(rawTable{"ICMS ESTIMADO",   "TOTAL"}) < abs(rawTable{"ICMS CONTÁBIL",   "TOTAL"})
-                            icmsEscolhido = 'ICMS ESTIMADO';
-                        end
-
-                        if abs(rawTable{"PIS ESTIMADO",    "TOTAL"}) < abs(rawTable{"PIS CONTÁBIL",    "TOTAL"})
-                            pisEscolhido = 'PIS ESTIMADO';
-                        end
-
-                        if abs(rawTable{"COFINS ESTIMADO", "TOTAL"}) < abs(rawTable{"COFINS CONTÁBIL", "TOTAL"})
-                            cofinsEscolhido = 'COFINS ESTIMADO';
-                        end
-
-                        rawTable(setdiff(rawTable.Properties.RowNames, {'ROB TELECOM', icmsEscolhido, pisEscolhido, cofinsEscolhido, 'VALOR APURADO FUST', 'VALOR APURADO FUNTTEL'}), :) = [];
-                        rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, {icmsEscolhido, pisEscolhido, cofinsEscolhido}, {'ICMS', 'PIS', 'COFINS'});
-                    end
-
-
-                case 'INTERCONEXAO'
-                    rawTable(contains(rawTable.Properties.RowNames, 'BÁSE DE CÁLCULO'), :) = [];
-                    rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, {'ICMS ESTIMADO', 'PIS ESTIMADO', 'COFINS ESTIMADO'}, {'ICMS', 'PIS', 'COFINS'});
-            end
-
-            switch layoutType
-                case 'normal'
-                    switch tableIdSuffix
-                        case 'GERAL'
-                            rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, 'ROB TELECOM', 'ROB TELECOM (GERAL)');
-
-                        case 'INTERCONEXAO'
-                            rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, 'ROB TELECOM', 'ROB TELECOM (INTERCONEXÃO)');
-                    end
-
+            switch tableType
+                case 'APURAÇÃO GERAL COMPLETA'
+                    rawTable = ecdObj.Table.('x_APURACAO_GERAL');
+                    rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, 'ROB TELECOM', 'ROB TELECOM (GERAL)');
+                    
                     Table = [table(rawTable.Properties.RowNames, 'VariableName', {'TIPO'}), rawTable];
 
-                case 'summary'
+                case 'APURAÇÃO GERAL RESUMIDA'
+                    rawTable = ecdObj.Table.('x_APURACAO_GERAL');
+
+                    icmsEscolhido   = 'ICMS CONTÁBIL';
+                    pisEscolhido    = 'PIS CONTÁBIL';
+                    cofinsEscolhido = 'COFINS CONTÁBIL';
+
+                    if abs(rawTable{"ICMS ESTIMADO",   "TOTAL"}) < abs(rawTable{"ICMS CONTÁBIL",   "TOTAL"})
+                        icmsEscolhido = 'ICMS ESTIMADO';
+                    end
+
+                    if abs(rawTable{"PIS ESTIMADO",    "TOTAL"}) < abs(rawTable{"PIS CONTÁBIL",    "TOTAL"})
+                        pisEscolhido = 'PIS ESTIMADO';
+                    end
+
+                    if abs(rawTable{"COFINS ESTIMADO", "TOTAL"}) < abs(rawTable{"COFINS CONTÁBIL", "TOTAL"})
+                        cofinsEscolhido = 'COFINS ESTIMADO';
+                    end
+
+                    rawTable(setdiff(rawTable.Properties.RowNames, {'ROB TELECOM', icmsEscolhido, pisEscolhido, cofinsEscolhido, 'VALOR APURADO FUST', 'VALOR APURADO FUNTTEL'}), :) = [];
+                    rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, {icmsEscolhido, pisEscolhido, cofinsEscolhido}, {'ICMS', 'PIS', 'COFINS'});
                     rawTable = cell2table(table2cell(rawTable)', 'VariableNames', rawTable.Properties.RowNames, 'RowNames', rawTable.Properties.VariableNames);
+                    
+                    Table = [table(rawTable.Properties.RowNames, 'VariableName', {'MÊS'}), rawTable];
+
+
+                case 'APURAÇÃO SOMENTE INTERCONEXÃO'
+                    if ~any(ecdObj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "Sim" & ismember(ecdObj.Table.x_CONTAS_ANOTACAO.('Interconexão?  ✎'), ["ITX", "EILD"]))
+                        error('reportLibConnection:Table:EmptyInterconnectionTable', 'Empty interconnection table')
+                    end
+
+                    rawTable = ecdObj.Table.('x_APURACAO_INTERCONEXAO');
+                    rawTable(contains(rawTable.Properties.RowNames, 'BÁSE DE CÁLCULO'), :) = [];
+                    rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, {'ICMS ESTIMADO', 'PIS ESTIMADO', 'COFINS ESTIMADO'}, {'ICMS', 'PIS', 'COFINS'});
+                    rawTable = cell2table(table2cell(rawTable)', 'VariableNames', rawTable.Properties.RowNames, 'RowNames', rawTable.Properties.VariableNames);
+                    
+                    Table = [table(rawTable.Properties.RowNames, 'VariableName', {'MÊS'}), rawTable];
+
+                case 'APURAÇÃO EXCLUINDO INTERCONEXÃO'
+                    [~, rawTableGeral] = reportLibConnection.Table.TabelaApuracao(analyzedData, 'APURAÇÃO GERAL RESUMIDA');
+                    [~, rawTableItx]   = reportLibConnection.Table.TabelaApuracao(analyzedData, 'APURAÇÃO SOMENTE INTERCONEXÃO');
+                    rawTable = rawTableGeral - rawTableItx;
+
                     Table = [table(rawTable.Properties.RowNames, 'VariableName', {'MÊS'}), rawTable];
             end
         end
@@ -206,7 +214,6 @@ classdef (Abstract) Table
             end
 
             Table = innerjoin(rawTable, ecdObj.Table.x_BALANCETE_RESULTADO, 'Keys', 'COD_CTA', 'RightVariables', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'});
-            Table = innerjoin(Table,    ecdObj.Table.x_CONTAS_DESCRICAO,    'Keys', 'COD_CTA', 'RightVariables', 'DESCRIÇÃO');
 
             % Eliminando caracteres especiais não renderizados no editor de
             % texto do SEI.
@@ -327,17 +334,8 @@ classdef (Abstract) Table
                 % ACCOUNTS
                 tempAccounts = join( ...
                     ecdObj(ii).Table.x_CONTAS_ANOTACAO, ...
-                    ecdObj(ii).Table.x_CONTAS_DESCRICAO, ...
-                    'Keys', 'COD_CTA', ...
-                    'LeftVariables', ecdObj(ii).Table.x_CONTAS_ANOTACAO.Properties.VariableNames, ...
-                    'RightVariables', 'DESCRIÇÃO' ...
-                );
-
-                tempAccounts = join( ...
-                    tempAccounts, ...
                     ecdObj(ii).Table.x_CONTAS_HISTORICO, ...
                     'Keys', 'COD_CTA', ...
-                    'LeftVariables', tempAccounts.Properties.VariableNames, ...
                     'RightVariables', {'TOTAL DE LANÇAMENTOS', 'LANÇAMENTOS NORMALIZADOS DEDUPLICADOS'} ...
                 );
                 tempAccounts.('LANÇAMENTOS NORMALIZADOS DEDUPLICADOS') = cellfun(@(x) jsonencode(x), tempAccounts.('LANÇAMENTOS NORMALIZADOS DEDUPLICADOS'), 'UniformOutput', false);
@@ -358,8 +356,8 @@ classdef (Abstract) Table
 
                 tempAccounts = renamevars( ...
                     tempAccounts, ...
-                    {'COD_CTA', 'Apurado?  ✎', 'Alíquota ICMS', 'Observação  ✎', 'DESCRIÇÃO', 'TOTAL DE LANÇAMENTOS', 'LANÇAMENTOS NORMALIZADOS DEDUPLICADOS', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
-                    {'accountCode', 'auditorAccountType', 'auditorIcmsConfig', 'auditorComment', 'description', 'entryHistoryCount', 'deduplicatedEntryHistory', 'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'total'} ...
+                    {'COD_CTA', 'DESCRIÇÃO', 'Apurado?  ✎', 'Alíquota ICMS', 'Observação  ✎', 'TOTAL DE LANÇAMENTOS', 'LANÇAMENTOS NORMALIZADOS DEDUPLICADOS', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
+                    {'accountCode', 'description', 'auditorAccountType', 'auditorIcmsConfig', 'auditorComment', 'entryHistoryCount', 'deduplicatedEntryHistory', 'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'total'} ...
                 );
                 accounts = [accounts; tempAccounts];
             end

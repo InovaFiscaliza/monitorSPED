@@ -1,5 +1,5 @@
 {
-    "version": 0.97,
+    "version": 1.00,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -78,6 +78,9 @@
                     "I350_I355"
                 ],
                 "autoload": [
+                    "0000", 
+                    "I030", 
+                    "I050",
                     "_CONTAS_DESCRICAO",
                     "_APURACAO_GERAL",
                     "_APURACAO_INTERCONEXAO"
@@ -116,7 +119,7 @@
                 "FUST": 0.01,
                 "FUNTTEL": 0.005
             },
-            "accountDescriptionScope": true
+            "accountDescriptionScope": false
         }
     },
     "reportLib": {

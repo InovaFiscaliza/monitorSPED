@@ -333,7 +333,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         
                                     % auxApp.dockECDAccount
                                     % auxApp.dockECDFilter        
-                                    case {'onAccountEdited', 'onFilterChanged', 'onTableReadRequired'}
+                                    case {'onAccountEdited',  'onAccountSelectionChanged', 'onFilterChanged', 'onTableReadRequired'}
                                         context  = varargin{1};
                                         varargin = [{eventName}, varargin(2:end)];
                                         ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})

@@ -283,18 +283,21 @@ classdef (Abstract) HtmlTextGenerator
         %-----------------------------------------------------------------%
         function [accountTable, index, htmlContent] = AccountInfo(ecdObj, accountName, generalSettings)
             accountTable  = innerjoin(ecdObj.Table.x_CONTAS_ANOTACAO, ecdObj.Table.x_BALANCETE_RESULTADO, 'Keys', 'COD_CTA', 'RightVariables', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'});
-            accountTable  = innerjoin(accountTable,                   ecdObj.Table.x_CONTAS_DESCRICAO,    'Keys', 'COD_CTA', 'RightVariables', 'DESCRIÇÃO');
 
             [~, index]    = ismember(accountName, accountTable.("COD_CTA"));
             [entryHistoryCount, entryHistoryUniqueValues] = getAccountHistoric(ecdObj, accountName, generalSettings);
             if isscalar(entryHistoryUniqueValues)
-                entryHistorySummary = sprintf('%d lançamentos agrupados em um único grupo após normalização e deduplicação', entryHistoryCount);
+                if entryHistoryCount == 1
+                    entryHistorySummary = 'Um único lançamento';
+                else
+                    entryHistorySummary = sprintf('%d lançamentos agrupados em um único grupo após normalização e deduplicação', entryHistoryCount);
+                end
             else
                 entryHistorySummary = sprintf('%d lançamentos agrupados em %d grupos após normalização e deduplicação', entryHistoryCount, numel(entryHistoryUniqueValues));
             end
 
             dataStruct(1) = struct('group', 'FullDescription', 'value', ['•&thinsp;' accountTable.('DESCRIÇÃO'){index}]);
-            dataStruct(2) = struct('group', 'AccountEntryHistoryCount', 'value', entryHistorySummary);
+            dataStruct(2) = struct('group', 'AccountEntryHistoryCount', 'value', ['•&thinsp;' entryHistorySummary]);
             dataStruct(3) = struct('group', 'AccountEntryHistoryUniqueValues', 'value', textFormatGUI.cellstr2Bullets(entryHistoryUniqueValues));
             htmlContent   = textFormatGUI.struct2PrettyPrintList(dataStruct, 'delete', '');
         end

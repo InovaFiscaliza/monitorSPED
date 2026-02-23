@@ -11,11 +11,8 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "Apurar os valores devidos ao \"%s\", assegurando o correto recolhimento das contribuições ao fundo sobre as receitas auferidas com a prestação de serviços de telecomunicações no exercício fiscal de %s.",
-                        "Variable": [
-                            "eFiscaliza_solicitacaoSubtema",
-                            "var_Year"
-                            ]
+                        "Text": "Assegurar o correto recolhimento das contribuições ao Fundo de Universalização dos Serviços de Telecomunicações (FUST) e ao Fundo para o Desenvolvimento Tecnológico das Telecomunicações (FUNTTEL), atendendo ao que consta na descrição da demanda: \"%s\"",
+                        "Variable": "eFiscaliza_solicitacaoDescricao"
                     }
                 }
             ]
@@ -180,7 +177,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "<a href=\"http://www.planalto.gov.br/ccivil_03/leis/l9998.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Lei nº 9.998, de 17 de agosto de 2000</a>, que institui o Fundo de Universalização dos Serviços de Telecomunicações (FUST).",
+                        "Text": "<a href=\"http://www.planalto.gov.br/ccivil_03/leis/l9998.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Lei nº 9.998, de 17 de agosto de 2000</a>, que institui o FUST.",
                         "Variable": []
                     }
                 },
@@ -188,7 +185,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "<a href=\"http://www.planalto.gov.br/ccivil_03/leis/L10052.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Lei nº 10.052, de 28 de novembro de 2000</a>, que institui o Fundo para o Desenvolvimento Tecnológico das Telecomunicações (Funtel), e dá outras providências.",
+                        "Text": "<a href=\"http://www.planalto.gov.br/ccivil_03/leis/L10052.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Lei nº 10.052, de 28 de novembro de 2000</a>, que institui o FUNTTEL, e dá outras providências.",
                         "Variable": []
                     }
                 },
@@ -204,7 +201,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "<a href=\"https://www.planalto.gov.br/ccivil_03/decreto/2001/d3737.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Decreto nº 3.737, de 30 de janeiro de 2001</a>, dispõe sobre a regulamentação do Fundo para o Desenvolvimento Tecnológico das Telecomunicações (FUNTTEL), e dá outras providências.",
+                        "Text": "<a href=\"https://www.planalto.gov.br/ccivil_03/decreto/2001/d3737.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Decreto nº 3.737, de 30 de janeiro de 2001</a>, dispõe sobre a regulamentação do FUNTTEL, e dá outras providências.",
                         "Variable": []
                     }
                 },
@@ -212,7 +209,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "<a href=\"https://www.planalto.gov.br/ccivil_03/_Ato2019-2022/2022/Decreto/D11004.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Decreto nº 11.004, de 21 de março de 2022</a>, que dispõe sobre a regulamentação do Fundo de Universalização dos Serviços de Telecomunicações (FUST).",
+                        "Text": "<a href=\"https://www.planalto.gov.br/ccivil_03/_Ato2019-2022/2022/Decreto/D11004.htm\" target=\"_blank\" rel=\"noopener noreferrer\">Decreto nº 11.004, de 21 de março de 2022</a>, que dispõe sobre a regulamentação do FUST.",
                         "Variable": []
                     }
                 },
@@ -328,7 +325,7 @@
                     "Data": [
                         {
                             "Editable": "true",
-                            "Text": "Os fatos contábeis são identificados nos registros I200 e I250. Após a consolidação desses registros, procede-se ao agrupamento por contas contábeis, resultando em balancete validado, no qual o somatório mensal dos lançamentos é igual a zero. A partir desse balancete, filtram-se apenas as contas analíticas cuja natureza é igual a 4 – as \"contas de resultado\" –, formando o balancete de resultados.",
+                            "Text": "Os fatos contábeis são identificados nos registros I200 e I250. Após a consolidação desses registros, procede-se ao agrupamento por contas contábeis, resultando em balancete validado, no qual o somatório mensal dos lançamentos é igual a zero. A partir desse balancete, filtram-se apenas as contas analíticas cuja natureza é igual a 4 &ndash; as \"contas de resultado\" &ndash;, formando o balancete de resultados.",
                             "Variable": []
                         },
                         {
@@ -338,7 +335,7 @@
                         },
                         {
                             "Editable": "true",
-                            "Text": "Na estimativa dos tributos dedutíveis, aplicam-se as alíquotas legais vigentes à época dos fatos – e, no caso do ICMS, as alíquotas correspondentes a cada Unidade da Federação, quando aplicável – podendo haver ajustes por conta e por mês, conforme o caso concreto.",
+                            "Text": "Na estimativa dos tributos dedutíveis, aplicam-se as alíquotas legais vigentes à época dos fatos &ndash; e, no caso do ICMS, as alíquotas correspondentes a cada Unidade da Federação (UF), quando aplicável &ndash; podendo haver ajustes por conta e por mês, conforme o caso concreto.",
                             "Variable": []
                         },
                         {
@@ -378,10 +375,10 @@
                     "Type": "Paragraph",
                     "Data": {
                         "Editable": "true",
-                        "Text": "Na tabela apresentada a seguir consta detalhes do(s) arquivo(s) sob análise relacionado(s) à empresa <b>%s</b>, inscrita no CNPJ sob o nº %s, contendo informações do período %s.",
+                        "Text": "Na tabela apresentada a seguir consta detalhes do(s) arquivo(s) sob análise relacionado(s) à empresa %s, inscrita no CNPJ sob o nº %s, contendo informações do período %s.",
                         "Variable": [
                             "var_EntityName",
-                            "var_EntityId",                            
+                            "var_EntityId",
                             "var_Period"
                         ]
                     }
@@ -469,7 +466,6 @@
                         "Origin": "FunctionEvaluation",
                         "Source": "tbl_Raw+0000",
                         "Columns": [
-                            "REG", 
                             "DT_INI", 
                             "DT_FIN", 
                             "NOME", 
@@ -483,25 +479,19 @@
                         "Settings": [
                             {
                                 "Editable": "false",
-                                "ColumnName": "REG",
+                                "ColumnName": "Data inicial",
                                 "Precision": "%s",
                                 "Width": "auto"
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "DT_INI",
+                                "ColumnName": "Data final",
                                 "Precision": "%s",
                                 "Width": "auto"
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "DT_FIN",
-                                "Precision": "%s",
-                                "Width": "auto"
-                            },
-                            {
-                                "Editable": "false",
-                                "ColumnName": "NOME",
+                                "ColumnName": "Nome empresarial da pessoa jurídica",
                                 "Precision": "%s",
                                 "Width": "auto"
                             },
@@ -519,19 +509,19 @@
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "IE",
+                                "ColumnName": "Inscrição estadual",
                                 "Precision": "%s",
                                 "Width": "auto"
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "COD_MUN",
+                                "ColumnName": "Código município",
                                 "Precision": "%s",
                                 "Width": "auto"
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "IM",
+                                "ColumnName": "Inscrição municipal",
                                 "Precision": "%s",
                                 "Width": "auto"
                             }
@@ -554,7 +544,7 @@
                             "Alíquota ICMS", 
                             "Observação  ✎"
                         ],
-                        "Caption": "Contas de resultado classificadas como \"Sim\", \"ICMS Telecom\", \"PIS Telecom\" ou \"COFINS Telecom\".",
+                        "Caption": "Contas de resultado consideradas relevantes para a definição da base de cálculo da CIDE.",
                         "Settings": [
                             {
                                 "Editable": "false",
@@ -593,7 +583,7 @@
                                 "Width": "auto"
                             }
                         ],
-                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A tabela a seguir apresenta as contas de resultado identificadas como relevantes para a definição da base de cálculo da CIDE devida. Também são indicadas a respectiva classificação contábil, correspondente às contas sintéticas aglutinadoras, as alíquotas de ICMS aplicáveis e eventual observação registrada pela equipe de fiscais.\"}",
+                        "Intro": "{\"Type\":\"Paragraph\",\"Editable\":\"true\",\"Text\":\"A tabela a seguir apresenta as contas de resultado identificadas como relevantes para a definição da base de cálculo da CIDE devida. Também são indicadas a respectiva classificação contábil, correspondente às contas sintéticas aglutinadoras, as alíquotas de ICMS aplicáveis e eventual observação registrada pela equipe de fiscais.\"}",
                         "Error": [],
                         "LineBreak": 1
                     }
@@ -602,12 +592,12 @@
                     "Type": "Table",
                     "Data": {
                         "Origin": "FunctionEvaluation",
-                        "Source": "tbl_TabelaApuracaoGeral",
+                        "Source": "tbl_ApuracaoGeralCompleta",
                         "Columns": [
                             "TIPO",
                             "TOTAL"
                         ],
-                        "Caption": "Planilha de apuração.",
+                        "Caption": "Resumo dos totais apurados com base nas receitas de prestação de serviços de telecomunicações.",
                         "Settings": [
                             {
                                 "Editable": "false",
@@ -621,12 +611,12 @@
                                 "Editable": "false",
                                 "ColumnName": "Total",
                                 "Precision": "%.2f",
-                                "Width": "120px",
+                                "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             }
                         ],
-                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A planilha de apuração, apresentada a seguir, registra ROB, ICMS, PIS e COFINS, além dos valores apurados de FUST e FUNTTEL.\"}",
+                        "Intro": "{\"Type\":\"Paragraph\",\"Editable\":\"true\",\"Text\":\"A tabela apresentada a seguir resume os totais anuais apurados com base nas receitas de prestação de serviços de telecomunicações.\"}",
                         "Error": [],
                         "LineBreak": 1
                     }
@@ -662,23 +652,21 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "Com base nas informações da Prestadora NOVA TELECOM LTDA - EPP, CNPJ nº 08.778.322/0001-78, os valores de contribuições devidas ao Fust em relação às receitas de telecomunicações auferidas no exercício financeiro de 2023 totalizam R$ 164.915,13 (sento e sessenta e quatro mil novecentos e quinze reais e treze centavos).",
-                        "Variable": []
-                    }
-                },
-                {
-                    "Type": "ItemN2",
-                    "Data": {
-                        "Editable": "true",
-                        "Text": "As tabelas a seguir apresentam os valores mensais apurados, referentes ao exercício fiscalizado, destacando o resultado da apuração referente às receitas de Interconexão e EILD das demais: ",
-                        "Variable": []
+                        "Text": "A auditoria realizada na empresa <b>%s</b>, inscrita no CNPJ sob o nº <b>%s</b>, apurou que as contribuições incidentes sobre as receitas de telecomunicações auferidas no exercício fiscal de <b>%s</b> totalizam <b>%s a título de FUST</b> e <b>%s a título de FUNTTEL</b>, conforme critérios e procedimentos descritos no presente relatório.",
+                        "Variable": [
+                            "var_EntityName",
+                            "var_EntityId",
+                            "var_Year",
+                            "var_FUST",
+                            "var_FUNTTEL"
+                        ]
                     }
                 },
                 {
                     "Type": "Table",
                     "Data": {
                         "Origin": "FunctionEvaluation",
-                        "Source": "tbl_TabelaApuracaoGeralSumarizada",
+                        "Source": "tbl_ApuracaoGeralResumida",
                         "Columns": [
                             "MÊS",
                             "ROB TELECOM", 
@@ -688,21 +676,21 @@
                             "VALOR APURADO FUST", 
                             "VALOR APURADO FUNTTEL"
                         ],
-                        "Caption": "Planilha de apuração.",
+                        "Caption": "Totais apurados com base nas receitas de prestação de serviços de telecomunicações.",
                         "Settings": [
                             {
                                 "Editable": "false",
                                 "ColumnName": "Mês",
                                 "Precision": "%s",
                                 "Width": "auto",
-                                "ContainerStyle": " style=\"background: #e6e6e6;\"",
-                                "TextStyle": " style=\"font-weight: bold;\""
+                                "ContainerStyle": "",
+                                "TextStyle": ""
                             },
                             {
                                 "Editable": "false",
                                 "ColumnName": "ROB TELECOM<br>(GERAL)",
                                 "Precision": "%.2f",
-                                "Width": "auto",
+                                "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
@@ -710,7 +698,7 @@
                                 "Editable": "false",
                                 "ColumnName": "ICMS",
                                 "Precision": "%.2f",
-                                "Width": "auto",
+                                "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
@@ -718,7 +706,7 @@
                                 "Editable": "false",
                                 "ColumnName": "PIS",
                                 "Precision": "%.2f",
-                                "Width": "auto",
+                                "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
@@ -726,7 +714,7 @@
                                 "Editable": "false",
                                 "ColumnName": "COFINS",
                                 "Precision": "%.2f",
-                                "Width": "auto",
+                                "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
@@ -734,7 +722,7 @@
                                 "Editable": "false",
                                 "ColumnName": "FUST",
                                 "Precision": "%.2f",
-                                "Width": "auto",
+                                "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
@@ -742,12 +730,12 @@
                                 "Editable": "false",
                                 "ColumnName": "FUNTTEL",
                                 "Precision": "%.2f",
-                                "Width": "auto",
+                                "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             }
                         ],
-                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A planilha de apuração, apresentada a seguir, registra ROB, ICMS, PIS e COFINS, além dos valores apurados de FUST e FUNTTEL.\"}",
+                        "Intro": "{\"Type\":\"ItemN2\",\"Editable\":\"true\",\"Text\":\"A planilha de apuração apresentada a seguir registra a ROB, o ICMS, o PIS e a COFINS, bem como os valores apurados de FUST e FUNTTEL, considerando os saldos das contas analíticas classificadas como receitas de prestação de serviços de telecomunicações.\"}",
                         "Error": [],
                         "LineBreak": 1
                     }
@@ -756,7 +744,7 @@
                     "Type": "Table",
                     "Data": {
                         "Origin": "FunctionEvaluation",
-                        "Source": "tbl_TabelaApuracaoInterconexaoSumarizada",
+                        "Source": "tbl_ApuracaoSomenteInterconexao",
                         "Columns": [
                             "MÊS",
                             "ROB TELECOM", 
@@ -766,21 +754,21 @@
                             "VALOR APURADO FUST", 
                             "VALOR APURADO FUNTTEL"
                         ],
-                        "Caption": "Planilha de apuração.",
+                        "Caption": "Totais apurados referentes à interconexão (ITX e EILD)",
                         "Settings": [
                             {
                                 "Editable": "false",
                                 "ColumnName": "Mês",
                                 "Precision": "%s",
                                 "Width": "auto",
-                                "ContainerStyle": " style=\"background: #e6e6e6;\"",
-                                "TextStyle": " style=\"font-weight: bold;\""
+                                "ContainerStyle": "",
+                                "TextStyle": ""
                             },
                             {
                                 "Editable": "false",
                                 "ColumnName": "ROB TELECOM<br>(INTERCONEXÃO)",
                                 "Precision": "%.2f",
-                                "Width": "auto",
+                                "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
@@ -788,7 +776,7 @@
                                 "Editable": "false",
                                 "ColumnName": "ICMS",
                                 "Precision": "%.2f",
-                                "Width": "auto",
+                                "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
@@ -796,7 +784,7 @@
                                 "Editable": "false",
                                 "ColumnName": "PIS",
                                 "Precision": "%.2f",
-                                "Width": "auto",
+                                "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
@@ -804,7 +792,7 @@
                                 "Editable": "false",
                                 "ColumnName": "COFINS",
                                 "Precision": "%.2f",
-                                "Width": "auto",
+                                "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
@@ -812,7 +800,7 @@
                                 "Editable": "false",
                                 "ColumnName": "FUST",
                                 "Precision": "%.2f",
-                                "Width": "auto",
+                                "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
@@ -820,12 +808,90 @@
                                 "Editable": "false",
                                 "ColumnName": "FUNTTEL",
                                 "Precision": "%.2f",
-                                "Width": "auto",
+                                "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             }
                         ],
-                        "Intro": "{\"Type\":\"Paragraph\",\"Text\":\"A planilha de apuração, apresentada a seguir, registra ROB, ICMS, PIS e COFINS, além dos valores apurados de FUST e FUNTTEL.\"}",
+                        "Intro": "{\"Type\":\"ItemN2\",\"Editable\":\"true\",\"Text\":\"As planilhas apresentadas a seguir registram a ROB, o ICMS, o PIS e a COFINS, bem como os valores apurados de FUST e FUNTTEL, sendo uma delas elaborada exclusivamente com base nos saldos das contas analíticas classificadas como interconexão (ITX ou EILD) e a outra apurada com a exclusão dessas mesmas contas.\"}",
+                        "Error": "{\"Type\":\"ItemN2\",\"Editable\":\"true\",\"Text\":\"Na presente análise, não foram identificadas contas analíticas classificadas como interconexão &ndash; ITX ou EILD.\"}",
+                        "LineBreak": 1
+                    }
+                },
+                {
+                    "Type": "Table",
+                    "Data": {
+                        "Origin": "FunctionEvaluation",
+                        "Source": "tbl_ApuracaoExcluindoInterconexao",
+                        "Columns": [
+                            "MÊS",
+                            "ROB TELECOM", 
+                            "ICMS", 
+                            "PIS", 
+                            "COFINS", 
+                            "VALOR APURADO FUST", 
+                            "VALOR APURADO FUNTTEL"
+                        ],
+                        "Caption": "Totais apurados desconsiderando receitas de interconexão.",
+                        "Settings": [
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Mês",
+                                "Precision": "%s",
+                                "Width": "auto",
+                                "ContainerStyle": "",
+                                "TextStyle": ""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "ROB TELECOM<br>(SEM INTERCONEXÃO)",
+                                "Precision": "%.2f",
+                                "Width": "130px",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "ICMS",
+                                "Precision": "%.2f",
+                                "Width": "130px",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "PIS",
+                                "Precision": "%.2f",
+                                "Width": "130px",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "COFINS",
+                                "Precision": "%.2f",
+                                "Width": "130px",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "FUST",
+                                "Precision": "%.2f",
+                                "Width": "130px",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "FUNTTEL",
+                                "Precision": "%.2f",
+                                "Width": "130px",
+                                "ContainerStyle": "",
+                                "TextStyle": " style=\"text-align: right;\""
+                            }
+                        ],
+                        "Intro": [],
                         "Error": [],
                         "LineBreak": 1
                     }
@@ -834,7 +900,15 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": " É o relatório. Submeta-se a revisão e aprovação pelas autoridades competentes.",
+                        "Text": "Compete à Anatel, por meio da área responsável pela arrecadação, proceder ao lançamento de eventuais créditos relativos ao FUST. Por sua vez, o lançamento das contribuições devidas ao FUNTTEL é atribuição do Ministério das Comunicações, nos termos da legislação aplicável. Por essa razão, uma cópia deste relatório será encaminhada ao Ministério das Comunicações para análise e adoção das medidas cabíveis.",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "É o relatório. Submeta-se à revisão e à aprovação pelas autoridades competentes.",
                         "Variable": []
                     }
                 }

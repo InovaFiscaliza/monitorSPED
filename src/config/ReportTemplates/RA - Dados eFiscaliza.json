@@ -1,0 +1,130 @@
+[
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "OBJETIVO",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "O presente documento apresenta todas as informações coletadas do eFiscaliza e que podem ser injetadas no relatório de análise. O conteúdo deste relatório contempla informações a demanda de fiscalização cadastrada no eFiscaliza sob a <b>Atividade de Inspeção nº %.0f</b>. A seguir é apresentada a informação bruta, encapsulada como JSON.",
+                        "Variable": "var_Issue"
+                    }
+                },
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "eFiscaliza_InformacaoBruta: %s",
+                        "Variable": "eFiscaliza_InformacaoBruta"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "SOLICITAÇÃO",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "eFiscaliza_solicitacaoId: %s<br>eFiscaliza_solicitacaoCodigo: %s<br>eFiscaliza_solicitacaoDescricao: \"%s\"<br>eFiscaliza_solicitacaoStatus: %s<br>eFiscaliza_solicitacaoDataInicio: %s<br>eFiscaliza_solicitacaoDataFim: %s<br>eFiscaliza_solicitacaoDemandante: %s<br>eFiscaliza_Demandante: %s &#x2757;<br>eFiscaliza_solicitacaoPAAF: %s<br>eFiscaliza_solicitacaoTipo: %s<br>eFiscaliza_solicitacaoTema: %s<br>eFiscaliza_solicitacaoSubtema: %s<br>eFiscaliza_solicitacaoTematica: %s<br>eFiscaliza_solicitacaoMacrotema: %s<br>eFiscaliza_solicitacaoClasse: %s<br>eFiscaliza_solicitacaoSeiProcesso: %s<br>eFiscaliza_ListaEntidades: %s<br>eFiscaliza_ListaServicos: %s",
+                        "Variable": [
+                            "eFiscaliza_solicitacaoId",
+                            "eFiscaliza_solicitacaoCodigo",
+                            "eFiscaliza_solicitacaoDescricao",
+                            "eFiscaliza_solicitacaoStatus",
+                            "eFiscaliza_solicitacaoDataInicio",
+                            "eFiscaliza_solicitacaoDataFim",
+                            "eFiscaliza_solicitacaoDemandante",
+                            "eFiscaliza_Demandante",
+                            "eFiscaliza_solicitacaoPAAF",
+                            "eFiscaliza_solicitacaoTipo",
+                            "eFiscaliza_solicitacaoTema",
+                            "eFiscaliza_solicitacaoSubtema",
+                            "eFiscaliza_solicitacaoTematica",
+                            "eFiscaliza_solicitacaoMacrotema",
+                            "eFiscaliza_solicitacaoClasse",
+                            "eFiscaliza_solicitacaoSeiProcesso",
+                            "eFiscaliza_ListaEntidades",
+                            "eFiscaliza_ListaServicos"                  
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "AÇÃO",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "eFiscaliza_acaoId: %s<br>eFiscaliza_acaoCodigo: %s<br>eFiscaliza_acaoDescricao: \"%s\"<br>eFiscaliza_acaoStatus: %s<br>eFiscaliza_acaoDataInicio: %s<br>eFiscaliza_acaoDataFim: %s<br>eFiscaliza_PeriodoPrevisto: %s<br>eFiscaliza_acaoUnidade: %s<br>eFiscaliza_UnidadeExecutante: %s &#x2757;<br>eFiscaliza_SedeUnidade: %s &#x2757;<br>eFiscaliza_acaoResponsavel: %s<br>eFiscaliza_acaoSeiProcesso: %s<br>eFiscaliza_acaoSeiRelatorio: %s<br>eFiscaliza_acaoSeiDespacho: %s<br>eFiscaliza_acaoSeiPado: %s",
+                        "Variable": [
+                            "eFiscaliza_acaoId",
+                            "eFiscaliza_acaoCodigo",
+                            "eFiscaliza_acaoDescricao",
+                            "eFiscaliza_acaoStatus",
+                            "eFiscaliza_acaoDataInicio",
+                            "eFiscaliza_acaoDataFim",
+                            "eFiscaliza_PeriodoPrevisto",
+                            "eFiscaliza_acaoUnidade",
+                            "eFiscaliza_UnidadeExecutante",
+                            "eFiscaliza_SedeUnidade",
+                            "eFiscaliza_acaoResponsavel",
+                            "eFiscaliza_acaoSeiProcesso",
+                            "eFiscaliza_acaoSeiRelatorio",
+                            "eFiscaliza_acaoSeiDespacho",
+                            "eFiscaliza_acaoSeiPado"
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "ATIVIDADE",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "Paragraph",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "eFiscaliza_atividadeId: %s<br>eFiscaliza_atividadeCodigo: %s<br>eFiscaliza_atividadeDescricao: \"%s\"<br>eFiscaliza_atividadeStatus: %s<br>eFiscaliza_atividadeDataInicio: %s<br>eFiscaliza_atividadeDataFim: %s<br>eFiscaliza_atividadeFiscalLider: %s<br>eFiscaliza_ListaFiscais: %s<br><br>&#x2757;Engloba informações inseridas no arquivo de configuração \"GeneralSettings.json\"",
+                        "Variable": [
+                            "eFiscaliza_atividadeId",
+                            "eFiscaliza_atividadeCodigo",
+                            "eFiscaliza_atividadeDescricao",
+                            "eFiscaliza_atividadeStatus",
+                            "eFiscaliza_atividadeDataInicio",
+                            "eFiscaliza_atividadeDataFim",
+                            "eFiscaliza_atividadeFiscalLider",
+                            "eFiscaliza_ListaFiscais"
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+]

@@ -143,6 +143,24 @@ classdef winECD_exported < matlab.apps.AppBase
                             % auxApp.dockECDAccount >> winMonitorSPED >> auxApp.winECD
                             case 'onAccountEdited'
                                 forceUpdateTable(app)
+
+                            case 'onAccountSelectionChanged'
+                                accountName = varargin{1};
+                                
+                                for uiTable = [app.UITable1, app.UITable2]
+                                    if ~isempty(uiTable.Data) && ismember('COD_CTA', uiTable.Data.Properties.VariableNames)
+                                        [~, accountNameIdx] = ismember(accountName, uiTable.Data.COD_CTA);
+                                        if accountNameIdx
+                                            columnWidth = width(uiTable.Data);
+                                            uiTable.Selection = [accountNameIdx * ones(columnWidth, 1), (1:columnWidth)'];
+
+                                            if ~isequal(uiTable.Selection, uiTable.UserData.Selection)
+                                                [tableCountText, tableSelectedAccount] = relatedTableComponents(app, uiTable);
+                                                updateTableFootnote(app, uiTable, tableCountText, tableSelectedAccount)
+                                            end
+                                        end
+                                    end
+                                end
                                 
                             % auxApp.dockECDExport >> winMonitorSPED >> auxApp.winECD
                             case 'onExportECD'
@@ -502,10 +520,11 @@ classdef winECD_exported < matlab.apps.AppBase
             % Posteriormente, define-se a lista de registros, mantendo a 
             % seleção inicial, caso registro já parseado.
             sheetsSorted = sort([ordinaryIds; setdiff(customIds, notappplicableIds)]);
+            sheetsSorted = [sheetsSorted(startsWith(sheetsSorted, '_')); sheetsSorted(~startsWith(sheetsSorted, '_'))];
 
             selection1 = app.SheetList.Value;
             if isempty(selection1) || ~ismember(selection1, sheetsSorted) || ~isfield(selectedECD.Table, ['x' selection1])
-                selection1 = sheetsSorted{1};
+                selection1 = '0000';
             end            
             set(app.SheetList, 'Items', sheetsSorted, 'Value', selection1)
 
@@ -515,7 +534,7 @@ classdef winECD_exported < matlab.apps.AppBase
             if app.SubTabGroup.UserData.isTabInitialized(2)
                 selection2 = app.SheetView_Second.Value;
                 if isempty(selection2) || ~ismember(selection2, sheetsSorted) || ~isfield(selectedECD.Table, ['x' selection2])
-                    selection2 = sheetsSorted{1};
+                    selection2 = '0000';
                 end
 
                 set(app.SheetView_First,  'Items', sheetsSorted, 'Value', selection1)
