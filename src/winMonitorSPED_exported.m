@@ -1191,7 +1191,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 % a variável app.ecdObj.
                 if ~ismember(fileName{ii}, {app.ecdObj.FileName})
                     [~, ~, fileExt] = fileparts(fileFullName{ii});
-                    switch fileExt
+                    switch lower(fileExt)
                         case {'.txt', '.sped'}
                             [app.ecdObj, msg] = addFiles(app.ecdObj, app.projectData, app.General, fileFullName{ii}, [], app.receitaFederalObj);                        
                         case '.mat'
