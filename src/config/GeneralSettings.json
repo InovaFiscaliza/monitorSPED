@@ -1,5 +1,5 @@
 {
-    "version": 1.00,
+    "version": 1.01,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -161,6 +161,7 @@
         "defaultValues": {
             "unit": [
                 "",
+                "FIGF",
                 "GR01", "GR01FI1", "GR01FI2", "GR01FI3",
                 "GR02", "GR02FI1", "GR02FI2", "GR02FI3",
                 "GR03", "GR03FI1", "GR03FI2",
@@ -190,6 +191,7 @@
                 "UO113"
             ],
             "unitCityMapping": [
+              {"unit": "FIGF",  "city": "Brasília/DF"},
               {"unit": "GR01",  "city": "São Paulo/SP"},
               {"unit": "GR02",  "city": "Rio de Janeiro/RJ"},
               {"unit": "GR03",  "city": "Curitiba/PR"},

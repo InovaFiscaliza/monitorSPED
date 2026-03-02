@@ -4,7 +4,6 @@ classdef dockECDExport_exported < matlab.apps.AppBase
     properties (Access = public)
         UIFigure              matlab.ui.Figure
         GridLayout            matlab.ui.container.GridLayout
-        Document              matlab.ui.container.GridLayout
         btnOK                 matlab.ui.control.Button
         Tree                  matlab.ui.container.CheckBoxTree
         GeneralAspects        matlab.ui.container.TreeNode
@@ -22,7 +21,6 @@ classdef dockECDExport_exported < matlab.apps.AppBase
         ApuracaoInterconexao  matlab.ui.container.TreeNode
         RTFFiles              matlab.ui.container.TreeNode
         eFiscalizaLabel       matlab.ui.control.Label
-        btnClose              matlab.ui.control.Image
     end
 
     
@@ -65,12 +63,9 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             
         end
 
-        % Callback function: UIFigure, btnClose
+        % Close request function: UIFigure
         function closeFcn(app, event)
             
-            context = app.inputArgs.context;
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcnCallFromPopupApp', context, 'auxApp.dockECDExport')
-
             delete(app)
             
         end
@@ -138,33 +133,14 @@ classdef dockECDExport_exported < matlab.apps.AppBase
 
             % Create GridLayout
             app.GridLayout = uigridlayout(app.Container);
-            app.GridLayout.ColumnWidth = {'1x', 30};
-            app.GridLayout.RowHeight = {30, '1x'};
-            app.GridLayout.ColumnSpacing = 0;
-            app.GridLayout.RowSpacing = 0;
-            app.GridLayout.Padding = [0 0 0 0];
-            app.GridLayout.BackgroundColor = [0.902 0.902 0.902];
-
-            % Create btnClose
-            app.btnClose = uiimage(app.GridLayout);
-            app.btnClose.ScaleMethod = 'none';
-            app.btnClose.ImageClickedFcn = createCallbackFcn(app, @closeFcn, true);
-            app.btnClose.Tag = 'Close';
-            app.btnClose.Layout.Row = 1;
-            app.btnClose.Layout.Column = 2;
-            app.btnClose.ImageSource = 'Delete_12SVG.svg';
-
-            % Create Document
-            app.Document = uigridlayout(app.GridLayout);
-            app.Document.ColumnWidth = {'1x', 90};
-            app.Document.RowHeight = {17, '1x', 22, 70, 1, 22};
-            app.Document.RowSpacing = 5;
-            app.Document.Layout.Row = 2;
-            app.Document.Layout.Column = [1 2];
-            app.Document.BackgroundColor = [1 1 1];
+            app.GridLayout.ColumnWidth = {'1x', 90};
+            app.GridLayout.RowHeight = {17, '1x', 1, 22};
+            app.GridLayout.RowSpacing = 5;
+            app.GridLayout.Padding = [20 20 20 20];
+            app.GridLayout.BackgroundColor = [1 1 1];
 
             % Create eFiscalizaLabel
-            app.eFiscalizaLabel = uilabel(app.Document);
+            app.eFiscalizaLabel = uilabel(app.GridLayout);
             app.eFiscalizaLabel.VerticalAlignment = 'bottom';
             app.eFiscalizaLabel.FontSize = 10;
             app.eFiscalizaLabel.Layout.Row = 1;
@@ -172,9 +148,9 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             app.eFiscalizaLabel.Text = 'INFORMAÇÃO A EXPORTAR';
 
             % Create Tree
-            app.Tree = uitree(app.Document, 'checkbox');
+            app.Tree = uitree(app.GridLayout, 'checkbox');
             app.Tree.FontSize = 11;
-            app.Tree.Layout.Row = [2 4];
+            app.Tree.Layout.Row = 2;
             app.Tree.Layout.Column = [1 2];
 
             % Create GeneralAspects
@@ -250,12 +226,12 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             app.Tree.CheckedNodesChangedFcn = createCallbackFcn(app, @TreeCheckedNodesChanged, true);
 
             % Create btnOK
-            app.btnOK = uibutton(app.Document, 'push');
+            app.btnOK = uibutton(app.GridLayout, 'push');
             app.btnOK.ButtonPushedFcn = createCallbackFcn(app, @btnOKButtonPushed, true);
             app.btnOK.Tag = 'OK';
             app.btnOK.IconAlignment = 'right';
             app.btnOK.BackgroundColor = [0.9804 0.9804 0.9804];
-            app.btnOK.Layout.Row = 6;
+            app.btnOK.Layout.Row = 4;
             app.btnOK.Layout.Column = 2;
             app.btnOK.Text = 'OK';
 

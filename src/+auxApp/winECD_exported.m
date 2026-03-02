@@ -133,9 +133,6 @@ classdef winECD_exported < matlab.apps.AppBase
                                 initializeAppProperties(app)
                                 applyInitialLayout(app, 'keepIfPossible')
 
-                            case 'closeFcnCallFromPopupApp'
-                                app.popupContainer.Parent.Visible = 0;
-
                             % auxApp.winConfig >> winMonitorSPED >> auxApp.winECD
                             case {'onICMSTaxChanged', 'onPISTaxChanged', 'onCOFINSTaxChanged'}
                                 forceUpdateTable(app)
@@ -164,7 +161,6 @@ classdef winECD_exported < matlab.apps.AppBase
                                 
                             % auxApp.dockECDExport >> winMonitorSPED >> auxApp.winECD
                             case 'onExportECD'
-                                app.popupContainer.Parent.Visible = 0;
                                 exportFiles(app, varargin{:})
 
                             % auxApp.dockECDFilter >> winMonitorSPED >> auxApp.winECD
@@ -301,8 +297,12 @@ classdef winECD_exported < matlab.apps.AppBase
             % Tabelas:
             app.UITable1.RowName = 'numbered';
             app.UITable2.RowName = 'numbered';
+            
             restartTableSelectionControl(app, app.UITable1, app.UITable1_CountText)
             restartTableSelectionControl(app, app.UITable2, app.UITable2_CountText)
+
+            app.UITable1.UserData.TableId = '';
+            app.UITable2.UserData.TableId = '';
         end
 
         %-----------------------------------------------------------------%
@@ -650,11 +650,9 @@ classdef winECD_exported < matlab.apps.AppBase
             %     (neste caso, força largura uniforme das colunas)
             if ~isempty(tableIdData.Properties.RowNames)
                 rowNames = tableIdData.Properties.RowNames;
-            elseif numVisibleRows == numRows
-                rowNames = 'numbered';
             else
                 columnWidth = '1x';
-                rowNames = string(visibleRows);
+                rowNames = cellstr(string(visibleRows));
             end
 
             % Verifica se a tabela suporta formatação customizável das suas
@@ -674,18 +672,22 @@ classdef winECD_exported < matlab.apps.AppBase
                 tableIdData = table2cell(tableIdData);
             end
 
-            columnFormatOptionalArgs = {};
+            columnOptionalArgs = {};
+            if ~isequal(hTable.UserData.TableId, tableId)
+                columnOptionalArgs = {'ColumnWidth', columnWidth, 'ColumnName', columnNames, 'ColumnEditable', columnEditable};
+            end
+
             if ~isequal(hTable.ColumnFormat, columnFormat)
-                columnFormatOptionalArgs = {'ColumnFormat', columnFormat};
+                columnOptionalArgs = [columnOptionalArgs, {'ColumnFormat', columnFormat}];
             end
             
             % Aplicação final das propriedades na uitable
-            set(hTable, 'ColumnWidth', columnWidth, ...
-                        'ColumnName', columnNames, ...
-                        'ColumnEditable', columnEditable, ...
-                        'RowName', rowNames, ...
-                        'Data', tableIdData(visibleRows, :), ...
-                        columnFormatOptionalArgs{:})
+            if ~isequal(hTable.UserData.TableId, tableId)
+                set(hTable, 'RowName', rowNames, 'Data', tableIdData(visibleRows, :), columnOptionalArgs{:})
+            else
+                hTable.Data = tableIdData(visibleRows, :);
+                hTable.RowName = rowNames;
+            end
             pause(.250) % drawnow
             hTable.UserData.TableId = tableId;
             hTable.UserData.visibleRows = visibleRows;
@@ -1015,7 +1017,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 
                 fileFullPath = ui.Dialog(app.UIFigure, 'uiputfile', '', nameFormatMap, defaultBaseName);
                 if isempty(fileFullPath)
-                    return
+                    error('Operação cancelada pelo usuário.')
                 end
 
                 if isscalar(outputfiles)

@@ -4,7 +4,6 @@ classdef dockIcmsRate_exported < matlab.apps.AppBase
     properties (Access = public)
         UIFigure               matlab.ui.Figure
         GridLayout             matlab.ui.container.GridLayout
-        Document               matlab.ui.container.GridLayout
         IcmsRateByMonthPanel   matlab.ui.container.Panel
         IcmsRateByMonthGrid    matlab.ui.container.GridLayout
         IcmsMonth12            matlab.ui.control.Spinner
@@ -36,7 +35,6 @@ classdef dockIcmsRate_exported < matlab.apps.AppBase
         IcmsRateEditMode       matlab.ui.control.Image
         IcmsRateRefresh        matlab.ui.control.Image
         EntityInfo             matlab.ui.control.Label
-        btnClose               matlab.ui.control.Image
     end
 
     
@@ -100,7 +98,7 @@ classdef dockIcmsRate_exported < matlab.apps.AppBase
                     app.IcmsRateEditMode.ImageSource = 'Edit_32Filled.png';
                     app.IcmsRateEditMode.UserData.status = true;
                     
-                    app.Document.ColumnWidth(end-1:end) = {18, 18};
+                    app.GridLayout.ColumnWidth(end-1:end) = {18, 18};
                     app.IcmsRateConfirmButton.Enable = 1;
                     app.IcmsRateCancelButton.Enable  = 1;
 
@@ -110,7 +108,7 @@ classdef dockIcmsRate_exported < matlab.apps.AppBase
                     app.IcmsRateEditMode.ImageSource = 'Edit_32.png';
                     app.IcmsRateEditMode.UserData.status = false;
 
-                    app.Document.ColumnWidth(end-1:end) = {0,0};
+                    app.GridLayout.ColumnWidth(end-1:end) = {0,0};
                     app.IcmsRateConfirmButton.Enable = 0;
                     app.IcmsRateCancelButton.Enable  = 0;
 
@@ -172,12 +170,9 @@ classdef dockIcmsRate_exported < matlab.apps.AppBase
             
         end
 
-        % Callback function: UIFigure, btnClose
+        % Close request function: UIFigure
         function closeFcn(app, event)
             
-            context = app.inputArgs.context;
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcnCallFromPopupApp', context, 'auxApp.dockECDAccount')
-
             delete(app)
             
         end
@@ -257,34 +252,15 @@ classdef dockIcmsRate_exported < matlab.apps.AppBase
 
             % Create GridLayout
             app.GridLayout = uigridlayout(app.Container);
-            app.GridLayout.ColumnWidth = {'1x', 30};
-            app.GridLayout.RowHeight = {30, '1x'};
-            app.GridLayout.ColumnSpacing = 0;
-            app.GridLayout.RowSpacing = 0;
-            app.GridLayout.Padding = [0 0 0 0];
-            app.GridLayout.BackgroundColor = [0.902 0.902 0.902];
-
-            % Create btnClose
-            app.btnClose = uiimage(app.GridLayout);
-            app.btnClose.ScaleMethod = 'none';
-            app.btnClose.ImageClickedFcn = createCallbackFcn(app, @closeFcn, true);
-            app.btnClose.Tag = 'Close';
-            app.btnClose.Layout.Row = 1;
-            app.btnClose.Layout.Column = 2;
-            app.btnClose.ImageSource = 'Delete_12SVG.svg';
-
-            % Create Document
-            app.Document = uigridlayout(app.GridLayout);
-            app.Document.ColumnWidth = {'1x', 18, 18, 0, 0};
-            app.Document.RowHeight = {'1x', 18, 108};
-            app.Document.ColumnSpacing = 5;
-            app.Document.RowSpacing = 5;
-            app.Document.Layout.Row = 2;
-            app.Document.Layout.Column = [1 2];
-            app.Document.BackgroundColor = [1 1 1];
+            app.GridLayout.ColumnWidth = {'1x', 18, 18, 0, 0};
+            app.GridLayout.RowHeight = {'1x', 18, 108};
+            app.GridLayout.ColumnSpacing = 5;
+            app.GridLayout.RowSpacing = 5;
+            app.GridLayout.Padding = [20 20 20 20];
+            app.GridLayout.BackgroundColor = [1 1 1];
 
             % Create EntityInfo
-            app.EntityInfo = uilabel(app.Document);
+            app.EntityInfo = uilabel(app.GridLayout);
             app.EntityInfo.VerticalAlignment = 'top';
             app.EntityInfo.WordWrap = 'on';
             app.EntityInfo.FontSize = 11;
@@ -294,7 +270,7 @@ classdef dockIcmsRate_exported < matlab.apps.AppBase
             app.EntityInfo.Text = '';
 
             % Create IcmsRateRefresh
-            app.IcmsRateRefresh = uiimage(app.Document);
+            app.IcmsRateRefresh = uiimage(app.GridLayout);
             app.IcmsRateRefresh.ScaleMethod = 'none';
             app.IcmsRateRefresh.ImageClickedFcn = createCallbackFcn(app, @onIcmsRateEditModeChanged, true);
             app.IcmsRateRefresh.Visible = 'off';
@@ -303,28 +279,28 @@ classdef dockIcmsRate_exported < matlab.apps.AppBase
             app.IcmsRateRefresh.ImageSource = 'Refresh_18.png';
 
             % Create IcmsRateEditMode
-            app.IcmsRateEditMode = uiimage(app.Document);
+            app.IcmsRateEditMode = uiimage(app.GridLayout);
             app.IcmsRateEditMode.ImageClickedFcn = createCallbackFcn(app, @onIcmsRateEditModeChanged, true);
             app.IcmsRateEditMode.Layout.Row = 2;
             app.IcmsRateEditMode.Layout.Column = 3;
             app.IcmsRateEditMode.ImageSource = 'Edit_32.png';
 
             % Create IcmsRateConfirmButton
-            app.IcmsRateConfirmButton = uiimage(app.Document);
+            app.IcmsRateConfirmButton = uiimage(app.GridLayout);
             app.IcmsRateConfirmButton.ImageClickedFcn = createCallbackFcn(app, @onIcmsRateEditModeChanged, true);
             app.IcmsRateConfirmButton.Layout.Row = 2;
             app.IcmsRateConfirmButton.Layout.Column = 4;
             app.IcmsRateConfirmButton.ImageSource = 'Ok_32Green.png';
 
             % Create IcmsRateCancelButton
-            app.IcmsRateCancelButton = uiimage(app.Document);
+            app.IcmsRateCancelButton = uiimage(app.GridLayout);
             app.IcmsRateCancelButton.ImageClickedFcn = createCallbackFcn(app, @onIcmsRateEditModeChanged, true);
             app.IcmsRateCancelButton.Layout.Row = 2;
             app.IcmsRateCancelButton.Layout.Column = 5;
             app.IcmsRateCancelButton.ImageSource = 'Delete_32Red.png';
 
             % Create IcmsRateByMonthPanel
-            app.IcmsRateByMonthPanel = uipanel(app.Document);
+            app.IcmsRateByMonthPanel = uipanel(app.GridLayout);
             app.IcmsRateByMonthPanel.Layout.Row = 3;
             app.IcmsRateByMonthPanel.Layout.Column = [1 5];
 

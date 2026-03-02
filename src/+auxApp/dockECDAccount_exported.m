@@ -4,7 +4,6 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
     properties (Access = public)
         UIFigure                  matlab.ui.Figure
         GridLayout                matlab.ui.container.GridLayout
-        Document                  matlab.ui.container.GridLayout
         AccountAnnualTotal        matlab.ui.control.Label
         NextSelection             matlab.ui.control.Image
         PreviousSelection         matlab.ui.control.Image
@@ -46,7 +45,6 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         AccountInfo               matlab.ui.control.Label
         AccountList               matlab.ui.control.DropDown
         AccountListLabel          matlab.ui.control.Label
-        btnClose                  matlab.ui.control.Image
     end
 
     
@@ -142,7 +140,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
                 yLimit = 1;
             end
             app.UIAxes.YLim = [-yLimit, yLimit];            
-            app.AccountAnnualTotal.Text = sprintf('R$ %.2f', accountTable{index, 'TOTAL'});
+            app.AccountAnnualTotal.Text = sprintf('Saldo anual:\nR$ %.2f', accountTable{index, 'TOTAL'});
 
             cla(app.UIAxes)
             plotHandle = bar(app.UIAxes, accountTable{index, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}}, 'FaceColor', '#ffff12', 'LineStyle', 'none');
@@ -229,12 +227,9 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             
         end
 
-        % Callback function: UIFigure, btnClose
+        % Close request function: UIFigure
         function closeFcn(app, event)
             
-            context = app.inputArgs.context;
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcnCallFromPopupApp', context, 'auxApp.dockECDAccount')
-
             delete(app)
             
         end
@@ -360,33 +355,14 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
 
             % Create GridLayout
             app.GridLayout = uigridlayout(app.Container);
-            app.GridLayout.ColumnWidth = {'1x', 30};
-            app.GridLayout.RowHeight = {30, '1x'};
-            app.GridLayout.ColumnSpacing = 0;
-            app.GridLayout.RowSpacing = 0;
-            app.GridLayout.Padding = [0 0 0 0];
-            app.GridLayout.BackgroundColor = [0.902 0.902 0.902];
-
-            % Create btnClose
-            app.btnClose = uiimage(app.GridLayout);
-            app.btnClose.ScaleMethod = 'none';
-            app.btnClose.ImageClickedFcn = createCallbackFcn(app, @closeFcn, true);
-            app.btnClose.Tag = 'Close';
-            app.btnClose.Layout.Row = 1;
-            app.btnClose.Layout.Column = 2;
-            app.btnClose.ImageSource = 'Delete_12SVG.svg';
-
-            % Create Document
-            app.Document = uigridlayout(app.GridLayout);
-            app.Document.ColumnWidth = {22, 22, '1x', 136, 135, 264};
-            app.Document.RowHeight = {17, 22, '1x', 22, 22, 108, 22, 44, 1, 22};
-            app.Document.RowSpacing = 5;
-            app.Document.Layout.Row = 2;
-            app.Document.Layout.Column = [1 2];
-            app.Document.BackgroundColor = [1 1 1];
+            app.GridLayout.ColumnWidth = {22, 22, '1x', 136, 135, 264};
+            app.GridLayout.RowHeight = {17, 22, '1x', 22, 22, 108, 22, 44, 1, 22};
+            app.GridLayout.RowSpacing = 5;
+            app.GridLayout.Padding = [20 20 20 20];
+            app.GridLayout.BackgroundColor = [1 1 1];
 
             % Create AccountListLabel
-            app.AccountListLabel = uilabel(app.Document);
+            app.AccountListLabel = uilabel(app.GridLayout);
             app.AccountListLabel.VerticalAlignment = 'bottom';
             app.AccountListLabel.FontSize = 11;
             app.AccountListLabel.Layout.Row = 1;
@@ -394,17 +370,17 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.AccountListLabel.Text = 'Conta:';
 
             % Create AccountList
-            app.AccountList = uidropdown(app.Document);
+            app.AccountList = uidropdown(app.GridLayout);
             app.AccountList.Items = {};
             app.AccountList.ValueChangedFcn = createCallbackFcn(app, @AccountListValueChanged, true);
             app.AccountList.FontSize = 11;
             app.AccountList.BackgroundColor = [1 1 1];
             app.AccountList.Layout.Row = 2;
-            app.AccountList.Layout.Column = [1 3];
+            app.AccountList.Layout.Column = [1 6];
             app.AccountList.Value = {};
 
             % Create AccountInfo
-            app.AccountInfo = uilabel(app.Document);
+            app.AccountInfo = uilabel(app.GridLayout);
             app.AccountInfo.VerticalAlignment = 'top';
             app.AccountInfo.WordWrap = 'on';
             app.AccountInfo.FontSize = 11;
@@ -414,7 +390,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.AccountInfo.Text = '';
 
             % Create AccountTaxCategoryLabel
-            app.AccountTaxCategoryLabel = uilabel(app.Document);
+            app.AccountTaxCategoryLabel = uilabel(app.GridLayout);
             app.AccountTaxCategoryLabel.VerticalAlignment = 'bottom';
             app.AccountTaxCategoryLabel.FontSize = 11;
             app.AccountTaxCategoryLabel.Layout.Row = 4;
@@ -422,7 +398,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.AccountTaxCategoryLabel.Text = 'Apurado? ✎';
 
             % Create AccountTaxCategory
-            app.AccountTaxCategory = uidropdown(app.Document);
+            app.AccountTaxCategory = uidropdown(app.GridLayout);
             app.AccountTaxCategory.Items = {'-', 'Não', 'Sim', 'ICMS Telecom', 'PIS Telecom', 'COFINS Telecom'};
             app.AccountTaxCategory.ValueChangedFcn = createCallbackFcn(app, @parameterValueChanged, true);
             app.AccountTaxCategory.FontSize = 11;
@@ -432,7 +408,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.AccountTaxCategory.Value = '-';
 
             % Create InterconnectionLabel
-            app.InterconnectionLabel = uilabel(app.Document);
+            app.InterconnectionLabel = uilabel(app.GridLayout);
             app.InterconnectionLabel.VerticalAlignment = 'bottom';
             app.InterconnectionLabel.FontSize = 11;
             app.InterconnectionLabel.Layout.Row = 4;
@@ -440,7 +416,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.InterconnectionLabel.Text = 'Interconexão? ✎';
 
             % Create Interconnection
-            app.Interconnection = uidropdown(app.Document);
+            app.Interconnection = uidropdown(app.GridLayout);
             app.Interconnection.Items = {'-', 'Não', 'ITX', 'EILD'};
             app.Interconnection.ValueChangedFcn = createCallbackFcn(app, @parameterValueChanged, true);
             app.Interconnection.FontSize = 11;
@@ -450,7 +426,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.Interconnection.Value = '-';
 
             % Create IcmsRateModeLabel
-            app.IcmsRateModeLabel = uilabel(app.Document);
+            app.IcmsRateModeLabel = uilabel(app.GridLayout);
             app.IcmsRateModeLabel.VerticalAlignment = 'bottom';
             app.IcmsRateModeLabel.FontSize = 11;
             app.IcmsRateModeLabel.Layout.Row = 4;
@@ -458,7 +434,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.IcmsRateModeLabel.Text = 'Alíquota ICMS ✎';
 
             % Create IcmsRateMode
-            app.IcmsRateMode = uidropdown(app.Document);
+            app.IcmsRateMode = uidropdown(app.GridLayout);
             app.IcmsRateMode.Items = {'auto', 'manual'};
             app.IcmsRateMode.ValueChangedFcn = createCallbackFcn(app, @parameterValueChanged, true);
             app.IcmsRateMode.FontSize = 11;
@@ -468,7 +444,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.IcmsRateMode.Value = 'auto';
 
             % Create IcmsMonthsPanel
-            app.IcmsMonthsPanel = uipanel(app.Document);
+            app.IcmsMonthsPanel = uipanel(app.GridLayout);
             app.IcmsMonthsPanel.Layout.Row = 6;
             app.IcmsMonthsPanel.Layout.Column = [1 5];
 
@@ -708,7 +684,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.icmsMonth12.Value = 25.1;
 
             % Create AuditorCommentLabel
-            app.AuditorCommentLabel = uilabel(app.Document);
+            app.AuditorCommentLabel = uilabel(app.GridLayout);
             app.AuditorCommentLabel.VerticalAlignment = 'bottom';
             app.AuditorCommentLabel.FontSize = 11;
             app.AuditorCommentLabel.Layout.Row = 7;
@@ -716,14 +692,14 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.AuditorCommentLabel.Text = 'Observação ✎';
 
             % Create AuditorComment
-            app.AuditorComment = uitextarea(app.Document);
+            app.AuditorComment = uitextarea(app.GridLayout);
             app.AuditorComment.ValueChangedFcn = createCallbackFcn(app, @parameterValueChanged, true);
             app.AuditorComment.FontSize = 11;
             app.AuditorComment.Layout.Row = 8;
             app.AuditorComment.Layout.Column = [1 5];
 
             % Create MonthlyBalanceChartPanel
-            app.MonthlyBalanceChartPanel = uipanel(app.Document);
+            app.MonthlyBalanceChartPanel = uipanel(app.GridLayout);
             app.MonthlyBalanceChartPanel.AutoResizeChildren = 'off';
             app.MonthlyBalanceChartPanel.BorderType = 'none';
             app.MonthlyBalanceChartPanel.BackgroundColor = [0 0 0];
@@ -731,7 +707,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.MonthlyBalanceChartPanel.Layout.Column = 6;
 
             % Create PreviousSelection
-            app.PreviousSelection = uiimage(app.Document);
+            app.PreviousSelection = uiimage(app.GridLayout);
             app.PreviousSelection.ImageClickedFcn = createCallbackFcn(app, @arrowButtonClicked, true);
             app.PreviousSelection.Tooltip = {'Navega para a conta anterior'};
             app.PreviousSelection.Layout.Row = 10;
@@ -739,7 +715,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.PreviousSelection.ImageSource = 'Previous_32.png';
 
             % Create NextSelection
-            app.NextSelection = uiimage(app.Document);
+            app.NextSelection = uiimage(app.GridLayout);
             app.NextSelection.ImageClickedFcn = createCallbackFcn(app, @arrowButtonClicked, true);
             app.NextSelection.Tooltip = {'Navega para a conta posterior'};
             app.NextSelection.Layout.Row = 10;
@@ -747,11 +723,9 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.NextSelection.ImageSource = 'After_32.png';
 
             % Create AccountAnnualTotal
-            app.AccountAnnualTotal = uilabel(app.Document);
-            app.AccountAnnualTotal.HorizontalAlignment = 'right';
+            app.AccountAnnualTotal = uilabel(app.GridLayout);
             app.AccountAnnualTotal.VerticalAlignment = 'top';
             app.AccountAnnualTotal.FontSize = 11;
-            app.AccountAnnualTotal.FontWeight = 'bold';
             app.AccountAnnualTotal.Layout.Row = [9 10];
             app.AccountAnnualTotal.Layout.Column = 6;
             app.AccountAnnualTotal.Text = '';

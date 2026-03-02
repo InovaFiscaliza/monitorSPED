@@ -64,6 +64,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         executionMode
         progressDialog
         popupContainer
+        popupCurrentApp
 
         eFiscalizaObj
         receitaFederalObj
@@ -123,6 +124,24 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     case 'unload'
                         closeFcn(app)
 
+                    case 'closeFcnCallFromPopupApp'
+                        context = event.HTMLEventData.context;
+                        popupCurrentAppTag = event.HTMLEventData.auxDockAppName;
+
+                        switch context
+                            case {'mainApp', 'FILE'}
+                                hApp = app;
+                            otherwise
+                                hApp = getAppHandle(app.tabGroupController, context);
+                        end
+                        
+                        if ~isempty(hApp) && isvalid(hApp)
+                            deleteContextMenu(app.tabGroupController, hApp.UIFigure, popupCurrentAppTag)
+                        end
+
+                        delete(app.popupCurrentApp)
+                        app.popupCurrentApp = [];
+
                     case 'customForm'
                         switch event.HTMLEventData.uuid
                             case {'onFetchIssueDetails', 'onReportGenerate', 'onUploadArtifacts'}
@@ -179,7 +198,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         ContextMenu_DeleteSelectedTreeNode(app)
 
                     otherwise
-                        error('UnexpectedEvent')
+                        error('winMonitorSPED:UnexpectedEvent', 'Unexpected event "%s"', event.HTMLEventName)
                 end
                 drawnow
 
@@ -241,7 +260,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                         ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', eventName)
         
                                     otherwise
-                                        error('UnexpectedCall')
+                                        error('winMonitorSPED:UnexpectedCall', 'Unexpected call "%s"', eventName)
                                 end
         
                             % auxApp.winECD (ECD)
@@ -272,7 +291,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                         end
         
                                     otherwise
-                                        error('UnexpectedCall')
+                                        error('winMonitorSPED:UnexpectedCall', 'Unexpected call "%s"', eventName)
                                 end
 
                             % DOCKS:OTHERS
@@ -283,23 +302,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                   'auxApp.dockECDFilter',      'auxApp.dockECDFilter_exported',  ...
                                   'auxApp.dockECDMemoryUsage', 'auxApp.dockECDMemoryUsage_exported'}
                                 switch eventName
-                                    case 'closeFcnCallFromPopupApp'
-                                        context = varargin{1};
-                                        moduleTag = varargin{2};
-        
-                                        switch context
-                                            case {'mainApp', 'FILE'}
-                                                hApp = app;
-                                                app.popupContainer.Parent.Visible = 0;
-                                            otherwise
-                                                hApp = getAppHandle(app.tabGroupController, context);
-                                                ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', eventName)
-                                        end
-                                        
-                                        if ~isempty(hApp)
-                                            deleteContextMenu(app.tabGroupController, hApp.UIFigure, moduleTag)
-                                        end
-        
                                     % auxApp.dockReportLib
                                     case {'onProjectRestart', 'onProjectLoad', 'onFinalReportFileChanged'}
                                         refreshProjectFiles(app, [], 'FileListChanged:ProjectLoad')
@@ -325,11 +327,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                         
                                     % auxApp.dockECDExport
                                     case 'onExportECD'
-                                        delete(callingApp)
-                                        
                                         context  = varargin{1};
                                         varargin = [{eventName}, varargin(2:end)];
                                         ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
+
+                                        if ~isempty(app.popupCurrentApp) && isvalid(app.popupCurrentApp)
+                                            sendEventToHTMLSource(app.jsBackDoor, 'closePopupAppRequest', struct('dataTag', app.popupCurrentApp.GridLayout.UserData.id))
+                                        end
         
                                     % auxApp.dockECDAccount
                                     % auxApp.dockECDFilter        
@@ -349,11 +353,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                         end
         
                                     otherwise
-                                        error('UnexpectedCall')
+                                        error('winMonitorSPED:UnexpectedCall', 'Unexpected call "%s"', eventName)
                                 end
             
                             otherwise
-                                error('UnexpectedCaller')
+                                error('winMonitorSPED:UnexpectedCaller', 'Unexpected caller "%s"', class(callingApp))
                         end
                 end
 
@@ -379,11 +383,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function ipcMainMatlabOpenPopupApp(app, callingApp, auxAppName, varargin)
+        function ipcMainMatlabOpenPopupApp(app, callingApp, auxAppName, context, varargin)
             arguments
                 app
                 callingApp
                 auxAppName char {mustBeMember(auxAppName, {'ReportLib', 'IcmsRate', 'ECDExport', 'ECDAccount', 'ECDFilter', 'ECDMemoryUsage'})}
+                context    char {mustBeMember(context, {'mainApp', 'FILE', 'ECD', 'CONFIG'})}
             end
 
             arguments (Repeating)
@@ -393,7 +398,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             switch auxAppName
                 case 'ReportLib'
                     screenWidth  = 460;
-                    screenHeight = 602;
+                    screenHeight = 598;
                 case 'IcmsRate'
                     screenWidth  = 448;
                     screenHeight = 320;
@@ -412,19 +417,28 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             end
 
             requestVisibilityChange(callingApp.progressDialog, 'visible', 'unlocked')
-            ui.PopUpContainer(callingApp, class.Constants.appName, screenWidth, screenHeight)
 
-            % Executa o app auxiliar.
-            inputArguments = [{app, callingApp}, varargin];
-            auxDockAppName = sprintf('auxApp.dock%s', auxAppName);
+            inputArguments = [{app, callingApp, context}, varargin];
             
             if app.General.operationMode.Debug
                 eval(sprintf('auxApp.dock%s(inputArguments{:})', auxAppName))
             else
-                eval([auxDockAppName '_exported(callingApp.popupContainer, inputArguments{:})'])
-                
+                auxDockAppName = sprintf('auxApp.dock%s', auxAppName);
+
+                ui.PopUpContainer(callingApp, screenWidth, screenHeight)
+                app.popupCurrentApp = feval([auxDockAppName '_exported'], callingApp.popupContainer, inputArguments{:});
+
+                ui.CustomizationBase.getElementsDataTag({app.popupCurrentApp.GridLayout});
+                app.popupCurrentApp.GridLayout.UserData.auxDockAppName = auxDockAppName;
                 callingApp.popupContainer.UserData.auxDockAppName = auxDockAppName;
-                callingApp.popupContainer.Parent.Visible = 1;
+
+                sendEventToHTMLSource(app.jsBackDoor, 'dockContainer', struct( ...
+                    'dataTag', app.popupCurrentApp.GridLayout.UserData.id, ...
+                    'width', screenWidth, ...
+                    'height', screenHeight+31, ...
+                    'context', context, ...
+                    'auxDockAppName', auxDockAppName ...
+                ))
             end
 
             requestVisibilityChange(callingApp.progressDialog, 'hidden', 'unlocked')

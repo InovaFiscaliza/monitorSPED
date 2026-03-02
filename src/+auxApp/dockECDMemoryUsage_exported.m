@@ -4,10 +4,8 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
     properties (Access = public)
         UIFigure    matlab.ui.Figure
         GridLayout  matlab.ui.container.GridLayout
-        Document    matlab.ui.container.GridLayout
         UITable     matlab.ui.control.Table
         TreeLabel   matlab.ui.control.Label
-        btnClose    matlab.ui.control.Image
     end
 
     
@@ -111,13 +109,10 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
             
         end
 
-        % Callback function: UIFigure, btnClose
+        % Close request function: UIFigure
         function closeFcn(app, event)
             
-            context = app.inputArgs.context;
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcnCallFromPopupApp', context, 'auxApp.dockECDMemoryUsage')
-            ui.Table.deleteAppHandleFromBaseWorkspace(app.appHandleNameInBase)
-            
+            ui.Table.deleteAppHandleFromBaseWorkspace(app.appHandleNameInBase)            
             delete(app)
             
         end
@@ -159,33 +154,14 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
 
             % Create GridLayout
             app.GridLayout = uigridlayout(app.Container);
-            app.GridLayout.ColumnWidth = {'1x', 30};
-            app.GridLayout.RowHeight = {30, '1x'};
-            app.GridLayout.ColumnSpacing = 0;
-            app.GridLayout.RowSpacing = 0;
-            app.GridLayout.Padding = [0 0 0 0];
-            app.GridLayout.BackgroundColor = [0.902 0.902 0.902];
-
-            % Create btnClose
-            app.btnClose = uiimage(app.GridLayout);
-            app.btnClose.ScaleMethod = 'none';
-            app.btnClose.ImageClickedFcn = createCallbackFcn(app, @closeFcn, true);
-            app.btnClose.Tag = 'Close';
-            app.btnClose.Layout.Row = 1;
-            app.btnClose.Layout.Column = 2;
-            app.btnClose.ImageSource = 'Delete_12SVG.svg';
-
-            % Create Document
-            app.Document = uigridlayout(app.GridLayout);
-            app.Document.ColumnWidth = {'1x'};
-            app.Document.RowHeight = {17, '1x'};
-            app.Document.RowSpacing = 5;
-            app.Document.Layout.Row = 2;
-            app.Document.Layout.Column = [1 2];
-            app.Document.BackgroundColor = [1 1 1];
+            app.GridLayout.ColumnWidth = {'1x'};
+            app.GridLayout.RowHeight = {17, '1x'};
+            app.GridLayout.RowSpacing = 5;
+            app.GridLayout.Padding = [20 20 20 20];
+            app.GridLayout.BackgroundColor = [1 1 1];
 
             % Create TreeLabel
-            app.TreeLabel = uilabel(app.Document);
+            app.TreeLabel = uilabel(app.GridLayout);
             app.TreeLabel.VerticalAlignment = 'bottom';
             app.TreeLabel.FontSize = 10;
             app.TreeLabel.Layout.Row = 1;
@@ -193,7 +169,7 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
             app.TreeLabel.Text = 'ESPAÇO EM MEMÓRIA OCUPADO POR REGISTROS LIDOS OU CRIADOS';
 
             % Create UITable
-            app.UITable = uitable(app.Document);
+            app.UITable = uitable(app.GridLayout);
             app.UITable.ColumnName = {'REGISTRO'; ''; ''};
             app.UITable.ColumnWidth = {'1x', 110, 60};
             app.UITable.RowName = {};

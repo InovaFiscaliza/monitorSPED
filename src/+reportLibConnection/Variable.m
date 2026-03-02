@@ -126,11 +126,11 @@ classdef (Abstract) Variable
                     fieldValue = height(ecdObj.Table.x_BALANCETE_RESULTADO);
                     switch fieldValue
                         case 0
-                            fieldValue = '<font style="color:red;">nenhuma</font> conta';
+                            fieldValue = '<font style="color:red;">nenhuma</font> conta de resultado';
                         case 1
-                            fieldValue = 'uma única conta';
+                            fieldValue = 'uma única conta de resultado';
                         otherwise
-                            fieldValue = sprintf('%d contas', fieldValue);
+                            fieldValue = sprintf('%d contas de resultado', fieldValue);
                     end
 
                 case 'TotalValue'

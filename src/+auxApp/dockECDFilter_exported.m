@@ -4,7 +4,6 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
     properties (Access = public)
         UIFigure                matlab.ui.Figure
         GridLayout              matlab.ui.container.GridLayout
-        Document                matlab.ui.container.GridLayout
         SpecificationLabel      matlab.ui.control.Label
         SpecificationPanel      matlab.ui.container.Panel
         SpecificationGrid       matlab.ui.container.GridLayout
@@ -26,7 +25,6 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
         symbolicNameList        matlab.ui.control.DropDown
         TableIdList             matlab.ui.control.DropDown
         TableIdLabel            matlab.ui.control.Label
-        btnClose                matlab.ui.control.Image
         ContextMenu             matlab.ui.container.ContextMenu
         ExcluirMenu             matlab.ui.container.Menu
     end
@@ -211,12 +209,9 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             
         end
 
-        % Callback function: UIFigure, btnClose
+        % Close request function: UIFigure
         function closeFcn(app, event)
             
-            context = app.inputArgs.context;
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'closeFcnCallFromPopupApp', context, 'auxApp.dockECDFilter')
-
             delete(app)
             
         end
@@ -434,35 +429,15 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
 
             % Create GridLayout
             app.GridLayout = uigridlayout(app.Container);
-            app.GridLayout.ColumnWidth = {'1x', 30};
-            app.GridLayout.RowHeight = {30, '1x'};
-            app.GridLayout.ColumnSpacing = 0;
-            app.GridLayout.RowSpacing = 0;
-            app.GridLayout.Padding = [0 0 0 0];
-            app.GridLayout.BackgroundColor = [0.902 0.902 0.902];
-
-            % Create btnClose
-            app.btnClose = uiimage(app.GridLayout);
-            app.btnClose.ScaleMethod = 'none';
-            app.btnClose.ImageClickedFcn = createCallbackFcn(app, @closeFcn, true);
-            app.btnClose.Tag = 'Close';
-            app.btnClose.Layout.Row = 1;
-            app.btnClose.Layout.Column = 2;
-            app.btnClose.ImageSource = 'Delete_12SVG.svg';
-
-            % Create Document
-            app.Document = uigridlayout(app.GridLayout);
-            app.Document.ColumnWidth = {'1x', 63, 22};
-            app.Document.RowHeight = {17, 22, 22, '1x'};
-            app.Document.ColumnSpacing = 5;
-            app.Document.RowSpacing = 5;
-            app.Document.Padding = [10 10 10 5];
-            app.Document.Layout.Row = 2;
-            app.Document.Layout.Column = [1 2];
-            app.Document.BackgroundColor = [0.9804 0.9804 0.9804];
+            app.GridLayout.ColumnWidth = {'1x', 63, 22};
+            app.GridLayout.RowHeight = {17, 22, 22, '1x'};
+            app.GridLayout.ColumnSpacing = 5;
+            app.GridLayout.RowSpacing = 5;
+            app.GridLayout.Padding = [20 20 20 20];
+            app.GridLayout.BackgroundColor = [0.9804 0.9804 0.9804];
 
             % Create TableIdLabel
-            app.TableIdLabel = uilabel(app.Document);
+            app.TableIdLabel = uilabel(app.GridLayout);
             app.TableIdLabel.VerticalAlignment = 'bottom';
             app.TableIdLabel.FontSize = 10;
             app.TableIdLabel.Layout.Row = 1;
@@ -470,7 +445,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             app.TableIdLabel.Text = 'REGISTRO';
 
             % Create TableIdList
-            app.TableIdList = uidropdown(app.Document);
+            app.TableIdList = uidropdown(app.GridLayout);
             app.TableIdList.Items = {};
             app.TableIdList.ValueChangedFcn = createCallbackFcn(app, @onTableIdValueChanged, true);
             app.TableIdList.FontSize = 11;
@@ -480,7 +455,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             app.TableIdList.Value = {};
 
             % Create SpecificationPanel
-            app.SpecificationPanel = uipanel(app.Document);
+            app.SpecificationPanel = uipanel(app.GridLayout);
             app.SpecificationPanel.Layout.Row = 4;
             app.SpecificationPanel.Layout.Column = [1 3];
 
@@ -642,7 +617,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             app.columnFilterList.CheckedNodesChangedFcn = createCallbackFcn(app, @onColumnFilterCheckedNodesChanged, true);
 
             % Create SpecificationLabel
-            app.SpecificationLabel = uilabel(app.Document);
+            app.SpecificationLabel = uilabel(app.GridLayout);
             app.SpecificationLabel.VerticalAlignment = 'bottom';
             app.SpecificationLabel.FontSize = 10;
             app.SpecificationLabel.Layout.Row = 3;
