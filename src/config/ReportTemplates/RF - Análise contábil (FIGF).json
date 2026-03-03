@@ -663,7 +663,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "Com base nas informações prestadas pela empresa <b>%s</b>, inscrita no CNPJ sob o nº <b>%s</b>, as receitas de telecomunicações auferidas no exercício fiscal de <b>%s</b> resultam nos seguintes valores:",
+                        "Text": "Com base nas informações prestadas pela empresa <b>%s</b>, inscrita no CNPJ sob o nº <b>%s</b>, as receitas de telecomunicações auferidas no exercício fiscal de <b>%s</b> resultam nos seguintes valores apurados devidos:",
                         "Variable": [
                             "var_EntityName",
                             "var_EntityId",
@@ -681,7 +681,7 @@
                         },
                         {
                             "Editable": "true",
-                            "Text": "Ao Finttel: <b>%s</b>.",
+                            "Text": "Ao Funttel: <b>%s</b>.",
                             "Variable": "var_FUNTTEL"
                         }
                     ]
