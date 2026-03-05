@@ -637,8 +637,8 @@ classdef ECD < handle
 
                             % (b) PIS/COFINS INTERCONEXÃO
                             itxBaseCalculoPisCofins   = itxRobContabil + itxIcmsEstimado;
-                            itxPisEstimado            = - fix(100 * pisDefaultTax    .* itxBaseCalculoPisCofins, 2);
-                            itxCofinsEstimado         = - fix(100 * cofinsDefaultTax .* itxBaseCalculoPisCofins, 2);
+                            itxPisEstimado            = - fix(100 * pisDefaultTax    .* itxBaseCalculoPisCofins) / 100;
+                            itxCofinsEstimado         = - fix(100 * cofinsDefaultTax .* itxBaseCalculoPisCofins) / 100;
 
                             % (c) FUST/FUNTTEL INTERCONEXÃO
                             itxBaseCalculoFustFunttel = itxBaseCalculoPisCofins + itxPisEstimado + itxCofinsEstimado;
