@@ -605,21 +605,21 @@ classdef ECD < handle
 
                             % (c) FUST/FUNTTEL
                             baseCalculoFustFunttel = baseCalculoPisCofins + pisEscolhido + cofinsEscolhido;
-                            fustApurado            = - fustDefaultTax    .* baseCalculoFustFunttel;
-                            funttelApurado         = - funttelDefaultTax .* baseCalculoFustFunttel;
+                            fustApurado            = - fix(100 * fustDefaultTax    .* baseCalculoFustFunttel) / 100;
+                            funttelApurado         = - fix(100 * funttelDefaultTax .* baseCalculoFustFunttel) / 100;
 
                             % (d) ATUALIZA TABELA
-                            obj.Table.x_APURACAO_GERAL('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [robContabil,            sum(robContabil)])            / 100);
-                            obj.Table.x_APURACAO_GERAL('ICMS ESTIMADO',                  [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [icmsEstimado,           sum(icmsEstimado)])           / 100);
-                            obj.Table.x_APURACAO_GERAL('ICMS CONTÁBIL',                  [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [icmsContabil,           sum(icmsContabil)])           / 100);
-                            obj.Table.x_APURACAO_GERAL('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [baseCalculoPisCofins,   sum(baseCalculoPisCofins)])   / 100);
-                            obj.Table.x_APURACAO_GERAL('PIS ESTIMADO',                   [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [pisEstimado,            sum(pisEstimado)])            / 100);
-                            obj.Table.x_APURACAO_GERAL('PIS CONTÁBIL',                   [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [pisContabil,            sum(pisContabil)])            / 100);
-                            obj.Table.x_APURACAO_GERAL('COFINS ESTIMADO',                [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [cofinsEstimado,         sum(cofinsEstimado)])         / 100);
-                            obj.Table.x_APURACAO_GERAL('COFINS CONTÁBIL',                [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [cofinsContabil,         sum(cofinsContabil)])         / 100);
-                            obj.Table.x_APURACAO_GERAL('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [baseCalculoFustFunttel, sum(baseCalculoFustFunttel)]) / 100);
-                            obj.Table.x_APURACAO_GERAL('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [fustApurado,            sum(fustApurado)])            / 100);
-                            obj.Table.x_APURACAO_GERAL('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [funttelApurado,         sum(funttelApurado)])         / 100);
+                            obj.Table.x_APURACAO_GERAL('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell([robContabil,            sum(robContabil)]);
+                            obj.Table.x_APURACAO_GERAL('ICMS ESTIMADO',                  [monthIds, {'TOTAL'}]) = num2cell([icmsEstimado,           sum(icmsEstimado)]);
+                            obj.Table.x_APURACAO_GERAL('ICMS CONTÁBIL',                  [monthIds, {'TOTAL'}]) = num2cell([icmsContabil,           sum(icmsContabil)]);
+                            obj.Table.x_APURACAO_GERAL('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell([baseCalculoPisCofins,   sum(baseCalculoPisCofins)]);
+                            obj.Table.x_APURACAO_GERAL('PIS ESTIMADO',                   [monthIds, {'TOTAL'}]) = num2cell([pisEstimado,            sum(pisEstimado)]);
+                            obj.Table.x_APURACAO_GERAL('PIS CONTÁBIL',                   [monthIds, {'TOTAL'}]) = num2cell([pisContabil,            sum(pisContabil)]);
+                            obj.Table.x_APURACAO_GERAL('COFINS ESTIMADO',                [monthIds, {'TOTAL'}]) = num2cell([cofinsEstimado,         sum(cofinsEstimado)]);
+                            obj.Table.x_APURACAO_GERAL('COFINS CONTÁBIL',                [monthIds, {'TOTAL'}]) = num2cell([cofinsContabil,         sum(cofinsContabil)]);
+                            obj.Table.x_APURACAO_GERAL('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell([baseCalculoFustFunttel, sum(baseCalculoFustFunttel)]);
+                            obj.Table.x_APURACAO_GERAL('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell([fustApurado,            sum(fustApurado)]);
+                            obj.Table.x_APURACAO_GERAL('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell([funttelApurado,         sum(funttelApurado)]);
 
                             
                             % ## _APURACAO_INTERCONEXÃO ## 
@@ -642,18 +642,18 @@ classdef ECD < handle
 
                             % (c) FUST/FUNTTEL INTERCONEXÃO
                             itxBaseCalculoFustFunttel = itxBaseCalculoPisCofins + itxPisEstimado + itxCofinsEstimado;
-                            itxFustApurado            = - fustDefaultTax    .* itxBaseCalculoFustFunttel;
-                            itxFunttelApurado         = - funttelDefaultTax .* itxBaseCalculoFustFunttel;
+                            itxFustApurado            = - fix(100 * fustDefaultTax    .* itxBaseCalculoFustFunttel) / 100;
+                            itxFunttelApurado         = - fix(100 * funttelDefaultTax .* itxBaseCalculoFustFunttel) / 100;
 
                             % (d) ATUALIZA TABELA INTERCONEXÃO
-                            obj.Table.x_APURACAO_INTERCONEXAO('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxRobContabil,            sum(itxRobContabil)])            / 100);
-                            obj.Table.x_APURACAO_INTERCONEXAO('ICMS ESTIMADO',                  [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxIcmsEstimado,           sum(itxIcmsEstimado)])           / 100);
-                            obj.Table.x_APURACAO_INTERCONEXAO('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxBaseCalculoPisCofins,   sum(itxBaseCalculoPisCofins)])   / 100);
-                            obj.Table.x_APURACAO_INTERCONEXAO('PIS ESTIMADO',                   [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxPisEstimado,            sum(itxPisEstimado)])            / 100);
-                            obj.Table.x_APURACAO_INTERCONEXAO('COFINS ESTIMADO',                [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxCofinsEstimado,         sum(itxCofinsEstimado)])         / 100);
-                            obj.Table.x_APURACAO_INTERCONEXAO('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxBaseCalculoFustFunttel, sum(itxBaseCalculoFustFunttel)]) / 100);
-                            obj.Table.x_APURACAO_INTERCONEXAO('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxFustApurado,            sum(itxFustApurado)])            / 100);
-                            obj.Table.x_APURACAO_INTERCONEXAO('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxFunttelApurado,         sum(itxFunttelApurado)])         / 100);
+                            obj.Table.x_APURACAO_INTERCONEXAO('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell([itxRobContabil,            sum(itxRobContabil)]);
+                            obj.Table.x_APURACAO_INTERCONEXAO('ICMS ESTIMADO',                  [monthIds, {'TOTAL'}]) = num2cell([itxIcmsEstimado,           sum(itxIcmsEstimado)]);
+                            obj.Table.x_APURACAO_INTERCONEXAO('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell([itxBaseCalculoPisCofins,   sum(itxBaseCalculoPisCofins)]);
+                            obj.Table.x_APURACAO_INTERCONEXAO('PIS ESTIMADO',                   [monthIds, {'TOTAL'}]) = num2cell([itxPisEstimado,            sum(itxPisEstimado)]);
+                            obj.Table.x_APURACAO_INTERCONEXAO('COFINS ESTIMADO',                [monthIds, {'TOTAL'}]) = num2cell([itxCofinsEstimado,         sum(itxCofinsEstimado)]);
+                            obj.Table.x_APURACAO_INTERCONEXAO('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell([itxBaseCalculoFustFunttel, sum(itxBaseCalculoFustFunttel)]);
+                            obj.Table.x_APURACAO_INTERCONEXAO('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell([itxFustApurado,            sum(itxFustApurado)]);
+                            obj.Table.x_APURACAO_INTERCONEXAO('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell([itxFunttelApurado,         sum(itxFunttelApurado)]);
 
                         otherwise
                             error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
@@ -1329,7 +1329,7 @@ classdef ECD < handle
                     accountBalanceByMonth(jj) = sum(accountTable.("VL_DC_COM_SINAL")(monthIndexes));
                 end
 
-                trialBalance(ii, :) = [{'', accountId}, num2cell(fix(100 * [accountBalanceByMonth, sum(accountBalanceByMonth)]) / 100)];
+                trialBalance(ii, :) = [{'', accountId}, num2cell([accountBalanceByMonth, sum(accountBalanceByMonth)])];
             end
 
             % Valida-se se o valor total de transações entre as contas por 
