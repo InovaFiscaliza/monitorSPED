@@ -560,7 +560,7 @@ classdef ECD < handle
 
                                 icmsEstimado  = icmsEstimado - icmsRate .* robContabilTable{ii, monthIds};
                             end
-                            icmsEstimado      = round(icmsEstimado, 2);
+                            icmsEstimado      = fix(100 * icmsEstimado) / 100;
                             
                             icmsContabil      = zeros(1, 12);
                             icmsContabilTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO(icmsContabilIdx, 'COD_CTA'), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);                            
@@ -577,14 +577,14 @@ classdef ECD < handle
                             % (b) PIS/COFINS
                             baseCalculoPisCofins = robContabil + icmsEscolhido;                            
                             
-                            pisEstimado          = - round(pisDefaultTax    .* baseCalculoPisCofins, 2);
+                            pisEstimado          = - fix(100 * pisDefaultTax .* baseCalculoPisCofins) / 100;
                             pisContabil          = zeros(1, 12);
                             pisContabilTable     = innerjoin(obj.Table.x_CONTAS_ANOTACAO(pisContabilIdx,    'COD_CTA'), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
                             if ~isempty(pisContabilTable)
                                 pisContabil      = sum(pisContabilTable{:, monthIds}, 1);
                             end
                             
-                            cofinsEstimado       = - round(cofinsDefaultTax .* baseCalculoPisCofins, 2);
+                            cofinsEstimado       = - fix(100 * cofinsDefaultTax .* baseCalculoPisCofins) / 100;
                             cofinsContabil       = zeros(1, 12);
                             cofinsContabilTable  = innerjoin(obj.Table.x_CONTAS_ANOTACAO(cofinsContabilIdx, 'COD_CTA'), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
                             if ~isempty(cofinsContabilTable)
@@ -609,17 +609,17 @@ classdef ECD < handle
                             funttelApurado         = - funttelDefaultTax .* baseCalculoFustFunttel;
 
                             % (d) ATUALIZA TABELA
-                            obj.Table.x_APURACAO_GERAL('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell(round([robContabil,            sum(robContabil)],            2));
-                            obj.Table.x_APURACAO_GERAL('ICMS ESTIMADO',                  [monthIds, {'TOTAL'}]) = num2cell(round([icmsEstimado,           sum(icmsEstimado)],           2));
-                            obj.Table.x_APURACAO_GERAL('ICMS CONTÁBIL',                  [monthIds, {'TOTAL'}]) = num2cell(round([icmsContabil,           sum(icmsContabil)],           2));
-                            obj.Table.x_APURACAO_GERAL('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell(round([baseCalculoPisCofins,   sum(baseCalculoPisCofins)],   2));
-                            obj.Table.x_APURACAO_GERAL('PIS ESTIMADO',                   [monthIds, {'TOTAL'}]) = num2cell(round([pisEstimado,            sum(pisEstimado)],            2));
-                            obj.Table.x_APURACAO_GERAL('PIS CONTÁBIL',                   [monthIds, {'TOTAL'}]) = num2cell(round([pisContabil,            sum(pisContabil)],            2));
-                            obj.Table.x_APURACAO_GERAL('COFINS ESTIMADO',                [monthIds, {'TOTAL'}]) = num2cell(round([cofinsEstimado,         sum(cofinsEstimado)],         2));
-                            obj.Table.x_APURACAO_GERAL('COFINS CONTÁBIL',                [monthIds, {'TOTAL'}]) = num2cell(round([cofinsContabil,         sum(cofinsContabil)],         2));
-                            obj.Table.x_APURACAO_GERAL('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell(round([baseCalculoFustFunttel, sum(baseCalculoFustFunttel)], 2));
-                            obj.Table.x_APURACAO_GERAL('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell(round([fustApurado,            sum(fustApurado)],            2));
-                            obj.Table.x_APURACAO_GERAL('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell(round([funttelApurado,         sum(funttelApurado)],         2));
+                            obj.Table.x_APURACAO_GERAL('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [robContabil,            sum(robContabil)])            / 100);
+                            obj.Table.x_APURACAO_GERAL('ICMS ESTIMADO',                  [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [icmsEstimado,           sum(icmsEstimado)])           / 100);
+                            obj.Table.x_APURACAO_GERAL('ICMS CONTÁBIL',                  [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [icmsContabil,           sum(icmsContabil)])           / 100);
+                            obj.Table.x_APURACAO_GERAL('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [baseCalculoPisCofins,   sum(baseCalculoPisCofins)])   / 100);
+                            obj.Table.x_APURACAO_GERAL('PIS ESTIMADO',                   [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [pisEstimado,            sum(pisEstimado)])            / 100);
+                            obj.Table.x_APURACAO_GERAL('PIS CONTÁBIL',                   [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [pisContabil,            sum(pisContabil)])            / 100);
+                            obj.Table.x_APURACAO_GERAL('COFINS ESTIMADO',                [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [cofinsEstimado,         sum(cofinsEstimado)])         / 100);
+                            obj.Table.x_APURACAO_GERAL('COFINS CONTÁBIL',                [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [cofinsContabil,         sum(cofinsContabil)])         / 100);
+                            obj.Table.x_APURACAO_GERAL('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [baseCalculoFustFunttel, sum(baseCalculoFustFunttel)]) / 100);
+                            obj.Table.x_APURACAO_GERAL('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [fustApurado,            sum(fustApurado)])            / 100);
+                            obj.Table.x_APURACAO_GERAL('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [funttelApurado,         sum(funttelApurado)])         / 100);
 
                             
                             % ## _APURACAO_INTERCONEXÃO ## 
@@ -632,13 +632,13 @@ classdef ECD < handle
                             itxRobContabilTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO(itxRobContabilIdx, {'COD_CTA', 'Alíquota ICMS'}), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
                             if ~isempty(itxRobContabilTable)
                                 itxRobContabil  = sum(itxRobContabilTable{:, monthIds}, 1);
-                                itxIcmsEstimado = - round(itxIcmsDefaultTax .* itxRobContabil, 2);
+                                itxIcmsEstimado = - fix(100 * itxIcmsDefaultTax .* itxRobContabil) / 100;
                             end
 
                             % (b) PIS/COFINS INTERCONEXÃO
                             itxBaseCalculoPisCofins   = itxRobContabil + itxIcmsEstimado;
-                            itxPisEstimado            = - round(pisDefaultTax    .* itxBaseCalculoPisCofins, 2);
-                            itxCofinsEstimado         = - round(cofinsDefaultTax .* itxBaseCalculoPisCofins, 2);
+                            itxPisEstimado            = - fix(100 * pisDefaultTax    .* itxBaseCalculoPisCofins, 2);
+                            itxCofinsEstimado         = - fix(100 * cofinsDefaultTax .* itxBaseCalculoPisCofins, 2);
 
                             % (c) FUST/FUNTTEL INTERCONEXÃO
                             itxBaseCalculoFustFunttel = itxBaseCalculoPisCofins + itxPisEstimado + itxCofinsEstimado;
@@ -646,14 +646,14 @@ classdef ECD < handle
                             itxFunttelApurado         = - funttelDefaultTax .* itxBaseCalculoFustFunttel;
 
                             % (d) ATUALIZA TABELA INTERCONEXÃO
-                            obj.Table.x_APURACAO_INTERCONEXAO('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell(round([itxRobContabil,            sum(itxRobContabil)],            2));
-                            obj.Table.x_APURACAO_INTERCONEXAO('ICMS ESTIMADO',                  [monthIds, {'TOTAL'}]) = num2cell(round([itxIcmsEstimado,           sum(itxIcmsEstimado)],           2));
-                            obj.Table.x_APURACAO_INTERCONEXAO('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell(round([itxBaseCalculoPisCofins,   sum(itxBaseCalculoPisCofins)],   2));
-                            obj.Table.x_APURACAO_INTERCONEXAO('PIS ESTIMADO',                   [monthIds, {'TOTAL'}]) = num2cell(round([itxPisEstimado,            sum(itxPisEstimado)],            2));
-                            obj.Table.x_APURACAO_INTERCONEXAO('COFINS ESTIMADO',                [monthIds, {'TOTAL'}]) = num2cell(round([itxCofinsEstimado,         sum(itxCofinsEstimado)],         2));
-                            obj.Table.x_APURACAO_INTERCONEXAO('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell(round([itxBaseCalculoFustFunttel, sum(itxBaseCalculoFustFunttel)], 2));
-                            obj.Table.x_APURACAO_INTERCONEXAO('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell(round([itxFustApurado,            sum(itxFustApurado)],            2));
-                            obj.Table.x_APURACAO_INTERCONEXAO('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell(round([itxFunttelApurado,         sum(itxFunttelApurado)],         2));
+                            obj.Table.x_APURACAO_INTERCONEXAO('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxRobContabil,            sum(itxRobContabil)])            / 100);
+                            obj.Table.x_APURACAO_INTERCONEXAO('ICMS ESTIMADO',                  [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxIcmsEstimado,           sum(itxIcmsEstimado)])           / 100);
+                            obj.Table.x_APURACAO_INTERCONEXAO('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxBaseCalculoPisCofins,   sum(itxBaseCalculoPisCofins)])   / 100);
+                            obj.Table.x_APURACAO_INTERCONEXAO('PIS ESTIMADO',                   [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxPisEstimado,            sum(itxPisEstimado)])            / 100);
+                            obj.Table.x_APURACAO_INTERCONEXAO('COFINS ESTIMADO',                [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxCofinsEstimado,         sum(itxCofinsEstimado)])         / 100);
+                            obj.Table.x_APURACAO_INTERCONEXAO('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxBaseCalculoFustFunttel, sum(itxBaseCalculoFustFunttel)]) / 100);
+                            obj.Table.x_APURACAO_INTERCONEXAO('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxFustApurado,            sum(itxFustApurado)])            / 100);
+                            obj.Table.x_APURACAO_INTERCONEXAO('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell(fix(100 * [itxFunttelApurado,         sum(itxFunttelApurado)])         / 100);
 
                         otherwise
                             error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
@@ -1329,7 +1329,7 @@ classdef ECD < handle
                     accountBalanceByMonth(jj) = sum(accountTable.("VL_DC_COM_SINAL")(monthIndexes));
                 end
 
-                trialBalance(ii, :) = [{'', accountId}, num2cell(round([accountBalanceByMonth, sum(accountBalanceByMonth)], 2))];
+                trialBalance(ii, :) = [{'', accountId}, num2cell(fix(100 * [accountBalanceByMonth, sum(accountBalanceByMonth)]) / 100)];
             end
 
             % Valida-se se o valor total de transações entre as contas por 
