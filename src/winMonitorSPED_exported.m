@@ -126,7 +126,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                     case 'closeFcnCallFromPopupApp'
                         context = event.HTMLEventData.context;
-                        popupCurrentAppTag = event.HTMLEventData.auxDockAppName;
+                        popupCurrentAppTag = event.HTMLEventData.dockAppName;
 
                         switch context
                             case {'mainApp', 'FILE'}
@@ -141,6 +141,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                         delete(app.popupCurrentApp)
                         app.popupCurrentApp = [];
+
+                    case 'syncPopupWithPanel'
+                        if ~isempty(app.popupCurrentApp) && isvalid(app.popupCurrentApp)
+                            app.popupCurrentApp.Container.Position(1:2) = [event.HTMLEventData.x, event.HTMLEventData.y];
+                        end
 
                     case 'customForm'
                         switch event.HTMLEventData.uuid
@@ -422,23 +427,29 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             
             if app.General.operationMode.Debug
                 eval(sprintf('auxApp.dock%s(inputArguments{:})', auxAppName))
+
             else
-                auxDockAppName = sprintf('auxApp.dock%s', auxAppName);
-
                 ui.PopUpContainer(callingApp, screenWidth, screenHeight)
-                app.popupCurrentApp = feval([auxDockAppName '_exported'], callingApp.popupContainer, inputArguments{:});
 
-                ui.CustomizationBase.getElementsDataTag({app.popupCurrentApp.GridLayout});
-                app.popupCurrentApp.GridLayout.UserData.auxDockAppName = auxDockAppName;
-                callingApp.popupContainer.UserData.auxDockAppName = auxDockAppName;
+                auxDockAppName = sprintf('auxApp.dock%s', auxAppName);
+                app.popupCurrentApp = feval([auxDockAppName '_exported'], callingApp.popupContainer, inputArguments{:});
+                
+                ui.CustomizationBase.getElementsDataTag({
+                    callingApp.popupContainer;
+                    app.popupCurrentApp.GridLayout
+                });
 
                 sendEventToHTMLSource(app.jsBackDoor, 'dockContainer', struct( ...
-                    'dataTag', app.popupCurrentApp.GridLayout.UserData.id, ...
+                    'dockAppName', auxDockAppName, ...
+                    'dockAppDataTag', app.popupCurrentApp.GridLayout.UserData.id, ...
+                    'dockAppContainerDataTag', callingApp.popupContainer.UserData.id, ...
                     'width', screenWidth, ...
                     'height', screenHeight+31, ...
-                    'context', context, ...
-                    'auxDockAppName', auxDockAppName ...
+                    'context', context ...                    
                 ))
+
+                app.popupCurrentApp.GridLayout.UserData.auxDockAppName = auxDockAppName;
+                callingApp.popupContainer.UserData.auxDockAppName = auxDockAppName;
             end
 
             requestVisibilityChange(callingApp.progressDialog, 'hidden', 'unlocked')
