@@ -543,87 +543,31 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function updateToolbar(app, selectedECD)
-            % A tabela "x_CONTAS_ANOTACAO" é composta pelas contas analíticas
-            % de resultado que compõem "_BALANCETE_RESULTADO". Por essa razão, 
-            % caso essa tabela não seja vazia, infere-se que é possível
-            % classificar as contas, gerar relatório etc.
-
-            % Por outro lado, caso não tenha sido registrado fato contábil,
-            % essa tabela será vazia.
-
-            nonEmptyECDObject                 = ~isempty(selectedECD);
-            hasSpecificNonEmptyTable          = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);            
-            reportFinalVersionGenerated       = ~isempty(app.projectData.modules.(app.Context).generatedFiles.lastHTMLDocFullPath);
-
-            tableIdView = {app.SheetList.Value};
-            if ~isempty(app.SheetView_Second.Value)
-                tableIdView{end+1} = app.SheetView_Second.Value;
-            end
-
-            app.tool_OpenPopupIcmsRate.Enable = nonEmptyECDObject;
-            app.tool_AccountButton.Enable     = hasSpecificNonEmptyTable;
-            app.tool_AutoFill.Enable          = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', tableIdView);
-            app.tool_DeleteAnnotation.Enable  = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', tableIdView);
-            app.tool_Separator2.Visible       = nonEmptyECDObject;
-            app.tool_GenerateReport.Enable    = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO');
-            app.tool_UploadFinalFile.Enable   = reportFinalVersionGenerated;
-        end
-
-        %-----------------------------------------------------------------%
-        function forceUpdateTable(app)
-            refTable    = struct('handle', app.UITable1, 'controller', app.SheetList);
-            refTable(2) = struct('handle', app.UITable2, 'controller', app.SheetView_Second);
-
-            for ii = 1:numel(refTable)
-                tableHandle = refTable(ii).handle;
-                controller  = refTable(ii).controller;
-                tableId     = controller.Value;
-                
-                if ismember(tableId, {'_CONTAS_ANOTACAO', '_APURACAO_GERAL', '_APURACAO_INTERCONEXAO'})
-                    initialSelection = tableHandle.Selection;
-                    controller.ValueChangedFcn(controller, struct('Source', controller))
-
-                    tableHandle.Selection = initialSelection;
-                    [tableCountText, tableSelectedAccount] = relatedTableComponents(app, tableHandle);
-                    updateTableFootnote(app, tableHandle, tableCountText, tableSelectedAccount)
-                end
-            end
-        end
-
-        %-----------------------------------------------------------------%
-        function checkIfTableRead(app, selectedECD, fileIndex, tableIdList)
-            if isTableRead(selectedECD, tableIdList, app.mainApp.General)
-                ipcMainMatlabCallsHandler(app.mainApp, app, 'onAccountingDataUpdated', fileIndex);
-            end
-
-            updateFinanceFacts(app, selectedECD)
-            updateToolbar(app, selectedECD)
-        end
-
-        %-----------------------------------------------------------------%
         function updateTable(app, hTable, hTableAccountInfo, hTableCountText, hTableFilterText, hTableFilterIcon, tableId)
             requestVisibilityChange(app.progressDialog, 'visible', 'unlocked')
 
             [selectedECD, fileIndex] = getSelectedECD(app);            
             checkIfTableRead(app, selectedECD, fileIndex, {tableId})
-            tableIdData    = selectedECD.Table.(['x' tableId]);
+            tableIdData = selectedECD.Table.(['x' tableId]);
             
             % Filtra os dados, caso aplicável.
             [filterIndex, filterStatus] = checkTableCustomFilter(app, selectedECD, tableId, 'active');
 
             if filterStatus
-                filterObj   = selectedECD.GUI.tableView(filterIndex).filter;
-                visibleRows = find(run(filterObj, 'filterRules', tableIdData));                
+                filterObj = selectedECD.GUI.tableView(filterIndex).filter;
+                displayDataIdxs = find(run(filterObj, 'filterRules', tableIdData));                
                 filterIconTooltip = strjoin(getFilterList(filterObj, ['ECD.x' tableId], 'on'), '\n');
             else
-                visibleRows = (1:height(tableIdData))';                
+                displayDataIdxs = (1:height(tableIdData))';                
                 filterIconTooltip = '';
             end
 
+            % Ordena os dados, caso aplicável.
+            displayDataIdxs = checkTableCustomSort(app, selectedECD, tableId, displayDataIdxs);
+
             % Número total de linhas da tabela e número de linhas visíveis.
             numRows = height(tableIdData);
-            numVisibleRows = numel(visibleRows);
+            numVisibleRows = numel(displayDataIdxs);
 
             % Inclusão da coluna "CTA", caso habilitado.
             if app.mainApp.General.context.ECD.accountDescriptionScope
@@ -652,7 +596,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 rowNames = tableIdData.Properties.RowNames;
             else
                 columnWidth = '1x';
-                rowNames = cellstr(string(visibleRows));
+                rowNames = cellstr(string(displayDataIdxs));
             end
 
             % Verifica se a tabela suporta formatação customizável das suas
@@ -683,14 +627,14 @@ classdef winECD_exported < matlab.apps.AppBase
             
             % Aplicação final das propriedades na uitable
             if ~isequal(hTable.UserData.TableId, tableId)
-                set(hTable, 'RowName', rowNames, 'Data', tableIdData(visibleRows, :), columnOptionalArgs{:})
+                set(hTable, 'RowName', rowNames, 'Data', tableIdData(displayDataIdxs, :), columnOptionalArgs{:})
             else
-                hTable.Data = tableIdData(visibleRows, :);
+                hTable.Data = tableIdData(displayDataIdxs, :);
                 hTable.RowName = rowNames;
             end
             pause(.250) % drawnow
             hTable.UserData.TableId = tableId;
-            hTable.UserData.visibleRows = visibleRows;
+            hTable.UserData.visibleRows = displayDataIdxs;
 
             % Atualiza elementos que suportam a tabela...
             restartTableSelectionControl(app, hTable, hTableAccountInfo, hTableCountText)
@@ -785,6 +729,34 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
+        function updateToolbar(app, selectedECD)
+            % A tabela "x_CONTAS_ANOTACAO" é composta pelas contas analíticas
+            % de resultado que compõem "_BALANCETE_RESULTADO". Por essa razão, 
+            % caso essa tabela não seja vazia, infere-se que é possível
+            % classificar as contas, gerar relatório etc.
+
+            % Por outro lado, caso não tenha sido registrado fato contábil,
+            % essa tabela será vazia.
+
+            nonEmptyECDObject                 = ~isempty(selectedECD);
+            hasSpecificNonEmptyTable          = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);            
+            reportFinalVersionGenerated       = ~isempty(app.projectData.modules.(app.Context).generatedFiles.lastHTMLDocFullPath);
+
+            tableIdView = {app.SheetList.Value};
+            if ~isempty(app.SheetView_Second.Value)
+                tableIdView{end+1} = app.SheetView_Second.Value;
+            end
+
+            app.tool_OpenPopupIcmsRate.Enable = nonEmptyECDObject;
+            app.tool_AccountButton.Enable     = hasSpecificNonEmptyTable;
+            app.tool_AutoFill.Enable          = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', tableIdView);
+            app.tool_DeleteAnnotation.Enable  = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', tableIdView);
+            app.tool_Separator2.Visible       = nonEmptyECDObject;
+            app.tool_GenerateReport.Enable    = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO');
+            app.tool_UploadFinalFile.Enable   = reportFinalVersionGenerated;
+        end
+
+        %-----------------------------------------------------------------%
         function restartTable(app, hTable, hTableAccountInfo, hTableCountText, hTableFilter, hTableFilterIcon)
             set(hTable, 'ColumnWidth', 'auto', ...
                         'ColumnName', {}, ...
@@ -810,6 +782,37 @@ classdef winECD_exported < matlab.apps.AppBase
                 hTableAccountInfo.Text = '';
                 hTableCountText.Text   = ' CONTAGEM: 0';
             end
+        end
+
+        %-----------------------------------------------------------------%
+        function forceUpdateTable(app)
+            refTable    = struct('handle', app.UITable1, 'controller', app.SheetList);
+            refTable(2) = struct('handle', app.UITable2, 'controller', app.SheetView_Second);
+
+            for ii = 1:numel(refTable)
+                tableHandle = refTable(ii).handle;
+                controller  = refTable(ii).controller;
+                tableId     = controller.Value;
+                
+                if ismember(tableId, {'_CONTAS_ANOTACAO', '_APURACAO_GERAL', '_APURACAO_INTERCONEXAO'})
+                    initialSelection = tableHandle.Selection;
+                    controller.ValueChangedFcn(controller, struct('Source', controller))
+
+                    tableHandle.Selection = initialSelection;
+                    [tableCountText, tableSelectedAccount] = relatedTableComponents(app, tableHandle);
+                    updateTableFootnote(app, tableHandle, tableCountText, tableSelectedAccount)
+                end
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function checkIfTableRead(app, selectedECD, fileIndex, tableIdList)
+            if isTableRead(selectedECD, tableIdList, app.mainApp.General)
+                ipcMainMatlabCallsHandler(app.mainApp, app, 'onAccountingDataUpdated', fileIndex);
+            end
+
+            updateFinanceFacts(app, selectedECD)
+            updateToolbar(app, selectedECD)
         end
 
         %-----------------------------------------------------------------%
@@ -847,6 +850,19 @@ classdef winECD_exported < matlab.apps.AppBase
             status = ~isempty(index) && ~isempty(selectedECD.GUI.tableView(index).filter);
             if strcmp(statusType, 'active')
                 status = status && ~isempty(selectedECD.GUI.tableView(index).filter.filterRules(selectedECD.GUI.tableView(index).filter.filterRules.Enable, :));
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function visibleRows = checkTableCustomSort(app, selectedECD, tableId, visibleRows)
+            [~, displayIdx] = ismember(tableId, {selectedECD.GUI.tableView.id});
+
+            if displayIdx && isfield(selectedECD.GUI.tableView(displayIdx), 'sort') && ~isempty(selectedECD.GUI.tableView(displayIdx).sort)
+                dataIdxs = selectedECD.GUI.tableView(displayIdx).sort.dataIdxs;
+
+                if numel(visibleRows) == numel(dataIdxs) && all(ismember(visibleRows, dataIdxs))
+                    visibleRows = dataIdxs;
+                end
             end
         end
 
@@ -1680,6 +1696,29 @@ classdef winECD_exported < matlab.apps.AppBase
             
         end
 
+        % Display data changed function: UITable1, UITable2
+        function TableDisplayDataChanged(app, event)
+            
+            displayDataIdxs = str2double(event.DisplayRowName);
+            if any(isnan(displayDataIdxs))
+                return
+            end
+
+            clickedTable = event.Source;            
+            selectedECD = getSelectedECD(app);            
+            tableId = getSelectedTableId(app, clickedTable);
+            
+            columnName = event.InteractionVariable;
+            initialDataIdxs = (1:height(selectedECD.Table.(['x' tableId])))';
+
+            if ~isequal(initialDataIdxs, displayDataIdxs)
+                update(selectedECD, 'GUI.TableView.Sort', 'applySort', tableId, columnName, displayDataIdxs)
+            else
+                update(selectedECD, 'GUI.TableView.Sort', 'clearSort', tableId)
+            end
+            
+        end
+
         % Image clicked function: StyleDelete, StyleRefresh
         function TableStyleDeleteOrRefresh(app, event)
             
@@ -2284,6 +2323,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable1.ColumnSortable = true;
             app.UITable1.CellEditCallback = createCallbackFcn(app, @TableCellEdit, true);
             app.UITable1.ClickedFcn = createCallbackFcn(app, @TableClicked, true);
+            app.UITable1.DisplayDataChangedFcn = createCallbackFcn(app, @TableDisplayDataChanged, true);
             app.UITable1.ForegroundColor = [0.149 0.149 0.149];
             app.UITable1.KeyReleaseFcn = createCallbackFcn(app, @TableClicked, true);
             app.UITable1.Layout.Row = 6;
@@ -2336,6 +2376,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable2.ColumnSortable = true;
             app.UITable2.CellEditCallback = createCallbackFcn(app, @TableCellEdit, true);
             app.UITable2.ClickedFcn = createCallbackFcn(app, @TableClicked, true);
+            app.UITable2.DisplayDataChangedFcn = createCallbackFcn(app, @TableDisplayDataChanged, true);
             app.UITable2.ForegroundColor = [0.149 0.149 0.149];
             app.UITable2.Visible = 'off';
             app.UITable2.KeyReleaseFcn = createCallbackFcn(app, @TableClicked, true);

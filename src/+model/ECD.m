@@ -57,7 +57,8 @@ classdef ECD < handle
             'tableView', struct( ...
                 'id', {}, ...
                 'filter', {}, ...
-                'style', {} ...
+                'style', {}, ...
+                'sort', {} ...
             ) ...
         )
         
@@ -305,6 +306,7 @@ classdef ECD < handle
                 obj
                 propertyName char {mustBeMember(propertyName, { 'GUI.TableView.Filter';
                                                                 'GUI.TableView.Style';
+                                                                'GUI.TableView.Sort';
                                                                 'GUI.IcmsRate';
                                                                 'Table.NonEssentialFiles';
                                                                 'Table.x_CONTAS_ANOTACAO';
@@ -323,9 +325,9 @@ classdef ECD < handle
                     switch updateType
                         case 'createFilteringObject'
                             tableId = varargin{1};
-                            filterIndex = varargin{2};
-                            obj.GUI.tableView(filterIndex).id     = tableId;
-                            obj.GUI.tableView(filterIndex).filter = tableFiltering;
+                            filterIdx = varargin{2};
+                            obj.GUI.tableView(filterIdx).id     = tableId;
+                            obj.GUI.tableView(filterIdx).filter = tableFiltering;
 
                         otherwise
                             error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
@@ -335,19 +337,48 @@ classdef ECD < handle
                     switch updateType
                         case 'addStyle'
                             tableId = varargin{1};
-                            styleIndex = varargin{2};
+                            styleIdx = varargin{2};
                             styleConfig = varargin{3};
-                            obj.GUI.tableView(styleIndex).id = tableId;
-                            obj.GUI.tableView(styleIndex).style = styleConfig;
+                            obj.GUI.tableView(styleIdx).id = tableId;
+                            obj.GUI.tableView(styleIdx).style = styleConfig;
 
                         case 'removeSelectedCellStyle'
-                            styleIndex = varargin{1};
+                            styleIdx = varargin{1};
                             styleConfig = varargin{2};
-                            obj.GUI.tableView(styleIndex).style = styleConfig;
+                            obj.GUI.tableView(styleIdx).style = styleConfig;
 
                         case 'removeTableStyle'
-                            styleIndex = varargin{1};                            
-                            obj.GUI.tableView(styleIndex).style = {};
+                            styleIdx = varargin{1};                            
+                            obj.GUI.tableView(styleIdx).style = {};
+
+                        otherwise
+                            error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
+                    end
+
+                case 'GUI.TableView.Sort'
+                    switch updateType
+                        case 'applySort'
+                            tableId = varargin{1};
+                            [~, displayIdx] = ismember(tableId, {obj.GUI.tableView.id});
+                            if ~displayIdx
+                                displayIdx = numel(obj.GUI.tableView) + 1;
+                            end
+
+                            columnName = varargin{2};
+                            dataIdxs = varargin{3};
+
+                            obj.GUI.tableView(displayIdx).id   = tableId;
+                            obj.GUI.tableView(displayIdx).sort = struct( ...
+                                'columnName', columnName, ...
+                                'dataIdxs', dataIdxs ...
+                            );
+
+                        case 'clearSort'
+                            tableId = varargin{1};
+                            [~, displayIdx] = ismember(tableId, {obj.GUI.tableView.id});
+                            if displayIdx
+                                obj.GUI.tableView(displayIdx).sort = [];
+                            end
 
                         otherwise
                             error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
@@ -389,8 +420,14 @@ classdef ECD < handle
                     switch updateType
                         case 'startup'
                             accountList = obj.Table.x_BALANCETE_RESULTADO.('COD_CTA');
-                            annotationAccountTemplate = innerjoin(model.ECDBase.initializeCustomTable('_CONTAS_ANOTACAO', accountList, generalSettings), obj.Table.x_CONTAS_DESCRICAO, 'Keys', 'COD_CTA', 'RightVariables', 'DESCRIÇÃO');
-                            obj.Table.x_CONTAS_ANOTACAO = movevars(annotationAccountTemplate, 'DESCRIÇÃO', 'After', 'COD_CTA');                            
+                            annotationAccountTemplate = innerjoin( ...
+                                model.ECDBase.initializeCustomTable('_CONTAS_ANOTACAO', accountList, generalSettings), ...
+                                obj.Table.x_CONTAS_DESCRICAO, ...
+                                'Keys', 'COD_CTA', 'RightVariables', 'DESCRIÇÃO' ...
+                            );
+                            
+                            obj.Table.x_CONTAS_ANOTACAO = movevars(annotationAccountTemplate, 'DESCRIÇÃO', 'After', 'COD_CTA');
+                          % obj.Table.x_CONTAS_ANOTACAO = sortrows(obj.Table.x_CONTAS_ANOTACAO, 'DESCRIÇÃO');
 
                         case 'valueChanged'
                             rowIndex = varargin{2};
@@ -457,7 +494,12 @@ classdef ECD < handle
                             % Edição automática limitada aos registros que ainda 
                             % não foram editados e, por isso, possuem valor '-'.
 
-                            accountTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO, obj.Table.x_BALANCETE_RESULTADO, 'Keys', 'COD_CTA', 'RightVariables', 'TOTAL');
+                            accountTable = innerjoin( ...
+                                obj.Table.x_CONTAS_ANOTACAO, ...
+                                obj.Table.x_BALANCETE_RESULTADO, ...
+                                'Keys', 'COD_CTA', ...
+                                'RightVariables', 'TOTAL' ...
+                            );
 
                             for ii = 1:height(accountTable)
                                 if accountTable.('Apurado?  ✎')(ii) ~= "-"
