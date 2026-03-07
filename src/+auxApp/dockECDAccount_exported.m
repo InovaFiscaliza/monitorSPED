@@ -355,7 +355,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
 
             % Create GridLayout
             app.GridLayout = uigridlayout(app.Container);
-            app.GridLayout.ColumnWidth = {22, 22, '1x', 136, 135, 264};
+            app.GridLayout.ColumnWidth = {22, 22, '1x', 125, 125, 264};
             app.GridLayout.RowHeight = {17, 22, '1x', 22, 22, 108, 22, 44, 1, 22};
             app.GridLayout.RowSpacing = 5;
             app.GridLayout.Padding = [20 20 20 20];
