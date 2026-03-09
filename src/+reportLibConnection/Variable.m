@@ -142,11 +142,13 @@ classdef (Abstract) Variable
                     end
 
                 case 'FUST'
-                    fustValue    = abs(ecdObj.Table.('x_APURACAO_GERAL'){'VALOR APURADO FUST', 'TOTAL'});
+                    [~, rowIdx]  = ismember('VALOR APURADO FUST', ecdObj.Table.('x_APURACAO_GERAL').TIPO);
+                    fustValue    = abs(ecdObj.Table.('x_APURACAO_GERAL'){rowIdx, 'TOTAL'});
                     fieldValue   = sprintf('R$ %.2f (%s)', fustValue, util.numberToPortugueseCurrency(fustValue));
 
                 case 'FUNTTEL'
-                    funttelValue = abs(ecdObj.Table.('x_APURACAO_GERAL'){'VALOR APURADO FUNTTEL', 'TOTAL'});
+                    [~, rowIdx]  = ismember('VALOR APURADO FUNTTEL', ecdObj.Table.('x_APURACAO_GERAL').TIPO);
+                    funttelValue = abs(ecdObj.Table.('x_APURACAO_GERAL'){rowIdx, 'TOTAL'});
                     fieldValue   = sprintf('R$ %.2f (%s)', funttelValue, util.numberToPortugueseCurrency(funttelValue));
 
                 otherwise

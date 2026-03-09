@@ -48,10 +48,11 @@ classdef winECD_exported < matlab.apps.AppBase
         CompanyNameListLabel    matlab.ui.control.Label
         SubTab2                 matlab.ui.container.Tab
         SubGrid2                matlab.ui.container.GridLayout
-        StyleRefresh            matlab.ui.control.Image
+        SortRefreshLabel        matlab.ui.control.Label
+        SortRefresh             matlab.ui.control.Image
+        StyleDeleteScope        matlab.ui.control.DropDown
+        StyleDeleteLabel        matlab.ui.control.Label
         StyleDelete             matlab.ui.control.Image
-        FontIconLabel           matlab.ui.control.Label
-        FontIcon                matlab.ui.control.DropDown
         Tab2Separator4          matlab.ui.control.Image
         FontColor               matlab.ui.control.ColorPicker
         FontBackground          matlab.ui.control.ColorPicker
@@ -62,10 +63,10 @@ classdef winECD_exported < matlab.apps.AppBase
         FontWeight              matlab.ui.control.Button
         FontFamily              matlab.ui.control.DropDown
         Tab2Separator3          matlab.ui.control.Image
+        FontIconLabel           matlab.ui.control.Label
+        FontIcon                matlab.ui.control.DropDown
         ColumnWidthLabel        matlab.ui.control.Label
         ColumnWidth             matlab.ui.control.DropDown
-        RowHeightLabel          matlab.ui.control.Label
-        RowHeight               matlab.ui.control.Spinner
         Tab2Separator2          matlab.ui.control.Image
         FilterButton            matlab.ui.control.Button
         Tab2Separator1          matlab.ui.control.Image
@@ -151,7 +152,7 @@ classdef winECD_exported < matlab.apps.AppBase
                                             columnWidth = width(uiTable.Data);
                                             uiTable.Selection = [accountNameIdx * ones(columnWidth, 1), (1:columnWidth)'];
 
-                                            if ~isequal(uiTable.Selection, uiTable.UserData.Selection)
+                                            if ~isequal(uiTable.Selection, uiTable.UserData.selection)
                                                 [tableCountText, tableSelectedAccount] = relatedTableComponents(app, uiTable);
                                                 updateTableFootnote(app, uiTable, tableCountText, tableSelectedAccount)
                                             end
@@ -183,6 +184,12 @@ classdef winECD_exported < matlab.apps.AppBase
                                 checkIfTableRead(app, selectedECD, fileIndex, {tableId})
 
                                 requestVisibilityChange(app.progressDialog, 'hidden', 'unlocked')
+
+                            case 'getTableColumnWidth'
+                                selectedECD = getSelectedECD(app);
+                                tableId = varargin{1};
+                                columnWidths = varargin{2};
+                                update(selectedECD, 'GUI.TableView.Width', 'updateColumnWidths', tableId, columnWidths)
 
                             % auxApp.dockReportLib >> winMonitorSPED >> auxApp.winECD
                             case {'onProjectRestart',        ...
@@ -262,17 +269,13 @@ classdef winECD_exported < matlab.apps.AppBase
 
                 case 2
                     elToModify = {
-                        app.SheetOnFocus;
-                        app.StyleDelete;
-                        app.StyleRefresh
+                        app.SheetOnFocus
                     };
                     ui.CustomizationBase.getElementsDataTag(elToModify);
 
                     try
                         sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
-                            struct('appName', appName, 'dataTag', app.SheetOnFocus.UserData.id,          'tooltip', struct('defaultPosition', 'top',    'textContent', 'Tabela ativa')), ...
-                            struct('appName', appName, 'dataTag', app.StyleDelete.UserData.id,           'tooltip', struct('defaultPosition', 'top',    'textContent', 'Remove o estilo aplicado às células selecionadas da tabela ativa')), ...
-                            struct('appName', appName, 'dataTag', app.StyleRefresh.UserData.id,          'tooltip', struct('defaultPosition', 'top',    'textContent', 'Remove o estilo aplicado à tabela ativa')) ...
+                            struct('appName', appName, 'dataTag', app.SheetOnFocus.UserData.id, 'tooltip', struct('defaultPosition', 'top', 'textContent', 'Tabela ativa')) ...
                         });
                     catch
                     end
@@ -294,15 +297,13 @@ classdef winECD_exported < matlab.apps.AppBase
                 app.dockModule_Undock.Enable = 1;
             end
 
-            % Tabelas:
-            app.UITable1.RowName = 'numbered';
-            app.UITable2.RowName = 'numbered';
-            
-            restartTableSelectionControl(app, app.UITable1, app.UITable1_CountText)
-            restartTableSelectionControl(app, app.UITable2, app.UITable2_CountText)
-
-            app.UITable1.UserData.TableId = '';
-            app.UITable2.UserData.TableId = '';
+            for hTable = [app.UITable1, app.UITable2]
+                hTable.UserData.tableId       = '';
+                hTable.UserData.hasRowNames   = false;
+                hTable.UserData.visibleRows   = [];
+                hTable.UserData.selection     = [];
+                hTable.UserData.selectionType = 'none';
+            end
         end
 
         %-----------------------------------------------------------------%
@@ -323,7 +324,6 @@ classdef winECD_exported < matlab.apps.AppBase
             if app.SubTabGroup.UserData.isTabInitialized(2)
                 renderedElements = [renderedElements; {
                     app.FilterButton;
-                    app.RowHeight;
                     app.ColumnWidth;
                     app.FontFamily;
                     app.FontWeight;
@@ -335,7 +335,10 @@ classdef winECD_exported < matlab.apps.AppBase
                     app.FontColor;
                     app.FontIcon;
                     app.StyleDelete;
-                    app.StyleRefresh                    
+                    app.StyleDeleteLabel;
+                    app.StyleDeleteScope;
+                    app.SortRefresh;
+                    app.SortRefreshLabel
                 }];
             end
             
@@ -578,14 +581,6 @@ classdef winECD_exported < matlab.apps.AppBase
                 end
             end
 
-            % Configuração básica das colunas:
-            % - largura padrão em modo automático;
-            % - nomes das colunas retirados da própria tabela; e
-            % - colunas editáveis identificadas pelo marcador (✎) no nome
-            columnWidth = 'auto';
-            columnNames = tableIdData.Properties.VariableNames;
-            columnEditable = contains(columnNames, '✎');
-
             % Definição dos rótulos das linhas, orientado à seguinte ordem
             % de priorização:
             % (1) RowNames definidos explicitamente na table;
@@ -595,9 +590,16 @@ classdef winECD_exported < matlab.apps.AppBase
             if ~isempty(tableIdData.Properties.RowNames)
                 rowNames = tableIdData.Properties.RowNames;
             else
-                columnWidth = '1x';
                 rowNames = cellstr(string(displayDataIdxs));
             end
+
+            % Configuração básica das colunas:
+            % - largura padrão em modo automático;
+            % - nomes das colunas retirados da própria tabela; e
+            % - colunas editáveis identificadas pelo marcador (✎) no nome
+            columnWidth    = resolveTableColumnWidth(app, selectedECD, tableId, hTable);
+            columnNames    = tableIdData.Properties.VariableNames;
+            columnEditable = contains(columnNames, '✎');
 
             % Verifica se a tabela suporta formatação customizável das suas
             % colunas, obtendo-se especificação de cada coluna. Caso todos os 
@@ -617,7 +619,7 @@ classdef winECD_exported < matlab.apps.AppBase
             end
 
             columnOptionalArgs = {};
-            if ~isequal(hTable.UserData.TableId, tableId)
+            if ~isequal(hTable.UserData.tableId, tableId)
                 columnOptionalArgs = {'ColumnWidth', columnWidth, 'ColumnName', columnNames, 'ColumnEditable', columnEditable};
             end
 
@@ -626,14 +628,14 @@ classdef winECD_exported < matlab.apps.AppBase
             end
             
             % Aplicação final das propriedades na uitable
-            if ~isequal(hTable.UserData.TableId, tableId)
+            if ~isequal(hTable.UserData.tableId, tableId)
                 set(hTable, 'RowName', rowNames, 'Data', tableIdData(displayDataIdxs, :), columnOptionalArgs{:})
             else
                 hTable.Data = tableIdData(displayDataIdxs, :);
                 hTable.RowName = rowNames;
             end
             pause(.250) % drawnow
-            hTable.UserData.TableId = tableId;
+            hTable.UserData.tableId     = tableId;
             hTable.UserData.visibleRows = displayDataIdxs;
 
             % Atualiza elementos que suportam a tabela...
@@ -660,18 +662,12 @@ classdef winECD_exported < matlab.apps.AppBase
             % Aplica estilo, normalizando-o p/ contemplar uma eventual filtragem.
             applyTableStyle(app, selectedECD, hTable, tableId)
 
-            % Ajusta-se largura das colunas...
-            if strcmp(columnWidth, '1x')
-                pause(1)
-                hTable.ColumnWidth = 'auto';
-            end
-
             requestVisibilityChange(app.progressDialog, 'hidden', 'unlocked')
         end
 
         %-----------------------------------------------------------------%
         function updateTableFootnote(app, clickedTable, tableCountText, tableSelectedAccount)
-            clickedTable.UserData.Selection = clickedTable.Selection;
+            clickedTable.UserData.selection = clickedTable.Selection;
 
             if isempty(clickedTable.Selection)
                 tableCountText.Text       = ' CONTAGEM: 0';
@@ -688,7 +684,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
                 cellsCount = height(clickedTable.Selection);
                 if isNumeric
-                    switch clickedTable.UserData.SelectionType
+                    switch clickedTable.UserData.selectionType
                         case 'column'
                             if istable(clickedTable.Data)
                                 referenceData = double(clickedTable.Data.(selectedColumnIdxs));
@@ -739,9 +735,9 @@ classdef winECD_exported < matlab.apps.AppBase
             % essa tabela será vazia.
 
             nonEmptyECDObject                 = ~isempty(selectedECD);
-            hasSpecificNonEmptyTable          = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);            
+            hasSpecificNonEmptyTable          = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);
             reportFinalVersionGenerated       = ~isempty(app.projectData.modules.(app.Context).generatedFiles.lastHTMLDocFullPath);
-
+            
             tableIdView = {app.SheetList.Value};
             if ~isempty(app.SheetView_Second.Value)
                 tableIdView{end+1} = app.SheetView_Second.Value;
@@ -775,8 +771,8 @@ classdef winECD_exported < matlab.apps.AppBase
             
             % ().UserData.id armazenará o "data-tag" do componente, caso haja
             % alguma customização em curso.
-            hTable.UserData.Selection = [];
-            hTable.UserData.SelectionType = 'none';
+            hTable.UserData.selection = [];
+            hTable.UserData.selectionType = 'none';
 
             if hTable == app.UITable2 && app.SubTabGroup.UserData.isTabInitialized(2)
                 hTableAccountInfo.Text = '';
@@ -833,8 +829,8 @@ classdef winECD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function [index, status] = checkTableCustomStyle(app, selectedECD, tableId)
-            index  = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
-            status = ~isempty(index) && ~isempty(selectedECD.GUI.tableView(index).style);
+            [~, index] = ismember(tableId, {selectedECD.GUI.tableView.id});
+            status = index && isfield(selectedECD.GUI.tableView(index), 'style') && ~isempty(selectedECD.GUI.tableView(index).style);
         end
 
         %-----------------------------------------------------------------%
@@ -846,23 +842,55 @@ classdef winECD_exported < matlab.apps.AppBase
                 statusType char {mustBeMember(statusType, {'basic', 'active'})}
             end
 
-            index  = find(strcmp({selectedECD.GUI.tableView.id}, tableId), 1);
-            status = ~isempty(index) && ~isempty(selectedECD.GUI.tableView(index).filter);
+            [~, index] = ismember(tableId, {selectedECD.GUI.tableView.id});
+            status = index && isfield(selectedECD.GUI.tableView(index), 'filter') && ~isempty(selectedECD.GUI.tableView(index).filter);
+
             if strcmp(statusType, 'active')
                 status = status && ~isempty(selectedECD.GUI.tableView(index).filter.filterRules(selectedECD.GUI.tableView(index).filter.filterRules.Enable, :));
             end
         end
 
         %-----------------------------------------------------------------%
-        function visibleRows = checkTableCustomSort(app, selectedECD, tableId, visibleRows)
-            [~, displayIdx] = ismember(tableId, {selectedECD.GUI.tableView.id});
+        function [visibleRows, index, status] = checkTableCustomSort(app, selectedECD, tableId, visibleRows)
+            [~, index] = ismember(tableId, {selectedECD.GUI.tableView.id});
+            status = index && isfield(selectedECD.GUI.tableView(index), 'sort') && ~isempty(selectedECD.GUI.tableView(index).sort);
 
-            if displayIdx && isfield(selectedECD.GUI.tableView(displayIdx), 'sort') && ~isempty(selectedECD.GUI.tableView(displayIdx).sort)
-                dataIdxs = selectedECD.GUI.tableView(displayIdx).sort.dataIdxs;
+            if status
+                dataIdxs = selectedECD.GUI.tableView(index).sort.dataIdxs;
 
                 if numel(visibleRows) == numel(dataIdxs) && all(ismember(visibleRows, dataIdxs))
                     visibleRows = dataIdxs;
                 end
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function columnWidth = resolveTableColumnWidth(app, selectedECD, targetTableId, tableHandle)
+            previousTableId = tableHandle.UserData.tableId;
+            previousColumnWidth = {};
+        
+            if ~isempty(previousTableId)
+                [~, previousWidthIdx] = ismember(previousTableId, {selectedECD.GUI.tableView.id});
+        
+                if previousWidthIdx
+                    previousColumnWidth = selectedECD.GUI.tableView(previousWidthIdx).width;
+                end
+            end
+        
+            [~, targetWidthIdx] = ismember(targetTableId, {selectedECD.GUI.tableView.id});
+            
+            if targetWidthIdx && isfield(selectedECD.GUI.tableView(targetWidthIdx),'width') && ~isempty(selectedECD.GUI.tableView(targetWidthIdx).width)        
+                columnWidth = selectedECD.GUI.tableView(targetWidthIdx).width;
+        
+                if ~isempty(previousColumnWidth)
+                    previousFixedColumns  = find(cellfun(@isnumeric, previousColumnWidth));
+                    targetFlexibleColumns = find(cellfun(@(x) ~isnumeric(x), columnWidth));
+        
+                    columnWidth(intersect(previousFixedColumns, targetFlexibleColumns)) = {'auto'};
+                end
+        
+            else
+                columnWidth = 'auto';
             end
         end
 
@@ -1416,7 +1444,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
         % Value changed function: SheetList, SheetView_First
         function SheetViewFirstValueChanged(app, event)
-            
+
             switch event.Source
                 case app.SheetList
                     if app.SubTabGroup.UserData.isTabInitialized(2)
@@ -1426,7 +1454,14 @@ classdef winECD_exported < matlab.apps.AppBase
                     app.SheetList.Value = app.SheetView_First.Value;
             end
 
-            updateTable(app, app.UITable1, app.UITable1_AccountInfo, app.UITable1_CountText, app.UITable1_FilterText, app.UITable1_FilterIcon, app.SheetList.Value)
+            try
+                updateTable(app, app.UITable1, app.UITable1_AccountInfo, app.UITable1_CountText, app.UITable1_FilterText, app.UITable1_FilterIcon, app.SheetList.Value)
+            catch ME
+                ui.Dialog(app.UIFigure, 'error', ME.message);
+
+                app.SheetList.Value = '0000';
+                SheetViewFirstValueChanged(app, struct('Source', app.SheetList))
+            end
 
         end
 
@@ -1434,7 +1469,14 @@ classdef winECD_exported < matlab.apps.AppBase
         function SheetViewSecondValueChanged(app, event)
             
             if app.UITable2.Visible
-                updateTable(app, app.UITable2, app.UITable2_AccountInfo, app.UITable2_CountText, app.UITable2_FilterText, app.UITable2_FilterIcon, app.SheetView_Second.Value)
+                try
+                    updateTable(app, app.UITable2, app.UITable2_AccountInfo, app.UITable2_CountText, app.UITable2_FilterText, app.UITable2_FilterIcon, app.SheetView_Second.Value)
+                catch ME
+                    ui.Dialog(app.UIFigure, 'error', ME.message);
+    
+                    app.SheetView_Second.Value = '0000';
+                    SheetViewSecondValueChanged(app, struct('Source', app.SheetView_Second))
+                end
             end
             
         end
@@ -1528,20 +1570,28 @@ classdef winECD_exported < matlab.apps.AppBase
             % Altera o tipo de seleção.
             if isempty(clickedRow) && isempty(clickedCol) 
                 if ~isempty(clickedTable.Selection)
-                    clickedTable.UserData.SelectionType = 'none';                    
+                    clickedTable.UserData.selectionType = 'none';                    
                     clickedTable.Selection = [];
                     drawnow                    
                 end
+
             elseif isempty(clickedCol)
-                clickedTable.UserData.SelectionType = 'row';
+                clickedTable.UserData.selectionType = 'row';
+
             elseif isempty(clickedRow)
-                clickedTable.UserData.SelectionType = 'column';
+                clickedTable.UserData.selectionType = 'column';
+                
+                if strcmp(event.EventName, 'Clicked')
+                    tableId = getSelectedTableId(app, clickedTable);                    
+                    sendEventToHTMLSource(app.jsBackDoor, 'getTableColumnWidth', struct('tableId', tableId, 'dataTag', clickedTable.UserData.id))
+                end
+
             else
-                clickedTable.UserData.SelectionType = 'cell';            
+                clickedTable.UserData.selectionType = 'cell';            
             end
 
             % Altera informações no rodapé da tabela.
-            if ~isequal(clickedTable.Selection, clickedTable.UserData.Selection)
+            if ~isequal(clickedTable.Selection, clickedTable.UserData.selection)
                 updateTableFootnote(app, clickedTable, tableCountText, tableSelectedAccount)
             end
 
@@ -1578,6 +1628,75 @@ classdef winECD_exported < matlab.apps.AppBase
             end
             forceUpdateTable(app)
 
+        end
+
+        % Display data changed function: UITable1, UITable2
+        function TableDisplayDataChanged(app, event)
+            
+            displayDataIdxs = str2double(event.DisplayRowName);
+            if any(isnan(displayDataIdxs))
+                return
+            end
+
+            clickedTable = event.Source;            
+            selectedECD = getSelectedECD(app);            
+            tableId = getSelectedTableId(app, clickedTable);
+            
+            columnName = event.InteractionVariable;
+            initialDataIdxs = (1:height(selectedECD.Table.(['x' tableId])))';
+
+            if ~isequal(initialDataIdxs, displayDataIdxs)
+                update(selectedECD, 'GUI.TableView.Sort', 'applySort', tableId, columnName, displayDataIdxs)
+            else
+                update(selectedECD, 'GUI.TableView.Sort', 'clearSort', tableId)
+            end
+            
+        end
+
+        % Image clicked function: SortRefresh
+        function TableSortRefresh(app, event)
+            
+            activeTable = onFocusTable(app);
+            selectedECD = getSelectedECD(app);
+            tableId     = getSelectedTableId(app, activeTable);
+            visibleRows = activeTable.UserData.visibleRows;
+
+            [~, ~, status] = checkTableCustomSort(app, selectedECD, tableId, visibleRows);
+
+            if status
+                update(selectedECD, 'GUI.TableView.Sort', 'clearSort', tableId)
+                forceUpdateTable(app)
+            end
+
+        end
+
+        % Value changed function: ColumnWidth
+        function TableColumnWidthChanged(app, event)
+            
+            eventSourceValue = event.Source.Value;
+
+            if ismember(eventSourceValue, {'auto', 'fit', '1x'})
+                if isfield(event, 'TableHandle')
+                    hTable = event.TableHandle;
+                else
+                    hTable = onFocusTable(app);
+                end
+
+                if isequal(hTable.ColumnWidth, event.Source.Value)
+                    widthOptions = setdiff(event.Source.Items, {'', event.Source.Value});
+                    hTable.ColumnWidth = widthOptions{1};
+                    pause(.250)
+                end
+
+                hTable.ColumnWidth = eventSourceValue;
+                pause(.250)
+
+                tableId = getSelectedTableId(app, hTable);                
+                sendEventToHTMLSource(app.jsBackDoor, 'getTableColumnWidth', struct('tableId', tableId, 'dataTag', hTable.UserData.id))
+            end
+
+            app.ColumnWidth.Value = '';
+            
         end
 
         % Callback function: FontAlign1, FontAlign2, FontAlign3, 
@@ -1696,30 +1815,7 @@ classdef winECD_exported < matlab.apps.AppBase
             
         end
 
-        % Display data changed function: UITable1, UITable2
-        function TableDisplayDataChanged(app, event)
-            
-            displayDataIdxs = str2double(event.DisplayRowName);
-            if any(isnan(displayDataIdxs))
-                return
-            end
-
-            clickedTable = event.Source;            
-            selectedECD = getSelectedECD(app);            
-            tableId = getSelectedTableId(app, clickedTable);
-            
-            columnName = event.InteractionVariable;
-            initialDataIdxs = (1:height(selectedECD.Table.(['x' tableId])))';
-
-            if ~isequal(initialDataIdxs, displayDataIdxs)
-                update(selectedECD, 'GUI.TableView.Sort', 'applySort', tableId, columnName, displayDataIdxs)
-            else
-                update(selectedECD, 'GUI.TableView.Sort', 'clearSort', tableId)
-            end
-            
-        end
-
-        % Image clicked function: StyleDelete, StyleRefresh
+        % Image clicked function: StyleDelete
         function TableStyleDeleteOrRefresh(app, event)
             
             clickedTable = onFocusTable(app);
@@ -1730,8 +1826,8 @@ classdef winECD_exported < matlab.apps.AppBase
             [styleIndex, styleStatus] = checkTableCustomStyle(app, selectedECD, tableId);
 
             if styleStatus
-                switch event.Source
-                    case app.StyleDelete
+                switch app.StyleDeleteScope.Value
+                    case 'células'
                         if isempty(clickedTable.Selection)
                             return
                         end
@@ -1773,7 +1869,7 @@ classdef winECD_exported < matlab.apps.AppBase
                             end
                         end
 
-                    case app.StyleRefresh
+                    case 'tabela'
                         removeStyle(clickedTable)
                         update(selectedECD, 'GUI.TableView.Style', 'removeTableStyle', styleIndex)
 
@@ -1784,78 +1880,6 @@ classdef winECD_exported < matlab.apps.AppBase
                 end
             end
 
-        end
-
-        % Value changed function: RowHeight
-        function TableRowHeightChanged(app, event)
-
-            % ToDo:
-            % Inserir comando pra forçar a renderização.
-
-            hTable = onFocusTable(app);
-            propertyName = 'height';
-
-            try
-                if ~isempty(hTable.Data) &&                            ...
-                  (~isprop(hTable, 'StyleObservations')             || ...
-                   ~isfield(hTable.StyleObservations, propertyName) || ...
-                    isempty(hTable.StyleObservations.(propertyName)))
-    
-                    hTableName  = ui.CustomizationBase.getPropertyName(hTable, app.Context);
-                    customEvent = struct('auxAppTag',     app.Context,        ...
-                                         'componentName', hTableName,         ...
-                                         'dataTag',       hTable.UserData.id, ...
-                                         'childClass',    'mw-table-row',     ...
-                                         'propertyName',  propertyName);
-
-                    sendEventToHTMLSource(app.jsBackDoor, 'getCssPropertyValue', customEvent);
-                    matlab.waitfor(hTable, propertyName, @(propName) isprop(hTable, propName), .010, 2, 'propName')
-                end
-                
-                if app.RowHeight.Value
-                    defaultProp   = regexp(hTable.StyleObservations.height, '(?<height>\d+[.]?\d*)px', 'names');
-                    defaultHeight = str2double(defaultProp.height);
-
-                    sendEventToHTMLSource(app.jsBackDoor, 'changeTableRowHeight', defaultHeight + app.RowHeight.Value);
-                else
-                    sendEventToHTMLSource(app.jsBackDoor, 'changeTableRowHeight', 'default');
-                end
-
-                % A simples troca do foco do elemento força a sua renderização,
-                % evitando uso de manipulações diretas em JavaScript.
-                pause(.100)
-                if app.SheetViewStatus.Value && ~isequal(hTable, app.UITable2)
-                    focus(hTable)
-                    pause(.100)
-                end
-                focus(hTable)
-
-            catch ME
-                ui.Dialog(app.UIFigure, 'error', ME.message);
-            end
-
-        end
-
-        % Value changed function: ColumnWidth
-        function TableColumnWidthChanged(app, event)
-            
-            if ~isempty(event.Source.Value)
-                if isfield(event, 'TableHandle')
-                    hTable = event.TableHandle;
-                else
-                    hTable = onFocusTable(app);
-                end
-
-                if isequal(hTable.ColumnWidth, event.Source.Value)
-                    widthOptions = setdiff(event.Source.Items, {'', event.Source.Value});
-                    hTable.ColumnWidth = widthOptions{1};
-                    drawnow
-                end
-
-                hTable.ColumnWidth = event.Source.Value;
-                app.ColumnWidth.Value = '';
-            end
-            
         end
     end
 
@@ -2052,7 +2076,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create SubGrid2
             app.SubGrid2 = uigridlayout(app.SubTab2);
-            app.SubGrid2.ColumnWidth = {44, 220, 40, 10, 3, 44, 3, 90, 90, 3, 22, 22, 22, 22, 22, 44, 44, 3, 90, '1x', 18, 18};
+            app.SubGrid2.ColumnWidth = {44, 220, 40, 10, 3, 44, 3, 90, 90, 3, 22, 22, 22, 22, 22, 44, 44, 3, 18, 81, 90, '1x'};
             app.SubGrid2.RowHeight = {22, 22};
             app.SubGrid2.RowSpacing = 5;
             app.SubGrid2.BackgroundColor = [0.9804 0.9804 0.9804];
@@ -2143,27 +2167,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.Tab2Separator2.Layout.Column = 7;
             app.Tab2Separator2.ImageSource = 'LineV.svg';
 
-            % Create RowHeight
-            app.RowHeight = uispinner(app.SubGrid2);
-            app.RowHeight.Step = 5;
-            app.RowHeight.Limits = [0 50];
-            app.RowHeight.RoundFractionalValues = 'on';
-            app.RowHeight.ValueDisplayFormat = '%d';
-            app.RowHeight.ValueChangedFcn = createCallbackFcn(app, @TableRowHeightChanged, true);
-            app.RowHeight.FontSize = 11;
-            app.RowHeight.Enable = 'off';
-            app.RowHeight.Layout.Row = 1;
-            app.RowHeight.Layout.Column = 8;
-
-            % Create RowHeightLabel
-            app.RowHeightLabel = uilabel(app.SubGrid2);
-            app.RowHeightLabel.HorizontalAlignment = 'center';
-            app.RowHeightLabel.WordWrap = 'on';
-            app.RowHeightLabel.FontSize = 10;
-            app.RowHeightLabel.Layout.Row = 2;
-            app.RowHeightLabel.Layout.Column = 8;
-            app.RowHeightLabel.Text = {'ALTURA LINHA'; '(offset)'};
-
             % Create ColumnWidth
             app.ColumnWidth = uidropdown(app.SubGrid2);
             app.ColumnWidth.Items = {'', 'auto', 'fit', '1x'};
@@ -2172,7 +2175,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ColumnWidth.FontSize = 11;
             app.ColumnWidth.BackgroundColor = [1 1 1];
             app.ColumnWidth.Layout.Row = 1;
-            app.ColumnWidth.Layout.Column = 9;
+            app.ColumnWidth.Layout.Column = 8;
             app.ColumnWidth.Value = '';
 
             % Create ColumnWidthLabel
@@ -2181,8 +2184,28 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ColumnWidthLabel.WordWrap = 'on';
             app.ColumnWidthLabel.FontSize = 10;
             app.ColumnWidthLabel.Layout.Row = 2;
-            app.ColumnWidthLabel.Layout.Column = 9;
+            app.ColumnWidthLabel.Layout.Column = 8;
             app.ColumnWidthLabel.Text = {'LARGURA'; 'COLUNA'};
+
+            % Create FontIcon
+            app.FontIcon = uidropdown(app.SubGrid2);
+            app.FontIcon.Items = {'', 'question', 'info', 'success', 'warning', 'error', 'none'};
+            app.FontIcon.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
+            app.FontIcon.Enable = 'off';
+            app.FontIcon.FontSize = 11;
+            app.FontIcon.BackgroundColor = [1 1 1];
+            app.FontIcon.Layout.Row = 1;
+            app.FontIcon.Layout.Column = 9;
+            app.FontIcon.Value = '';
+
+            % Create FontIconLabel
+            app.FontIconLabel = uilabel(app.SubGrid2);
+            app.FontIconLabel.HorizontalAlignment = 'center';
+            app.FontIconLabel.WordWrap = 'on';
+            app.FontIconLabel.FontSize = 10;
+            app.FontIconLabel.Layout.Row = 2;
+            app.FontIconLabel.Layout.Column = 9;
+            app.FontIconLabel.Text = 'ÍCONE';
 
             % Create Tab2Separator3
             app.Tab2Separator3 = uiimage(app.SubGrid2);
@@ -2278,43 +2301,48 @@ classdef winECD_exported < matlab.apps.AppBase
             app.Tab2Separator4.Layout.Column = 18;
             app.Tab2Separator4.ImageSource = 'LineV.svg';
 
-            % Create FontIcon
-            app.FontIcon = uidropdown(app.SubGrid2);
-            app.FontIcon.Items = {'', 'question', 'info', 'success', 'warning', 'error', 'none'};
-            app.FontIcon.ValueChangedFcn = createCallbackFcn(app, @TableStyleChanged, true);
-            app.FontIcon.Enable = 'off';
-            app.FontIcon.FontSize = 11;
-            app.FontIcon.BackgroundColor = [1 1 1];
-            app.FontIcon.Layout.Row = 1;
-            app.FontIcon.Layout.Column = 19;
-            app.FontIcon.Value = '';
-
-            % Create FontIconLabel
-            app.FontIconLabel = uilabel(app.SubGrid2);
-            app.FontIconLabel.HorizontalAlignment = 'center';
-            app.FontIconLabel.WordWrap = 'on';
-            app.FontIconLabel.FontSize = 10;
-            app.FontIconLabel.Layout.Row = 2;
-            app.FontIconLabel.Layout.Column = 19;
-            app.FontIconLabel.Text = 'ÍCONE';
-
             % Create StyleDelete
             app.StyleDelete = uiimage(app.SubGrid2);
             app.StyleDelete.ScaleMethod = 'none';
             app.StyleDelete.ImageClickedFcn = createCallbackFcn(app, @TableStyleDeleteOrRefresh, true);
             app.StyleDelete.Enable = 'off';
-            app.StyleDelete.Layout.Row = 2;
-            app.StyleDelete.Layout.Column = 21;
+            app.StyleDelete.Layout.Row = 1;
+            app.StyleDelete.Layout.Column = 19;
             app.StyleDelete.ImageSource = 'clear_all_outputs_16-3d3c482971dfdb6852db717989f585fa.png';
 
-            % Create StyleRefresh
-            app.StyleRefresh = uiimage(app.SubGrid2);
-            app.StyleRefresh.ScaleMethod = 'none';
-            app.StyleRefresh.ImageClickedFcn = createCallbackFcn(app, @TableStyleDeleteOrRefresh, true);
-            app.StyleRefresh.Enable = 'off';
-            app.StyleRefresh.Layout.Row = 2;
-            app.StyleRefresh.Layout.Column = 22;
-            app.StyleRefresh.ImageSource = 'Refresh_18.png';
+            % Create StyleDeleteLabel
+            app.StyleDeleteLabel = uilabel(app.SubGrid2);
+            app.StyleDeleteLabel.FontSize = 11;
+            app.StyleDeleteLabel.Enable = 'off';
+            app.StyleDeleteLabel.Layout.Row = 1;
+            app.StyleDeleteLabel.Layout.Column = [20 21];
+            app.StyleDeleteLabel.Text = 'Remove estilo de';
+
+            % Create StyleDeleteScope
+            app.StyleDeleteScope = uidropdown(app.SubGrid2);
+            app.StyleDeleteScope.Items = {'células', 'tabela'};
+            app.StyleDeleteScope.Enable = 'off';
+            app.StyleDeleteScope.FontSize = 11;
+            app.StyleDeleteScope.BackgroundColor = [1 1 1];
+            app.StyleDeleteScope.Layout.Row = 1;
+            app.StyleDeleteScope.Layout.Column = 21;
+            app.StyleDeleteScope.Value = 'células';
+
+            % Create SortRefresh
+            app.SortRefresh = uiimage(app.SubGrid2);
+            app.SortRefresh.ImageClickedFcn = createCallbackFcn(app, @TableSortRefresh, true);
+            app.SortRefresh.Enable = 'off';
+            app.SortRefresh.Layout.Row = 2;
+            app.SortRefresh.Layout.Column = 19;
+            app.SortRefresh.ImageSource = 'sort_az_ascending.png';
+
+            % Create SortRefreshLabel
+            app.SortRefreshLabel = uilabel(app.SubGrid2);
+            app.SortRefreshLabel.FontSize = 11;
+            app.SortRefreshLabel.Enable = 'off';
+            app.SortRefreshLabel.Layout.Row = 2;
+            app.SortRefreshLabel.Layout.Column = [20 21];
+            app.SortRefreshLabel.Text = 'Remove ordenamento';
 
             % Create UITable1
             app.UITable1 = uitable(app.GridLayout);

@@ -58,7 +58,8 @@ classdef ECD < handle
                 'id', {}, ...
                 'filter', {}, ...
                 'style', {}, ...
-                'sort', {} ...
+                'sort', {}, ...
+                'width', {} ...
             ) ...
         )
         
@@ -307,6 +308,7 @@ classdef ECD < handle
                 propertyName char {mustBeMember(propertyName, { 'GUI.TableView.Filter';
                                                                 'GUI.TableView.Style';
                                                                 'GUI.TableView.Sort';
+                                                                'GUI.TableView.Width';
                                                                 'GUI.IcmsRate';
                                                                 'Table.NonEssentialFiles';
                                                                 'Table.x_CONTAS_ANOTACAO';
@@ -356,10 +358,11 @@ classdef ECD < handle
                     end
 
                 case 'GUI.TableView.Sort'
+                    tableId = varargin{1};
+                    [~, displayIdx] = ismember(tableId, {obj.GUI.tableView.id});
+
                     switch updateType
                         case 'applySort'
-                            tableId = varargin{1};
-                            [~, displayIdx] = ismember(tableId, {obj.GUI.tableView.id});
                             if ~displayIdx
                                 displayIdx = numel(obj.GUI.tableView) + 1;
                             end
@@ -374,10 +377,41 @@ classdef ECD < handle
                             );
 
                         case 'clearSort'
-                            tableId = varargin{1};
-                            [~, displayIdx] = ismember(tableId, {obj.GUI.tableView.id});
                             if displayIdx
                                 obj.GUI.tableView(displayIdx).sort = [];
+                            end
+
+                        otherwise
+                            error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
+                    end
+
+                case 'GUI.TableView.Width'
+                    tableId = varargin{1};
+                    [~, widthIdx] = ismember(tableId, {obj.GUI.tableView.id});
+
+                    switch updateType
+                        case 'updateColumnWidths'
+                            columnWidthUpdates = varargin{2};
+
+                            if widthIdx && isfield(obj.GUI.tableView(widthIdx), 'width') && ~isempty(obj.GUI.tableView(widthIdx).width)
+                                widthCells = obj.GUI.tableView(widthIdx).width;
+                            else
+                                widthIdx = numel(obj.GUI.tableView) + 1;
+                                widthCells = repmat({'auto'}, 1, width(obj.Table.(['x' tableId])));
+                            end
+
+                            widths = str2double(extractBefore({columnWidthUpdates.width}, 'px'));
+                            widthCells([columnWidthUpdates.idx]) = num2cell(widths);
+                            
+                            widthCells(cellfun(@(x) isequal(x, 10), widthCells)) = {'1x'};
+                            widthCells(cellfun(@(x) isequal(x, 75), widthCells)) = {'auto'};
+
+                            obj.GUI.tableView(widthIdx).id    = tableId;
+                            obj.GUI.tableView(widthIdx).width = widthCells;
+
+                        case 'resetColumnWidths'
+                            if widthIdx
+                                obj.GUI.tableView(widthIdx).width = [];
                             end
 
                         otherwise
@@ -498,7 +532,7 @@ classdef ECD < handle
                                 obj.Table.x_CONTAS_ANOTACAO, ...
                                 obj.Table.x_BALANCETE_RESULTADO, ...
                                 'Keys', 'COD_CTA', ...
-                                'RightVariables', 'TOTAL' ...
+                                'RightVariables', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'} ...
                             );
 
                             for ii = 1:height(accountTable)
@@ -507,13 +541,14 @@ classdef ECD < handle
                                 end
 
                                 accountDescription = lower(replace(accountTable.('DESCRIÇÃO'){ii}, textAnalysis.specialPont, ''));
-                                accountTotal       = accountTable.('TOTAL')(ii);
+                                hasPositiveMonthlyBalance = all(accountTable{ii, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}} >= 0);
+                                totalBalance = accountTable.('TOTAL')(ii);
 
                                 % Identifica qual das descrições possuem as palavras 
                                 % "ICMS", "PIS" ou "COFINS", e qual delas aparece no 
                                 % final da descrição (e mais próxima da descrição da 
                                 % conta analítica sob análise).
-                                taxOptions    = {'icms', 'pis', 'cofins'};
+                                taxOptions    = {'icms', ' pis', 'cofins'};
                                 taxValidation = repmat({[]}, 1, 3);
                                 
                                 for jj = 1:numel(taxOptions)
@@ -541,10 +576,47 @@ classdef ECD < handle
                                             obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Descrição inclui termo "COFINS"';
                                     end
 
-                                elseif accountTotal > 0                                    
-                                    obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "Sim";
-                                    obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){ii}  = jsonencode(obj.GUI.icmsRate.current);
-                                    obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Saldo anual positivo';
+                                else
+                                    if totalBalance <= 0
+                                        continue
+                                    end
+
+                                    keywords = struct( ...
+                                        'nonTelecom', {{'nao telecom', ' sva ', 'valor adicionado', 'valor adcionado', ' locacao', 'instalacao'}}, ...
+                                        'telecom',    {{'telecom', 'servico', 'receita'}} ...
+                                    );
+
+                                    normalizedDescription = textAnalysis.normalizeWords(accountTable.('DESCRIÇÃO'){ii});
+                                    nonTelecomMatchMask   = cellfun(@(x) contains(normalizedDescription, x), keywords.nonTelecom);
+                                    telecomTermsMatchMask = cellfun(@(x) contains(normalizedDescription, x), keywords.telecom);
+
+                                    if any(nonTelecomMatchMask)
+                                        nonTelecomWords = upper(strcat({'"'}, strtrim(keywords.nonTelecom(nonTelecomMatchMask)), {'"'}));
+                                        if isscalar(nonTelecomWords)
+                                            nonTelecomWords = char(nonTelecomWords);
+                                            classificationNote = sprintf('[auto] Descrição inclui termo %s', nonTelecomWords);
+                                        else
+                                            nonTelecomWords = strjoin({strjoin(nonTelecomWords(1:end-1), ', '), nonTelecomWords{end}}, ' e ');
+                                            classificationNote = sprintf('[auto] Descrição inclui termos %s', nonTelecomWords);
+                                        end
+
+                                        obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "Não";
+                                        obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = classificationNote;
+
+                                    elseif sum(telecomTermsMatchMask) >= 2
+                                        telecomWords = upper(strcat({'"'}, strtrim(keywords.telecom(telecomTermsMatchMask)), {'"'}));
+                                        telecomWords = strjoin({strjoin(telecomWords(1:end-1), ', '), telecomWords{end}}, ' e ');
+
+                                        if hasPositiveMonthlyBalance
+                                            classificationNote = sprintf('[auto] Saldos mensais não negativos e descrição inclui termos %s', telecomWords);
+                                        else
+                                            classificationNote = sprintf('[auto] Saldo anual positivo e descrição inclui termos %s', telecomWords);
+                                        end
+
+                                        obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "Sim";
+                                        obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){ii}  = jsonencode(obj.GUI.icmsRate.current);
+                                        obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = classificationNote;
+                                    end
                                 end
                             end
 
@@ -651,17 +723,17 @@ classdef ECD < handle
                             funttelApurado         = - fix(100 * funttelDefaultTax .* baseCalculoFustFunttel) / 100;
 
                             % (d) ATUALIZA TABELA
-                            obj.Table.x_APURACAO_GERAL('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell([robContabil,            sum(robContabil)]);
-                            obj.Table.x_APURACAO_GERAL('ICMS ESTIMADO',                  [monthIds, {'TOTAL'}]) = num2cell([icmsEstimado,           sum(icmsEstimado)]);
-                            obj.Table.x_APURACAO_GERAL('ICMS CONTÁBIL',                  [monthIds, {'TOTAL'}]) = num2cell([icmsContabil,           sum(icmsContabil)]);
-                            obj.Table.x_APURACAO_GERAL('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell([baseCalculoPisCofins,   sum(baseCalculoPisCofins)]);
-                            obj.Table.x_APURACAO_GERAL('PIS ESTIMADO',                   [monthIds, {'TOTAL'}]) = num2cell([pisEstimado,            sum(pisEstimado)]);
-                            obj.Table.x_APURACAO_GERAL('PIS CONTÁBIL',                   [monthIds, {'TOTAL'}]) = num2cell([pisContabil,            sum(pisContabil)]);
-                            obj.Table.x_APURACAO_GERAL('COFINS ESTIMADO',                [monthIds, {'TOTAL'}]) = num2cell([cofinsEstimado,         sum(cofinsEstimado)]);
-                            obj.Table.x_APURACAO_GERAL('COFINS CONTÁBIL',                [monthIds, {'TOTAL'}]) = num2cell([cofinsContabil,         sum(cofinsContabil)]);
-                            obj.Table.x_APURACAO_GERAL('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell([baseCalculoFustFunttel, sum(baseCalculoFustFunttel)]);
-                            obj.Table.x_APURACAO_GERAL('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell([fustApurado,            sum(fustApurado)]);
-                            obj.Table.x_APURACAO_GERAL('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell([funttelApurado,         sum(funttelApurado)]);
+                            obj.Table.x_APURACAO_GERAL( 1, [monthIds, {'TOTAL'}]) = num2cell([robContabil,            sum(robContabil)]);
+                            obj.Table.x_APURACAO_GERAL( 2, [monthIds, {'TOTAL'}]) = num2cell([icmsEstimado,           sum(icmsEstimado)]);
+                            obj.Table.x_APURACAO_GERAL( 3, [monthIds, {'TOTAL'}]) = num2cell([icmsContabil,           sum(icmsContabil)]);
+                            obj.Table.x_APURACAO_GERAL( 4, [monthIds, {'TOTAL'}]) = num2cell([baseCalculoPisCofins,   sum(baseCalculoPisCofins)]);
+                            obj.Table.x_APURACAO_GERAL( 5, [monthIds, {'TOTAL'}]) = num2cell([pisEstimado,            sum(pisEstimado)]);
+                            obj.Table.x_APURACAO_GERAL( 6, [monthIds, {'TOTAL'}]) = num2cell([pisContabil,            sum(pisContabil)]);
+                            obj.Table.x_APURACAO_GERAL( 7, [monthIds, {'TOTAL'}]) = num2cell([cofinsEstimado,         sum(cofinsEstimado)]);
+                            obj.Table.x_APURACAO_GERAL( 8, [monthIds, {'TOTAL'}]) = num2cell([cofinsContabil,         sum(cofinsContabil)]);
+                            obj.Table.x_APURACAO_GERAL( 9, [monthIds, {'TOTAL'}]) = num2cell([baseCalculoFustFunttel, sum(baseCalculoFustFunttel)]);
+                            obj.Table.x_APURACAO_GERAL(10, [monthIds, {'TOTAL'}]) = num2cell([fustApurado,            sum(fustApurado)]);
+                            obj.Table.x_APURACAO_GERAL(11, [monthIds, {'TOTAL'}]) = num2cell([funttelApurado,         sum(funttelApurado)]);
 
                             
                             % ## _APURACAO_INTERCONEXÃO ## 
@@ -688,14 +760,14 @@ classdef ECD < handle
                             itxFunttelApurado         = - fix(100 * funttelDefaultTax .* itxBaseCalculoFustFunttel) / 100;
 
                             % (d) ATUALIZA TABELA INTERCONEXÃO
-                            obj.Table.x_APURACAO_INTERCONEXAO('ROB TELECOM',                    [monthIds, {'TOTAL'}]) = num2cell([itxRobContabil,            sum(itxRobContabil)]);
-                            obj.Table.x_APURACAO_INTERCONEXAO('ICMS ESTIMADO',                  [monthIds, {'TOTAL'}]) = num2cell([itxIcmsEstimado,           sum(itxIcmsEstimado)]);
-                            obj.Table.x_APURACAO_INTERCONEXAO('BÁSE DE CÁLCULO (PIS/COFINS)',   [monthIds, {'TOTAL'}]) = num2cell([itxBaseCalculoPisCofins,   sum(itxBaseCalculoPisCofins)]);
-                            obj.Table.x_APURACAO_INTERCONEXAO('PIS ESTIMADO',                   [monthIds, {'TOTAL'}]) = num2cell([itxPisEstimado,            sum(itxPisEstimado)]);
-                            obj.Table.x_APURACAO_INTERCONEXAO('COFINS ESTIMADO',                [monthIds, {'TOTAL'}]) = num2cell([itxCofinsEstimado,         sum(itxCofinsEstimado)]);
-                            obj.Table.x_APURACAO_INTERCONEXAO('BÁSE DE CÁLCULO (FUST/FUNTTEL)', [monthIds, {'TOTAL'}]) = num2cell([itxBaseCalculoFustFunttel, sum(itxBaseCalculoFustFunttel)]);
-                            obj.Table.x_APURACAO_INTERCONEXAO('VALOR APURADO FUST',             [monthIds, {'TOTAL'}]) = num2cell([itxFustApurado,            sum(itxFustApurado)]);
-                            obj.Table.x_APURACAO_INTERCONEXAO('VALOR APURADO FUNTTEL',          [monthIds, {'TOTAL'}]) = num2cell([itxFunttelApurado,         sum(itxFunttelApurado)]);
+                            obj.Table.x_APURACAO_INTERCONEXAO(1, [monthIds, {'TOTAL'}]) = num2cell([itxRobContabil,            sum(itxRobContabil)]);
+                            obj.Table.x_APURACAO_INTERCONEXAO(2, [monthIds, {'TOTAL'}]) = num2cell([itxIcmsEstimado,           sum(itxIcmsEstimado)]);
+                            obj.Table.x_APURACAO_INTERCONEXAO(3, [monthIds, {'TOTAL'}]) = num2cell([itxBaseCalculoPisCofins,   sum(itxBaseCalculoPisCofins)]);
+                            obj.Table.x_APURACAO_INTERCONEXAO(4, [monthIds, {'TOTAL'}]) = num2cell([itxPisEstimado,            sum(itxPisEstimado)]);
+                            obj.Table.x_APURACAO_INTERCONEXAO(5, [monthIds, {'TOTAL'}]) = num2cell([itxCofinsEstimado,         sum(itxCofinsEstimado)]);
+                            obj.Table.x_APURACAO_INTERCONEXAO(6, [monthIds, {'TOTAL'}]) = num2cell([itxBaseCalculoFustFunttel, sum(itxBaseCalculoFustFunttel)]);
+                            obj.Table.x_APURACAO_INTERCONEXAO(7, [monthIds, {'TOTAL'}]) = num2cell([itxFustApurado,            sum(itxFustApurado)]);
+                            obj.Table.x_APURACAO_INTERCONEXAO(8, [monthIds, {'TOTAL'}]) = num2cell([itxFunttelApurado,         sum(itxFunttelApurado)]);
 
                         otherwise
                             error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
@@ -1053,6 +1125,11 @@ classdef ECD < handle
 
                     % Prealoca, viabilizando operação em modo paralelo...
                     x_CONTAS_HISTORICO = model.ECDBase.initializeCustomTable('_CONTAS_HISTORICO', numAccounts);
+
+                    if isempty(x_CONTAS_HISTORICO)
+                        obj.Table.x_CONTAS_HISTORICO = x_CONTAS_HISTORICO;
+                        return
+                    end
 
                     % Identifica apenas registros relacionados às contas de
                     % resultado.

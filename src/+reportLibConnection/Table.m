@@ -147,12 +147,14 @@ classdef (Abstract) Table
             switch tableType
                 case 'APURAÇÃO GERAL COMPLETA'
                     rawTable = ecdObj.Table.('x_APURACAO_GERAL');
+                    rawTable = ensureRowNames(rawTable, 'TIPO');
                     rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, 'ROB TELECOM', 'ROB TELECOM (GERAL)');
                     
                     Table = [table(rawTable.Properties.RowNames, 'VariableName', {'TIPO'}), rawTable];
 
                 case 'APURAÇÃO GERAL RESUMIDA'
                     rawTable = ecdObj.Table.('x_APURACAO_GERAL');
+                    rawTable = ensureRowNames(rawTable, 'TIPO');
 
                     icmsEscolhido   = 'ICMS CONTÁBIL';
                     pisEscolhido    = 'PIS CONTÁBIL';
@@ -183,6 +185,8 @@ classdef (Abstract) Table
                     end
 
                     rawTable = ecdObj.Table.('x_APURACAO_INTERCONEXAO');
+                    rawTable = ensureRowNames(rawTable, 'TIPO');
+
                     rawTable(contains(rawTable.Properties.RowNames, 'BÁSE DE CÁLCULO'), :) = [];
                     rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, {'ICMS ESTIMADO', 'PIS ESTIMADO', 'COFINS ESTIMADO'}, {'ICMS', 'PIS', 'COFINS'});
                     rawTable = cell2table(table2cell(rawTable)', 'VariableNames', rawTable.Properties.RowNames, 'RowNames', rawTable.Properties.VariableNames);
@@ -192,9 +196,20 @@ classdef (Abstract) Table
                 case 'APURAÇÃO EXCLUINDO INTERCONEXÃO'
                     [~, rawTableGeral] = reportLibConnection.Table.TabelaApuracao(analyzedData, 'APURAÇÃO GERAL RESUMIDA');
                     [~, rawTableItx]   = reportLibConnection.Table.TabelaApuracao(analyzedData, 'APURAÇÃO SOMENTE INTERCONEXÃO');
+                    
+                    rawTableGeral = ensureRowNames(rawTableGeral, 'TIPO');
+                    rawTableItx = ensureRowNames(rawTableItx, 'TIPO');
+                    
                     rawTable = rawTableGeral - rawTableItx;
 
                     Table = [table(rawTable.Properties.RowNames, 'VariableName', {'MÊS'}), rawTable];
+            end
+
+            function tbl = ensureRowNames(tbl, rowNameVariable)
+                if isempty(tbl.Properties.RowNames) && ismember(rowNameVariable, tbl.Properties.VariableNames)
+                    tbl.Properties.RowNames = tbl.(rowNameVariable);
+                    tbl = removevars(tbl, rowNameVariable);
+                end
             end
         end
 

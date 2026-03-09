@@ -20,5 +20,10 @@ function fuzzyUniqueList = deduplicateAccountEntryHistory(entryHistory)
 
     % Concatena contagem com valor original
     entryHistoryCount = cellstr(replace(" (" + string(countsSorted) + "x)", " (1x)", ""));
-    fuzzyUniqueList = strcat(entryHistory(idxsSorted), entryHistoryCount);
+
+    entryHistoryList  = entryHistory(idxsSorted);
+    entryHistoryIdxs  = endsWith(entryHistoryList, ' ↳ ');
+    entryHistoryList(entryHistoryIdxs) = replace(entryHistoryList(entryHistoryIdxs), ' ↳ ', '');
+
+    fuzzyUniqueList   = strcat(entryHistoryList, entryHistoryCount);
 end

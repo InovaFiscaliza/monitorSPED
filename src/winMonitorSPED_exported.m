@@ -173,30 +173,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     case 'getNavigatorBasicInformation'
                         app.General.AppVersion.browser = event.HTMLEventData;
 
-                    case 'getCssPropertyValue'
-                        componentName = event.HTMLEventData.componentName;
+                    case 'getTableColumnWidth'
+                        context = 'ECD';
+                        tableId = event.HTMLEventData.tableId;
+                        columnWidths = event.HTMLEventData.columnWidths;
 
-                        if ~isempty(componentName)
-                            if ~isprop(app, 'isDocked') % mainApp (app container)
-                                auxAppTag = event.HTMLEventData.auxAppTag;
-                                if ~isempty(auxAppTag)
-                                    hAuxApp   = getAppHandle(app.tabGroupController, auxAppTag);
-                                    objHandle = hAuxApp.(componentName);
-                                else
-                                    objHandle = eval(['app.' componentName]);
-                                end
-                            else
-                                objHandle = eval(['app.' componentName]);
-                            end
-                            
-                            cssProp  = event.HTMLEventData.propertyName;
-                            cssValue = event.HTMLEventData.propertyValue;
-    
-                            if ~isprop(objHandle, 'StyleObservations')
-                                objHandle.addprop('StyleObservations');
-                            end
-                            objHandle.StyleObservations.(cssProp) = cssValue;
-                        end
+                        ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', 'getTableColumnWidth', tableId, columnWidths)
 
                     % MAINAPP
                     case 'mainApp.file_Tree'
@@ -439,7 +421,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     app.popupCurrentApp.GridLayout
                 });
 
-                sendEventToHTMLSource(app.jsBackDoor, 'dockContainer', struct( ...
+                sendEventToHTMLSource(callingApp.jsBackDoor, 'dockContainer', struct( ...
                     'dockAppName', auxDockAppName, ...
                     'dockAppDataTag', app.popupCurrentApp.GridLayout.UserData.id, ...
                     'dockAppContainerDataTag', callingApp.popupContainer.UserData.id, ...
