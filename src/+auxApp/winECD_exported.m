@@ -188,8 +188,9 @@ classdef winECD_exported < matlab.apps.AppBase
                             case 'getTableColumnWidth'
                                 selectedECD = getSelectedECD(app);
                                 tableId = varargin{1};
-                                columnWidths = varargin{2};
-                                update(selectedECD, 'GUI.TableView.Width', 'updateColumnWidths', tableId, columnWidths)
+                                displayedColumnCount = varargin{2};
+                                columnWidths = varargin{3};
+                                update(selectedECD, 'GUI.TableView.Width', 'updateColumnWidths', tableId, displayedColumnCount, columnWidths)
 
                             % auxApp.dockReportLib >> winMonitorSPED >> auxApp.winECD
                             case {'onProjectRestart',        ...
@@ -597,9 +598,9 @@ classdef winECD_exported < matlab.apps.AppBase
             % - largura padrão em modo automático;
             % - nomes das colunas retirados da própria tabela; e
             % - colunas editáveis identificadas pelo marcador (✎) no nome
-            columnWidth    = resolveTableColumnWidth(app, selectedECD, tableId, hTable);
             columnNames    = tableIdData.Properties.VariableNames;
             columnEditable = contains(columnNames, '✎');
+            columnWidth    = resolveTableColumnWidth(app, selectedECD, tableId, columnNames, hTable);
 
             % Verifica se a tabela suporta formatação customizável das suas
             % colunas, obtendo-se especificação de cada coluna. Caso todos os 
@@ -865,7 +866,7 @@ classdef winECD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function columnWidth = resolveTableColumnWidth(app, selectedECD, targetTableId, tableHandle)
+        function columnWidth = resolveTableColumnWidth(app, selectedECD, targetTableId, columnNames, tableHandle)
             previousTableId = tableHandle.UserData.tableId;
             previousColumnWidth = {};
         
@@ -879,7 +880,7 @@ classdef winECD_exported < matlab.apps.AppBase
         
             [~, targetWidthIdx] = ismember(targetTableId, {selectedECD.GUI.tableView.id});
             
-            if targetWidthIdx && isfield(selectedECD.GUI.tableView(targetWidthIdx),'width') && ~isempty(selectedECD.GUI.tableView(targetWidthIdx).width)        
+            if targetWidthIdx && isfield(selectedECD.GUI.tableView(targetWidthIdx),'width') && ~isempty(selectedECD.GUI.tableView(targetWidthIdx).width) && numel(selectedECD.GUI.tableView(targetWidthIdx).width) == numel(columnNames)
                 columnWidth = selectedECD.GUI.tableView(targetWidthIdx).width;
         
                 if ~isempty(previousColumnWidth)
@@ -890,7 +891,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 end
         
             else
-                columnWidth = 'auto';
+                columnWidth = repmat({'auto'}, 1, numel(columnNames));
             end
         end
 
@@ -1567,32 +1568,36 @@ classdef winECD_exported < matlab.apps.AppBase
                 app.SheetOnFocus.Layout.Row = lampPositionRow;
             end
 
+            hasTableSelectionChanged = ~isequal(clickedTable.Selection, clickedTable.UserData.selection);
+            isUpdateTableColumnWidthNeeded = false;
+
             % Altera o tipo de seleção.
-            if isempty(clickedRow) && isempty(clickedCol) 
-                if ~isempty(clickedTable.Selection)
-                    clickedTable.UserData.selectionType = 'none';                    
-                    clickedTable.Selection = [];
-                    drawnow                    
+            if isempty(clickedRow) 
+                if ~isempty(clickedCol) 
+                    clickedTable.UserData.selectionType = 'column';
+                end
+
+                if ~hasTableSelectionChanged
+                    isUpdateTableColumnWidthNeeded = true;
                 end
 
             elseif isempty(clickedCol)
                 clickedTable.UserData.selectionType = 'row';
-
-            elseif isempty(clickedRow)
-                clickedTable.UserData.selectionType = 'column';
-                
-                if strcmp(event.EventName, 'Clicked')
-                    tableId = getSelectedTableId(app, clickedTable);                    
-                    sendEventToHTMLSource(app.jsBackDoor, 'getTableColumnWidth', struct('tableId', tableId, 'dataTag', clickedTable.UserData.id))
-                end
 
             else
                 clickedTable.UserData.selectionType = 'cell';            
             end
 
             % Altera informações no rodapé da tabela.
-            if ~isequal(clickedTable.Selection, clickedTable.UserData.selection)
+            if hasTableSelectionChanged
                 updateTableFootnote(app, clickedTable, tableCountText, tableSelectedAccount)
+            end
+
+            if isUpdateTableColumnWidthNeeded
+                if strcmp(event.EventName, 'Clicked')
+                    tableId = getSelectedTableId(app, clickedTable);                    
+                    sendEventToHTMLSource(app.jsBackDoor, 'getTableColumnWidth', struct('tableId', tableId, 'dataTag', clickedTable.UserData.id, 'displayedColumnCount', width(clickedTable.Data)))
+                end
             end
 
         end
@@ -1691,8 +1696,8 @@ classdef winECD_exported < matlab.apps.AppBase
                 hTable.ColumnWidth = eventSourceValue;
                 pause(.250)
 
-                tableId = getSelectedTableId(app, hTable);                
-                sendEventToHTMLSource(app.jsBackDoor, 'getTableColumnWidth', struct('tableId', tableId, 'dataTag', hTable.UserData.id))
+                tableId = getSelectedTableId(app, hTable);
+                sendEventToHTMLSource(app.jsBackDoor, 'getTableColumnWidth', struct('tableId', tableId, 'dataTag', hTable.UserData.id, 'displayedColumnCount', width(hTable.Data)))
             end
 
             app.ColumnWidth.Value = '';

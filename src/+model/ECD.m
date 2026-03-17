@@ -391,18 +391,23 @@ classdef ECD < handle
 
                     switch updateType
                         case 'updateColumnWidths'
-                            columnWidthUpdates = varargin{2};
+                            displayedColumnCount = varargin{2};
+                            columnWidthUpdates = varargin{3};
 
                             if widthIdx && isfield(obj.GUI.tableView(widthIdx), 'width') && ~isempty(obj.GUI.tableView(widthIdx).width)
                                 widthCells = obj.GUI.tableView(widthIdx).width;
+                                if numel(widthCells) ~= displayedColumnCount
+                                    widthCells = repmat({'auto'}, 1, displayedColumnCount);
+                                end
+
                             else
                                 widthIdx = numel(obj.GUI.tableView) + 1;
-                                widthCells = repmat({'auto'}, 1, width(obj.Table.(['x' tableId])));
+                                widthCells = repmat({'auto'}, 1, displayedColumnCount);
                             end
 
                             widths = str2double(extractBefore({columnWidthUpdates.width}, 'px'));
                             widthCells([columnWidthUpdates.idx]) = num2cell(widths);
-                            
+
                             widthCells(cellfun(@(x) isequal(x, 10), widthCells)) = {'1x'};
                             widthCells(cellfun(@(x) isequal(x, 75), widthCells)) = {'auto'};
 

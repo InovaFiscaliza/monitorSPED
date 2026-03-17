@@ -129,7 +129,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         popupCurrentAppTag = event.HTMLEventData.dockAppName;
 
                         switch context
-                            case {'mainApp', 'FILE'}
+                            case {'mainApp', app.Context}
                                 hApp = app;
                             otherwise
                                 hApp = getAppHandle(app.tabGroupController, context);
@@ -176,9 +176,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     case 'getTableColumnWidth'
                         context = 'ECD';
                         tableId = event.HTMLEventData.tableId;
+                        displayedColumnCount = event.HTMLEventData.displayedColumnCount;
                         columnWidths = event.HTMLEventData.columnWidths;
 
-                        ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', 'getTableColumnWidth', tableId, columnWidths)
+                        ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', 'getTableColumnWidth', tableId, displayedColumnCount, columnWidths)
 
                     % MAINAPP
                     case 'mainApp.file_Tree'
