@@ -1,5 +1,5 @@
 {
-    "version": 1.04,
+    "version": 1.05,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -99,6 +99,8 @@
                 "_CONTAS_ANOTACAO",
                 "_CONTAS_DESCRICAO",
                 "_CONTAS_HISTORICO",
+                "_CONCILIACAO_GERAL",
+                "_CONCILIACAO_INTERCONEXAO",
                 "_APURACAO_GERAL",
                 "_APURACAO_INTERCONEXAO"
             ],
