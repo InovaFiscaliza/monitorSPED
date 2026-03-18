@@ -2,80 +2,81 @@ classdef winECD_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure                matlab.ui.Figure
-        GridLayout              matlab.ui.container.GridLayout
-        DockModule              matlab.ui.container.GridLayout
-        dockModule_Close        matlab.ui.control.Image
-        dockModule_Undock       matlab.ui.control.Image
-        Toolbar                 matlab.ui.container.GridLayout
-        tool_UploadFinalFile    matlab.ui.control.Image
-        tool_GenerateReport     matlab.ui.control.Image
-        tool_OpenPopupProject   matlab.ui.control.Image
-        tool_CompanyInfo        matlab.ui.control.Label
-        tool_Separator2         matlab.ui.control.Image
-        tool_DeleteAnnotation   matlab.ui.control.Image
-        tool_AutoFill           matlab.ui.control.Image
-        tool_AccountButton      matlab.ui.control.Image
-        tool_Separator1         matlab.ui.control.Image
-        tool_OpenPopupIcmsRate  matlab.ui.control.Image
-        UITable2_AccountInfo    matlab.ui.control.Label
-        UITable2_FilterIcon     matlab.ui.control.Image
-        UITable2_FilterText     matlab.ui.control.Label
-        UITable2_CountText      matlab.ui.control.Label
-        UITable2_CountIcon      matlab.ui.control.Image
-        UITable2                matlab.ui.control.Table
-        UITable1_AccountInfo    matlab.ui.control.Label
-        UITable1_FilterIcon     matlab.ui.control.Image
-        UITable1_FilterText     matlab.ui.control.Label
-        UITable1_CountText      matlab.ui.control.Label
-        UITable1_CountIcon      matlab.ui.control.Image
-        UITable1                matlab.ui.control.Table
-        SubTabGroup             matlab.ui.container.TabGroup
-        SubTab1                 matlab.ui.container.Tab
-        SubGrid1                matlab.ui.container.GridLayout
-        FinanceFacts            matlab.ui.control.Label
-        Tab1Separator3          matlab.ui.control.Image
-        LogButton               matlab.ui.control.Button
-        MemoryUsageButton       matlab.ui.control.Button
-        Tab1Separator2          matlab.ui.control.Image
-        ExportButton            matlab.ui.control.Button
-        Tab1Separator1          matlab.ui.control.Image
-        SheetList               matlab.ui.control.DropDown
-        SheetListLabel          matlab.ui.control.Label
-        TimePeriodList          matlab.ui.control.DropDown
-        TimePeriodListLabel     matlab.ui.control.Label
-        CompanyNameList         matlab.ui.control.DropDown
-        CompanyNameListLabel    matlab.ui.control.Label
-        SubTab2                 matlab.ui.container.Tab
-        SubGrid2                matlab.ui.container.GridLayout
-        SortRefreshLabel        matlab.ui.control.Label
-        SortRefresh             matlab.ui.control.Image
-        StyleDeleteScope        matlab.ui.control.DropDown
-        StyleDeleteLabel        matlab.ui.control.Label
-        StyleDelete             matlab.ui.control.Image
-        Tab2Separator4          matlab.ui.control.Image
-        FontColor               matlab.ui.control.ColorPicker
-        FontBackground          matlab.ui.control.ColorPicker
-        FontAlign3              matlab.ui.control.Image
-        FontAlign2              matlab.ui.control.Image
-        FontAlign1              matlab.ui.control.Image
-        FontStyle               matlab.ui.control.Button
-        FontWeight              matlab.ui.control.Button
-        FontFamily              matlab.ui.control.DropDown
-        Tab2Separator3          matlab.ui.control.Image
-        FontIconLabel           matlab.ui.control.Label
-        FontIcon                matlab.ui.control.DropDown
-        ColumnWidthLabel        matlab.ui.control.Label
-        ColumnWidth             matlab.ui.control.DropDown
-        Tab2Separator2          matlab.ui.control.Image
-        FilterButton            matlab.ui.control.Button
-        Tab2Separator1          matlab.ui.control.Image
-        SheetOnFocus            matlab.ui.control.Lamp
-        SheetHeight_Second      matlab.ui.control.Spinner
-        SheetView_Second        matlab.ui.control.DropDown
-        SheetHeight_First       matlab.ui.control.Spinner
-        SheetView_First         matlab.ui.control.DropDown
-        SheetViewStatus         matlab.ui.control.StateButton
+        UIFigure                  matlab.ui.Figure
+        GridLayout                matlab.ui.container.GridLayout
+        DockModule                matlab.ui.container.GridLayout
+        dockModule_Close          matlab.ui.control.Image
+        dockModule_Undock         matlab.ui.control.Image
+        Toolbar                   matlab.ui.container.GridLayout
+        tool_UploadFinalFile      matlab.ui.control.Image
+        tool_GenerateReport       matlab.ui.control.Image
+        tool_OpenPopupProject     matlab.ui.control.Image
+        tool_CompanyInfo          matlab.ui.control.Label
+        tool_Separator2           matlab.ui.control.Image
+        tool_DeleteAnnotation     matlab.ui.control.Image
+        tool_AutoFill             matlab.ui.control.Image
+        tool_AccountButton        matlab.ui.control.Image
+        tool_Separator1           matlab.ui.control.Image
+        tool_OpenPopupIcmsRate    matlab.ui.control.Image
+        UITable2_AccountInfo      matlab.ui.control.Label
+        UITable2_FilterIcon       matlab.ui.control.Image
+        UITable2_FilterText       matlab.ui.control.Label
+        UITable2_CountText        matlab.ui.control.Label
+        UITable2_CountIcon        matlab.ui.control.Image
+        UITable2                  matlab.ui.control.Table
+        UITable1_AccountInfo      matlab.ui.control.Label
+        UITable1_FilterIcon       matlab.ui.control.Image
+        UITable1_FilterText       matlab.ui.control.Label
+        UITable1_CountText        matlab.ui.control.Label
+        UITable1_CountIcon        matlab.ui.control.Image
+        UITable1                  matlab.ui.control.Table
+        SubTabGroup               matlab.ui.container.TabGroup
+        SubTab1                   matlab.ui.container.Tab
+        SubGrid1                  matlab.ui.container.GridLayout
+        FinanceFacts              matlab.ui.control.Label
+        Tab1Separator3            matlab.ui.control.Image
+        LogButton                 matlab.ui.control.Button
+        MemoryUsageButton         matlab.ui.control.Button
+        Tab1Separator2            matlab.ui.control.Image
+        ExportButton              matlab.ui.control.Button
+        ReconciliationFileButton  matlab.ui.control.Button
+        Tab1Separator1            matlab.ui.control.Image
+        SheetList                 matlab.ui.control.DropDown
+        SheetListLabel            matlab.ui.control.Label
+        TimePeriodList            matlab.ui.control.DropDown
+        TimePeriodListLabel       matlab.ui.control.Label
+        CompanyNameList           matlab.ui.control.DropDown
+        CompanyNameListLabel      matlab.ui.control.Label
+        SubTab2                   matlab.ui.container.Tab
+        SubGrid2                  matlab.ui.container.GridLayout
+        SortRefreshLabel          matlab.ui.control.Label
+        SortRefresh               matlab.ui.control.Image
+        StyleDeleteScope          matlab.ui.control.DropDown
+        StyleDeleteLabel          matlab.ui.control.Label
+        StyleDelete               matlab.ui.control.Image
+        Tab2Separator4            matlab.ui.control.Image
+        FontColor                 matlab.ui.control.ColorPicker
+        FontBackground            matlab.ui.control.ColorPicker
+        FontAlign3                matlab.ui.control.Image
+        FontAlign2                matlab.ui.control.Image
+        FontAlign1                matlab.ui.control.Image
+        FontStyle                 matlab.ui.control.Button
+        FontWeight                matlab.ui.control.Button
+        FontFamily                matlab.ui.control.DropDown
+        Tab2Separator3            matlab.ui.control.Image
+        FontIconLabel             matlab.ui.control.Label
+        FontIcon                  matlab.ui.control.DropDown
+        ColumnWidthLabel          matlab.ui.control.Label
+        ColumnWidth               matlab.ui.control.DropDown
+        Tab2Separator2            matlab.ui.control.Image
+        FilterButton              matlab.ui.control.Button
+        Tab2Separator1            matlab.ui.control.Image
+        SheetOnFocus              matlab.ui.control.Lamp
+        SheetHeight_Second        matlab.ui.control.Spinner
+        SheetView_Second          matlab.ui.control.DropDown
+        SheetHeight_First         matlab.ui.control.Spinner
+        SheetView_First           matlab.ui.control.DropDown
+        SheetViewStatus           matlab.ui.control.StateButton
     end
 
     
@@ -299,6 +300,7 @@ classdef winECD_exported < matlab.apps.AppBase
             end
 
             for hTable = [app.UITable1, app.UITable2]
+                hTable.ColumnWidth = '1x';
                 hTable.UserData.tableId       = '';
                 hTable.UserData.hasRowNames   = false;
                 hTable.UserData.visibleRows   = [];
@@ -317,6 +319,7 @@ classdef winECD_exported < matlab.apps.AppBase
             nonEmptyECDObject = ~isempty(app.ecdObj);
 
             renderedElements  = {
+                app.ReconciliationFileButton;
                 app.ExportButton;
                 app.MemoryUsageButton;
                 app.LogButton
@@ -791,7 +794,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 controller  = refTable(ii).controller;
                 tableId     = controller.Value;
                 
-                if ismember(tableId, {'_CONTAS_ANOTACAO', '_APURACAO_GERAL', '_APURACAO_INTERCONEXAO'})
+                if ismember(tableId, {'_CONTAS_ANOTACAO', '_APURACAO_GERAL', '_APURACAO_INTERCONEXAO', '_CONCILIACAO_GERAL', '_CONCILIACAO_INTERCONEXAO'})
                     initialSelection = tableHandle.Selection;
                     controller.ValueChangedFcn(controller, struct('Source', controller))
 
@@ -1203,6 +1206,48 @@ classdef winECD_exported < matlab.apps.AppBase
                     end
                     
                     ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ECDAccount', context, fileIndex, accountName)
+            end
+
+        end
+
+        % Button pushed function: ReconciliationFileButton
+        function onReconciliationImportRequested(app, event)
+            
+            selectedECD = getSelectedECD(app);
+            
+            msgQuestion = '';
+            if isfield(selectedECD.Table, 'x_CONCILIACAO_GERAL') && ~isempty(selectedECD.Table.x_CONCILIACAO_GERAL) && any(abs(selectedECD.Table.x_CONCILIACAO_GERAL.TOTAL) > 0)
+                msgQuestion = 'Foi carregada planilha de CONCILIAÇÃO GERAL com ao menos um valor não nulo.';
+            end
+
+            if isfield(selectedECD.Table, 'x_CONCILIACAO_INTERCONEXAO') && ~isempty(selectedECD.Table.x_CONCILIACAO_INTERCONEXAO) && any(abs(selectedECD.Table.x_CONCILIACAO_INTERCONEXAO.TOTAL) > 0)
+                if isempty(msgQuestion)
+                    msgQuestion = 'Foi ';
+                else
+                    msgQuestion = [msgQuestion ' Além disso, foi '];
+                end
+                msgQuestion = [msgQuestion 'carregada planilha de CONCILIAÇÃO INTERCONEXÃO com ao menos um valor não nulo.'];
+            end
+
+            if ~isempty(msgQuestion)
+                msgQuestion = [msgQuestion '<br><br> Deseja continuar, importando um novo arquivo de CONCILIAÇÃO?'];
+                userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
+                if userSelection == "Não"
+                    return
+                end
+            end
+
+            [fileFullName, fileFolder] = ui.Dialog(app.UIFigure, 'uigetfile', '', {'*.xlsx', 'Excel (*.xlsx)'}, app.mainApp.General.fileFolder.lastVisited);
+            if isempty(fileFullName)
+                return
+            end
+
+            try
+                update(selectedECD, 'Table.x_CONCILIACAO', 'importFile', fileFullName, app.mainApp.General)
+                forceUpdateTable(app)
+                ipcMainMatlabCallsHandler(app.mainApp, app, 'onUpdateLastVisitedFolder', fileFolder);
+            catch ME
+                ui.Dialog(app.UIFigure, 'error', ME.message);
             end
 
         end
@@ -1720,7 +1765,7 @@ classdef winECD_exported < matlab.apps.AppBase
             tableId = getSelectedTableId(app, clickedTable);
 
             styleIndex = checkTableCustomStyle(app, selectedECD, tableId);
-            if isempty(styleIndex)
+            if ~styleIndex
                 styleIndex = numel(selectedECD.GUI.tableView)+1;
             end
             
@@ -1946,7 +1991,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create SubGrid1
             app.SubGrid1 = uigridlayout(app.SubTab1);
-            app.SubGrid1.ColumnWidth = {90, 220, 60, 220, 3, 44, 3, 44, 44, 3, '1x'};
+            app.SubGrid1.ColumnWidth = {90, 220, 60, 220, 3, 44, 44, 3, 44, 44, 3, '1x'};
             app.SubGrid1.RowHeight = {22, 22};
             app.SubGrid1.RowSpacing = 5;
             app.SubGrid1.BackgroundColor = [0.9804 0.9804 0.9804];
@@ -2016,6 +2061,18 @@ classdef winECD_exported < matlab.apps.AppBase
             app.Tab1Separator1.Layout.Column = 5;
             app.Tab1Separator1.ImageSource = 'LineV.svg';
 
+            % Create ReconciliationFileButton
+            app.ReconciliationFileButton = uibutton(app.SubGrid1, 'push');
+            app.ReconciliationFileButton.ButtonPushedFcn = createCallbackFcn(app, @onReconciliationImportRequested, true);
+            app.ReconciliationFileButton.Icon = 'import-24px.png';
+            app.ReconciliationFileButton.IconAlignment = 'top';
+            app.ReconciliationFileButton.BackgroundColor = [0.9608 0.9608 0.9608];
+            app.ReconciliationFileButton.FontSize = 10;
+            app.ReconciliationFileButton.Enable = 'off';
+            app.ReconciliationFileButton.Layout.Row = [1 2];
+            app.ReconciliationFileButton.Layout.Column = 6;
+            app.ReconciliationFileButton.Text = 'Concilia';
+
             % Create ExportButton
             app.ExportButton = uibutton(app.SubGrid1, 'push');
             app.ExportButton.ButtonPushedFcn = createCallbackFcn(app, @onPopupModuleRequest, true);
@@ -2025,14 +2082,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.ExportButton.FontSize = 10;
             app.ExportButton.Enable = 'off';
             app.ExportButton.Layout.Row = [1 2];
-            app.ExportButton.Layout.Column = 6;
+            app.ExportButton.Layout.Column = 7;
             app.ExportButton.Text = 'Exporta';
 
             % Create Tab1Separator2
             app.Tab1Separator2 = uiimage(app.SubGrid1);
             app.Tab1Separator2.Enable = 'off';
             app.Tab1Separator2.Layout.Row = [1 2];
-            app.Tab1Separator2.Layout.Column = 7;
+            app.Tab1Separator2.Layout.Column = 8;
             app.Tab1Separator2.ImageSource = 'LineV.svg';
 
             % Create MemoryUsageButton
@@ -2044,7 +2101,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.MemoryUsageButton.FontSize = 10;
             app.MemoryUsageButton.Enable = 'off';
             app.MemoryUsageButton.Layout.Row = [1 2];
-            app.MemoryUsageButton.Layout.Column = 8;
+            app.MemoryUsageButton.Layout.Column = 9;
             app.MemoryUsageButton.Text = 'Em uso';
 
             % Create LogButton
@@ -2055,21 +2112,21 @@ classdef winECD_exported < matlab.apps.AppBase
             app.LogButton.FontSize = 10;
             app.LogButton.Enable = 'off';
             app.LogButton.Layout.Row = [1 2];
-            app.LogButton.Layout.Column = 9;
+            app.LogButton.Layout.Column = 10;
             app.LogButton.Text = 'Análise';
 
             % Create Tab1Separator3
             app.Tab1Separator3 = uiimage(app.SubGrid1);
             app.Tab1Separator3.Enable = 'off';
             app.Tab1Separator3.Layout.Row = [1 2];
-            app.Tab1Separator3.Layout.Column = 10;
+            app.Tab1Separator3.Layout.Column = 11;
             app.Tab1Separator3.ImageSource = 'LineV.svg';
 
             % Create FinanceFacts
             app.FinanceFacts = uilabel(app.SubGrid1);
             app.FinanceFacts.FontSize = 11;
             app.FinanceFacts.Layout.Row = [1 2];
-            app.FinanceFacts.Layout.Column = 11;
+            app.FinanceFacts.Layout.Column = 12;
             app.FinanceFacts.Interpreter = 'html';
             app.FinanceFacts.Text = '⚠️ Pendente leitura de informação contábil';
 

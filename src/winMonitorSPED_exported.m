@@ -263,6 +263,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                         end
                                         varargout{1} = fileIndex;
 
+                                    case 'onUpdateLastVisitedFolder'
+                                        filePath = varargin{1};
+                                        updateLastVisitedFolder(app, filePath)
+
                                     case {'onReportGenerate', 'onUploadArtifacts'}
                                         context = varargin{1};
                                         varargin = varargin(2:end);
@@ -392,7 +396,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     screenHeight = 320;
                 case 'ECDExport'
                     screenWidth  = 460;
-                    screenHeight = 404;
+                    screenHeight = 480;
                 case 'ECDAccount'
                     screenWidth  = 720;
                     screenHeight = 580;
@@ -1125,7 +1129,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         % Image clicked function: tool_SelectFilesToRead
         function Toolbar_SelectFileToReadImageClicked(app, event)
 
-            d = [];
             fileFullName = {};
 
             if app.General.operationMode.Simulation
@@ -1150,23 +1153,15 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             else
                 switch app.General.context.FILE.input
                     case 'file'
-                        [~, filePath, ~, fileName] = ui.Dialog( ...
-                            app.UIFigure, ...
-                            'uigetfile', ...
-                            '', ...
-                            {'*.txt;*.sped;*.zip;*.mat', 'monitorSPED (*.txt,*.sped,*.zip,*.mat)'}, ...
-                            app.General.fileFolder.lastVisited, ...
-                            {'MultiSelect', 'on'} ...
-                        );
+                        [~, filePath, ~, fileName] = ui.Dialog(app.UIFigure, 'uigetfile', '', {'*.txt;*.sped;*.zip;*.mat', 'monitorSPED (*.txt,*.sped,*.zip,*.mat)'}, app.General.fileFolder.lastVisited, {'MultiSelect', 'on'});
             
                         if isempty(fileName)
                             return
                         elseif ~iscell(fileName)
                             fileName = {fileName};
                         end
+                        pathList = fullfile(filePath, fileName);
 
-                        [fileFullName, fileName] = util.getFilesFromCompressedFile(fullfile(filePath, fileName), app.General.fileFolder.tempPath);
-    
                     case 'folder'
                         filePath = uigetdir(app.General.fileFolder.lastVisited);
                         figure(app.UIFigure)
@@ -1174,23 +1169,20 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         if isequal(filePath, 0)
                             return
                         end
-    
-                        d = ui.Dialog(app.UIFigure, "progressdlg", "Em andamento...");
-                        [fileFullName, fileName] = util.getFilesFromFolder(filePath, {'.txt', '.sped'}, app.General.fileFolder.tempPath);
+                        pathList = {filePath};
                 end
+
+                [fileFullName, fileName] = util.getFilesFromPathList(pathList, app.General.fileFolder.tempPath, {'.txt', '', '.mat'});
                 updateLastVisitedFolder(app, filePath)
             end
 
             if isempty(fileFullName)
-                msgWarning = 'Não foi identificado arquivo em um dos formatos esperados (.txt, .sped ou .mat).';
+                msgWarning = 'Não foi identificado arquivo em um dos formatos esperados.';
                 ui.Dialog(app.UIFigure, "warning", msgWarning);
                 return
             end
 
-            if isempty(d)
-                d = ui.Dialog(app.UIFigure, "progressdlg", "Em andamento...");
-            end
-            
+            d = ui.Dialog(app.UIFigure, "progressdlg", "Em andamento...");            
             filesError = struct('File', {}, 'Error', {});
 
             for ii = 1:numel(fileFullName)
@@ -1201,7 +1193,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 if ~ismember(fileName{ii}, {app.ecdObj.FileName})
                     [~, ~, fileExt] = fileparts(fileFullName{ii});
                     switch lower(fileExt)
-                        case {'.txt', '.sped'}
+                        case {'.txt', ''}
                             [app.ecdObj, msg] = addFiles(app.ecdObj, app.projectData, app.General, fileFullName{ii}, [], app.receitaFederalObj);                        
                         case '.mat'
                             [app.ecdObj, msg] = load(app.projectData, app.Context, fileFullName{ii}, app.General, app.ecdObj);

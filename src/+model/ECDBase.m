@@ -535,7 +535,7 @@ classdef (Abstract) ECDBase
         %-----------------------------------------------------------------%
         function tableOut = initializeCustomTable(tableId, varargin)
             arguments
-                tableId {mustBeMember(tableId, {'_BALANCETE_GERAL', '_CONTAS_ANOTACAO', '_CONTAS_DESCRICAO', '_CONTAS_HISTORICO', '_APURACAO_GERAL', '_APURACAO_INTERCONEXAO'})}
+                tableId {mustBeMember(tableId, {'_BALANCETE_GERAL', '_CONTAS_ANOTACAO', '_CONTAS_DESCRICAO', '_CONTAS_HISTORICO', '_APURACAO_GERAL', '_APURACAO_INTERCONEXAO', '_CONCILIACAO_GERAL', '_CONCILIACAO_INTERCONEXAO'})}
             end
 
             arguments (Repeating)
@@ -604,6 +604,22 @@ classdef (Abstract) ECDBase
                         'VariableTypes', {'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'} ...
                     );
                     tableOut.("TIPO")(:) = {'ROB TELECOM'; 'ICMS ESTIMADO'; 'BÁSE DE CÁLCULO (PIS/COFINS)'; 'PIS ESTIMADO'; 'COFINS ESTIMADO'; 'BÁSE DE CÁLCULO (FUST/FUNTTEL)'; 'VALOR APURADO FUST'; 'VALOR APURADO FUNTTEL'};
+
+                case '_CONCILIACAO_GERAL'
+                    tableOut = table( ...
+                        'Size', [4, 14], ...
+                        'VariableNames', {'TIPO', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
+                        'VariableTypes', {'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'} ...
+                    );
+                    tableOut.("TIPO")(:) = {'ROB TELECOM'; 'ICMS CONTÁBIL'; 'PIS CONTÁBIL'; 'COFINS CONTÁBIL'};
+
+                case '_CONCILIACAO_INTERCONEXAO'
+                    tableOut = table( ...
+                        'Size', [1, 14], ...
+                        'VariableNames', {'TIPO', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
+                        'VariableTypes', {'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'} ...
+                    );
+                    tableOut.("TIPO")(:) = {'ROB TELECOM'};
             end
         end
     end

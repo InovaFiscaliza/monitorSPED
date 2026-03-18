@@ -236,7 +236,10 @@ classdef (Abstract) HtmlTextGenerator
                             receitaFederalStatusIcon = util.HtmlTextGenerator.unicodeToHtmlHexMap.('WhiteCircle').unicode;
                         end
                     end
-                    dataStruct(end+1) = struct('group', sprintf('RECEITA FEDERAL %s', receitaFederalStatusIcon), 'value', ecdObj.Sources(end).validationMessage);
+
+                    for ii = 1:numel(ecdObj.Sources)
+                        dataStruct(end+1) = struct('group', sprintf('RECEITA FEDERAL %s', receitaFederalStatusIcon), 'value', ecdObj.Sources(ii).validationMessage);
+                    end
 
                     if numel(ecdObj.Sources) > 1
                         dataStruct(end+1) = struct('group', 'RECEITA FEDERAL TEST', 'value', jsonencode(rmfield(ecdObj.Sources, {'file', 'period', 'validationMessage', 'validationStatus'})));

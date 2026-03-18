@@ -1,5 +1,5 @@
 {
-    "version": 1.02,
+    "version": 1.04,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -71,6 +71,8 @@
                     "_CONTAS_HISTORICO",
                     "_APURACAO_GERAL",
                     "_APURACAO_INTERCONEXAO",
+                    "_CONCILIACAO_GERAL",
+                    "_CONCILIACAO_INTERCONEXAO",
                     "C050_C051_C052",
                     "I050_I051_I052",
                     "I150_I155",
@@ -82,6 +84,8 @@
                     "I030", 
                     "I050",
                     "_CONTAS_DESCRICAO",
+                    "_CONCILIACAO_GERAL",
+                    "_CONCILIACAO_INTERCONEXAO",
                     "_APURACAO_GERAL",
                     "_APURACAO_INTERCONEXAO"
                 ]

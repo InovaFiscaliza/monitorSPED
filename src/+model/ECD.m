@@ -124,18 +124,6 @@ classdef ECD < handle
                         ));
                     end
 
-                    if isempty(mergedIndexes) && ~contains(fileName, obj(idx).Hash, "IgnoreCase", true)
-                        obj(idx).GUI.warnings{end+1} = jsonencode(struct( ...
-                            'id', 'FileHash', ...
-                            'message', [ ...
-                                'O arquivo não segue o padrão de nomenclatura da ' ...
-                                'Receita Federal, que inclui o hash. Essa diferença ' ...
-                                'pode indicar uma alteração no nome do arquivo ou no ' ...
-                                'seu conteúdo.' ...
-                            ] ...
-                        ));
-                    end
-
                     % Leitura do registro "I010", identificando o layout do
                     % arquivo. Como essa ficha não mudou ao longo do tempo, 
                     % considera-se que o layout é igual a 9 (mais recente), 
@@ -312,7 +300,8 @@ classdef ECD < handle
                                                                 'GUI.IcmsRate';
                                                                 'Table.NonEssentialFiles';
                                                                 'Table.x_CONTAS_ANOTACAO';
-                                                                'Table.x_APURACAO_GERAL' })}
+                                                                'Table.x_APURACAO_GERAL'; ...
+                                                                'Table.x_CONCILIACAO' })}
                 updateType
             end
 
@@ -667,6 +656,7 @@ classdef ECD < handle
                             if ~isempty(robContabilTable)
                                 robContabil   = sum(robContabilTable{:, monthIds}, 1);
                             end
+                            robContabil       = applyReconciliationAdjustment(obj, robContabil, '_CONCILIACAO_GERAL', 'ROB TELECOM');
                             
                             icmsEstimado      = zeros(1, 12);
                             for ii = 1:height(robContabilTable)
@@ -686,6 +676,7 @@ classdef ECD < handle
                             if ~isempty(icmsContabilTable)
                                 icmsContabil  = sum(icmsContabilTable{:, monthIds}, 1);
                             end
+                            icmsContabil      = applyReconciliationAdjustment(obj, icmsContabil, '_CONCILIACAO_GERAL', 'ICMS CONTÁBIL');
 
                             if abs(sum(icmsEstimado)) < abs(sum(icmsContabil))
                                 icmsEscolhido = icmsEstimado;
@@ -702,6 +693,7 @@ classdef ECD < handle
                             if ~isempty(pisContabilTable)
                                 pisContabil      = sum(pisContabilTable{:, monthIds}, 1);
                             end
+                            pisContabil          = applyReconciliationAdjustment(obj, pisContabil, '_CONCILIACAO_GERAL', 'PIS CONTÁBIL');
                             
                             cofinsEstimado       = - fix(100 * cofinsDefaultTax .* baseCalculoPisCofins) / 100;
                             cofinsContabil       = zeros(1, 12);
@@ -709,6 +701,7 @@ classdef ECD < handle
                             if ~isempty(cofinsContabilTable)
                                 cofinsContabil   = sum(cofinsContabilTable{:, monthIds}, 1);
                             end
+                            cofinsContabil       = applyReconciliationAdjustment(obj, cofinsContabil, '_CONCILIACAO_GERAL', 'COFINS CONTÁBIL');
                             
                             if abs(sum(pisEstimado)) < abs(sum(pisContabil))
                                 pisEscolhido     = pisEstimado;
@@ -751,18 +744,21 @@ classdef ECD < handle
                             itxRobContabilTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO(itxRobContabilIdx, {'COD_CTA', 'Alíquota ICMS'}), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
                             if ~isempty(itxRobContabilTable)
                                 itxRobContabil  = sum(itxRobContabilTable{:, monthIds}, 1);
+                                itxRobContabil  = applyReconciliationAdjustment(obj, itxRobContabil,  '_CONCILIACAO_INTERCONEXAO', 'ROB TELECOM');
+
                                 itxIcmsEstimado = - fix(100 * itxIcmsDefaultTax .* itxRobContabil) / 100;
                             end
 
                             % (b) PIS/COFINS INTERCONEXÃO
-                            itxBaseCalculoPisCofins   = itxRobContabil + itxIcmsEstimado;
-                            itxPisEstimado            = - fix(100 * pisDefaultTax    .* itxBaseCalculoPisCofins) / 100;
-                            itxCofinsEstimado         = - fix(100 * cofinsDefaultTax .* itxBaseCalculoPisCofins) / 100;
+                            itxBaseCalculoPisCofins = itxRobContabil + itxIcmsEstimado;
+
+                            itxPisEstimado      = - fix(100 * pisDefaultTax    .* itxBaseCalculoPisCofins) / 100;
+                            itxCofinsEstimado   = - fix(100 * cofinsDefaultTax .* itxBaseCalculoPisCofins) / 100;
 
                             % (c) FUST/FUNTTEL INTERCONEXÃO
                             itxBaseCalculoFustFunttel = itxBaseCalculoPisCofins + itxPisEstimado + itxCofinsEstimado;
-                            itxFustApurado            = - fix(100 * fustDefaultTax    .* itxBaseCalculoFustFunttel) / 100;
-                            itxFunttelApurado         = - fix(100 * funttelDefaultTax .* itxBaseCalculoFustFunttel) / 100;
+                            itxFustApurado      = - fix(100 * fustDefaultTax    .* itxBaseCalculoFustFunttel) / 100;
+                            itxFunttelApurado   = - fix(100 * funttelDefaultTax .* itxBaseCalculoFustFunttel) / 100;
 
                             % (d) ATUALIZA TABELA INTERCONEXÃO
                             obj.Table.x_APURACAO_INTERCONEXAO(1, [monthIds, {'TOTAL'}]) = num2cell([itxRobContabil,            sum(itxRobContabil)]);
@@ -773,6 +769,49 @@ classdef ECD < handle
                             obj.Table.x_APURACAO_INTERCONEXAO(6, [monthIds, {'TOTAL'}]) = num2cell([itxBaseCalculoFustFunttel, sum(itxBaseCalculoFustFunttel)]);
                             obj.Table.x_APURACAO_INTERCONEXAO(7, [monthIds, {'TOTAL'}]) = num2cell([itxFustApurado,            sum(itxFustApurado)]);
                             obj.Table.x_APURACAO_INTERCONEXAO(8, [monthIds, {'TOTAL'}]) = num2cell([itxFunttelApurado,         sum(itxFunttelApurado)]);
+
+                        otherwise
+                            error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
+                    end
+
+                case 'Table.x_CONCILIACAO'
+                    switch updateType
+                        case 'startup'
+                            obj.Table.x_CONCILIACAO_GERAL        = model.ECDBase.initializeCustomTable('_CONCILIACAO_GERAL');
+                            obj.Table.x_CONCILIACAO_INTERCONEXAO = model.ECDBase.initializeCustomTable('_CONCILIACAO_INTERCONEXAO');
+
+                        case 'importFile'
+                            fileName = varargin{1};
+                            generalSettings = varargin{2};
+                            
+                            x_CONCILIACAO_GERAL_TEMPLATE        = model.ECDBase.initializeCustomTable('_CONCILIACAO_GERAL');
+                            x_CONCILIACAO_INTERCONEXAO_TEMPLATE = model.ECDBase.initializeCustomTable('_CONCILIACAO_INTERCONEXAO');
+
+                            x_CONCILIACAO_GERAL        = readtable(fileName, 'Sheet', 'CONCILIAÇÃO', 'Range', 'B6:O10',  'VariableNamingRule', 'preserve', 'UseExcel', false);
+                            x_CONCILIACAO_INTERCONEXAO = readtable(fileName, 'Sheet', 'CONCILIAÇÃO', 'Range', 'B14:O15', 'VariableNamingRule', 'preserve', 'UseExcel', false);
+
+                            % Substitui "NaN" (célula Excel vazia) por 0, caso
+                            % aplicável.
+                            monthIds = {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'};
+                            x_CONCILIACAO_GERAL{:, monthIds}(isnan(x_CONCILIACAO_GERAL{:, monthIds})) = 0;
+                            x_CONCILIACAO_INTERCONEXAO{:, monthIds}(isnan(x_CONCILIACAO_INTERCONEXAO{:, monthIds})) = 0;
+
+                            if ~isequal(x_CONCILIACAO_GERAL_TEMPLATE.Properties.VariableNames, x_CONCILIACAO_GERAL.Properties.VariableNames) || ...
+                               ~isequal(x_CONCILIACAO_GERAL_TEMPLATE.TIPO, x_CONCILIACAO_GERAL.TIPO) || ...
+                               ~isequal(matlab.Compatibility.resolveTableVariableTypes(x_CONCILIACAO_GERAL_TEMPLATE), matlab.Compatibility.resolveTableVariableTypes(x_CONCILIACAO_GERAL))
+                                error('model:ECD:UnexpectedTable', 'Unexpected table');
+                            end
+
+                            if ~isequal(x_CONCILIACAO_INTERCONEXAO_TEMPLATE.Properties.VariableNames, x_CONCILIACAO_INTERCONEXAO.Properties.VariableNames) || ...
+                               ~isequal(x_CONCILIACAO_INTERCONEXAO_TEMPLATE.TIPO, x_CONCILIACAO_INTERCONEXAO.TIPO) || ...
+                               ~isequal(matlab.Compatibility.resolveTableVariableTypes(x_CONCILIACAO_INTERCONEXAO_TEMPLATE), matlab.Compatibility.resolveTableVariableTypes(x_CONCILIACAO_INTERCONEXAO))
+                                error('model:ECD:UnexpectedTable', 'Unexpected table');
+                            end
+
+                            obj.Table.x_CONCILIACAO_GERAL        = x_CONCILIACAO_GERAL;
+                            obj.Table.x_CONCILIACAO_INTERCONEXAO = x_CONCILIACAO_INTERCONEXAO;
+
+                            update(obj, 'Table.x_APURACAO_GERAL', 'accountValueChanged', generalSettings)
 
                         otherwise
                             error('model:ECD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
@@ -837,7 +876,7 @@ classdef ECD < handle
                     obj(ii).Sources(index).validationMessage = validationMessage;
                     obj(ii).Sources(index).validationStatus  = validationStatus;
 
-                    if validationStatus == 1
+                    if validationStatus == 1 || contains(obj(ii).FileName, fileHash, "IgnoreCase", true)
                         break;
                     end
                 end
@@ -1183,6 +1222,9 @@ classdef ECD < handle
                 case {'_APURACAO_GERAL', '_APURACAO_INTERCONEXAO'}
                     update(obj, 'Table.x_APURACAO_GERAL', 'startup')
 
+                case {'_CONCILIACAO_GERAL', '_CONCILIACAO_INTERCONEXAO'}
+                    update(obj, 'Table.x_CONCILIACAO', 'startup')
+
                 case {'C050_C051_C052', 'I050_I051_I052', 'I150_I155', 'I350_I355', 'I200_I250'}
                     switch tableId
                         case 'C050_C051_C052'
@@ -1512,6 +1554,26 @@ classdef ECD < handle
                 if ~isempty(tableIdIndex)
                     expectedRows = sum(obj.Table.x9900.("QTD_REG_BLC")(tableIdIndex));
                 end
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function updatedMonthlyData = applyReconciliationAdjustment(obj, monthlyData, reconciliationType, accountType)
+            arguments
+                obj
+                monthlyData
+                reconciliationType {mustBeMember(reconciliationType, {'_CONCILIACAO_GERAL', '_CONCILIACAO_INTERCONEXAO'})}
+                accountType        {mustBeMember(accountType, {'ROB TELECOM', 'ICMS CONTÁBIL', 'PIS CONTÁBIL', 'COFINS CONTÁBIL'})}
+            end
+        
+            reconciliationTable = obj.Table.(['x' reconciliationType]);        
+            [~, accountTypeIdx] = ismember(accountType, reconciliationTable.TIPO);
+        
+            if accountTypeIdx
+                monthlyAdjustment  = reconciliationTable{accountTypeIdx, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}};        
+                updatedMonthlyData = monthlyData + monthlyAdjustment;
+            else
+                updatedMonthlyData = monthlyData;
             end
         end
     end
