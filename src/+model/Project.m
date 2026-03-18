@@ -157,9 +157,13 @@ classdef Project < model.ProjectCommon
                             end
     
                             obj.modules.(context).ui.system = prjData.variables.modules.(context).ui.system;
-                            obj.modules.(context).ui.unit   = prjData.variables.modules.(context).ui.unit;
                             obj.modules.(context).ui.issue  = prjData.variables.modules.(context).ui.issue;
                             obj.modules.(context).ui.entity = prjData.variables.modules.(context).ui.entity;
+                            
+                            unit = prjData.variables.modules.(context).ui.unit;
+                            if ~isempty(unit) && ismember(unit, generalSettings.eFiscaliza.defaultValues.unit)
+                                obj.modules.(context).ui.unit = unit;
+                            end
         
                             reportModel = prjData.variables.modules.(context).ui.reportModel;
                             if ismember(reportModel, obj.modules.(context).ui.templates)

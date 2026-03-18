@@ -670,6 +670,7 @@ classdef ECD < handle
                                 icmsEstimado  = icmsEstimado - icmsRate .* robContabilTable{ii, monthIds};
                             end
                             icmsEstimado      = fix(100 * icmsEstimado) / 100;
+                            icmsEstimado       = applyReconciliationAdjustment(obj, icmsEstimado, '_CONCILIACAO_GERAL', 'ICMS ESTIMADO');
                             
                             icmsContabil      = zeros(1, 12);
                             icmsContabilTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO(icmsContabilIdx, 'COD_CTA'), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);                            
@@ -787,8 +788,8 @@ classdef ECD < handle
                             x_CONCILIACAO_GERAL_TEMPLATE        = model.ECDBase.initializeCustomTable('_CONCILIACAO_GERAL');
                             x_CONCILIACAO_INTERCONEXAO_TEMPLATE = model.ECDBase.initializeCustomTable('_CONCILIACAO_INTERCONEXAO');
 
-                            x_CONCILIACAO_GERAL        = readtable(fileName, 'Sheet', 'CONCILIAÇÃO', 'Range', 'B6:O10',  'VariableNamingRule', 'preserve', 'UseExcel', false);
-                            x_CONCILIACAO_INTERCONEXAO = readtable(fileName, 'Sheet', 'CONCILIAÇÃO', 'Range', 'B14:O15', 'VariableNamingRule', 'preserve', 'UseExcel', false);
+                            x_CONCILIACAO_GERAL        = readtable(fileName, 'Sheet', 'CONCILIAÇÃO', 'Range', 'B6:O11',  'VariableNamingRule', 'preserve', 'UseExcel', false);
+                            x_CONCILIACAO_INTERCONEXAO = readtable(fileName, 'Sheet', 'CONCILIAÇÃO', 'Range', 'B15:O16', 'VariableNamingRule', 'preserve', 'UseExcel', false);
 
                             % Substitui "NaN" (célula Excel vazia) por 0, caso
                             % aplicável.
@@ -1563,7 +1564,7 @@ classdef ECD < handle
                 obj
                 monthlyData
                 reconciliationType {mustBeMember(reconciliationType, {'_CONCILIACAO_GERAL', '_CONCILIACAO_INTERCONEXAO'})}
-                accountType        {mustBeMember(accountType, {'ROB TELECOM', 'ICMS CONTÁBIL', 'PIS CONTÁBIL', 'COFINS CONTÁBIL'})}
+                accountType        {mustBeMember(accountType, {'ROB TELECOM', 'ICMS ESTIMADO', 'ICMS CONTÁBIL', 'PIS CONTÁBIL', 'COFINS CONTÁBIL'})}
             end
         
             reconciliationTable = obj.Table.(['x' reconciliationType]);        

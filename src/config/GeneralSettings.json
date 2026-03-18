@@ -1,5 +1,5 @@
 {
-    "version": 1.05,
+    "version": 1.07,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -167,7 +167,7 @@
         "defaultValues": {
             "unit": [
                 "",
-                "FIGF",
+                "FIGF5",
                 "GR01", "GR01FI1", "GR01FI2", "GR01FI3",
                 "GR02", "GR02FI1", "GR02FI2", "GR02FI3",
                 "GR03", "GR03FI1", "GR03FI2",
