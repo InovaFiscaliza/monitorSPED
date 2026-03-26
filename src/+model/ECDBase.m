@@ -520,8 +520,7 @@ classdef (Abstract) ECDBase
     
                     for ii = 1:numel(columnSpec.optional)
                         columnName = columnSpec.optional{ii};
-                        columnType = model.ECDBase.getFieldSpecification(columnName, 'DataType');
-                        tableOut.(columnName) = repmat(model.ECDBase.defaultValue(columnType), height(tableOut), 1);
+                        tableOut.(columnName) = repmat({''}, height(tableOut), 1);
                     end
     
                 case numCompleteColumns
@@ -595,7 +594,7 @@ classdef (Abstract) ECDBase
                         'VariableNames', {'TIPO', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
                         'VariableTypes', {'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'} ...
                     );
-                    tableOut.("TIPO")(:) = {'ROB TELECOM'; 'ICMS ESTIMADO'; 'ICMS CONTÁBIL'; 'BÁSE DE CÁLCULO (PIS/COFINS)'; 'PIS ESTIMADO'; 'PIS CONTÁBIL'; 'COFINS ESTIMADO'; 'COFINS CONTÁBIL'; 'BÁSE DE CÁLCULO (FUST/FUNTTEL)'; 'VALOR APURADO FUST'; 'VALOR APURADO FUNTTEL'};
+                    tableOut.("TIPO")(:) = {'ROB TELECOM'; 'ICMS ESTIMADO'; 'ICMS CONTÁBIL'; 'BASE DE CÁLCULO (PIS/COFINS)'; 'PIS ESTIMADO'; 'PIS CONTÁBIL'; 'COFINS ESTIMADO'; 'COFINS CONTÁBIL'; 'BASE DE CÁLCULO (FUST/FUNTTEL)'; 'VALOR APURADO FUST'; 'VALOR APURADO FUNTTEL'};
 
                 case '_APURACAO_INTERCONEXAO'
                     tableOut = table( ...
@@ -603,7 +602,7 @@ classdef (Abstract) ECDBase
                         'VariableNames', {'TIPO', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'}, ...
                         'VariableTypes', {'cell', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'} ...
                     );
-                    tableOut.("TIPO")(:) = {'ROB TELECOM'; 'ICMS ESTIMADO'; 'BÁSE DE CÁLCULO (PIS/COFINS)'; 'PIS ESTIMADO'; 'COFINS ESTIMADO'; 'BÁSE DE CÁLCULO (FUST/FUNTTEL)'; 'VALOR APURADO FUST'; 'VALOR APURADO FUNTTEL'};
+                    tableOut.("TIPO")(:) = {'ROB TELECOM'; 'ICMS ESTIMADO'; 'BASE DE CÁLCULO (PIS/COFINS)'; 'PIS ESTIMADO'; 'COFINS ESTIMADO'; 'BASE DE CÁLCULO (FUST/FUNTTEL)'; 'VALOR APURADO FUST'; 'VALOR APURADO FUNTTEL'};
 
                 case '_CONCILIACAO_GERAL'
                     tableOut = table( ...

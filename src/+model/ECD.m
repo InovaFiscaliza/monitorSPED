@@ -433,6 +433,10 @@ classdef ECD < handle
                 case 'Table.NonEssentialFiles'
                     switch updateType
                         case 'onCacheCleanup'
+                            if isempty(varargin{1})
+                                return
+                            end
+
                             tableIdList = strcat({'x'}, varargin{1});
                             tableIdList = tableIdList(isfield(obj.Table, tableIdList));
 
@@ -959,10 +963,15 @@ classdef ECD < handle
         function [entryHistoryCount, entryHistoryUniqueValues] = getAccountHistoric(obj, accountName, generalSettings)
             isTableRead(obj, {'_CONTAS_HISTORICO'}, generalSettings);
 
-            index = find(strcmp(obj.Table.x_CONTAS_HISTORICO.("COD_CTA"), accountName), 1);
+            entryHistoryCount = [];
+            entryHistoryUniqueValues = {};
             
-            entryHistoryCount = obj.Table.x_CONTAS_HISTORICO.('TOTAL DE LANÇAMENTOS')(index);
-            entryHistoryUniqueValues = obj.Table.x_CONTAS_HISTORICO.('LANÇAMENTOS NORMALIZADOS DEDUPLICADOS'){index};
+            if ~isempty(obj.Table.x_CONTAS_HISTORICO)
+                index = find(strcmp(obj.Table.x_CONTAS_HISTORICO.("COD_CTA"), accountName), 1);
+
+                entryHistoryCount = obj.Table.x_CONTAS_HISTORICO.('TOTAL DE LANÇAMENTOS')(index);
+                entryHistoryUniqueValues = obj.Table.x_CONTAS_HISTORICO.('LANÇAMENTOS NORMALIZADOS DEDUPLICADOS'){index};
+            end
         end
 
         %-----------------------------------------------------------------%
@@ -1103,14 +1112,14 @@ classdef ECD < handle
 
             switch tableId
                 case '_BALANCETE_GERAL'
-                    obj.Table.x_BALANCETE_GERAL = createTrialBalanceTable(obj, generalSettings);
+                    obj.Table.x_BALANCETE_GERAL = createTrialBalanceTable(obj, 'I155+I355', generalSettings);
 
                 case '_BALANCETE_RESULTADO'
                     isTableRead(obj, {'_BALANCETE_GERAL'}, generalSettings);
                     obj.Table.x_BALANCETE_RESULTADO = filterTrialBalanceByAccountType(obj, '04');
 
                 case '_CONTAS_ANOTACAO'
-                    isTableRead(obj, {'_BALANCETE_RESULTADO',  '_CONTAS_HISTORICO', '_APURACAO_GERAL'}, generalSettings);
+                    isTableRead(obj, {'_BALANCETE_RESULTADO',  '_APURACAO_GERAL'}, generalSettings);
                     update(obj, 'Table.x_CONTAS_ANOTACAO', 'startup', generalSettings)
 
                 case '_CONTAS_DESCRICAO'
@@ -1163,23 +1172,34 @@ classdef ECD < handle
                     obj.Table.x_CONTAS_DESCRICAO = x_CONTAS_DESCRICAO;
 
                 case '_CONTAS_HISTORICO'
-                    isTableRead(obj, {'_BALANCETE_RESULTADO', 'I075'}, generalSettings);
+                    isTableRead(obj, {'_BALANCETE_RESULTADO'}, generalSettings);
 
                     accountList = obj.Table.x_BALANCETE_RESULTADO.('COD_CTA');
                     numAccounts = numel(accountList);
 
-                    % Prealoca, viabilizando operação em modo paralelo...
-                    x_CONTAS_HISTORICO = model.ECDBase.initializeCustomTable('_CONTAS_HISTORICO', numAccounts);
+                    refTable = [];
+                    if isfield(obj.Table, 'xI200_I250') && ~isempty(obj.Table.xI200_I250)
+                        refTable = obj.Table.xI200_I250(:, {'COD_CTA', 'COD_HIST_PAD', 'HIST'});
+                    else
+                        isTableRead(obj, {'I250'}, generalSettings);
 
-                    if isempty(x_CONTAS_HISTORICO)
-                        obj.Table.x_CONTAS_HISTORICO = x_CONTAS_HISTORICO;
+                        if isfield(obj.Table, 'xI250') && ~isempty(obj.Table.xI250)
+                            refTable = obj.Table.xI250(:, {'COD_CTA', 'COD_HIST_PAD', 'HIST'});
+                            onCacheCleanup('I250')
+                        end
+                    end
+
+                    if isempty(accountList) || isempty(refTable)
+                        obj.Table.x_CONTAS_HISTORICO = model.ECDBase.initializeCustomTable('_CONTAS_HISTORICO', 0);
                         return
                     end
 
+                    isTableRead(obj, {'I075'}, generalSettings);
+
                     % Identifica apenas registros relacionados às contas de
                     % resultado.
-                    xI200_I250_I075 = outerjoin( ...
-                        obj.Table.xI200_I250(:, {'COD_CTA', 'COD_HIST_PAD', 'HIST'}), ...
+                    xI250_I075 = outerjoin( ...
+                        refTable, ...
                         obj.Table.xI075, ...
                         "LeftKeys", "COD_HIST_PAD", ...
                         "RightKeys", "COD_HIST", ...
@@ -1188,17 +1208,20 @@ classdef ECD < handle
                         "Type", "left" ...
                     );
                     
-                    [~, accountIdxs] = ismember(xI200_I250_I075.("COD_CTA"), accountList);
-                    xI200_I250_I075(~accountIdxs, :) = [];
+                    [~, accountIdxs] = ismember(xI250_I075.("COD_CTA"), accountList);
+                    xI250_I075(~accountIdxs, :) = [];
+
+                    % Prealoca, viabilizando operação em modo paralelo...
+                    x_CONTAS_HISTORICO = model.ECDBase.initializeCustomTable('_CONTAS_HISTORICO', numAccounts);
 
                     parpoolCheck()
                     parfor ii = 1:numAccounts
                         accountId = accountList{ii};
-                        index = find(strcmp(xI200_I250_I075.("COD_CTA"), accountId));
+                        index = find(strcmp(xI250_I075.("COD_CTA"), accountId));
             
                         if ~isempty(index)
-                            tmpHist = xI200_I250_I075.("HIST")(index);
-                            description = xI200_I250_I075.("DESCR_HIST")(index);
+                            tmpHist = xI250_I075.("HIST")(index);
+                            description = xI250_I075.("DESCR_HIST")(index);
             
                             mergeIdxs = ~cellfun(@isempty, description) & ~strcmp(description, tmpHist);
                             if any(mergeIdxs)
@@ -1255,11 +1278,7 @@ classdef ECD < handle
 
                             obj.Table.xI200_I250 = mergeTables(obj, 'I200', {'I250'}, generalSettings, mainTableColumns, secondaryTableColumns);
                     end
-
-                    if ~generalSettings.context.FILE.largeTable.cacheEnabled
-                        tablesToDeleteFromCache = setdiff(strsplit(tableId, '_'), generalSettings.context.ECD.cacheTables);
-                        update(obj, 'Table.NonEssentialFiles', 'onCacheCleanup', tablesToDeleteFromCache)
-                    end
+                    onCacheCleanup(tableId)
 
                 case {'J800', 'J801'}
                     ordinaryId   = true;
@@ -1283,6 +1302,13 @@ classdef ECD < handle
                 end
 
                 obj.Table.(['x' tableId]) = tableOut;
+            end
+
+            function onCacheCleanup(id)
+                if ~generalSettings.context.FILE.largeTable.cacheEnabled
+                    tablesToDeleteFromCache = setdiff(strsplit(id, '_'), generalSettings.context.ECD.cacheTables);
+                    update(obj, 'Table.NonEssentialFiles', 'onCacheCleanup', tablesToDeleteFromCache)
+                end
             end
         end
 
@@ -1329,7 +1355,7 @@ classdef ECD < handle
 
                     tableStartIndex = (numLoops-1)*MIN_ROW_COUNT + 1;
                     tableEndIndex   = tableStartIndex + numRows - 1;
-                    tableOut(tableStartIndex:tableEndIndex, :) = tableTempOut(:, variableNames);
+                    tableOut(tableStartIndex:tableEndIndex, variableNames) = tableTempOut(:, variableNames);
                 end
 
             else
@@ -1453,63 +1479,115 @@ classdef ECD < handle
         end
 
         %-----------------------------------------------------------------%
-        function trialBalance = createTrialBalanceTable(obj, generalSettings)
+        function trialBalance = createTrialBalanceTable(obj, tableIdSource, generalSettings)
+            arguments
+                obj 
+                tableIdSource {mustBeMember(tableIdSource, {'I155+I355' , 'I200+I250'})}
+                generalSettings 
+            end
+
             checkIfScalar(obj)
-            parseTableAndAddToCache(obj, {'I200_I250'}, generalSettings)
 
-            if ~isfield(obj.Table, 'xI200_I250') || isempty(obj.Table.xI200_I250)
-                trialBalance = model.ECDBase.initializeCustomTable('_BALANCETE_GERAL', 0);
-                return
-            end
+            switch tableIdSource
+                case 'I155+I355'
+                    parseTableAndAddToCache(obj, {'I150_I155', 'I350_I355'}, generalSettings)
 
-            % Aplica filtros na tabela de fatos contábeis (I200_I250), de forma 
-            % que sejam considerados apenas os lançamentos "NORMAIS". Além
-            % disso, cria-se coluna "VL_DC_COM_SINAL".
-            mergedTable_I200_I250 = obj.Table.xI200_I250;
-            mergedTable_I200_I250.("VL_DC_COM_SINAL") = mergedTable_I200_I250.("VL_DC");
-            negativeValueIndexes  = strcmp(mergedTable_I200_I250.("IND_DC"), 'D');
-            mergedTable_I200_I250.("VL_DC_COM_SINAL")(negativeValueIndexes) = -mergedTable_I200_I250.("VL_DC_COM_SINAL")(negativeValueIndexes);
+                    if ~isfield(obj.Table, 'xI150_I155') || isempty(obj.Table.xI150_I155)
+                        trialBalance = createTrialBalanceTable(obj, 'I200+I250', generalSettings);
+                        return
+                    end
 
-            unnormalEntryIndexes  = ~strcmp(mergedTable_I200_I250.("IND_LCTO"), 'N');
-            mergedTable_I200_I250(unnormalEntryIndexes, :) = [];
+                    mergedTable_I150_I155 = obj.Table.xI150_I155;
+                    mergedTable_I150_I155.("VL_MOVIMENTACAO")  = obj.Table.xI150_I155.("VL_CRED") - obj.Table.xI150_I155.("VL_DEB");
 
-            % Deixando apenas o essencial porque essa tabela poderá ser
-            % passada para cada um dos núcleos de processamento, caso 
-            % habilitado o processamento em paralelo.
-            mergedTable_I200_I250 = mergedTable_I200_I250(:, {'COD_CTA', 'DT_LCTO', 'VL_DC_COM_SINAL'});
-            
-            accountUniqueIdList = unique(obj.Table.xI200_I250.("COD_CTA"));
-            numAccounts  = numel(accountUniqueIdList);
-            trialBalance = model.ECDBase.initializeCustomTable('_BALANCETE_GERAL', numAccounts);
+                    if isfield(obj.Table, 'xI350_I355') && ~isempty(obj.Table.xI350_I355)
+                        mergedTable_I350_I355 = obj.Table.xI350_I355;
+                        mergedTable_I350_I355.("VL_CTA_COM_SINAL") = mergedTable_I350_I355.("VL_CTA");
+                        negativeValueIndexes  = strcmp(mergedTable_I350_I355.("IND_DC"), 'D');
+                        mergedTable_I350_I355.("VL_CTA_COM_SINAL")(negativeValueIndexes) = -mergedTable_I350_I355.("VL_CTA_COM_SINAL")(negativeValueIndexes);
+                    end
 
-           %parpoolCheck()
-           %parfor ii = 1:numAccounts
-            for ii = 1:numAccounts
-                accountId      = accountUniqueIdList{ii};
-                accountIndexes = strcmp(mergedTable_I200_I250.("COD_CTA"), accountId);
-                accountTable   = mergedTable_I200_I250(accountIndexes, :);
+                    accountIdList = unique(obj.Table.xI150_I155.("COD_CTA"));
+                    numAccounts   = numel(accountIdList);
+                    trialBalance  = prealocateTrialBalance(numAccounts);
+
+                    for ii = 1:numAccounts
+                        accountId     = accountIdList{ii};                        
+                        accountTable1 = mergedTable_I150_I155(strcmp(mergedTable_I150_I155.("COD_CTA"), accountId), :);
+                        accountTable2 = [];
+                        if isfield(obj.Table, 'xI350_I355') && ~isempty(obj.Table.xI350_I355)
+                            accountTable2 = mergedTable_I350_I355(strcmp(mergedTable_I350_I355.("COD_CTA"), accountId), :);
+                        end
+                        
+                        % Sumariza-se mensalmente os fatos contábeis para cada conta.
+                        accountBalanceByMonth = zeros(1, 12);
+                        for jj = 1:12
+                            monthAccountTable1Idxs = month(accountTable1.("DT_FIN")) == jj;
+                            accountBalanceByMonth(jj) = sum(accountTable1.("VL_MOVIMENTACAO")(monthAccountTable1Idxs));
+
+                            if ~isempty(accountTable2)
+                                monthAccountTable2Idxs = month(accountTable2.("DT_RES")) == jj;
+
+                                if any(monthAccountTable2Idxs)
+                                    accountBalanceByMonth(jj) = accountBalanceByMonth(jj) + sum(accountTable2.("VL_CTA_COM_SINAL")(monthAccountTable2Idxs));
+                                end
+                            end
+                        end
+        
+                        trialBalance(ii, :) = [{'', accountId}, num2cell([accountBalanceByMonth, sum(accountBalanceByMonth)])];
+                    end
                 
-                % Sumariza-se mensalmente os fatos contábeis para cada conta.
-                accountBalanceByMonth = zeros(1, 12);
-                for jj = 1:12
-                    monthIndexes = month(accountTable.("DT_LCTO")) == jj;
-                    accountBalanceByMonth(jj) = sum(accountTable.("VL_DC_COM_SINAL")(monthIndexes));
-                end
-
-                trialBalance(ii, :) = [{'', accountId}, num2cell([accountBalanceByMonth, sum(accountBalanceByMonth)])];
+                case 'I200+I250'
+                    parseTableAndAddToCache(obj, {'I200_I250'}, generalSettings)
+        
+                    if ~isfield(obj.Table, 'xI200_I250') || isempty(obj.Table.xI200_I250)
+                        trialBalance = model.ECDBase.initializeCustomTable('_BALANCETE_GERAL', 0);
+                        return
+                    end
+        
+                    % Aplica filtros na tabela de fatos contábeis (I200_I250), de forma 
+                    % que sejam considerados apenas os lançamentos "NORMAIS". Além
+                    % disso, cria-se coluna "VL_DC_COM_SINAL".
+                    mergedTable_I200_I250 = obj.Table.xI200_I250;
+                    mergedTable_I200_I250.("VL_DC_COM_SINAL") = mergedTable_I200_I250.("VL_DC");
+                    negativeValueIndexes  = strcmp(mergedTable_I200_I250.("IND_DC"), 'D');
+                    mergedTable_I200_I250.("VL_DC_COM_SINAL")(negativeValueIndexes) = -mergedTable_I200_I250.("VL_DC_COM_SINAL")(negativeValueIndexes);
+        
+                    unnormalEntryIndexes  = ~strcmp(mergedTable_I200_I250.("IND_LCTO"), 'N');
+                    mergedTable_I200_I250(unnormalEntryIndexes, :) = [];
+        
+                    % Deixando apenas o essencial porque essa tabela poderá ser
+                    % passada para cada um dos núcleos de processamento, caso 
+                    % habilitado o processamento em paralelo.
+                    mergedTable_I200_I250 = mergedTable_I200_I250(:, {'COD_CTA', 'DT_LCTO', 'VL_DC_COM_SINAL'});
+                    
+                    accountUniqueIdList = unique(obj.Table.xI200_I250.("COD_CTA"));
+                    numAccounts  = numel(accountUniqueIdList);
+                    trialBalance = prealocateTrialBalance(numAccounts);
+        
+                    for ii = 1:numAccounts
+                        accountId      = accountUniqueIdList{ii};
+                        accountIndexes = strcmp(mergedTable_I200_I250.("COD_CTA"), accountId);
+                        accountTable   = mergedTable_I200_I250(accountIndexes, :);
+                        
+                        % Sumariza-se mensalmente os fatos contábeis para cada conta.
+                        accountBalanceByMonth = zeros(1, 12);
+                        for jj = 1:12
+                            monthAccountTableIdxs = month(accountTable.("DT_LCTO")) == jj;
+                            accountBalanceByMonth(jj) = sum(accountTable.("VL_DC_COM_SINAL")(monthAccountTableIdxs));
+                        end
+        
+                        trialBalance(ii, :) = [{'', accountId}, num2cell([accountBalanceByMonth, sum(accountBalanceByMonth)])];
+                    end
             end
 
-            % Valida-se se o valor total de transações entre as contas por 
-            % mês é igual a zero.
-            FLOAT_DIFF_TOLERANCE = 1e-5;
-            if any(cellfun(@(x) sum(trialBalance.(x)) > FLOAT_DIFF_TOLERANCE, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}))
-                obj.GUI.warnings{end+1} = jsonencode(struct( ...
-                    'id', 'mBALANCETE_GERAL', ...
-                    'message', 'Ao menos um dos meses apresentou um balanço diferente de zero, o que evidencia erro no arquivo contábil ou na análise dos seus dados.' ...
-                ));
-            end
-            
+            % Adiciona coluna "COD_NAT", que possibilitará aplicar filtros, 
+            % identificando contas de resultados (COD_NAT = 4), por exemplo.
             trialBalance = addAccountDescription(obj, trialBalance, setdiff(trialBalance.Properties.VariableNames, 'COD_NAT', 'stable'), 'COD_NAT');
+
+            function tbl = prealocateTrialBalance(numAccounts)
+                tbl = model.ECDBase.initializeCustomTable('_BALANCETE_GERAL', numAccounts);
+            end
         end
 
         %-----------------------------------------------------------------%
@@ -1536,10 +1614,11 @@ classdef ECD < handle
         function hasTransactions = checkIfHasTransactions(obj)
             checkIfScalar(obj)
 
+            expectedI155Rows = expectedRowsByTableId(obj, 'I155');
             expectedI200Rows = expectedRowsByTableId(obj, 'I200');
             hasTransactions = false;
 
-            if ~isempty(expectedI200Rows) && expectedI200Rows > 0 && isfield(obj.Table, 'xI050') && any(strcmp(obj.Table.xI050.('COD_NAT'), '04'))
+            if ((~isempty(expectedI155Rows) && expectedI155Rows > 0) || (~isempty(expectedI200Rows) && expectedI200Rows > 0)) && isfield(obj.Table, 'xI050') && any(strcmp(obj.Table.xI050.('COD_NAT'), '04'))
                 hasTransactions = true;
             end
         end

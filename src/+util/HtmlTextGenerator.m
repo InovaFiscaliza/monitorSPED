@@ -217,7 +217,7 @@ classdef (Abstract) HtmlTextGenerator
                 if ~ecdObj.GUI.hasTransactions
                     hasTransactionsMessage = [ ...
                         '<font style="color: red;">Empresa provavelmente está inativa, sem movimentação fiscal. ' ...
-                        'Isto porque não foram encontrados contas de resultados (I050) ou lançamentos contábeis (I200) ' ...
+                        'Isto porque não foram encontrados contas de resultados (I050) ou lançamentos contábeis (I155 ou I200) ' ...
                         'nesta escrituração.</font>' ...
                     ];
                     dataStruct(end+1) = struct('group', ['FATO CONTÁBIL ' util.HtmlTextGenerator.unicodeToHtmlHexMap.('ProhibitedSign').unicode], 'value', hasTransactionsMessage);
@@ -288,21 +288,33 @@ classdef (Abstract) HtmlTextGenerator
             accountTable  = innerjoin(ecdObj.Table.x_CONTAS_ANOTACAO, ecdObj.Table.x_BALANCETE_RESULTADO, 'Keys', 'COD_CTA', 'RightVariables', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'});
 
             [~, index]    = ismember(accountName, accountTable.("COD_CTA"));
+            dataStruct(1) = struct('group', 'FullDescription', 'value', ['•&thinsp;' accountTable.('DESCRIÇÃO'){index}]);
+
             [entryHistoryCount, entryHistoryUniqueValues] = getAccountHistoric(ecdObj, accountName, generalSettings);
-            if isscalar(entryHistoryUniqueValues)
-                if entryHistoryCount == 1
-                    entryHistorySummary = 'Um único lançamento';
+            if ~isempty(entryHistoryCount)
+                if isscalar(entryHistoryUniqueValues)
+                    if entryHistoryCount == 0
+                        entryHistorySummary = 'Nenhum lançamento';
+                    elseif entryHistoryCount == 1
+                        entryHistorySummary = 'Um único lançamento';
+                    else
+                        entryHistorySummary = sprintf('%d lançamentos agrupados em um único grupo após normalização e deduplicação', entryHistoryCount);
+                    end
                 else
-                    entryHistorySummary = sprintf('%d lançamentos agrupados em um único grupo após normalização e deduplicação', entryHistoryCount);
+                    entryHistorySummary = sprintf('%d lançamentos agrupados em %d grupos após normalização e deduplicação', entryHistoryCount, numel(entryHistoryUniqueValues));
                 end
+    
+                dataStruct(2) = struct('group', 'AccountEntryHistoryCount', 'value', ['•&thinsp;' entryHistorySummary]);
+                
+                if entryHistoryCount
+                    dataStruct(3) = struct('group', 'AccountEntryHistoryUniqueValues', 'value', textFormatGUI.cellstr2Bullets(entryHistoryUniqueValues));
+                end
+
             else
-                entryHistorySummary = sprintf('%d lançamentos agrupados em %d grupos após normalização e deduplicação', entryHistoryCount, numel(entryHistoryUniqueValues));
+                dataStruct(2) = struct('group', 'AccountEntryHistoryWarning', 'value', '•&thinsp;<font style="color: red;">O registro I250 não foi encontrado na escrituração. Por essa razão, o histórico de lançamentos não pode ser recuperado.</font>');
             end
 
-            dataStruct(1) = struct('group', 'FullDescription', 'value', ['•&thinsp;' accountTable.('DESCRIÇÃO'){index}]);
-            dataStruct(2) = struct('group', 'AccountEntryHistoryCount', 'value', ['•&thinsp;' entryHistorySummary]);
-            dataStruct(3) = struct('group', 'AccountEntryHistoryUniqueValues', 'value', textFormatGUI.cellstr2Bullets(entryHistoryUniqueValues));
-            htmlContent   = textFormatGUI.struct2PrettyPrintList(dataStruct, 'delete', '');
+            htmlContent = textFormatGUI.struct2PrettyPrintList(dataStruct, 'delete', '');
         end
 
         %-----------------------------------------------------------------%

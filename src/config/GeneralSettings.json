@@ -1,5 +1,5 @@
 {
-    "version": 1.07,
+    "version": 1.08,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -68,7 +68,6 @@
                     "_BALANCETE_RESULTADO",
                     "_CONTAS_ANOTACAO",
                     "_CONTAS_DESCRICAO",
-                    "_CONTAS_HISTORICO",
                     "_APURACAO_GERAL",
                     "_APURACAO_INTERCONEXAO",
                     "_CONCILIACAO_GERAL",
