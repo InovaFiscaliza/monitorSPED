@@ -1,5 +1,5 @@
 {
-    "version": 1.10,
+    "version": 1.12,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -27,12 +27,13 @@
             "input": "file",
             "sortMethod": "CNPJ",
             "checkStatus": "Cache+RealTime",
+            "encodingOverride": "",
             "encodingList": [
                 "ISO-8859-1",
                 "UTF-8"
             ],
-            "largeFileThresholdBytes": 50000000,
             "encodingDetectionBytes": 10000000,
+            "largeFileThresholdBytes": 50000000,
             "terminator": {
                 "options": [
                     "CRLF",

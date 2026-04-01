@@ -29,6 +29,8 @@ classdef winConfig_exported < matlab.apps.AppBase
         configAnalysisPanel2Label    matlab.ui.control.Label
         configAnalysisPanel1         matlab.ui.container.Panel
         configAnalysisGrid1          matlab.ui.container.GridLayout
+        EncodingOverride             matlab.ui.control.DropDown
+        EncodingOverrideLabel        matlab.ui.control.Label
         CheckStatus                  matlab.ui.control.DropDown
         CheckStatusLabel             matlab.ui.control.Label
         SortMethod                   matlab.ui.control.DropDown
@@ -158,6 +160,7 @@ classdef winConfig_exported < matlab.apps.AppBase
                     if ~strcmp(app.mainApp.executionMode, 'webApp')
                         app.InputType.Enable = "on";
                     end
+                    app.EncodingOverride.Items = [{''}; app.mainApp.General.context.FILE.encodingList]';
                     updatePanel_Analysis(app)
 
                 case 3
@@ -428,7 +431,7 @@ classdef winConfig_exported < matlab.apps.AppBase
         end
 
         % Value changed function: AddAccountDescription, CheckStatus, 
-        % ...and 4 other components
+        % ...and 6 other components
         function Config_AnalysisParameterValueChanged(app, event)
             
             switch event.Source
@@ -441,6 +444,10 @@ classdef winConfig_exported < matlab.apps.AppBase
 
                 case app.CheckStatus
                     app.mainApp.General.context.FILE.checkStatus = app.CheckStatus.Value;
+
+                case app.EncodingOverride
+                    app.mainApp.General.context.FILE.encodingOverride = app.EncodingOverride.Value;
+                    return
 
                 case app.ICMS
                     app.mainApp.General.context.ECD.taxConfig.ICMS_INTERCONEXAO = app.ICMS.Value / 100;
@@ -705,7 +712,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create SubGrid2
             app.SubGrid2 = uigridlayout(app.SubTab2);
             app.SubGrid2.ColumnWidth = {'1x', 22};
-            app.SubGrid2.RowHeight = {17, 98, 22, '1x'};
+            app.SubGrid2.RowHeight = {17, 125, 22, '1x'};
             app.SubGrid2.RowSpacing = 5;
             app.SubGrid2.BackgroundColor = [1 1 1];
 
@@ -736,7 +743,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create configAnalysisGrid1
             app.configAnalysisGrid1 = uigridlayout(app.configAnalysisPanel1);
             app.configAnalysisGrid1.ColumnWidth = {350, 230};
-            app.configAnalysisGrid1.RowHeight = {22, 22, 22};
+            app.configAnalysisGrid1.RowHeight = {22, 22, 22, 22};
             app.configAnalysisGrid1.RowSpacing = 5;
             app.configAnalysisGrid1.BackgroundColor = [1 1 1];
 
@@ -792,6 +799,23 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.CheckStatus.Layout.Column = 2;
             app.CheckStatus.Value = 'Cache+RealTime';
 
+            % Create EncodingOverrideLabel
+            app.EncodingOverrideLabel = uilabel(app.configAnalysisGrid1);
+            app.EncodingOverrideLabel.FontSize = 11;
+            app.EncodingOverrideLabel.Layout.Row = 4;
+            app.EncodingOverrideLabel.Layout.Column = 1;
+            app.EncodingOverrideLabel.Text = 'Codificação do arquivo:';
+
+            % Create EncodingOverride
+            app.EncodingOverride = uidropdown(app.configAnalysisGrid1);
+            app.EncodingOverride.Items = {'', 'ISO-8859-1', 'UTF-8'};
+            app.EncodingOverride.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
+            app.EncodingOverride.FontSize = 11;
+            app.EncodingOverride.BackgroundColor = [1 1 1];
+            app.EncodingOverride.Layout.Row = 4;
+            app.EncodingOverride.Layout.Column = 2;
+            app.EncodingOverride.Value = '';
+
             % Create configAnalysisPanel2Label
             app.configAnalysisPanel2Label = uilabel(app.SubGrid2);
             app.configAnalysisPanel2Label.VerticalAlignment = 'bottom';
@@ -826,6 +850,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.ICMS.Step = 0.1;
             app.ICMS.Limits = [0 Inf];
             app.ICMS.ValueDisplayFormat = '%.2f';
+            app.ICMS.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
             app.ICMS.FontSize = 11;
             app.ICMS.Layout.Row = 1;
             app.ICMS.Layout.Column = 2;
