@@ -530,6 +530,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 app.General_I.context.FILE.checkStatus = 'Cache+RealTime';
             end
 
+            if ~isempty(app.General_I.context.FILE.encodingOverride)
+                app.General_I.context.FILE.encodingOverride = '';
+            end
+
             switch app.executionMode
                 case 'webApp'
                     % Força a exclusão do SplashScreen do MATLAB Web Server.

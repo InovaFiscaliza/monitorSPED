@@ -54,9 +54,13 @@ function fileread(obj, fileFullName, generalSettings, isInitialLoad, recordIds)
             encodingInfo(end+1, :) = {encodingList{ii}, sum(numSpecialChars > 0), sum(numSpecialChars)};
         end
         encodingInfo = sortrows(encodingInfo, {'SpecialCharsTypeCount', 'SpecialCharsCount'}, 'descend');
-        
-        encoding = encodingInfo.Encoding{1};
         encodingJson = matlab.jsonencode(encodingInfo);
+        
+        if ~isempty(generalSettings.context.FILE.encodingOverride)
+            encoding = generalSettings.context.FILE.encodingOverride;
+        else
+            encoding = encodingInfo.Encoding{1};
+        end
     
         % Avalia o tamanho do arquivo, adicionando mensagem de LOG e salvando a
         % a versão textual do conteúdo do arquivo na propriedade "Content", caso
@@ -93,7 +97,7 @@ function fileread(obj, fileFullName, generalSettings, isInitialLoad, recordIds)
             continue
         end
 
-        fileBlock = arrayfun(@(x,y) strtrim(char(byteArray(x:y))), idIxs(:, 1), idIxs(:, 2), "UniformOutput", false);
+        fileBlock = arrayfun(@(x,y) strtrim(native2unicode(byteArray(x:y), obj.Encoding)), idIxs(:, 1), idIxs(:, 2), "UniformOutput", false);
 
         if strcmp(id, 'I010')
             if isempty(fileBlock)
@@ -326,23 +330,23 @@ function [xI200, xI250] = initializeFactTable(obj, operation, byteArray, newLine
                     case 'I200'
                         % Trecho comum a todos os layouts:
                         % | REG | NUM_LCTO | DT_LCTO | VL_LCTO | IND_LCTO | 
-                        blockData{jj, 1} = datetime(char(line(delimiterIdxs(3)+1:delimiterIdxs(4)-1)), 'InputFormat', 'ddMMyyyy');
-                        blockData{jj, 2} = char(line(delimiterIdxs(5)+1:delimiterIdxs(6)-1));
+                        blockData{jj, 1} = datetime(native2unicode(line(delimiterIdxs(3)+1:delimiterIdxs(4)-1), obj.Encoding), 'InputFormat', 'ddMMyyyy');
+                        blockData{jj, 2} = native2unicode(line(delimiterIdxs(5)+1:delimiterIdxs(6)-1), obj.Encoding);
 
                     case 'I250'
                         % Trecho comum a todos os layouts:
                         % | REG | COD_CTA | COD_CCUS | VL_DC | IND_DC | NUM_ARQ | COD_HIST_PAD | HIST | COD_PART |
-                        blockData{jj, 1} = char(line(delimiterIdxs(2)+1:delimiterIdxs(3)-1));
+                        blockData{jj, 1} = native2unicode(line(delimiterIdxs(2)+1:delimiterIdxs(3)-1), obj.Encoding);
                         if (delimiterIdxs(8)-delimiterIdxs(7) == 1)
                             blockData{jj, 2} = '';
                         else
-                            blockData{jj, 2} = char(line(delimiterIdxs(7)+1:delimiterIdxs(8)-1));
+                            blockData{jj, 2} = native2unicode(line(delimiterIdxs(7)+1:delimiterIdxs(8)-1), obj.Encoding);
                         end
-                        blockData{jj, 3} = char(line(delimiterIdxs(8)+1:delimiterIdxs(9)-1));
+                        blockData{jj, 3} = native2unicode(line(delimiterIdxs(8)+1:delimiterIdxs(9)-1), obj.Encoding);
                         
                         if numel(variableNames) == 5
-                            blockData{jj, 4} = str2double(replace(char(line(delimiterIdxs(4)+1:delimiterIdxs(5)-1)), ',', '.'));
-                            blockData{jj, 5} = char(line(delimiterIdxs(5)+1:delimiterIdxs(6)-1));
+                            blockData{jj, 4} = str2double(replace(native2unicode(line(delimiterIdxs(4)+1:delimiterIdxs(5)-1), obj.Encoding), ',', '.'));
+                            blockData{jj, 5} = native2unicode(line(delimiterIdxs(5)+1:delimiterIdxs(6)-1), obj.Encoding);
                         end
                 end
             end
