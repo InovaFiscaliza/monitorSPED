@@ -225,6 +225,11 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             if ~isfield(app.ecdObj(index).Table, ['x' tableId])
                 context = app.inputArgs.context;
                 ipcMainMatlabCallsHandler(app.mainApp, app, 'onTableReadRequired', context, tableId)
+
+                if exist('event', 'var') && ~isfield(app.ecdObj(index).Table, ['x' tableId])
+                    app.TableIdList.Value = event.PreviousValue;
+                    return
+                end
             end
 
             updateForm(app, index, tableId)

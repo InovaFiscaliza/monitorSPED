@@ -194,11 +194,18 @@ classdef (Abstract) HtmlTextGenerator
                     dataStruct(end+1) = struct('group', 'Origin', 'value', textFormatGUI.cellstr2Bullets(cellfun(@(x) sprintf('"%s"', x), {ecdObj.Sources.file}, 'UniformOutput', false)));
                 end
 
-                dataStruct(end+1) = struct('group', 'Size',     'value', textFormatGUI.bytes2human(ecdObj.Size));
-                dataStruct(end+1) = struct('group', 'Hash',     'value', ecdObj.Hash);
+                dataStruct(end+1) = struct('group', 'Size', 'value', textFormatGUI.bytes2human(ecdObj.Size));
+
+                if ~isempty(ecdObj.Hash)
+                    dataStruct(end+1) = struct('group', 'Hash', 'value', ecdObj.Hash);
+                end
+
                 dataStruct(end+1) = struct('group', 'Encoding', 'value', ecdObj.Encoding);
-                dataStruct(end+1) = struct('group', 'Encoding Test', 'value', ecdObj.EncodingInfo);                
-                dataStruct(end+1) = struct('group', 'Content',  'value', [strtrim(strjoin((splitlines(ecdObj.Content(1:min(500, numel(ecdObj.Content))))), '\n')) '<br><font style="color: gray;">... [texto truncado]</font>']);
+                dataStruct(end+1) = struct('group', 'Encoding Test', 'value', ecdObj.EncodingInfo);             
+
+                if ~isempty(ecdObj.Content)
+                    dataStruct(end+1) = struct('group', 'Content',  'value', [strtrim(strjoin((splitlines(ecdObj.Content(1:min(500, numel(ecdObj.Content))))), '\n')) '<br><font style="color: red;">... [texto truncado]</font>']);
+                end
                 
                 [ordinaryIds, ~, readOrdinaryIds] = getTableIds(ecdObj);
                 if isequal(ordinaryIds, readOrdinaryIds)
@@ -208,7 +215,7 @@ classdef (Abstract) HtmlTextGenerator
                     dataStruct(end+1) = struct('group', 'REGISTROS LIDOS OU CRIADOS', 'value', strjoin(readOrdinaryIds, ', '));
                 end
 
-                dataStruct(end+1) = struct('group', 'ALÍQUOTA GLOBAL DE REFERÊNCIA DO ICMS', 'value', jsonencode(ecdObj.GUI.icmsRate));
+                dataStruct(end+1) = struct('group', 'ALÍQUOTA GLOBAL DE REFERÊNCIA DO ICMS', 'value', matlab.jsonencode(ecdObj.GUI.icmsRate));
 
                 if ~isempty(ecdObj.GUI.warnings)
                     dataStruct(end+1) = struct('group', ['ALERTAS ' util.HtmlTextGenerator.unicodeToHtmlHexMap.('ExclamationMark').unicode], 'value', ['<font style="color: red;">' strjoin(ecdObj.GUI.warnings, '<br>') '</font>']);
