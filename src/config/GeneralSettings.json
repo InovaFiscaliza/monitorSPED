@@ -1,5 +1,5 @@
 {
-    "version": 1.08,
+    "version": 1.10,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -31,6 +31,7 @@
                 "ISO-8859-1",
                 "UTF-8"
             ],
+            "largeFileThresholdBytes": 50000000,
             "encodingDetectionBytes": 10000000,
             "terminator": {
                 "options": [
@@ -79,9 +80,6 @@
                     "I350_I355"
                 ],
                 "autoload": [
-                    "0000", 
-                    "I030", 
-                    "I050",
                     "_CONTAS_DESCRICAO",
                     "_CONCILIACAO_GERAL",
                     "_CONCILIACAO_INTERCONEXAO",

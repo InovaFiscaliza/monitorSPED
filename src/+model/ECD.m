@@ -6,16 +6,16 @@ classdef ECD < handle
 
     properties
         %-----------------------------------------------------------------%
-        FileName
-        FileFullName
+        FileName = ''
+        FileFullName = ''
 
         Size
-        Hash
-        Encoding
-        EncodingInfo
+        Hash = ''
+        Encoding = ''
+        EncodingInfo = ''
 
-        Content
-        Layout
+        Content = ''
+        Layout = 1
         Table
 
         CompanyName
@@ -106,41 +106,15 @@ classdef ECD < handle
                 try
                     obj(idx).FileName = fileName;
                     obj(idx).FileFullName = fileFullName;
+                    obj(idx).PeriodMerged = ~isempty(mergedIndexes);
                     
-                    [obj(idx).Content, ...
-                     obj(idx).Size, ...
-                     obj(idx).Encoding, ...
-                     obj(idx).EncodingInfo, ...
-                     obj(idx).Hash, largeFileWarning] = util.fileread(fileFullName, generalSettings);
+                    % Leitura do arquivo, identificando o encoding e lendo os
+                    % principais registros ("0000", "I030", "I050" etc).
+                    util.fileread(obj(idx), fileFullName, generalSettings);
 
                     if numel(obj) > 1 && ismember(obj(idx).Hash, {obj(1:end-1).Hash})
                         error('model:ECD:FileAlreadyRead', 'File content has already been read.')
                     end
-
-                    if ~isempty(largeFileWarning)
-                        obj(idx).GUI.warnings{end+1} = jsonencode(struct( ...
-                            'id', 'LargeFile', ...
-                            'message', largeFileWarning ...
-                        ));
-                    end
-
-                    % Leitura do registro "I010", identificando o layout do
-                    % arquivo. Como essa ficha não mudou ao longo do tempo, 
-                    % considera-se que o layout é igual a 9 (mais recente), 
-                    % mas depois de lida a ficha, o valor é atualizado.
-                    obj(idx).Layout = 9;
-                    parseTableAndAddToCache(obj(idx), {'I010'}, generalSettings)
-
-                    if ~isfield(obj(idx).Table, 'xI010') || isempty(obj(idx).Table.('xI010'))
-                        error('model:ECD:UnexpectedEmptyTable', 'Unexpected empty table "I010".');
-                    end
-                    obj(idx).Layout = obj(idx).Table.xI010.COD_VER_LC(1);
-
-                    % Leitura do registro "9900", , o qual registra o número
-                    % de linhas de cada registro, o que possibilita validação 
-                    % do processo de leitura. No caso de um registro mesclado,
-                    % o registro "9900" deve ser agrupado.
-                    parseTableAndAddToCache(obj(idx), {'9900'}, generalSettings)
 
                     % A mesclagem da informação contábil ocorre nos casos em 
                     % que a declaração não é anual, mas mensal, trimestral etc.
@@ -148,13 +122,8 @@ classdef ECD < handle
                     % concatenação de todos os arquivos brutos, e depois é
                     % feita a leitura desse arquivo temporário. O mapeamento
                     % com os arquivos brutos se mantém na propriedade "Sources".
-                    if ~isempty(mergedIndexes)
-                        obj(idx).PeriodMerged = true;
-
-                        for index = mergedIndexes
-                            nSources = numel(obj(index).Sources);
-                            obj(idx).Sources(end+1:end+nSources) = obj(index).Sources;
-                        end
+                    if obj(idx).PeriodMerged
+                        obj(idx).Sources = [obj(mergedIndexes).Sources];
 
                         if isfield(obj(idx).Table, 'x9900') && ~isempty(obj(idx).Table.x9900)
                             tempSummaryTable = groupsummary(obj(idx).Table.x9900, "REG_BLC", "sum", "QTD_REG_BLC");
@@ -168,60 +137,12 @@ classdef ECD < handle
                         end
                     end
 
-                    % Leitura de outros registros essenciais de identificação
-                    % ("0000" e "I030") e plano de contas ("I050").
+                    % Leitura de outros registros essenciais...
                     parseTableAndAddToCache(obj(idx), generalSettings.context.ECD.customTables.autoload, generalSettings)
+                    parseTableAndAddToCache(obj(idx), {'_CONTAS_ANOTACAO'},  generalSettings)
+                    parseTableAndAddToCache(obj(idx), {'_CONTAS_HISTORICO'}, generalSettings)
 
-                    if isfield(obj(idx).Table, 'x0000') && ~isempty(obj(idx).Table.x0000)
-                        obj(idx).CompanyName    = upper(strtrim(obj(idx).Table.x0000.NOME{1}));
-                        obj(idx).CompanyId      = checkCNPJOrCPF(obj(idx).Table.x0000.CNPJ{1}, 'NumberValidation');
-                        obj(idx).CompanyInfo(1) = struct('CNPJ', obj(idx).Table.x0000.CNPJ{1}, ...
-                                                         'IE',   obj(idx).Table.x0000.IE{1},   ...
-                                                         'IM',   obj(idx).Table.x0000.IM{1},   ...
-                                                         'NIRE', '',                           ...
-                                                         'UF',   obj(idx).Table.x0000.UF{1},   ...
-                                                         'City', obj(idx).Table.x0000.COD_MUN{1});
-
-                        obj(idx).State          = obj(idx).CompanyInfo.UF;
-                        obj(idx).Period         = [min(obj(idx).Table.x0000.DT_INI), max(obj(idx).Table.x0000.DT_FIN)];
-                        obj(idx).Period.Format  = 'dd/MM/yyyy';
-
-                        periodYear = year(obj(idx).Table.x0000.("DT_INI")(1));
-                        periodRate = zeros(1, 12);
-                        rateErrorMsg = {};
-                        for periodMonth = 1:12
-                            [periodRate(periodMonth), msgError] = calculateIcmsRate(projectData, obj(idx).CompanyInfo.UF, datetime([periodYear, periodMonth, 1]), 'mean', 3);
-                            if ~isempty(msgError)
-                                rateErrorMsg{end+1} = msgError;
-                            end
-                        end
-
-                        if isscalar(unique(periodRate))
-                            periodRate = periodRate(1);
-                        end
-
-                        if ~isempty(rateErrorMsg)
-                            obj(idx).GUI.warnings{end+1} = jsonencode(struct( ...
-                                'id', 'RateError', ...
-                                'message', strjoin(rateErrorMsg, '<br>') ...
-                            ));
-                        end
-
-                        obj(idx).GUI.icmsRate.default.rate = periodRate;
-                        obj(idx).GUI.icmsRate.current = obj(idx).GUI.icmsRate.default;
-                    end
-
-                    if isfield(obj(idx).Table, 'xI030') && ~isempty(obj(idx).Table.xI030)
-                         obj(idx).CompanyInfo(1).NIRE = obj(idx).Table.xI030.NIRE{1};
-                    end
-
-                    if ~isempty(receitaFederalObj)
-                        checkFileStatus(obj(idx), receitaFederalObj, generalSettings.context.FILE.encodingList);
-                    end
-
-                    obj(idx).GUI.hasTransactions = checkIfHasTransactions(obj(idx));
-                    obj(idx).GUI.hasValidPeriod  = checkIfValidPeriod(obj(idx));
-                    obj(idx).GUI.hasValidStatus  = checkIfValidStatus(obj(idx));
+                    initializeCompanyContext(obj(idx), projectData, generalSettings, receitaFederalObj)
 
                 catch ME
                     delete(obj(idx))
@@ -235,12 +156,130 @@ classdef ECD < handle
 
         %-----------------------------------------------------------------%
         function [obj, msg] = mergeFiles(obj, projectData, generalSettings, indexes, tempPath)
+            msg = '';
+            hasAnyLargeFile = any(cellfun(@isempty, {obj(indexes).Content}));
+
             try
-                content  = strjoin({obj(indexes).Content}, char(obj(indexes(1)).TERMINATOR));
-                tempFile = [appEngine.util.DefaultFileName(tempPath, 'monitorSPED') '.txt'];
-                writematrix(content, tempFile, "FileType", "text", "QuoteStrings", "none", "Encoding", obj(indexes(1)).Encoding);
+                if ~hasAnyLargeFile
+                    content  = strjoin({obj(indexes).Content}, char(obj(indexes(1)).TERMINATOR));
+                    tempFile = [appEngine.util.DefaultFileName(tempPath, 'monitorSPED') '.txt'];
+                    writematrix(content, tempFile, "FileType", "text", "QuoteStrings", "none", "Encoding", obj(indexes(1)).Encoding);
+                    [obj, msg] = addFiles(obj, projectData, generalSettings, tempFile, indexes);
+
+                else
+                    idx = numel(obj)+1;
+                    obj(idx) = model.ECD;
+
+                    % Inicialmente, ordenam-se os fluxos:
+                    periodList = arrayfun(@(x) x.Period(1), obj(indexes));
+                    [~, sortedIndexes] = sort(periodList);
+                    indexes = indexes(sortedIndexes);
+
+                    obj(idx).PeriodMerged = true;
+                    obj(idx).Sources = [obj(indexes).Sources];
+                    obj(idx).Size = sum([obj(indexes).Size]);
+
+                    encodingInfo = cellfun(@(x) jsondecode(x), {obj(indexes).EncodingInfo}, 'UniformOutput', false);
+                    encodingInfo = struct2table(vertcat(encodingInfo{:}));
+                    encodingInfo = groupsummary(encodingInfo, 'Encoding', 'sum', {'SpecialCharsTypeCount', 'SpecialCharsCount'});
+                    encodingInfo = renamevars(encodingInfo, {'sum_SpecialCharsTypeCount', 'sum_SpecialCharsCount'}, {'SpecialCharsTypeCount', 'SpecialCharsCount'});
     
-                [obj, msg] = addFiles(obj, projectData, generalSettings, tempFile, indexes);
+                    obj(idx).Encoding = strjoin(unique({obj(indexes).Encoding}, 'stable'), ' & ');
+                    obj(idx).EncodingInfo = matlab.jsonencode(encodingInfo);
+
+                    layout = unique([obj(indexes).Layout]);
+                    if isscalar(layout)
+                        obj(idx).Layout = layout;
+                    end
+
+                    registerIds = {'0000', '9900', 'I010', 'I030', 'I050', '_BALANCETE_GERAL', '_CONTAS_DESCRICAO', '_CONTAS_HISTORICO'};
+                    for ii = 1:numel(registerIds)
+                        id = registerIds{ii};
+
+                        switch id
+                            case '_BALANCETE_GERAL'
+                                monthMapping = dictionary(1:12, ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]); 
+                                trialBalance = obj(indexes(end)).Table.x_BALANCETE_GERAL;
+
+                                for jj = indexes(1:end-1)
+                                    periodMonths = month(obj(jj).Period);
+                                    
+                                    for kk = 1:height(obj(jj).Table.x_BALANCETE_GERAL)
+                                        accountId = obj(jj).Table.x_BALANCETE_GERAL.('COD_CTA'){kk};
+                                        [~, accountIdx] = ismember(accountId, trialBalance.('COD_CTA'));
+
+                                        if accountIdx
+                                            trialBalance(accountIdx, monthMapping(periodMonths(1):periodMonths(2))) = obj(jj).Table.x_BALANCETE_GERAL(kk, monthMapping(periodMonths(1):periodMonths(2)));
+                                        else
+                                            trialBalance = [trialBalance; obj(jj).Table.x_BALANCETE_GERAL(kk, :)];
+                                        end
+                                    end
+                                end
+                                trialBalance = sortrows(trialBalance, 'COD_CTA');
+
+                                obj(idx).Table.(['x' id]) = trialBalance;
+                            
+                            case '_CONTAS_DESCRICAO'
+                                if isfield(obj(idx).Table, 'xI050') && ~isempty(obj(idx).Table.xI050)
+                                     parseTableAndAddToCache(obj(idx), {'_CONTAS_DESCRICAO'}, generalSettings)
+                                else
+                                    % O flip garante o uso da descrição mais 
+                                    % recente...
+                                    mergedTable = flip(arrayfun(@(x) x.Table.(['x' id]), obj(indexes), "UniformOutput", false));
+                                    mergedTable = vertcat(mergedTable{:});
+                                    [~, uniqueIdxs] = unique(mergedTable.("COD_CTA"));
+                                    mergedTable = sortrows(mergedTable(uniqueIdxs, :), 'COD_CTA');
+                                    
+                                    obj(idx).Table.(['x' id]) = mergedTable;
+                                end
+
+                            case '_CONTAS_HISTORICO'
+                                mergedTable = arrayfun(@(x) x.Table.(['x' id]), obj(indexes), "UniformOutput", false);
+                                mergedTable = vertcat(mergedTable{:});
+
+                                [accountList, ~, accountListIdxs] = unique(mergedTable.("COD_CTA"));
+                                numAccounts = numel(accountList);
+                                
+                                x_CONTAS_HISTORICO = model.ECDBase.initializeCustomTable('_CONTAS_HISTORICO', numAccounts);
+
+                                for jj = 1:numel(accountList)
+                                    accountId = accountList{jj};
+                                    accountIdxs = jj == accountListIdxs;
+
+                                    tmpHist = mergedTable.('LANÇAMENTOS NORMALIZADOS DEDUPLICADOS')(accountIdxs);
+                                    tmpHist = vertcat(tmpHist{:});
+                                    [hist, totalCount] = util.deduplicateAccountEntryHistory('aggregated', tmpHist);
+
+                                    x_CONTAS_HISTORICO(jj, :) = {accountId, totalCount, hist};
+                                end
+
+                                obj(idx).Table.(['x' id]) = x_CONTAS_HISTORICO;
+
+                            otherwise
+                                mergedTable = arrayfun(@(x) x.Table.(['x' id]), obj(indexes), "UniformOutput", false);
+                                mergedTable = vertcat(mergedTable{:});
+
+                                if strcmp(id, '9900')
+                                    mergedTable = groupsummary(mergedTable, "REG_BLC", "sum", "QTD_REG_BLC");
+                                    mergedTable = renamevars(mergedTable, "sum_QTD_REG_BLC", "QTD_REG_BLC");
+                                    mergedTable = removevars(mergedTable, 'GroupCount');
+                                    mergedTable.REG(:) = {'9900'};
+                                    mergedTable = movevars(mergedTable, 'REG', 'Before', 1);
+
+                                    x9900Index = find(strcmp(mergedTable.("REG_BLC"), '9900'), 1);
+                                    if ~isempty(x9900Index)
+                                        mergedTable.("QTD_REG_BLC")(x9900Index) = height(mergedTable);
+                                    end
+                                end
+
+                                obj(idx).Table.(['x' id]) = mergedTable;
+                        end
+                    end
+
+                    parseTableAndAddToCache(obj(idx), setdiff(generalSettings.context.ECD.customTables.autoload, extractAfter(fieldnames(obj(idx).Table), 'x')), generalSettings)
+                    initializeCompanyContext(obj(idx), projectData, generalSettings)
+                end
+
             catch ME
                 msg = ME.message;
             end
@@ -275,7 +314,7 @@ classdef ECD < handle
                     if ~isempty(expectedRows) && expectedRows > 0
                         readRows = height(obj(ii).Table.(['x' tableId]));                            
                         if expectedRows ~= readRows
-                            obj(ii).GUI.warnings{end+1} = jsonencode(struct( ...
+                            obj(ii).GUI.warnings{end+1} = matlab.jsonencode(struct( ...
                                 'id', tableId, ...
                                 'message', sprintf('expectedRows: %d, readRows: %d', expectedRows, readRows) ...
                             ));
@@ -916,7 +955,7 @@ classdef ECD < handle
         function [ordinaryIds, customIds, readIds] = getTableIds(obj)
             checkIfScalar(obj)
 
-            if isfield(obj.Table, 'x9900') && ~isempty(obj.Table.x9900)
+            if (~isempty(obj.Content) || ~obj.PeriodMerged) && isfield(obj.Table, 'x9900') && ~isempty(obj.Table.x9900)
                 ordinaryIds = unique(obj.Table.x9900.("REG_BLC")(obj.Table.x9900.("QTD_REG_BLC") > 0));
             else
                 ordinaryIds = extractAfter(fieldnames(obj.Table), 'x');
@@ -1095,6 +1134,20 @@ classdef ECD < handle
 
             msg = strjoin(msg, '<br>');
         end
+
+        %-----------------------------------------------------------------%
+        function expectedRows = expectedRowsByTableId(obj, tableId)
+            checkIfScalar(obj)
+            
+            expectedRows = [];
+            if isfield(obj.Table, 'x9900') && ~isempty(obj.Table.x9900)
+                tableIdIndex = find(strcmp(obj.Table.x9900.("REG_BLC"), tableId));
+
+                if ~isempty(tableIdIndex)
+                    expectedRows = sum(obj.Table.x9900.("QTD_REG_BLC")(tableIdIndex));
+                end
+            end
+        end
     end
 
 
@@ -1214,8 +1267,7 @@ classdef ECD < handle
                     % Prealoca, viabilizando operação em modo paralelo...
                     x_CONTAS_HISTORICO = model.ECDBase.initializeCustomTable('_CONTAS_HISTORICO', numAccounts);
 
-                    parpoolCheck()
-                    parfor ii = 1:numAccounts
+                    for ii = 1:numAccounts
                         accountId = accountList{ii};
                         index = find(strcmp(xI250_I075.("COD_CTA"), accountId));
             
@@ -1227,9 +1279,8 @@ classdef ECD < handle
                             if any(mergeIdxs)
                                 tmpHist(mergeIdxs) = strcat(description(mergeIdxs), {' ↳ '}, tmpHist(mergeIdxs));
                             end
-            
-                            % hist = unique(tmpHist, 'stable');
-                            hist = util.deduplicateAccountEntryHistory(tmpHist);
+
+                            hist = util.deduplicateAccountEntryHistory('rawI250', tmpHist);
                         else
                             hist = {'-'};
                         end
@@ -1281,14 +1332,22 @@ classdef ECD < handle
                     onCacheCleanup(tableId)
 
                 case {'J800', 'J801'}
-                    ordinaryId   = true;
-                    regexMatches = extractBetween(obj.Content, ['|' tableId '|'], ['|' tableId 'FIM|'], 'Boundaries', 'inclusive');
+                    if ~isempty(obj.Content)
+                        ordinaryId   = true;
+                        regexMatches = extractBetween(obj.Content, ['|' tableId '|'], ['|' tableId 'FIM|'], 'Boundaries', 'inclusive');
+                    else
+                        util.fileread(obj, obj.FileFullName, generalSettings, false, {'J800', 'J801'});
+                    end
 
                 otherwise
-                    ordinaryId   = true;
-                    regexPattern = ['^\|' tableId '\|.*'];
-                    regexMatches = regexp(obj.Content, regexPattern, 'match', 'lineanchors', 'dotexceptnewline')';
-                    regexMatches = strrep(regexMatches, sprintf('\r'), '');
+                    if ~isempty(obj.Content)
+                        ordinaryId   = true;
+                        regexPattern = ['^\|' tableId '\|.*'];
+                        regexMatches = regexp(obj.Content, regexPattern, 'match', 'lineanchors', 'dotexceptnewline')';
+                        regexMatches = strrep(regexMatches, sprintf('\r'), '');
+                    else
+                        util.fileread(obj, obj.FileFullName, generalSettings, false, {tableId});
+                    end
             end
 
             if ordinaryId
@@ -1426,8 +1485,12 @@ classdef ECD < handle
             % Converte conteúdo de arquivo em lista de células, orientada à
             % quebra de linha. Identifica o número da linha de cada um dos
             % registros sob análise - "mainId" e "secondaryIds".
-            splitContent = splitlines(obj.Content);
-            fileIndexes  = cellfun(@(x) find(startsWith(splitContent, x)), strcat('|', tableIdList, '|'), 'UniformOutput', false);
+            if ~isempty(obj.Content)
+                splitContent = splitlines(obj.Content);
+                fileIndexes  = cellfun(@(x) find(startsWith(splitContent, x)), strcat('|', tableIdList, '|'), 'UniformOutput', false);
+            else
+                fileIndexes  = [{obj.Table.(['x' mainId]).Properties.UserData}, cellfun(@(x) obj.Table.(['x' x]).Properties.UserData, secondaryIds, 'UniformOutput', false)];
+            end
 
             mainTableHeight = height(mainTable);
             mainTable.("_TEMP_KEY") = (1:mainTableHeight)';
@@ -1476,6 +1539,74 @@ classdef ECD < handle
                 mergedTable = removevars(mergedTable, '_TEMP_KEY');
             end
             mergedTable.("REG")(:) = {strjoin(tableIdList, '_')};
+        end
+
+        %-----------------------------------------------------------------%
+        function initializeCompanyContext(obj, projectData, generalSettings, receitaFederalObj)
+            arguments
+                obj
+                projectData
+                generalSettings
+                receitaFederalObj = []
+            end
+
+            checkIfScalar(obj)
+
+            if isfield(obj.Table, 'x0000') && ~isempty(obj.Table.x0000)
+                obj.Table.x0000 = sortrows(obj.Table.x0000, 'DT_INI');
+
+                obj.CompanyName = upper(strtrim(obj.Table.x0000.NOME{end}));
+                obj.CompanyId = checkCNPJOrCPF(obj.Table.x0000.CNPJ{end}, 'NumberValidation');                
+                obj.CompanyInfo(1) = struct( ...
+                    'CNPJ', obj.Table.x0000.CNPJ{end}, ...
+                    'IE', obj.Table.x0000.IE{end}, ...
+                    'IM', obj.Table.x0000.IM{end}, ...
+                    'NIRE', '', ...
+                    'UF', obj.Table.x0000.UF{end}, ...
+                    'City', obj.Table.x0000.COD_MUN{end} ...
+                );
+
+                obj.State = obj.CompanyInfo.UF;
+                obj.Period = [min(obj.Table.x0000.DT_INI), max(obj.Table.x0000.DT_FIN)];
+                obj.Period.Format = 'dd/MM/yyyy';
+
+                periodYear = year(obj.Period(1));
+                periodRate = zeros(1, 12);
+                rateErrorMsg = {};
+                for periodMonth = 1:12
+                    [periodRate(periodMonth), msgError] = calculateIcmsRate(projectData, obj.CompanyInfo.UF, datetime([periodYear, periodMonth, 1]), 'mean', 3);
+                    if ~isempty(msgError)
+                        rateErrorMsg{end+1} = msgError;
+                    end
+                end
+
+                if isscalar(unique(periodRate))
+                    periodRate = periodRate(1);
+                end
+
+                if ~isempty(rateErrorMsg)
+                    obj.GUI.warnings{end+1} = matlab.jsonencode(struct( ...
+                        'id', 'RateError', ...
+                        'message', strjoin(rateErrorMsg, '<br>') ...
+                    ));
+                end
+
+                obj.GUI.icmsRate.default.rate = periodRate;
+                obj.GUI.icmsRate.current = obj.GUI.icmsRate.default;
+            end
+
+            if isfield(obj.Table, 'xI030') && ~isempty(obj.Table.xI030)
+                nire = unique(obj.Table.xI030.NIRE);                
+                obj.CompanyInfo(1).NIRE = nire{end};
+            end
+
+            if ~isempty(receitaFederalObj)
+                checkFileStatus(obj, receitaFederalObj, generalSettings.context.FILE.encodingList);
+            end
+
+            obj.GUI.hasTransactions = checkIfHasTransactions(obj);
+            obj.GUI.hasValidPeriod  = checkIfValidPeriod(obj);
+            obj.GUI.hasValidStatus  = checkIfValidStatus(obj);
         end
 
         %-----------------------------------------------------------------%
@@ -1620,20 +1751,6 @@ classdef ECD < handle
 
             if ((~isempty(expectedI155Rows) && expectedI155Rows > 0) || (~isempty(expectedI200Rows) && expectedI200Rows > 0)) && isfield(obj.Table, 'xI050') && any(strcmp(obj.Table.xI050.('COD_NAT'), '04'))
                 hasTransactions = true;
-            end
-        end
-
-        %-----------------------------------------------------------------%
-        function expectedRows = expectedRowsByTableId(obj, tableId)
-            checkIfScalar(obj)
-            
-            expectedRows = [];
-            if isfield(obj.Table, 'x9900') && ~isempty(obj.Table.x9900)
-                tableIdIndex = find(strcmp(obj.Table.x9900.("REG_BLC"), tableId));
-
-                if ~isempty(tableIdIndex)
-                    expectedRows = sum(obj.Table.x9900.("QTD_REG_BLC")(tableIdIndex));
-                end
             end
         end
 

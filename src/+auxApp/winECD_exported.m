@@ -181,9 +181,10 @@ classdef winECD_exported < matlab.apps.AppBase
                                 tableId = varargin{1};
 
                                 requestVisibilityChange(app.progressDialog, 'visible', 'unlocked')
-
-                                checkIfTableRead(app, selectedECD, fileIndex, {tableId})
-
+                                try
+                                    checkIfTableRead(app, selectedECD, fileIndex, {tableId})
+                                catch
+                                end
                                 requestVisibilityChange(app.progressDialog, 'hidden', 'unlocked')
 
                             case 'getTableColumnWidth'
@@ -508,6 +509,7 @@ classdef winECD_exported < matlab.apps.AppBase
             % "I200_I250" existe apenas se o registro "I200" existe.
             customIds = app.mainApp.General.context.ECD.customTables.expected;
             notappplicableIds = {};
+
             if isfield(selectedECD.Table, 'x9900') && ~isempty(selectedECD.Table.x9900)
                 for ii = 1:numel(customIds)
                     customId = customIds{ii};
@@ -518,7 +520,7 @@ classdef winECD_exported < matlab.apps.AppBase
                     mainMergedId = extractBefore(customId, '_');
                     mainMergedIdIndex = find(strcmp(selectedECD.Table.x9900.("REG_BLC"), mainMergedId));
 
-                    if isempty(mainMergedIdIndex) || sum(selectedECD.Table.x9900.("QTD_REG_BLC")(mainMergedIdIndex)) <= 0
+                    if (isempty(selectedECD.Content) && selectedECD.PeriodMerged) || isempty(mainMergedIdIndex) || sum(selectedECD.Table.x9900.("QTD_REG_BLC")(mainMergedIdIndex)) <= 0
                         notappplicableIds{end+1} = customId;
                     end
                 end
@@ -807,6 +809,42 @@ classdef winECD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function checkIfTableRead(app, selectedECD, fileIndex, tableIdList)
+            % Em arquivos grandes, o conteúdo textual completo não é mantido na
+            % propriedade "Content". Assim, ao acessar um registro ainda não carregado,
+            % o app precisará reler o arquivo, o que pode levar alguns segundos.
+            if isempty(selectedECD.Content)
+                requiresReloadConfirmation = false;
+
+                for ii = 1:numel(tableIdList)
+                    tableId = tableIdList{ii};
+                    if tableId(1) == '_'
+                        continue
+                    end
+
+                    tableField = ['x' tableId];
+                    numExpectedRows = expectedRowsByTableId(selectedECD, tableId);
+
+                    if ~isfield(selectedECD.Table, tableField) || isempty(numExpectedRows) || height(selectedECD.Table.(tableField)) ~= numExpectedRows
+                        requiresReloadConfirmation = true;
+                        break
+                    end
+                end
+
+                if requiresReloadConfirmation
+                    msgQuestion = sprintf([ ...
+                        'O arquivo é tratado como grande por possuir mais de %s. Por essa razão, o seu conteúdo não está ' ...
+                        'totalmente carregado na memória.<br><br>O registro %s ainda não foi lido, de forma que ' ...
+                        'o aplicativo precisará reler o arquivo para carregar esses dados, o que pode levar alguns segundos.<br><br>', ...
+                        'Deseja continuar?' ...
+                    ], textFormatGUI.bytes2human(app.mainApp.General.context.FILE.largeFileThresholdBytes), tableId);
+                    userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
+                    
+                    if userSelection == "Não"
+                        error('auxApp:winECD:UserAbortedReload', 'Operation cancelled by user. Reload of file content was not authorized.')
+                    end
+                end
+            end
+
             if isTableRead(selectedECD, tableIdList, app.mainApp.General)
                 ipcMainMatlabCallsHandler(app.mainApp, app, 'onAccountingDataUpdated', fileIndex);
             end
@@ -1010,7 +1048,13 @@ classdef winECD_exported < matlab.apps.AppBase
             % lidos.
             tableIds = cellfun(@(x) strsplit(x, '|'), rawTableIdFields, 'UniformOutput', false);
             tableIds = extractAfter(horzcat(tableIds{:}), 'x');
-            checkIfTableRead(app, selectedECD, fileIndex, tableIds)
+
+            try
+                checkIfTableRead(app, selectedECD, fileIndex, tableIds)
+            catch ME
+                ui.Dialog(app.UIFigure, 'error', ME.message);
+                return
+            end
 
             % EXCEL
             msgError = {};
