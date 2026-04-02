@@ -1234,6 +1234,21 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     return
                 end
 
+                encodings = unique({app.ecdObj(indexes).Encoding});
+                if ~isscalar(encodings)
+                    msgQuestion = sprintf([ ...
+                        'Encodings diferentes detectados - %s. Isso pode indicar falha ' ...
+                        'na detecção automática e comprometer a leitura dos dados.<br><br>' ...
+                        'Se necessário, o encoding pode ser definido manualmente nas configurações.<br><br>' ...
+                        'Deseja continuar a mesclagem?' ...
+                    ], textFormatGUI.cellstr2FriendlyListWithQuotes(encodings));
+                    userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 2, 2);
+
+                    if strcmp(userSelection, 'Não')
+                        return
+                    end
+                end
+
                 app.progressDialog.Visible = 'visible';
 
                 [app.ecdObj, msg] = mergeFiles(app.ecdObj, app.projectData, app.General, indexes, app.General.fileFolder.tempPath);

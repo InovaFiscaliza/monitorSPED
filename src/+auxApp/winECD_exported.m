@@ -15,8 +15,8 @@ classdef winECD_exported < matlab.apps.AppBase
         tool_Separator2           matlab.ui.control.Image
         tool_DeleteAnnotation     matlab.ui.control.Image
         tool_AutoFill             matlab.ui.control.Image
-        tool_AccountButton        matlab.ui.control.Image
         tool_Separator1           matlab.ui.control.Image
+        tool_AccountButton        matlab.ui.control.Image
         tool_OpenPopupIcmsRate    matlab.ui.control.Image
         UITable2_AccountInfo      matlab.ui.control.Label
         UITable2_FilterIcon       matlab.ui.control.Image
@@ -1304,6 +1304,18 @@ classdef winECD_exported < matlab.apps.AppBase
                 return
             end
 
+            msgQuestion = [ ...
+                'A sugestão de classificação será aplicada apenas às contas ainda não classificadas.<br><br>' ...
+                'Este é um processo inicial, baseado em regras determinísticas (palavras-chave e saldos mensais), ' ...
+                'podendo gerar classificações incorretas que devem ser revisadas pelo usuário.<br><br>' ...
+                'O campo "Observação" indicará a regra utilizada em cada caso.<br><br>' ...
+                'Deseja continuar?' ...
+            ];
+            userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
+            if userSelection == "Não"
+                return
+            end
+
             update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'autoFill', app.mainApp.General)
             forceUpdateTable(app)
 
@@ -1321,6 +1333,12 @@ classdef winECD_exported < matlab.apps.AppBase
 
                 userCellSelection = clickedTable.Selection;
                 if ~isempty(userCellSelection)
+                    msgQuestion = 'Deseja limpar a classificação das contas selecionadas?';
+                    userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
+                    if userSelection == "Não"
+                        return
+                    end
+
                     rowIndexes = d(unique(userCellSelection(:, 1)));
                     update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'deleteAnnotation', app.mainApp.General, rowIndexes)
                     forceUpdateTable(app)
@@ -2558,7 +2576,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create Toolbar
             app.Toolbar = uigridlayout(app.GridLayout);
-            app.Toolbar.ColumnWidth = {22, 5, 22, 22, 22, 5, '1x', 22, 22, 22};
+            app.Toolbar.ColumnWidth = {22, 22, 5, 22, 22, 5, '1x', 22, 22, 22};
             app.Toolbar.RowHeight = {4, 17, 2};
             app.Toolbar.ColumnSpacing = 5;
             app.Toolbar.RowSpacing = 0;
@@ -2576,22 +2594,22 @@ classdef winECD_exported < matlab.apps.AppBase
             app.tool_OpenPopupIcmsRate.Layout.Column = 1;
             app.tool_OpenPopupIcmsRate.ImageSource = 'percentage-20px.svg';
 
-            % Create tool_Separator1
-            app.tool_Separator1 = uiimage(app.Toolbar);
-            app.tool_Separator1.ScaleMethod = 'none';
-            app.tool_Separator1.Enable = 'off';
-            app.tool_Separator1.Layout.Row = [1 3];
-            app.tool_Separator1.Layout.Column = 2;
-            app.tool_Separator1.ImageSource = 'LineV.svg';
-
             % Create tool_AccountButton
             app.tool_AccountButton = uiimage(app.Toolbar);
             app.tool_AccountButton.ScaleMethod = 'none';
             app.tool_AccountButton.ImageClickedFcn = createCallbackFcn(app, @onPopupModuleRequest, true);
             app.tool_AccountButton.Enable = 'off';
             app.tool_AccountButton.Layout.Row = [1 3];
-            app.tool_AccountButton.Layout.Column = 3;
+            app.tool_AccountButton.Layout.Column = 2;
             app.tool_AccountButton.ImageSource = 'Variable_edit_16.png';
+
+            % Create tool_Separator1
+            app.tool_Separator1 = uiimage(app.Toolbar);
+            app.tool_Separator1.ScaleMethod = 'none';
+            app.tool_Separator1.Enable = 'off';
+            app.tool_Separator1.Layout.Row = [1 3];
+            app.tool_Separator1.Layout.Column = 3;
+            app.tool_Separator1.ImageSource = 'LineV.svg';
 
             % Create tool_AutoFill
             app.tool_AutoFill = uiimage(app.Toolbar);
