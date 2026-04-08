@@ -18,7 +18,7 @@ function fileread(obj, fileFullName, generalSettings, isInitialLoad, recordIds)
 
     % Identifica quebras de linhas, o que ajudará a parsear informações dos
     % diversos registros.
-    newLineIdxs = strfind(byteArray, uint8(10))';
+    newLineIdxs = find(byteArray == uint8(10))';
 
 
     % Em se tratando de um arquivo não mesclado, identifica-se posição do 
@@ -165,8 +165,13 @@ function ranges = getByteRangesByRecord(byteArray, newLineIdxs, recordId)
             startPattern = [uint8(10), uint8(['|' recordId '|'])];
             endPattern   = uint8(['|' recordId 'FIM|']);
 
-            startIdxs = strfind(byteArray, startPattern)';
-            endIdxs   = strfind(byteArray, endPattern)';
+            try
+                startIdxs = strfind(byteArray, startPattern)';
+                endIdxs   = strfind(byteArray, endPattern)';
+            catch
+                startIdxs = findRecordPattern(byteArray, newLineIdxs, startPattern)';
+                endIdxs   = findRecordPattern(byteArray, newLineIdxs, endPattern)';
+            end
 
             if isempty(startIdxs) || isempty(endIdxs)
                 return
@@ -189,26 +194,33 @@ function ranges = getByteRangesByRecord(byteArray, newLineIdxs, recordId)
 
             switch recordId
                 case '0000'
-                    % Primeira linha...
-                    startIdxs1 = strfind(byteArray, pattern)';
-                    if ~isempty(startIdxs1)
-                        startIdxs1 = startIdxs1(1);
+                    try
+                        % Primeira linha...
+                        startIdxs1 = strfind(byteArray, pattern)';
+                        if ~isempty(startIdxs1)
+                            startIdxs1 = startIdxs1(1);
+                        end
+                    
+                        % Outras linhas (caso se trate de arquivo mesclado)...            
+                        startIdxs2 = strfind(byteArray, [uint8(10), pattern])';
+                        if ~isempty(startIdxs2)
+                            startIdxs2 = startIdxs2+1;
+                        end
+
+                        startIdxs = [startIdxs1; startIdxs2];
+                    catch
+                        startIdxs = findRecordPattern(byteArray, newLineIdxs, pattern)';
                     end
-                
-                    % Outras linhas (caso se trate de arquivo mesclado)...
-                    pattern = [uint8(10), pattern];
-        
-                    startIdxs2 = strfind(byteArray, pattern)';
-                    if ~isempty(startIdxs2)
-                        startIdxs2 = startIdxs2+1;
-                    end
-        
-                    startIdxs = [startIdxs1; startIdxs2];
 
                 otherwise
                     pattern = [uint8(10), pattern];
-                
-                    startIdxs = strfind(byteArray, pattern)';
+
+                    try
+                        startIdxs = strfind(byteArray, pattern)';
+                    catch
+                        startIdxs = findRecordPattern(byteArray, newLineIdxs, pattern)';
+                    end
+                    
                     if isempty(startIdxs)
                         return
                     end
@@ -355,4 +367,45 @@ function [xI200, xI250] = initializeFactTable(obj, operation, byteArray, newLine
             tbl(startIdx:endIdx, :) = tableTempOut(:, variableNames);
         end
     end
+end
+
+
+%-------------------------------------------------------------------------%
+function idxs = findRecordPattern(byteArray, newLineIdxs, pattern)
+    % Fallback do strfind(byteArray, pattern), evitando o erro "Requested 
+    % {numRows}x{numCols} ({Size}) array exceeds maximum array size preference 
+    % (15.9GB). This might cause MATLAB to become unresponsive". Trata-se de 
+    % método não tão rápido quanto o strfind, por isso usado apenas como fallback.
+
+    if pattern(1) == uint8(10)
+        compareBytes = pattern(2:end);
+        compareOffsets = 1:numel(compareBytes);
+        candidates = newLineIdxs(:);
+    else
+        compareBytes = pattern;
+        compareOffsets = 0:(numel(compareBytes)-1);
+        candidates = [1; newLineIdxs(:) + 1];
+    end
+
+    maxPos = numel(byteArray) - numel(pattern) + 1;
+    candidates = candidates(candidates <= maxPos);
+
+    if isempty(candidates)
+        idxs = [];
+        return
+    end
+
+    matchPositions = find(byteArray(candidates + compareOffsets(1)) == compareBytes(1));
+
+    for pp = 2:numel(compareBytes)
+        currentPositions = find(byteArray(candidates + compareOffsets(pp)) == compareBytes(pp));
+        matchPositions = intersect(matchPositions, currentPositions, 'stable');
+
+        if isempty(matchPositions)
+            idxs = [];
+            return
+        end
+    end
+
+    idxs = candidates(matchPositions)';
 end
