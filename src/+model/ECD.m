@@ -1269,9 +1269,9 @@ classdef ECD < handle
 
                     for ii = 1:numAccounts
                         accountId = accountList{ii};
-                        index = find(strcmp(xI250_I075.("COD_CTA"), accountId));
+                        index = strcmp(xI250_I075.("COD_CTA"), accountId);
             
-                        if ~isempty(index)
+                        if any(index)
                             tmpHist = xI250_I075.("HIST")(index);
                             description = xI250_I075.("DESCR_HIST")(index);
             
@@ -1289,7 +1289,7 @@ classdef ECD < handle
                             hist = {hist};
                         end
 
-                        x_CONTAS_HISTORICO(ii, :) = {accountId, numel(index), hist};
+                        x_CONTAS_HISTORICO(ii, :) = {accountId, sum(index), hist};
                     end
 
                     obj.Table.x_CONTAS_HISTORICO = x_CONTAS_HISTORICO;

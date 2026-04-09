@@ -315,56 +315,47 @@ function [xI200, xI250] = initializeFactTable(obj, operation, byteArray, newLine
 
     function tbl = parseFactTable(registerId, variableTypes, variableNames)
         MIN_ROW_COUNT = 100000;
-        numTableRows = expectedRowsByTableId(obj, registerId);
+        encoding = obj.Encoding;
+        numVariables = numel(variableNames);
+        hasExtendedI250Fields = numVariables == 5;
+
+        ranges = getByteRangesByRecord(byteArray, newLineIdxs, registerId);
+        numRows = height(ranges);
+
         tbl = table( ...
-            'Size', [numTableRows, numel(variableNames)], ...
+            'Size', [numRows, numVariables], ...
             'VariableTypes', variableTypes, ...
             'VariableNames', variableNames ...
         );
-
-        ranges = getByteRangesByRecord(byteArray, newLineIdxs, registerId);
-        numRowsTotal = height(ranges);
-        numLoops = ceil(numRowsTotal/MIN_ROW_COUNT);
+        numLoops = ceil(numRows/MIN_ROW_COUNT);
 
         for ii = 1:numLoops
             startIdx = (ii - 1) * MIN_ROW_COUNT + 1;
-            endIdx = min(ii * MIN_ROW_COUNT, numRowsTotal);
+            endIdx = min(ii * MIN_ROW_COUNT, numRows);
 
             currentRanges = ranges(startIdx:endIdx, :);
-            numRows = height(currentRanges);
+            decodedLines = arrayfun(@(x, y) strtrim(native2unicode(byteArray(x:y), encoding)), currentRanges(:, 1), currentRanges(:, 2), 'UniformOutput', false);
+            parsedFields = split(extractBetween(decodedLines, 2, strlength(decodedLines) - 1), '|', 2);
 
-            blockData = cell(numRows, numel(variableNames));
-            for jj = 1:numRows
-                line = byteArray(currentRanges(jj, 1):currentRanges(jj, 2));
-                delimiterIdxs = find(line == 124);
+            switch registerId
+                case 'I200'
+                    % Trecho comum a todos os layouts:
+                    % | REG | NUM_LCTO | DT_LCTO | VL_LCTO | IND_LCTO |
+                    tbl.DT_LCTO(startIdx:endIdx) = datetime(parsedFields(:, 3), 'InputFormat', 'ddMMyyyy');
+                    tbl.IND_LCTO(startIdx:endIdx) = parsedFields(:, 5);
 
-                switch registerId
-                    case 'I200'
-                        % Trecho comum a todos os layouts:
-                        % | REG | NUM_LCTO | DT_LCTO | VL_LCTO | IND_LCTO | 
-                        blockData{jj, 1} = datetime(native2unicode(line(delimiterIdxs(3)+1:delimiterIdxs(4)-1), obj.Encoding), 'InputFormat', 'ddMMyyyy');
-                        blockData{jj, 2} = native2unicode(line(delimiterIdxs(5)+1:delimiterIdxs(6)-1), obj.Encoding);
+                case 'I250'
+                    % Trecho comum a todos os layouts:
+                    % | REG | COD_CTA | COD_CCUS | VL_DC | IND_DC | NUM_ARQ | COD_HIST_PAD | HIST | COD_PART |
+                    tbl.COD_CTA(startIdx:endIdx) = parsedFields(:, 2);
+                    tbl.COD_HIST_PAD(startIdx:endIdx) = parsedFields(:, 7);
+                    tbl.HIST(startIdx:endIdx) = parsedFields(:, 8);
 
-                    case 'I250'
-                        % Trecho comum a todos os layouts:
-                        % | REG | COD_CTA | COD_CCUS | VL_DC | IND_DC | NUM_ARQ | COD_HIST_PAD | HIST | COD_PART |
-                        blockData{jj, 1} = native2unicode(line(delimiterIdxs(2)+1:delimiterIdxs(3)-1), obj.Encoding);
-                        if (delimiterIdxs(8)-delimiterIdxs(7) == 1)
-                            blockData{jj, 2} = '';
-                        else
-                            blockData{jj, 2} = native2unicode(line(delimiterIdxs(7)+1:delimiterIdxs(8)-1), obj.Encoding);
-                        end
-                        blockData{jj, 3} = native2unicode(line(delimiterIdxs(8)+1:delimiterIdxs(9)-1), obj.Encoding);
-                        
-                        if numel(variableNames) == 5
-                            blockData{jj, 4} = str2double(replace(native2unicode(line(delimiterIdxs(4)+1:delimiterIdxs(5)-1), obj.Encoding), ',', '.'));
-                            blockData{jj, 5} = native2unicode(line(delimiterIdxs(5)+1:delimiterIdxs(6)-1), obj.Encoding);
-                        end
-                end
+                    if hasExtendedI250Fields
+                        tbl.IND_DC(startIdx:endIdx) = parsedFields(:, 5);
+                        tbl.VD_DC(startIdx:endIdx) = str2double(replace(parsedFields(:, 4), ',', '.'));
+                    end
             end
-
-            tableTempOut = cell2table(blockData, 'VariableNames', variableNames);
-            tbl(startIdx:endIdx, :) = tableTempOut(:, variableNames);
         end
     end
 end
