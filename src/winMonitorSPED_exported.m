@@ -385,37 +385,32 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 varargin 
             end
 
-            switch auxAppName
-                case 'ReportLib'
-                    screenWidth  = 460;
-                    screenHeight = 598;
-                case 'IcmsRate'
-                    screenWidth  = 448;
-                    screenHeight = 320;
-                case 'ECDExport'
-                    screenWidth  = 460;
-                    screenHeight = 480;
-                case 'ECDAccount'
-                    screenWidth  = 720;
-                    screenHeight = 580;
-                case 'ECDFilter'
-                    screenWidth  = 518;
-                    screenHeight = 376;
-                case 'ECDMemoryUsage'
-                    screenWidth  = 460;
-                    screenHeight = 580;
-            end
-
             requestVisibilityChange(callingApp.progressDialog, 'visible', 'unlocked')
-
             inputArguments = [{app, callingApp, context}, varargin];
-            
+
             if app.General.operationMode.Debug
-                eval(sprintf('auxApp.dock%s(inputArguments{:})', auxAppName))
+                app.popupCurrentApp = eval(sprintf('auxApp.dock%s(inputArguments{:})', auxAppName));
+                app.popupCurrentApp.isDocked = false;
 
             else
-                ui.PopUpContainer(callingApp, screenWidth, screenHeight)
+                popupSpecifications = table( ...
+                    'Size', [15, 4], ...
+                    'VariableTypes', {'string', 'double', 'double', 'logical'}, ...
+                    'VariableNames', {'AuxAppName', 'Width', 'Height', 'IsFluid'} ...
+                );
+                popupSpecifications( 1, :) = {"ECDAccount",     720, 580, false};
+                popupSpecifications( 2, :) = {"ECDExport",      460, 480, false};
+                popupSpecifications( 3, :) = {"ECDFilter",      518, 376, false};
+                popupSpecifications( 4, :) = {"ECDMemoryUsage", 460, 580, false};
+                popupSpecifications( 5, :) = {"IcmsRate",       448, 320, false};
+                popupSpecifications( 6, :) = {"ReportLib",      460, 598, false};
 
+                auxAppNameIdx = find(popupSpecifications.AuxAppName == string(auxAppName), 1);
+                screenWidth = popupSpecifications.Width(auxAppNameIdx);
+                screenHeight = popupSpecifications.Height(auxAppNameIdx);
+                isFluid = popupSpecifications.IsFluid(auxAppNameIdx);
+
+                ui.PopUpContainer(callingApp, screenWidth, screenHeight)
                 auxDockAppName = sprintf('auxApp.dock%s', auxAppName);
                 app.popupCurrentApp = feval([auxDockAppName '_exported'], callingApp.popupContainer, inputArguments{:});
                 
@@ -424,12 +419,17 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     app.popupCurrentApp.GridLayout
                 });
 
+                if isFluid
+                    sizing = struct('type', 'fluid', 'width', 90, 'height', 80);
+                else
+                    sizing = struct('type', 'fixed', 'width', screenWidth, 'height', screenHeight+31);
+                end
+
                 sendEventToHTMLSource(callingApp.jsBackDoor, 'dockContainer', struct( ...
                     'dockAppName', auxDockAppName, ...
                     'dockAppDataTag', app.popupCurrentApp.GridLayout.UserData.id, ...
                     'dockAppContainerDataTag', callingApp.popupContainer.UserData.id, ...
-                    'width', screenWidth, ...
-                    'height', screenHeight+31, ...
+                    'sizing', sizing, ...
                     'context', context, ...
                     'numCanvasElements', numel(findobj(app.popupCurrentApp.Container, 'Type', 'axes')) ...
                 ))

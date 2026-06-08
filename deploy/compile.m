@@ -18,7 +18,7 @@ function varargout = compile(compilationType, rootCompiledFolder, matlabRuntimeF
         githubAccount           char    = 'EricMagalhaesDelgado'
     end
 
-    appName     = 'monitorSPED';
+    appName = 'monitorSPED';
 
     initFolder  = fileparts(mfilename('fullpath'));
     finalFolder = fullfile(rootCompiledFolder, appName);
