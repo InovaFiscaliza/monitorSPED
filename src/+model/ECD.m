@@ -209,13 +209,14 @@ classdef ECD < handle
                                         [~, accountIdx] = ismember(accountId, trialBalance.('COD_CTA'));
 
                                         if accountIdx
-                                            trialBalance(accountIdx, monthMapping(periodMonths(1):periodMonths(2))) = obj(jj).Table.x_BALANCETE_GERAL(kk, monthMapping(periodMonths(1):periodMonths(2)));
+                                            trialBalance(accountIdx, monthMapping(periodMonths(1):periodMonths(2))) = trialBalance(accountIdx, monthMapping(periodMonths(1):periodMonths(2))) + obj(jj).Table.x_BALANCETE_GERAL(kk, monthMapping(periodMonths(1):periodMonths(2)));
                                         else
                                             trialBalance = [trialBalance; obj(jj).Table.x_BALANCETE_GERAL(kk, :)];
                                         end
                                     end
                                 end
                                 trialBalance = sortrows(trialBalance, 'COD_CTA');
+                                trialBalance.("TOTAL") = sum(trialBalance{:, monthMapping.values}, 2);
 
                                 obj(idx).Table.(['x' id]) = trialBalance;
                             
