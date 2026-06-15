@@ -201,8 +201,10 @@ classdef (Abstract) Table
                     
                     rawTableGeral = ensureRowNames(rawTableGeral, 'TIPO');
                     rawTableItx = ensureRowNames(rawTableItx, 'TIPO');
+
+                    commonVariables = intersect(rawTableGeral.Properties.VariableNames, rawTableItx.Properties.VariableNames);
                     
-                    rawTable = rawTableGeral - rawTableItx;
+                    rawTable = rawTableGeral(:, commonVariables) - rawTableItx(:, commonVariables);
                     Table = [table(rawTable.Properties.RowNames, 'VariableName', {'MÊS'}), rawTable];
             end
 
