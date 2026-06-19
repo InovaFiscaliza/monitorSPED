@@ -224,15 +224,18 @@ classdef (Abstract) Table
         function Table = TabelaAnotacao(analyzedData, status)
             arguments
                 analyzedData
-                status {mustBeMember(status, {'all', 'on'})}
+                status {mustBeMember(status, {'all', 'on', 'on/off'})}
             end
 
             ecdObj = analyzedData.InfoSet.ecdObj;
             checkIfScalar(ecdObj)
 
             rawTable = ecdObj.Table.x_CONTAS_ANOTACAO;
-            if strcmp(status, 'on')
-                rawTable = rawTable(~ismember(rawTable.('Apurado?  ✎'), ["-", "Não"]), :);
+            switch status
+                case 'on'
+                    rawTable = rawTable(~ismember(rawTable.('Apurado?  ✎'), ["-", "Não"]), :);
+                case 'on/off'
+                    rawTable = rawTable(~ismember(rawTable.('Apurado?  ✎'), ["-"]), :);
             end
 
             Table = innerjoin(rawTable, ecdObj.Table.x_BALANCETE_RESULTADO, 'Keys', 'COD_CTA', 'RightVariables', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'});

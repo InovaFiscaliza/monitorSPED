@@ -244,7 +244,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "<a href=\"https://informacoes.anatel.gov.br/legislacao/component/content/article/46-instrucoes-de-fiscalizacao/1632-portaria-2106\" target=\"_blank\" rel=\"noopener noreferrer\">Portaria nº 2106, de 15 de novembro de 2021</a>, que aprova a Instrução de Fiscalização sobre Preparação, Execução e Conclusão de Inspeções no âmbito da Atividade de Fiscalização Regulatória.",
+                        "Text": "<a href=\"https://informacoes.anatel.gov.br/legislacao/procedimentos-de-fiscalizacao/1958-portaria-2817\" target=\"_blank\" rel=\"noopener noreferrer\">Portaria nº 2817, de 06 de maio de 2024</a>, que aprova o Procedimento de Fiscalização para verificação do cumprimento das obrigações relativas ao recolhimento das contribuições ao Fust e ao Funttel.",
                         "Variable": []
                     }
                 },
@@ -252,7 +252,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "<a href=\"https://informacoes.anatel.gov.br/legislacao/procedimentos-de-fiscalizacao/1958-portaria-2817\" target=\"_blank\" rel=\"noopener noreferrer\">Portaria nº 2817, de 06 de maio de 2024</a>, que aprova o Procedimento de Fiscalização para verificação do cumprimento das obrigações relativas ao recolhimento das contribuições ao Fust e ao Funttel.",
+                        "Text": "<a href=\"https://informacoes.anatel.gov.br/legislacao/instrucoes-de-fiscalizacao/2151-portaria-anatel-3164\" target=\"_blank\" rel=\"noopener noreferrer\">Portaria nº 3164, de 22 de maio de 2026</a>, que aprova a Instrução de Fiscalização Sobre a Execução da Fiscalização Regulatória no âmbito da Superintendência de Fiscalização.",
                         "Variable": []
                     }
                 }
@@ -276,7 +276,7 @@
                     }
                 },
                 {
-                    "Type": "Paragraph",
+                    "Type": "ItemN3",
                     "Data": {
                         "Editable": "true",
                         "Text": "... (texto livre) ...",
@@ -300,7 +300,7 @@
                     }
                 },
                 {
-                    "Type": "Paragraph",
+                    "Type": "ItemN3",
                     "Data": {
                         "Editable": "true",
                         "Text": "A fiscalização tributária tem início com a requisição, junto à empresa fiscalizada (sujeito passivo), dos documentos e esclarecimentos necessários à apuração dos valores devidos ao Fust e ao Funttel.",
@@ -308,7 +308,7 @@
                     }
                 },
                 {
-                    "Type": "Paragraph",
+                    "Type": "ItemN3",
                     "Data": {
                         "Editable": "true",
                         "Text": "Uma vez obtida a Escrituração Contábil Digital (ECD) &ndash; módulo do Sistema Público de Escrituração Digital (Sped) &ndash; os dados são processados com as ferramentas de apoio à fiscalização tributária da Anatel.",
@@ -316,7 +316,7 @@
                     }
                 },
                 {
-                    "Type": "Paragraph",
+                    "Type": "ItemN3",
                     "Data": {
                         "Editable": "true",
                         "Text": "Nesse processamento, verifica-se a integridade e a autenticidade dos arquivos. Para isso, calcula-se o respectivo <i>hash</i> e realiza-se a validação por meio do <i>webservice</i> disponibilizado pela Receita Federal, a fim de confirmar sua correspondência com o arquivo registrado na base de dados daquele órgão. Caso necessário investigar eventuais atualizações após a análise inicial, é possível realizar nova verificação mediante a inserção do <i>hash</i> do arquivo <a href=\"http://www.sped.fazenda.gov.br/appConsultaSituacaoContabil/\" target=\"_blank\" rel=\"noopener noreferrer\">neste link</a>.",
@@ -324,7 +324,7 @@
                     }
                 },
                 {
-                    "Type": "Paragraph",
+                    "Type": "ItemN3",
                     "Data": {
                         "Editable": "true",
                         "Text": "Após confirmada a validade, passa-se à análise do conteúdo de cada arquivo, conforme os procedimentos gerais descritos a seguir:",
@@ -332,7 +332,7 @@
                     }
                 },
                 {
-                    "Type": "NonIndentedList",
+                    "Type": "DeepIndentedList",
                     "Data": [
                         {
                             "Editable": "true",
@@ -383,10 +383,10 @@
                     }
                 },
                 {
-                    "Type": "Paragraph",
+                    "Type": "ItemN3",
                     "Data": {
                         "Editable": "true",
-                        "Text": "Na tabela apresentada a seguir consta detalhes do(s) arquivo(s) sob análise relacionado(s) à empresa %s, inscrita no CNPJ sob o nº %s, contendo informações do período %s.",
+                        "Text": "Na tabela apresentada a seguir constam detalhes do(s) arquivo(s) sob análise relacionado(s) à empresa %s, inscrita no CNPJ sob o nº %s, contendo informações do período %s.",
                         "Variable": [
                             "var_EntityName",
                             "var_EntityId",
@@ -460,7 +460,7 @@
                     }
                 },
                 {
-                    "Type": "Paragraph",
+                    "Type": "ItemN3",
                     "Data": {
                         "Editable": "true",
                         "Text": "A empresa %s registrou movimentação de %s no exercício fiscalizado. O resultado contábil líquido neste período foi de %s.",
@@ -486,7 +486,7 @@
                             "COD_MUN", 
                             "IM"
                         ],
-                        "Caption": "Registro \"0000\".",
+                        "Caption": "Bloco de Abertura do Arquivo Digital da ECD utilizada na apuração - Registro \"0000\".",
                         "Settings": [
                             {
                                 "Editable": "false",
@@ -546,7 +546,7 @@
                     "Type": "Table",
                     "Data": {
                         "Origin": "FunctionEvaluation",
-                        "Source": "tbl_TabelaAnotacao_On",
+                        "Source": "tbl_TabelaAnotacao_OnOff",
                         "Columns": [
                             "COD_CTA", 
                             "DESCRIÇÃO", 
@@ -594,7 +594,7 @@
                                 "Width": "auto"
                             }
                         ],
-                        "Intro": "{\"Type\":\"Paragraph\",\"Editable\":\"true\",\"Text\":\"A tabela a seguir apresenta as contas de resultado identificadas como relevantes para a definição da base de cálculo da Cide devida. Também são indicadas a respectiva classificação contábil, correspondente às contas sintéticas aglutinadoras, as alíquotas de ICMS aplicáveis e eventual observação registrada pela equipe de fiscais.\"}",
+                        "Intro": "{\"Type\":\"ItemN3\",\"Editable\":\"true\",\"Text\":\"A tabela a seguir apresenta as contas de resultado identificadas como relevantes para a definição da base de cálculo da Cide devida. Também são indicadas a respectiva classificação contábil, correspondente às contas sintéticas aglutinadoras, as alíquotas de ICMS aplicáveis e eventual observação registrada pela equipe de fiscais.\"}",
                         "Error": [],
                         "LineBreak": 1
                     }
@@ -608,7 +608,7 @@
                             "TIPO",
                             "TOTAL"
                         ],
-                        "Caption": "Resumo dos totais apurados com base nas receitas de prestação de serviços de telecomunicações.",
+                        "Caption": "Resumo dos totais apurados (R$) com base nas receitas de prestação de serviços de telecomunicações.",
                         "Settings": [
                             {
                                 "Editable": "false",
@@ -627,7 +627,7 @@
                                 "TextStyle": " style=\"text-align: right;\""
                             }
                         ],
-                        "Intro": "{\"Type\":\"Paragraph\",\"Editable\":\"true\",\"Text\":\"A tabela apresentada a seguir resume os totais anuais apurados com base nas receitas de prestação de serviços de telecomunicações.\"}",
+                        "Intro": "{\"Type\":\"ItemN3\",\"Editable\":\"true\",\"Text\":\"A tabela apresentada a seguir resume os totais anuais apurados com base nas receitas de prestação de serviços de telecomunicações.\"}",
                         "Error": [],
                         "LineBreak": 1
                     }
@@ -641,7 +641,7 @@
                     }
                 },
                 {
-                    "Type": "Paragraph",
+                    "Type": "ItemN3",
                     "Data": {
                         "Editable": "true",
                         "Text": "... (texto livre) ...",
