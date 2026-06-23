@@ -14,7 +14,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         Tab2Button              matlab.ui.control.StateButton
         Tab1Button              matlab.ui.control.StateButton
         AppName                 matlab.ui.control.Label
-        AppIcon                 matlab.ui.control.Image
         TabGroup                matlab.ui.container.TabGroup
         Tab1_File               matlab.ui.container.Tab
         file_Grid               matlab.ui.container.GridLayout
@@ -34,7 +33,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         tool_CheckRFB           matlab.ui.control.Image
         tool_MergeFiles         matlab.ui.control.Image
         tool_Separator1         matlab.ui.control.Image
-        tool_SelectFilesToRead  matlab.ui.control.Image
+        tool_ReadFiles          matlab.ui.control.Image
         Tab2_Playback           matlab.ui.container.Tab
         Tab3_Config             matlab.ui.container.Tab
         ContextMenu             matlab.ui.container.ContextMenu
@@ -170,6 +169,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                     case 'getNavigatorBasicInformation'
                         app.General.AppVersion.browser = event.HTMLEventData;
+
+                    case 'findResourceStaticURL'
+                        resourceStaticURL = event.HTMLEventData;
+                        if ~isempty(resourceStaticURL)
+                            app.General.AppVersion.application.resourceStaticURL = resourceStaticURL;
+                        end
 
                     case 'getTableColumnWidth'
                         context = 'ECD';
@@ -466,7 +471,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         app.FileModuleLegend;
                         app.FileTree; 
                         app.FileMetadata;
-                        app.tool_SelectFilesToRead;
+                        app.tool_ReadFiles;
                         app.tool_MergeFiles;
                         app.tool_CheckRFB;
                         app.tool_OpenPopupProject;
@@ -483,7 +488,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     try
                         sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
                             struct('appName', appName, 'dataTag', app.FileModuleLegend.UserData.id,       'tooltip', struct('defaultPosition', 'top', 'textContent', 'Mostra legenda de símbolos')), ...
-                            struct('appName', appName, 'dataTag', app.tool_SelectFilesToRead.UserData.id, 'tooltip', struct('defaultPosition', 'top', 'textContent', 'Seleciona arquivos')), ...
+                            struct('appName', appName, 'dataTag', app.tool_ReadFiles.UserData.id,         'tooltip', struct('defaultPosition', 'top', 'textContent', 'Seleciona arquivos')), ...
                             struct('appName', appName, 'dataTag', app.tool_MergeFiles.UserData.id,        'tooltip', struct('defaultPosition', 'top', 'textContent', 'Mescla informação contábil')), ...
                             struct('appName', appName, 'dataTag', app.tool_CheckRFB.UserData.id,          'tooltip', struct('defaultPosition', 'top', 'textContent', 'Consulta à Receita Federal')), ...
                             struct('appName', appName, 'dataTag', app.tool_OpenPopupProject.UserData.id,  'tooltip', struct('defaultPosition', 'top', 'textContent', 'Edita informações do projeto<br>(fiscalizada, arquivo de backup etc)')), ...
@@ -566,6 +571,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.General            = app.General_I;        
             app.General.AppVersion = util.getAppVersion(app.rootFolder, MFilePath, tempDir);
             sendEventToHTMLSource(app.jsBackDoor, 'getNavigatorBasicInformation')
+
+            % Ideia é identificar URL de pasta estática servida pelo backend, de 
+            % forma que possam ser inseridas imagens em uilabel (como ui.TextView).
+            try
+                [~, resourceName, resourceExt] = fileparts(app.tool_ReadFiles.ImageSource);
+                sendEventToHTMLSource(app.jsBackDoor, 'findResourceStaticURL', struct('resourceName', [resourceName resourceExt], 'resourceTag', 'img', 'resourceId', app.tool_ReadFiles.UserData.id))
+            catch
+            end
         end
 
         %-----------------------------------------------------------------%
@@ -1124,7 +1137,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         end
 
-        % Image clicked function: tool_SelectFilesToRead
+        % Image clicked function: tool_ReadFiles
         function Toolbar_SelectFileToReadImageClicked(app, event)
 
             fileFullName = {};
@@ -1546,13 +1559,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_Grid.Layout.Column = [1 7];
             app.tool_Grid.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
 
-            % Create tool_SelectFilesToRead
-            app.tool_SelectFilesToRead = uiimage(app.tool_Grid);
-            app.tool_SelectFilesToRead.ScaleMethod = 'none';
-            app.tool_SelectFilesToRead.ImageClickedFcn = createCallbackFcn(app, @Toolbar_SelectFileToReadImageClicked, true);
-            app.tool_SelectFilesToRead.Layout.Row = [1 3];
-            app.tool_SelectFilesToRead.Layout.Column = 1;
-            app.tool_SelectFilesToRead.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Import_16.png');
+            % Create tool_ReadFiles
+            app.tool_ReadFiles = uiimage(app.tool_Grid);
+            app.tool_ReadFiles.ScaleMethod = 'none';
+            app.tool_ReadFiles.ImageClickedFcn = createCallbackFcn(app, @Toolbar_SelectFileToReadImageClicked, true);
+            app.tool_ReadFiles.Layout.Row = [1 3];
+            app.tool_ReadFiles.Layout.Column = 1;
+            app.tool_ReadFiles.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Import_16.png');
 
             % Create tool_Separator1
             app.tool_Separator1 = uiimage(app.tool_Grid);
@@ -1694,7 +1707,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create NavBar
             app.NavBar = uigridlayout(app.GridLayout);
-            app.NavBar.ColumnWidth = {22, 74, '1x', 34, 34, 5, 34, '1x', 20, 20, 1, 20, 20};
+            app.NavBar.ColumnWidth = {74, '1x', 34, 34, 5, 34, '1x', 20, 20, 1, 20, 20};
             app.NavBar.RowHeight = {5, 7, 20, 7, 5};
             app.NavBar.ColumnSpacing = 5;
             app.NavBar.RowSpacing = 0;
@@ -1704,20 +1717,13 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.NavBar.Layout.Column = 1;
             app.NavBar.BackgroundColor = [0.2 0.2 0.2];
 
-            % Create AppIcon
-            app.AppIcon = uiimage(app.NavBar);
-            app.AppIcon.ScaleMethod = 'none';
-            app.AppIcon.Layout.Row = [1 5];
-            app.AppIcon.Layout.Column = 1;
-            app.AppIcon.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'deleteEntireRow_16-aa465db167fbf7f8e67f1c8f29834ebd.png');
-
             % Create AppName
             app.AppName = uilabel(app.NavBar);
             app.AppName.WordWrap = 'on';
             app.AppName.FontSize = 11;
             app.AppName.FontColor = [1 1 1];
             app.AppName.Layout.Row = [1 5];
-            app.AppName.Layout.Column = [2 3];
+            app.AppName.Layout.Column = [1 2];
             app.AppName.Interpreter = 'html';
             app.AppName.Text = {'monitorSPED v. 1.00.0'; '<font style="font-size: 9px;">R2024a</font>'};
 
@@ -1729,7 +1735,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab1Button.Text = '';
             app.Tab1Button.BackgroundColor = [0.2 0.2 0.2];
             app.Tab1Button.Layout.Row = [2 4];
-            app.Tab1Button.Layout.Column = 4;
+            app.Tab1Button.Layout.Column = 3;
             app.Tab1Button.Value = true;
 
             % Create Tab2Button
@@ -1740,14 +1746,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab2Button.Text = '';
             app.Tab2Button.BackgroundColor = [0.2 0.2 0.2];
             app.Tab2Button.Layout.Row = [2 4];
-            app.Tab2Button.Layout.Column = 5;
+            app.Tab2Button.Layout.Column = 4;
 
             % Create ButtonsSeparator
             app.ButtonsSeparator = uiimage(app.NavBar);
             app.ButtonsSeparator.ScaleMethod = 'none';
             app.ButtonsSeparator.Enable = 'off';
             app.ButtonsSeparator.Layout.Row = [2 4];
-            app.ButtonsSeparator.Layout.Column = 6;
+            app.ButtonsSeparator.Layout.Column = 5;
             app.ButtonsSeparator.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV_White.svg');
 
             % Create Tab3Button
@@ -1758,12 +1764,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab3Button.Text = '';
             app.Tab3Button.BackgroundColor = [0.2 0.2 0.2];
             app.Tab3Button.Layout.Row = [2 4];
-            app.Tab3Button.Layout.Column = 7;
+            app.Tab3Button.Layout.Column = 6;
 
             % Create jsBackDoor
             app.jsBackDoor = uihtml(app.NavBar);
             app.jsBackDoor.Layout.Row = 3;
-            app.jsBackDoor.Layout.Column = 9;
+            app.jsBackDoor.Layout.Column = 8;
 
             % Create DataHubLamp
             app.DataHubLamp = uiimage(app.NavBar);
@@ -1771,7 +1777,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.DataHubLamp.ImageClickedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.DataHubLamp.Visible = 'off';
             app.DataHubLamp.Layout.Row = 3;
-            app.DataHubLamp.Layout.Column = 10;
+            app.DataHubLamp.Layout.Column = 9;
             app.DataHubLamp.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'red-circle-blink.gif');
 
             % Create FigurePosition
@@ -1780,7 +1786,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.FigurePosition.ImageClickedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.FigurePosition.Visible = 'off';
             app.FigurePosition.Layout.Row = 3;
-            app.FigurePosition.Layout.Column = 12;
+            app.FigurePosition.Layout.Column = 11;
             app.FigurePosition.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'screen-normal-24px-white.svg');
 
             % Create AppInfo
@@ -1788,7 +1794,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.AppInfo.ScaleMethod = 'none';
             app.AppInfo.ImageClickedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.AppInfo.Layout.Row = 3;
-            app.AppInfo.Layout.Column = 13;
+            app.AppInfo.Layout.Column = 12;
             app.AppInfo.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'kebab-vertical-24px-white.svg');
 
             % Create ContextMenu
