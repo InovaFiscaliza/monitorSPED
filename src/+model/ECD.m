@@ -527,6 +527,12 @@ classdef ECD < handle
                                 update(obj, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Apurado?', generalSettings, rowIndex, newValue)
                             end
 
+                        case 'valueChanged:Declarado?'
+                            rowIndex = varargin{2};
+                            newValue = varargin{3};
+
+                            obj.Table.x_CONTAS_ANOTACAO.('Declarado?  ✎')(rowIndex) = newValue;
+
                         case 'valueChanged:Apurado?'
                             rowIndex = varargin{2};
                             newValue = varargin{3};
@@ -1123,13 +1129,29 @@ classdef ECD < handle
         
             % Verifica coerência entre ROB e ITX/EILD...
             if isfield(obj.Table, 'x_CONTAS_ANOTACAO')
-                robAccountIdxs = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "Sim");
-                itxAccountIdxs = find(ismember(obj.Table.x_CONTAS_ANOTACAO.('Interconexão?  ✎'), ["ITX", "EILD"]));
-            
-                invalidAnnotationIdxs = setdiff(itxAccountIdxs, robAccountIdxs);            
-                if ~isempty(invalidAnnotationIdxs)
+                declaredMask           = obj.Table.x_CONTAS_ANOTACAO.('Declarado?  ✎') ~= "-";
+                declaredAsTelecomMask  = ismember(obj.Table.x_CONTAS_ANOTACAO.('Declarado?  ✎'), ["Sim-parcial", "Sim-total"]);
+                accountedMask          = obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "Sim";
+                nonAccountedMask       = ismember(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎'), ["Não", "-"]);
+                interconnectionMask    = ismember(obj.Table.x_CONTAS_ANOTACAO.('Interconexão?  ✎'), ["ITX", "EILD"]);
+                missingObservationMask = cellfun(@isempty, obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'));
+
+                missingDeclaration = accountedMask & ~declaredMask;
+                if any(missingDeclaration)
                     status = false;
-                    msg{end+1} = '• Existe ao menos uma conta identificada como ITX/EILD que não consta como "Sim" na coluna "Apurado?".';
+                    msg{end+1} = '• Toda conta marcada como "Sim" na coluna "Apurado?" deve possuir informação na coluna "Declarado?".';
+                end
+
+                missingObservation = declaredAsTelecomMask & nonAccountedMask & missingObservationMask;
+                if any(missingObservation)
+                    status = false;
+                    msg{end+1} = '• Contas marcadas como "Sim-parcial" ou "Sim-total" na coluna "Declarado?" e "Não" ou "-" na coluna "Apurado?" devem possuir justificativa na coluna "Observação".';
+                end
+            
+                invalidInterconnection = interconnectionMask & ~accountedMask;
+                if any(invalidInterconnection)
+                    status = false;
+                    msg{end+1} = '• Contas classificadas como ITX ou EILD na coluna "Interconexão?" devem estar marcadas como "Sim" na coluna "Apurado?".';
                 end
             end
 

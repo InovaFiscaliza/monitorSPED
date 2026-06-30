@@ -1366,77 +1366,70 @@ classdef winECD_exported < matlab.apps.AppBase
         function Toolbar_ReportImageClicked(app, event)
             
             context = app.Context;
+            [selectedECD, fileIndex] = getSelectedECD(app);
+
+            % <VALIDAÇÕES>
             if ~validateReportRequirements(app.projectData, context, 'reportModel')
-                ui.Dialog(app.UIFigure, 'warning', 'Pendente escolha do modelo de relatório.');
+                criticalWarningMsg = '• Pendente escolha do modelo de relatório.';
+
+            elseif isempty(fileIndex)
+                criticalWarningMsg = '• Leia ao menos um arquivo de escrituração digital contábil.';
+
+            else
+                [~, criticalWarningMsg] = validateReportGenerationRequirements(selectedECD);
+            end
+
+            if ~isempty(criticalWarningMsg)
+                msgInfo = sprintf('Foi identificada pendência:<br>%s<br><br><b>Essa(s) pendência(s) precisa(m) ser resolvida(s) antes de ser gerado o relatório</b>.', criticalWarningMsg);
+                ui.Dialog(app.UIFigure, 'warning', msgInfo);
                 return
             end
-            
-            [~, fileIndex] = getSelectedECD(app);
 
-            if ~isempty(fileIndex)
-                % <VALIDAÇÕES>
-                issue = app.projectData.modules.(context).ui.issue;
-                reportVersion = app.projectData.modules.(context).ui.reportVersion;
-    
-                msgWarning = {};
-                [auditorValidationStatus, auditorValidationMessage] = validateReportGenerationRequirements(app.ecdObj(fileIndex));
-                if ~auditorValidationStatus
-                    msgWarning{end+1} = auditorValidationMessage;
-                end
+            issue = app.projectData.modules.(context).ui.issue;
+            reportVersion = app.projectData.modules.(context).ui.reportVersion;
 
-                if ~validateReportRequirements(app.projectData, context, 'issue')
-                    msgWarning{end+1} = sprintf('• O número da inspeção "%.0f" é inválido.', issue);
-                end
-    
-                if ~validateReportRequirements(app.projectData, context, 'unit')
-                    msgWarning{end+1} = '• Unidade geradora do documento precisa ser selecionada.';
-                end
-    
-                if isempty(msgWarning)
-                    switch reportVersion
-                        case 'Definitiva'
-                            msgQuestion = sprintf('Confirma que se trata de monitoração relacionada à Atividade de Inspeção nº %.0f?', issue);
-                            userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
-                            if userSelection == "Não"
-                                return
-                            end
-                            
-                        case 'Preliminar'
-                            % ...
-                    end
-    
-                else
-                    switch reportVersion
-                        case 'Definitiva'
-                            msgInfo = sprintf([ ...
-                                    'Foi(ram) identificado(s) a(s) pendência(s):<br>%s' ...
-                                    '<br><br>' ...
-                                    '<b>Essa(s) pendência(s) precisa(m) ser resolvida(s) ' ...
-                                    'antes de ser gerada a versão "Definitiva" do relatório</b>.' ...
-                                ], strjoin(msgWarning, '<br>') ...
-                            );
-                            ui.Dialog(app.UIFigure, 'warning', msgInfo);
-                            return
-    
-                        case 'Preliminar'
-                            msgQuestion = sprintf([ ...
-                                    'Foi(ram) identificado(s) a(s) pendência(s):<br>%s' ...
-                                    '<br><br>' ...
-                                    '<b>Continuar mesmo assim?</b>' ...
-                                ], strjoin(msgWarning, '<br>') ...
-                            );
-                            selection = ui.Dialog(app.UIFigure, "uiconfirm", msgQuestion, {'Sim', 'Não'}, 1, 2);
-                            if strcmp(selection, 'Não')
-                                return
-                            end
-                    end
-                end
-                % </VALIDAÇÕES>
-    
-                % <PROCESSO>
-                reportDispatchOperation(app, 'onReportGenerate', fileIndex)
-                % </PROCESSO>
+            nonCriticalWarningMsg = {};
+            if ~validateReportRequirements(app.projectData, context, 'issue')
+                nonCriticalWarningMsg{end+1} = sprintf('• O número da inspeção "%.0f" é inválido.', issue);
             end
+
+            if ~validateReportRequirements(app.projectData, context, 'unit')
+                nonCriticalWarningMsg{end+1} = '• Unidade geradora do documento precisa ser selecionada.';
+            end
+
+            if isempty(nonCriticalWarningMsg)
+                switch reportVersion
+                    case 'Definitiva'
+                        msgQuestion = sprintf('Confirma que se trata de monitoração relacionada à Atividade de Inspeção nº %.0f?', issue);
+                        userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
+                        if userSelection == "Não"
+                            return
+                        end
+                        
+                    case 'Preliminar'
+                        % ...
+                end
+
+            else
+                switch reportVersion
+                    case 'Definitiva'
+                        msgInfo = sprintf('Foi identificada pendência:<br>%s<br><br><b>Essa(s) pendência(s) precisa(m) ser resolvida(s) antes de ser gerada a versão "Definitiva" do relatório</b>.', strjoin(nonCriticalWarningMsg, '<br>'));
+                        ui.Dialog(app.UIFigure, 'warning', msgInfo);
+                        return
+
+                    case 'Preliminar'
+                        msgQuestion = sprintf('Foi identificada pendência:<br>%s<br><br><b>Continuar mesmo assim?</b>', strjoin(nonCriticalWarningMsg, '<br>'));
+                        selection = ui.Dialog(app.UIFigure, "uiconfirm", msgQuestion, {'Sim', 'Não'}, 1, 2);
+                        if strcmp(selection, 'Não')
+                            return
+                        end
+                end
+            end
+            % </VALIDAÇÕES>
+
+            % <PROCESSO>
+            reportDispatchOperation(app, 'onReportGenerate', fileIndex)
+            % </PROCESSO>
             
         end
 

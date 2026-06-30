@@ -1,5 +1,5 @@
 {
-    "version": 1.13,
+    "version": 1.14,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -101,6 +101,12 @@
                 "_CONCILIACAO_INTERCONEXAO",
                 "_APURACAO_GERAL",
                 "_APURACAO_INTERCONEXAO"
+            ],
+            "selfDeclarationOptions": [
+                "-",
+                "Não",
+                "Sim-parcial",
+                "Sim-total"
             ],
             "accountOptions": [
                 "-",

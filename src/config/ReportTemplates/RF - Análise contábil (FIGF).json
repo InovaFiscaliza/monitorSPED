@@ -550,6 +550,7 @@
                         "Columns": [
                             "COD_CTA", 
                             "DESCRIÇÃO", 
+                            "Declarado?  ✎", 
                             "Apurado?  ✎", 
                             "Interconexão?  ✎", 
                             "Alíquota ICMS", 
@@ -566,6 +567,12 @@
                             {
                                 "Editable": "false",
                                 "ColumnName": "Classificação Contábil",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Declarado?",
                                 "Precision": "%s",
                                 "Width": "auto"
                             },
@@ -947,6 +954,14 @@
             "Text": "DOCUMENTOS REFERENCIADOS",
             "Variable": [],
             "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "Planilha Análise ECD e Apuração 20XX (SEI nº XXXX)",
+                        "Variable": []
+                    }
+                },
                 {
                     "Type": "ItemN2",
                     "Data": {

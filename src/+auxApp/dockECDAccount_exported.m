@@ -42,6 +42,8 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         InterconnectionLabel      matlab.ui.control.Label
         AccountTaxCategory        matlab.ui.control.DropDown
         AccountTaxCategoryLabel   matlab.ui.control.Label
+        SelfDeclaration           matlab.ui.control.DropDown
+        SelfDeclarationLabel      matlab.ui.control.Label
         AccountInfo               matlab.ui.control.Label
         AccountList               matlab.ui.control.DropDown
         AccountListLabel          matlab.ui.control.Label
@@ -102,6 +104,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             end
 
             % Tipos de conta:
+            app.SelfDeclaration.Items = app.mainApp.General.context.ECD.selfDeclarationOptions;
             app.AccountTaxCategory.Items = app.mainApp.General.context.ECD.accountOptions;
             app.Interconnection.Items = app.mainApp.General.context.ECD.interconnectionOptions;
         end
@@ -116,6 +119,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             ui.TextView.setLabelInnerHTMLBypassingText(app.jsBackDoor, app.AccountInfo, htmlContent)
             
             % Valores iniciais dos campos passíveis de anotação:
+            app.SelfDeclaration.Value = char(accountTable.('Declarado?  ✎')(index));
             app.AccountTaxCategory.Value = char(accountTable.('Apurado?  ✎')(index));
             app.Interconnection.Value = char(accountTable.('Interconexão?  ✎')(index));
             app.AuditorComment.Value = accountTable.('Observação  ✎'){index};
@@ -243,7 +247,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         end
 
         % Value changed function: AccountTaxCategory, AuditorComment, 
-        % ...and 14 other components
+        % ...and 15 other components
         function parameterValueChanged(app, event)
             
             fileIndex    = app.inputArgs.index;
@@ -252,6 +256,9 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             generalSettings = app.mainApp.General;
 
             switch event.Source
+                case app.SelfDeclaration
+                    update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Declarado?', generalSettings, accountIndex, app.SelfDeclaration.Value)
+
                 case app.AccountTaxCategory
                     update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'valueChanged:Apurado?', generalSettings, accountIndex, app.AccountTaxCategory.Value)
 
@@ -332,7 +339,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             if isempty(Container)
                 app.UIFigure = uifigure('Visible', 'off');
                 app.UIFigure.AutoResizeChildren = 'off';
-                app.UIFigure.Position = [92 92 720 580];
+                app.UIFigure.Position = [92 92 794 580];
                 app.UIFigure.Name = 'monitorSPED';
                 app.UIFigure.Icon = 'icon_16.png';
                 app.UIFigure.CloseRequestFcn = createCallbackFcn(app, @closeFcn, true);
@@ -355,7 +362,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
 
             % Create GridLayout
             app.GridLayout = uigridlayout(app.Container);
-            app.GridLayout.ColumnWidth = {22, 22, '1x', 125, 125, 264};
+            app.GridLayout.ColumnWidth = {22, 22, 46, 120, 110, 110, 264};
             app.GridLayout.RowHeight = {17, 22, '1x', 22, 22, 108, 22, 44, 1, 22};
             app.GridLayout.RowSpacing = 5;
             app.GridLayout.Padding = [20 20 20 20];
@@ -376,7 +383,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.AccountList.FontSize = 11;
             app.AccountList.BackgroundColor = [1 1 1];
             app.AccountList.Layout.Row = 2;
-            app.AccountList.Layout.Column = [1 6];
+            app.AccountList.Layout.Column = [1 7];
             app.AccountList.Value = {};
 
             % Create AccountInfo
@@ -385,16 +392,34 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.AccountInfo.WordWrap = 'on';
             app.AccountInfo.FontSize = 11;
             app.AccountInfo.Layout.Row = 3;
-            app.AccountInfo.Layout.Column = [1 6];
+            app.AccountInfo.Layout.Column = [1 7];
             app.AccountInfo.Interpreter = 'html';
             app.AccountInfo.Text = '';
+
+            % Create SelfDeclarationLabel
+            app.SelfDeclarationLabel = uilabel(app.GridLayout);
+            app.SelfDeclarationLabel.VerticalAlignment = 'bottom';
+            app.SelfDeclarationLabel.FontSize = 11;
+            app.SelfDeclarationLabel.Layout.Row = 4;
+            app.SelfDeclarationLabel.Layout.Column = [1 3];
+            app.SelfDeclarationLabel.Text = 'Declarado? ✎';
+
+            % Create SelfDeclaration
+            app.SelfDeclaration = uidropdown(app.GridLayout);
+            app.SelfDeclaration.Items = {'-', 'Não', 'Sim-parcial', 'Sim-total'};
+            app.SelfDeclaration.ValueChangedFcn = createCallbackFcn(app, @parameterValueChanged, true);
+            app.SelfDeclaration.FontSize = 11;
+            app.SelfDeclaration.BackgroundColor = [1 1 1];
+            app.SelfDeclaration.Layout.Row = 5;
+            app.SelfDeclaration.Layout.Column = [1 3];
+            app.SelfDeclaration.Value = '-';
 
             % Create AccountTaxCategoryLabel
             app.AccountTaxCategoryLabel = uilabel(app.GridLayout);
             app.AccountTaxCategoryLabel.VerticalAlignment = 'bottom';
             app.AccountTaxCategoryLabel.FontSize = 11;
             app.AccountTaxCategoryLabel.Layout.Row = 4;
-            app.AccountTaxCategoryLabel.Layout.Column = [1 3];
+            app.AccountTaxCategoryLabel.Layout.Column = 4;
             app.AccountTaxCategoryLabel.Text = 'Apurado? ✎';
 
             % Create AccountTaxCategory
@@ -404,7 +429,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.AccountTaxCategory.FontSize = 11;
             app.AccountTaxCategory.BackgroundColor = [1 1 1];
             app.AccountTaxCategory.Layout.Row = 5;
-            app.AccountTaxCategory.Layout.Column = [1 3];
+            app.AccountTaxCategory.Layout.Column = 4;
             app.AccountTaxCategory.Value = '-';
 
             % Create InterconnectionLabel
@@ -412,7 +437,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.InterconnectionLabel.VerticalAlignment = 'bottom';
             app.InterconnectionLabel.FontSize = 11;
             app.InterconnectionLabel.Layout.Row = 4;
-            app.InterconnectionLabel.Layout.Column = 4;
+            app.InterconnectionLabel.Layout.Column = 5;
             app.InterconnectionLabel.Text = 'Interconexão? ✎';
 
             % Create Interconnection
@@ -422,7 +447,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.Interconnection.FontSize = 11;
             app.Interconnection.BackgroundColor = [1 1 1];
             app.Interconnection.Layout.Row = 5;
-            app.Interconnection.Layout.Column = 4;
+            app.Interconnection.Layout.Column = 5;
             app.Interconnection.Value = '-';
 
             % Create IcmsRateModeLabel
@@ -430,7 +455,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.IcmsRateModeLabel.VerticalAlignment = 'bottom';
             app.IcmsRateModeLabel.FontSize = 11;
             app.IcmsRateModeLabel.Layout.Row = 4;
-            app.IcmsRateModeLabel.Layout.Column = 5;
+            app.IcmsRateModeLabel.Layout.Column = 6;
             app.IcmsRateModeLabel.Text = 'Alíquota ICMS ✎';
 
             % Create IcmsRateMode
@@ -440,13 +465,13 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.IcmsRateMode.FontSize = 11;
             app.IcmsRateMode.BackgroundColor = [1 1 1];
             app.IcmsRateMode.Layout.Row = 5;
-            app.IcmsRateMode.Layout.Column = 5;
+            app.IcmsRateMode.Layout.Column = 6;
             app.IcmsRateMode.Value = 'auto';
 
             % Create IcmsMonthsPanel
             app.IcmsMonthsPanel = uipanel(app.GridLayout);
             app.IcmsMonthsPanel.Layout.Row = 6;
-            app.IcmsMonthsPanel.Layout.Column = [1 5];
+            app.IcmsMonthsPanel.Layout.Column = [1 6];
 
             % Create IcmsMonthsGrid
             app.IcmsMonthsGrid = uigridlayout(app.IcmsMonthsPanel);
@@ -696,7 +721,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.AuditorComment.ValueChangedFcn = createCallbackFcn(app, @parameterValueChanged, true);
             app.AuditorComment.FontSize = 11;
             app.AuditorComment.Layout.Row = 8;
-            app.AuditorComment.Layout.Column = [1 5];
+            app.AuditorComment.Layout.Column = [1 6];
 
             % Create MonthlyBalanceChartPanel
             app.MonthlyBalanceChartPanel = uipanel(app.GridLayout);
@@ -704,7 +729,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.MonthlyBalanceChartPanel.BorderType = 'none';
             app.MonthlyBalanceChartPanel.BackgroundColor = [0 0 0];
             app.MonthlyBalanceChartPanel.Layout.Row = [5 8];
-            app.MonthlyBalanceChartPanel.Layout.Column = 6;
+            app.MonthlyBalanceChartPanel.Layout.Column = 7;
 
             % Create PreviousSelection
             app.PreviousSelection = uiimage(app.GridLayout);
@@ -727,7 +752,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.AccountAnnualTotal.VerticalAlignment = 'top';
             app.AccountAnnualTotal.FontSize = 11;
             app.AccountAnnualTotal.Layout.Row = [9 10];
-            app.AccountAnnualTotal.Layout.Column = 6;
+            app.AccountAnnualTotal.Layout.Column = 7;
             app.AccountAnnualTotal.Text = '';
 
             % Show the figure after all components are created

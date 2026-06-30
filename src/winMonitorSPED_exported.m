@@ -403,7 +403,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     'VariableTypes', {'string', 'double', 'double', 'logical'}, ...
                     'VariableNames', {'AuxAppName', 'Width', 'Height', 'IsFluid'} ...
                 );
-                popupSpecifications( 1, :) = {"ECDAccount",     720, 580, false};
+                popupSpecifications( 1, :) = {"ECDAccount",     794, 580, false};
                 popupSpecifications( 2, :) = {"ECDExport",      460, 480, false};
                 popupSpecifications( 3, :) = {"ECDFilter",      518, 376, false};
                 popupSpecifications( 4, :) = {"ECDMemoryUsage", 460, 580, false};
@@ -1707,7 +1707,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create NavBar
             app.NavBar = uigridlayout(app.GridLayout);
-            app.NavBar.ColumnWidth = {74, '1x', 34, 34, 5, 34, '1x', 20, 20, 1, 20, 20};
+            app.NavBar.ColumnWidth = {101, '1x', 34, 34, 5, 34, '1x', 20, 20, 1, 20, 20};
             app.NavBar.RowHeight = {5, 7, 20, 7, 5};
             app.NavBar.ColumnSpacing = 5;
             app.NavBar.RowSpacing = 0;
