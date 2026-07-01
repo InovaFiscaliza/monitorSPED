@@ -1,5 +1,5 @@
 {
-    "version": 1.17,
+    "version": 1.18,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -167,7 +167,7 @@
         },
         "external": {
             "originId": "R",
-            "typeId": "63"
+            "typeId": "104"
         },
         "legalBasisId": "33",
         "accessLevelId": "1",

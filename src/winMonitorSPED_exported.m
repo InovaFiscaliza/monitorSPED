@@ -326,8 +326,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                         varargin = [{eventName}, varargin(2:end)];
                                         ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
 
-                                        if ~isempty(app.popupCurrentApp) && isvalid(app.popupCurrentApp)
-                                            sendEventToHTMLSource(app.jsBackDoor, 'closePopupAppRequest', struct('dataTag', app.popupCurrentApp.GridLayout.UserData.id))
+                                        if callingApp.isDocked
+                                            sendEventToHTMLSource(callingApp.callingApp.jsBackDoor, 'closePopupAppRequest', struct('dataTag', callingApp.GridLayout.UserData.id))
+                                        else
+                                            delete(callingApp)
                                         end
         
                                     % auxApp.dockECDAccount
@@ -853,7 +855,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     reportGenerate(app, context, credentials, indexes);
         
                 case 'onUploadArtifacts'
-                    reportUploadArtifacts(app, context, credentials, 'uploadDocument');
+                    reportUploadArtifacts(app, context, credentials);
             end
         end
 
@@ -916,7 +918,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function reportUploadArtifacts(app, context, credentials, operation)
+        function reportUploadArtifacts(app, context, credentials)
             callingApp = getAppHandle(app.tabGroupController, context);
             if isempty(callingApp)
                 callingApp = app;
@@ -925,16 +927,22 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             callingApp.progressDialog.Visible = 'visible';
 
             createEFiscalizaObject(app, credentials)
-            [status1, icon1, msg1] = reportUploadToSEI(app, context, operation);
+
+            [status1, icon1, msg1] = reportUploadToSEI(app, context, 'uploadDocument');
+            [status2, ~, msg2] = reportUploadToSEI(app, context, 'uploadExternalDocument');
+
+            if status1 && status2
+                msg1 = sprintf('• RELATÓRIO:\n%s\n\n• PLANILHA DE SUPORTE:\n%s', msg1, msg2);
+            end
             ui.Dialog(callingApp.UIFigure, icon1, msg1);
 
             callingApp.progressDialog.Visible = 'hidden';
             
             if status1 && strcmp(app.projectData.modules.(context).ui.system, 'eFiscaliza')
-                [status2, msg2] = reportUploadFilesToSharepoint(app, context);
+                [status3, msg3] = reportUploadFilesToSharepoint(app, context);
 
-                if ~status2
-                    ui.Dialog(callingApp.UIFigure, 'error', msg2);
+                if ~status3
+                    ui.Dialog(callingApp.UIFigure, 'error', msg3);
                 end
             end
         end
@@ -978,6 +986,29 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         end                        
 
                         response = run(app.eFiscalizaObj, env, operation, issueInfo, unit, docSpec, HTMLFile);
+
+                    case 'uploadExternalDocument'
+                        XLSXFile = getGeneratedDocumentFileName(app.projectData, '.xlsx', context);
+                        if isempty(XLSXFile)
+                            status = false;
+                            icon   = '';
+                            msg    = '';
+                            return
+                        end
+
+                        docSpec = app.General.eFiscaliza;
+                        docSpec.originId = docSpec.external.originId;
+                        docSpec.typeId = docSpec.external.typeId;
+                        docSpec.nomeArvore = 'de Análise ECD e Apuração';
+
+                        if app.projectData.modules.(context).ui.entity.status
+                            docSpec.interessados = {struct( ...
+                                'sigla', app.projectData.modules.(context).ui.entity.id, ...
+                                'nome', app.projectData.modules.(context).ui.entity.name ...
+                            )};
+                        end   
+
+                        response = run(app.eFiscalizaObj, env, operation, issueInfo, unit, docSpec, XLSXFile);
 
                     otherwise
                         error('Unexpected call')

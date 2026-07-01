@@ -297,7 +297,38 @@ classdef (Abstract) Controller
                         writematrix(JSONContent,  JSONFile,  "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite", "Encoding", "UTF-8")
                         writematrix(TEAMSContent, TEAMSFile, "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite", "Encoding", "UTF-8")
 
+                        if isscalar(ecdObj)
+                            try
+                                tableIdList = {'0000', '_BALANCETE_RESULTADO', '_CONTAS_ANOTACAO', '_CONCILIACAO_GERAL', '_CONCILIACAO_INTERCONEXAO', '_APURACAO_GERAL', '_APURACAO_INTERCONEXAO'};
+                                isTableRead(ecdObj, tableIdList, generalSettings);
+    
+                                tempExcelFile = fullfile(generalSettings.fileFolder.tempPath, [sharepointFileBase '.xlsx']);
+                                for ii = 1:numel(tableIdList)
+                                    tableId = tableIdList{ii};
+                                    tableData = ecdObj.Table.(['x' tableId]);
+                                    if ~isempty(tableData.Properties.RowNames)
+                                        tableData = [table(tableData.Properties.RowNames, 'VariableName', {'TIPO'}), tableData];
+                                    end
+            
+                                    if ii == 1
+                                        writeMode = 'replacefile';
+                                    else
+                                        writeMode = 'append';
+                                    end
+                                    writetable(tableData, tempExcelFile, "Sheet", tableId, "WriteMode", writeMode)
+                                end
+
+                                XLSXFile = tempExcelFile;
+
+                            catch
+                            end
+                        end
+
                         ZIPFileList = [ZIPFileList, {JSONFile, TEAMSFile}];
+                        
+                        if ~isempty(XLSXFile)
+                            ZIPFileList{end+1} = XLSXFile;
+                        end
                     end
                     
                     zip(ZIPFile, ZIPFileList)

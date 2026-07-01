@@ -958,7 +958,7 @@
                     "Type": "ItemN2",
                     "Data": {
                         "Editable": "true",
-                        "Text": "Planilha Análise ECD e Apuração 20XX (SEI nº XXXX)",
+                        "Text": "Planilha de Análise ECD e Apuração (SEI nº XXXX)",
                         "Variable": []
                     }
                 },
