@@ -191,6 +191,7 @@ classdef Project < model.ProjectCommon
                         end
     
                         ecdObj = [ecdObj, prjData.variables.ecdData];
+                        model.ECDBase.ensureTableSchema(ecdObj, generalSettings);
     
                     otherwise
                         error('UnexpectedVersion')

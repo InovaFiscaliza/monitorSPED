@@ -623,5 +623,37 @@ classdef (Abstract) ECDBase
                     tableOut.("TIPO")(:) = {'ROB TELECOM'};
             end
         end
+
+        %-----------------------------------------------------------------%
+        function ensureTableSchema(ecdObj, generalSettings)
+            % Edições nas tabelas que precisam ser aplciadas para manter
+            % compatibilidade com projetos salvos em versões anteriores do 
+            % app.
+            % - Em 07/01/2026 foi inserida na tabela "_CONTAS_ANOTACAO" a nova 
+            %   coluna 'Declarado?  ✎', que possui valor inicial "-".
+            % - Posteriormente, foi inserida a opção "Não informado" à lista de
+            %   categorias da coluna 'Declarado?  ✎'.
+            
+            for ii = 1:numel(ecdObj)
+                if ~isvalid(ecdObj(ii)) || isempty(ecdObj(ii).Table) || ~isfield(ecdObj(ii).Table, 'x_CONTAS_ANOTACAO')
+                    continue
+                end
+
+                % _CONTAS_ANOTACAO
+                tbl = ecdObj(ii).Table.('x_CONTAS_ANOTACAO');
+                if ~ismember('Declarado?  ✎', tbl.Properties.VariableNames)
+                    tbl.('Declarado?  ✎') = repmat(categorical("-", generalSettings.context.ECD.selfDeclarationOptions, 'Protected', true), height(tbl), 1);
+                    tbl = movevars(tbl, 'Declarado?  ✎', 'Before', 'Apurado?  ✎');
+                end
+
+                if ~isequal(categories(tbl.('Declarado?  ✎')), generalSettings.context.ECD.selfDeclarationOptions)
+                    columnValues = cellstr(tbl.('Declarado?  ✎'));
+                    tbl.('Declarado?  ✎') = repmat(categorical("-", generalSettings.context.ECD.selfDeclarationOptions, 'Protected', true), height(tbl), 1);
+                    tbl.('Declarado?  ✎')(:) = columnValues;
+                end
+
+                ecdObj(ii).Table.('x_CONTAS_ANOTACAO') = tbl;
+            end
+        end
     end
 end

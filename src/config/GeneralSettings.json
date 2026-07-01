@@ -1,5 +1,5 @@
 {
-    "version": 1.15,
+    "version": 1.17,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -104,6 +104,7 @@
             ],
             "selfDeclarationOptions": [
                 "-",
+                "Não informado",
                 "Não",
                 "Sim-parcial",
                 "Sim-total"

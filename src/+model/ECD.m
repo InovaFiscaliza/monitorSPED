@@ -1130,6 +1130,7 @@ classdef ECD < handle
             % Verifica coerência entre ROB e ITX/EILD...
             if isfield(obj.Table, 'x_CONTAS_ANOTACAO')
                 declaredMask           = obj.Table.x_CONTAS_ANOTACAO.('Declarado?  ✎') ~= "-";
+                declaredIrregularMask  = obj.Table.x_CONTAS_ANOTACAO.('Declarado?  ✎') == "Não informado";
                 declaredAsTelecomMask  = ismember(obj.Table.x_CONTAS_ANOTACAO.('Declarado?  ✎'), ["Sim-parcial", "Sim-total"]);
                 accountedMask          = obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "Sim";
                 nonAccountedMask       = ismember(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎'), ["Não", "-"]);
@@ -1140,6 +1141,12 @@ classdef ECD < handle
                 if any(missingDeclaration)
                     status = false;
                     msg{end+1} = '• Toda conta marcada como "Sim" na coluna "Apurado?" deve possuir informação na coluna "Declarado?".';
+                end
+
+                irregularDeclaration = declaredIrregularMask & missingObservationMask;
+                if any(irregularDeclaration)
+                    status = false;
+                    msg{end+1} = '• Contas marcadas como "Não informado" na coluna "Declarado?" devem possuir justificativa na coluna "Observação".';
                 end
 
                 missingObservation = declaredAsTelecomMask & nonAccountedMask & missingObservationMask;
