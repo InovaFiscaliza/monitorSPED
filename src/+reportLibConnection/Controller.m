@@ -248,15 +248,32 @@ classdef (Abstract) Controller
                 case 'final'
                     try
                         [issueDetails, msgError] = getOrFetchIssueDetails(projectData, projectData.modules.(context).ui.system, projectData.modules.(context).ui.issue, mainApp.eFiscalizaObj);
+                        
                         if ~isempty(msgError)
                             error('reportLibConnection:Controller', msgError)
                         end
+
+                        if ~isdeployed() && ~ismember(issueDetails.issueContext.solicitacao.classificacao.subtema, generalSettings.reportLib.allowedSubthemes)
+                            issueDetails.issueContext.solicitacao.classificacao.subtema = generalSettings.reportLib.allowedSubthemes{1};
+                        end
+
                     catch ME
                         if ~isdeployed()
-                            issueDetails = struct('usuario', struct('nome', 'NOME_FISCAL', 'email', 'EMAIL_FISCAL@anatel.gov.br', 'unidade', 'LOTACAO_FISCAL', 'funcao', 'FISCAL'));
+                            issueDetails = struct( ...
+                                'usuario', struct('nome', 'NOME_FISCAL', 'email', 'EMAIL_FISCAL@anatel.gov.br', 'unidade', 'LOTACAO_FISCAL', 'funcao', 'FISCAL'), ...
+                                'issueContext', struct( ...
+                                    'solicitacao', struct('classificacao', struct('subtema', generalSettings.reportLib.allowedSubthemes{1})), ...
+                                    'acao', struct('sei', struct('processo', '00000.000000/0000-00')) ...
+                                ) ...
+                            );
                         else
                             rethrow(ME)
                         end
+                    end
+
+                    subtheme = issueDetails.issueContext.solicitacao.classificacao.subtema;
+                    if ~ismember(subtheme, generalSettings.reportLib.allowedSubthemes)
+                        error('reportLibConnection:Controller:UnexpectedSubthemes', 'A Atividade de inspeção nº %d está associada ao subtema "%s". Entretanto, este subtema não está configurado para a geração de relatórios pelo %s.<br><br>Favor revisar a indicação da inspeção.', issueDetails.issueId, subtheme, appName)
                     end
 
                     JSONFile  = '';

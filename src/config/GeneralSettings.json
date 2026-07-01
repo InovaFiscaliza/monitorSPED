@@ -1,5 +1,5 @@
 {
-    "version": 1.14,
+    "version": 1.15,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -135,6 +135,10 @@
     "reportLib": {
         "system": "eFiscaliza",
         "unit": "",
+        "allowedSubthemes": [
+            "Tributário - FUST",
+            "Tributário - FUNTTEL"
+        ],
         "tablesToClearBeforeSave": [
             "C050_C051_C052",
             "I050_I051_I052",

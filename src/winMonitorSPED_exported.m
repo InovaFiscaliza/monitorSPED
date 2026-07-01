@@ -909,7 +909,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             catch ME
                 app.eFiscalizaObj = [];
-                ui.Dialog(callingApp.UIFigure, 'error', getReport(ME));
+                ui.Dialog(callingApp.UIFigure, 'error', ME.message);
             end
 
             callingApp.progressDialog.Visible = 'hidden';
