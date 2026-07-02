@@ -1,5 +1,5 @@
 {
-    "version": 1.18,
+    "version": 1.19,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -169,7 +169,7 @@
             "originId": "R",
             "typeId": "104"
         },
-        "legalBasisId": "33",
+        "legalBasisId": "42",
         "accessLevelId": "1",
         "description": "",
         "note": "Documento gerado no monitorSPED",
