@@ -268,6 +268,11 @@ function tbl = initializeOrdinaryTable(layout, recordId, fileBlock)
             end
     
             switch model.ECDBase.getFieldSpecification(columnName, 'DataType')
+                case 'cell'
+                    if columnName == "COD_CTA"
+                        tbl = model.ECDBase.normalizeStringColumns(tbl);
+                    end
+
                 case 'double'
                     if ~isa(tbl.(columnName), 'double')
                         emptyIndexes = cellfun(@isempty, tbl.(columnName));
@@ -347,7 +352,7 @@ function [xI200, xI250] = initializeFactTable(obj, operation, byteArray, newLine
                 case 'I250'
                     % Trecho comum a todos os layouts:
                     % | REG | COD_CTA | COD_CCUS | VL_DC | IND_DC | NUM_ARQ | COD_HIST_PAD | HIST | COD_PART |
-                    tbl.COD_CTA(startIdx:endIdx) = parsedFields(:, 2);
+                    tbl.COD_CTA(startIdx:endIdx) = strtrim(parsedFields(:, 2));
                     tbl.COD_HIST_PAD(startIdx:endIdx) = parsedFields(:, 7);
                     tbl.HIST(startIdx:endIdx) = parsedFields(:, 8);
 

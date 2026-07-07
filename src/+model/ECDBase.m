@@ -625,11 +625,23 @@ classdef (Abstract) ECDBase
         end
 
         %-----------------------------------------------------------------%
+        function tbl = normalizeStringColumns(tbl)
+            % Normalização nas tabelas que precisam ser aplicadas para que
+            % a coluna "COD_CTA" possa ser usada como chave, quando aplicável.
+            % Isto porque em 06/07/2026 foi identificada escrituração contendo 
+            % uma conta "2.01.01.20 ".
+
+            if ismember('COD_CTA', tbl.Properties.VariableNames)
+                tbl.('COD_CTA') = strtrim(tbl.('COD_CTA'));
+            end
+        end
+
+        %-----------------------------------------------------------------%
         function ensureTableSchema(ecdObj, generalSettings)
             % Edições nas tabelas que precisam ser aplciadas para manter
             % compatibilidade com projetos salvos em versões anteriores do 
             % app.
-            % - Em 07/01/2026 foi inserida na tabela "_CONTAS_ANOTACAO" a nova 
+            % - Em 01/07/2026 foi inserida na tabela "_CONTAS_ANOTACAO" a nova 
             %   coluna 'Declarado?  ✎', que possui valor inicial "-".
             % - Posteriormente, foi inserida a opção "Não informado" à lista de
             %   categorias da coluna 'Declarado?  ✎'.

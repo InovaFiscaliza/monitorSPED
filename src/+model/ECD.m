@@ -309,6 +309,9 @@ classdef ECD < handle
                     end
 
                     parseTable(obj(ii), tableId, generalSettings);
+                    if isfield(obj(ii).Table, tableIdField) && ~isempty(obj(ii).Table.(tableIdField))
+                        obj.Table.(tableIdField) = model.ECDBase.normalizeStringColumns(obj.Table.(tableIdField));
+                    end
 
                     % Valida se foi lido o número de linhas esperado...
                     expectedRows = expectedRowsByTableId(obj, tableId);
@@ -1229,6 +1232,10 @@ classdef ECD < handle
         
                         for jj = 1:accountNumLevel
                             currentIndex = find(strcmp(xI050.("COD_CTA"), currentId),  1);
+                            if isempty(currentIndex)
+                                continue
+                            end
+                            
                             currentId = xI050.("COD_CTA_SUP"){currentIndex};
                             
                             superiorDescription = '';
