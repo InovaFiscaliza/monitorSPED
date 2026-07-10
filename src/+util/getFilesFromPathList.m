@@ -23,7 +23,7 @@ function [filePathList, fileNameList] = getFilesFromPathList(inputPathList, temp
         else
             [~, ~, fileExt] = fileparts(currentPath);
             
-            if any(contains({'.sped', '.zip'}, fileExt, 'IgnoreCase', true))
+            if ~isempty(fileExt) && any(contains({'.sped', '.zip'}, fileExt, 'IgnoreCase', true))
                 tempExtractFolder = getTempFolder(tempFolder);
         
                 try

@@ -110,7 +110,7 @@ classdef ECD < handle
                     
                     % Leitura do arquivo, identificando o encoding e lendo os
                     % principais registros ("0000", "I030", "I050" etc).
-                    util.fileread(obj(idx), fileFullName, generalSettings);
+                    util.fileStream(obj(idx), fileFullName, generalSettings);
 
                     if numel(obj) > 1 && ismember(obj(idx).Hash, {obj(1:end-1).Hash})
                         error('model:ECD:FileAlreadyRead', 'File content has already been read.')
@@ -1373,7 +1373,7 @@ classdef ECD < handle
                         ordinaryId   = true;
                         regexMatches = extractBetween(obj.Content, ['|' tableId '|'], ['|' tableId 'FIM|'], 'Boundaries', 'inclusive');
                     else
-                        util.fileread(obj, obj.FileFullName, generalSettings, false, {'J800', 'J801'});
+                        util.fileStream(obj, obj.FileFullName, generalSettings, false, {'J800', 'J801'});
                     end
 
                 otherwise
@@ -1383,7 +1383,7 @@ classdef ECD < handle
                         regexMatches = regexp(obj.Content, regexPattern, 'match', 'lineanchors', 'dotexceptnewline')';
                         regexMatches = strrep(regexMatches, sprintf('\r'), '');
                     else
-                        util.fileread(obj, obj.FileFullName, generalSettings, false, {tableId});
+                        util.fileStream(obj, obj.FileFullName, generalSettings, false, {tableId});
                     end
             end
 

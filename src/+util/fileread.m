@@ -315,7 +315,7 @@ function [xI200, xI250] = initializeFactTable(obj, operation, byteArray, newLine
             end
 
             xI200 = parseFactTable('I200', {'datetime', 'cell'}, {'DT_LCTO', 'IND_LCTO'});
-            xI250 = parseFactTable('I250', {'cell', 'cell', 'cell' 'cell', 'double'}, {'COD_CTA', 'COD_HIST_PAD', 'HIST', 'IND_DC', 'VD_DC'});
+            xI250 = parseFactTable('I250', {'cell', 'cell', 'cell' 'cell', 'double'}, {'COD_CTA', 'COD_HIST_PAD', 'HIST', 'IND_DC', 'VL_DC'});
     end
 
     function tbl = parseFactTable(registerId, variableTypes, variableNames)
@@ -358,7 +358,7 @@ function [xI200, xI250] = initializeFactTable(obj, operation, byteArray, newLine
 
                     if hasExtendedI250Fields
                         tbl.IND_DC(startIdx:endIdx) = parsedFields(:, 5);
-                        tbl.VD_DC(startIdx:endIdx) = str2double(replace(parsedFields(:, 4), ',', '.'));
+                        tbl.VL_DC(startIdx:endIdx) = str2double(replace(parsedFields(:, 4), ',', '.'));
                     end
             end
         end
