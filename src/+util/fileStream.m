@@ -148,15 +148,15 @@ function [encoding, encodingJson] = detectEncoding(fileFullName, fileSize, gener
     encodingDetectionBytes = min([fileSize, generalSettings.context.FILE.encodingDetectionBytes]);
     sampleBytes = readFilePrefix(fileFullName, encodingDetectionBytes);
 
-    % Elimina do sample tudo que venha após o terminador do arquivo (9999),
+    % Elimina da amostra tudo que venha após o terminador do arquivo (9999),
     % pois o bloco binário da assinatura digital que segue a linha |9999|
-    % distorceria a contagem de caracteres especiais.
+    % pode distorcer a contagem de caracteres especiais.
     sampleBytes = truncateSampleAtTerminator(sampleBytes);
 
     for ii = 1:numel(encodingList)
         rawDecoded = lower(native2unicode(sampleBytes, encodingList{ii}));
         numSpecialChars = cellfun(@(x) numel(strfind(rawDecoded, x)), textAnalysis.specialMain);
-        encodingInfo(end+1, :) = {encodingList{ii}, sum(numSpecialChars > 0), sum(numSpecialChars)}; %#ok<AGROW>
+        encodingInfo(end+1, :) = {encodingList{ii}, sum(numSpecialChars > 0), sum(numSpecialChars)};
     end
     encodingInfo = sortrows(encodingInfo, {'SpecialCharsTypeCount', 'SpecialCharsCount'}, 'descend');
     encodingJson = matlab.jsonencode(encodingInfo);
@@ -203,7 +203,7 @@ function result = streamParse(fileFullName, encoding, recordIds, stopAt9999, chu
     % entre conteúdo e fatos. Retorna um struct "result"; a montagem das tabelas
     % de fatos é feita depois por buildFactTables.
 
-    recordLines = repmat({cell(0, 1)}, 1, numel(recordIds));
+    recordLines  = repmat({cell(0, 1)},  1, numel(recordIds));
     recordStarts = repmat({zeros(0, 1)}, 1, numel(recordIds));
     contentParts = {};
 
@@ -219,7 +219,7 @@ function result = streamParse(fileFullName, encoding, recordIds, stopAt9999, chu
     % Modo Histórico (existe I150) vs TrialBalance+Historic (sem I150). Como o
     % I150 aparece ANTES de I200/I250, o modo já é conhecido quando a enxurrada
     % de fatos começa. Isso evita acumular campos desnecessários (IND_DC, VL_DC
-    % e todo o I200) no modo Histórico — decisivo para não estourar a memória.
+    % e todo o I200) no modo Histórico — minimiza risco de estourar a memória.
     i150Index = find(strcmp(recordIds, 'I150'), 1);
     sawI150 = false;
 
@@ -231,7 +231,7 @@ function result = streamParse(fileFullName, encoding, recordIds, stopAt9999, chu
     if fileID == -1
         error('util:fileStream:FileNotFound', 'File not found')
     end
-    fileCleanup = onCleanup(@() fclose(fileID)); %#ok<NASGU>
+    fileCleanup = onCleanup(@() fclose(fileID));
 
     iterateLineAlignedBlocks(fileID, chunkSizeBytes, @handleBlock);
 
@@ -263,12 +263,6 @@ function result = streamParse(fileFullName, encoding, recordIds, stopAt9999, chu
     );
 
     function shouldStop = handleBlock(blockBytes, blockStartPos)
-        global nVezes
-        if isempty(nVezes)
-            nVezes = 0;
-        end
-        nVezes = nVezes+1;
-        
         shouldStop = false;
         consumedEnd = numel(blockBytes);
         truncated = false;
@@ -278,7 +272,7 @@ function result = streamParse(fileFullName, encoding, recordIds, stopAt9999, chu
         % quebra de linha anterior (\n|9999|) para não casar com o mapeamento
         % de contagem de registros "|9900|9999|...|".
         if stopAt9999
-            try
+            % try
                 termIdx = strfind(blockBytes, [uint8(10), uint8('|9999|')]);
                 if ~isempty(termIdx)
                     lineStart9999 = termIdx(1) + 1;
@@ -292,11 +286,10 @@ function result = streamParse(fileFullName, encoding, recordIds, stopAt9999, chu
                     truncated = true;
                 end
 
-            catch ME
-                ME
-                [userview,systemview] = memory;
-                jsonencode(struct('userView', userview, 'systemView', systemview))
-            end
+            % catch ME
+            %     [userview,systemview] = memory;
+            %     jsonencode(struct('userView', userview, 'systemView', systemview))
+            % end
         end
 
         % Evita copiar o bloco quando não há truncamento (caso comum).
@@ -350,7 +343,7 @@ function result = streamParse(fileFullName, encoding, recordIds, stopAt9999, chu
             blockText = native2unicode(searchBytes, encoding);
 
             if buildContent
-                contentParts{end+1, 1} = blockText; %#ok<AGROW>
+                contentParts{end+1, 1} = blockText;
             end
 
             if collectFacts
@@ -365,13 +358,13 @@ function result = streamParse(fileFullName, encoding, recordIds, stopAt9999, chu
                 sel250 = lines(startsWith(lines, '|I250|'));
                 if ~isempty(sel250)
                     parsed = split(extractBetween(sel250, 2, strlength(sel250) - 1), '|', 2);
-                    codCtaParts{end+1, 1}  = parsed(:, 2); %#ok<AGROW>
-                    codHistParts{end+1, 1} = parsed(:, 7); %#ok<AGROW>
-                    histParts{end+1, 1}    = parsed(:, 8); %#ok<AGROW>
+                    codCtaParts{end+1, 1}  = parsed(:, 2);
+                    codHistParts{end+1, 1} = parsed(:, 7);
+                    histParts{end+1, 1}    = parsed(:, 8);
 
                     if extended
-                        indDcParts{end+1, 1}   = parsed(:, 5); %#ok<AGROW>
-                        vdDcRawParts{end+1, 1} = parsed(:, 4); %#ok<AGROW>
+                        indDcParts{end+1, 1}   = parsed(:, 5);
+                        vdDcRawParts{end+1, 1} = parsed(:, 4);
                     end
                 end
 
@@ -380,8 +373,8 @@ function result = streamParse(fileFullName, encoding, recordIds, stopAt9999, chu
                     sel200 = lines(startsWith(lines, '|I200|'));
                     if ~isempty(sel200)
                         parsed = split(extractBetween(sel200, 2, strlength(sel200) - 1), '|', 2);
-                        dtRawParts{end+1, 1}   = parsed(:, 3); %#ok<AGROW>
-                        indLctoParts{end+1, 1} = parsed(:, 5); %#ok<AGROW>
+                        dtRawParts{end+1, 1}   = parsed(:, 3);
+                        indLctoParts{end+1, 1} = parsed(:, 5);
                     end
                 end
             end
@@ -447,9 +440,10 @@ function ends = lineEndsFor(starts, newLineIdxs, nBytes)
     firstNl = nl(1);
     lastNl = nl(end);
 
-    % s <= firstNl: primeira linha do bloco (sem quebra anterior neste bloco).
+    % Primeira linha do bloco (sem quebra anterior neste bloco).
     belowFirst = starts <= firstNl;
-    % s > lastNl: última linha sem quebra de linha final.
+    
+    % Última linha sem quebra de linha final.
     aboveLast = starts > lastNl;
     mid = ~belowFirst & ~aboveLast;
 
@@ -481,7 +475,6 @@ function [xI200, xI250] = buildFactTables(operation, facts)
     i200Names = {'DT_LCTO', 'IND_LCTO'};
     i200Types = {'datetime', 'cell'};
 
-    % ----- I250 --------------------------------------------------------------
     if isempty(facts.codCtaParts)
         xI250 = table('Size', [0, numel(i250Names)], 'VariableTypes', i250Types, 'VariableNames', i250Names);
     else
@@ -498,7 +491,6 @@ function [xI200, xI250] = buildFactTables(operation, facts)
         end
     end
 
-    % ----- I200 --------------------------------------------------------------
     xI200 = [];
     if extended
         if isempty(facts.dtRawParts)
@@ -517,10 +509,7 @@ function iterateLineAlignedBlocks(fileID, chunkSizeBytes, handler)
     % Lê o arquivo em blocos alinhados por quebra de linha. Uma leitura pode
     % terminar no meio de uma linha; nesse caso o ponteiro do arquivo é
     % reposicionado (fseek) para logo após a última quebra de linha, garantindo
-    % que o próximo bloco SEMPRE comece no início de uma linha. A posição global
-    % (1-based) do primeiro byte do bloco é obtida via ftell, evitando qualquer
-    % aritmética manual de deslocamento. O handler recebe (blockBytes,
-    % blockStartPos) e retorna shouldStop (logical).
+    % que o próximo bloco SEMPRE comece no início de uma linha.
     while true
         blockStartPos = ftell(fileID) + 1;
         chunk = fread(fileID, [1, chunkSizeBytes], 'uint8=>uint8');
@@ -537,7 +526,7 @@ function iterateLineAlignedBlocks(fileID, chunkSizeBytes, handler)
         while isempty(newLines) && ~atEOF
             more = fread(fileID, [1, chunkSizeBytes], 'uint8=>uint8');
             atEOF = numel(more) < chunkSizeBytes;
-            chunk = [chunk, more]; %#ok<AGROW>
+            chunk = [chunk, more];
             newLines = find(chunk == uint8(10));
         end
 
@@ -594,9 +583,8 @@ function bytes = readFilePrefix(fileFullName, numBytes)
     if fileID == -1
         error('util:fileStream:FileNotFound', 'File not found')
     end
-    fileCleanup = onCleanup(@() fclose(fileID)); %#ok<NASGU>
-
     bytes = fread(fileID, [1, numBytes], 'uint8=>uint8');
+    fclose(fileID);
 end
 
 
@@ -625,8 +613,8 @@ function tbl = initializeOrdinaryTable(layout, recordId, fileBlock)
         tbl = model.ECDBase.cellToTable(mergedFileBlock, columnSpec);
 
         % Conversão de unidades...
-        for kk = 1:numel(columnSpec.complete)
-            columnName = columnSpec.complete{kk};
+        for ii = 1:numel(columnSpec.complete)
+            columnName = columnSpec.complete{ii};
 
             if ~ismember(columnName, tbl.Properties.VariableNames)
                 continue
