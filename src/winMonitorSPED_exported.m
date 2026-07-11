@@ -1195,7 +1195,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             else
                 switch app.General.context.FILE.input
                     case 'file'
-                        [~, filePath, ~, fileName] = ui.Dialog(app.UIFigure, 'uigetfile', '', {'*.txt;*.sped;*.zip;*.mat', 'monitorSPED (*.txt,*.sped,*.zip,*.mat)'}, app.General.fileFolder.lastVisited, {'MultiSelect', 'on'});
+                        [~, filePath, ~, fileName] = ui.Dialog(app.UIFigure, 'uigetfile', '', {'*.txt;*.sped;*.zip;*.mat', 'monitorSPED (*.txt,*.sped,*.zip,*.mat)'; '*.*', 'Todos os arquivos (*.*)'}, app.General.fileFolder.lastVisited, {'MultiSelect', 'on'});
             
                         if isempty(fileName)
                             return
