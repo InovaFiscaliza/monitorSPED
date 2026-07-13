@@ -570,7 +570,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     end
             end
 
-            app.General            = app.General_I;        
+            app.General = app.General_I;        
             app.General.AppVersion = util.getAppVersion(app.rootFolder, MFilePath, tempDir);
             sendEventToHTMLSource(app.jsBackDoor, 'getNavigatorBasicInformation')
 

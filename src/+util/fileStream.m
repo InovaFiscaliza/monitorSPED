@@ -272,7 +272,7 @@ function result = streamParse(fileFullName, encoding, recordIds, stopAt9999, chu
         % quebra de linha anterior (\n|9999|) para não casar com o mapeamento
         % de contagem de registros "|9900|9999|...|".
         if stopAt9999
-            % try
+            try
                 termIdx = strfind(blockBytes, [uint8(10), uint8('|9999|')]);
                 if ~isempty(termIdx)
                     lineStart9999 = termIdx(1) + 1;
@@ -286,10 +286,10 @@ function result = streamParse(fileFullName, encoding, recordIds, stopAt9999, chu
                     truncated = true;
                 end
 
-            % catch ME
-            %     [userview,systemview] = memory;
-            %     jsonencode(struct('userView', userview, 'systemView', systemview))
-            % end
+            catch ME
+                [userview,systemview] = memory;
+                jsonencode(struct('userView', userview, 'systemView', systemview))
+            end
         end
 
         % Evita copiar o bloco quando não há truncamento (caso comum).
