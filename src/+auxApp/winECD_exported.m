@@ -502,34 +502,11 @@ classdef winECD_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function updateSheetList(app)
             selectedECD = getSelectedECD(app);
-            ordinaryIds = getTableIds(selectedECD);
 
-            % Algumas das tabelas customizadas existirão apenas se registros 
-            % ordinários estiverem presentes na escrituração. Por exemplo,
-            % "I200_I250" existe apenas se o registro "I200" existe.
-            customIds = app.mainApp.General.context.ECD.customTables.expected;
-            notappplicableIds = {};
-
-            if isfield(selectedECD.Table, 'x9900') && ~isempty(selectedECD.Table.x9900)
-                for ii = 1:numel(customIds)
-                    customId = customIds{ii};
-                    if startsWith(customId, '_')
-                        continue
-                    end
-
-                    mainMergedId = extractBefore(customId, '_');
-                    mainMergedIdIndex = find(strcmp(selectedECD.Table.x9900.("REG_BLC"), mainMergedId));
-
-                    if (isempty(selectedECD.Content) && selectedECD.PeriodMerged) || isempty(mainMergedIdIndex) || sum(selectedECD.Table.x9900.("QTD_REG_BLC")(mainMergedIdIndex)) <= 0
-                        notappplicableIds{end+1} = customId;
-                    end
-                end
+            if ~isfield(selectedECD.GUI, 'tableIds') || isempty(selectedECD.GUI.tableIds)
+                update(selectedECD, 'GUI.TableIds', [], app.mainApp.General)
             end
-
-            % Posteriormente, define-se a lista de registros, mantendo a 
-            % seleção inicial, caso registro já parseado.
-            sheetsSorted = sort([ordinaryIds; setdiff(customIds, notappplicableIds)]);
-            sheetsSorted = [sheetsSorted(startsWith(sheetsSorted, '_')); sheetsSorted(~startsWith(sheetsSorted, '_'))];
+            sheetsSorted = selectedECD.GUI.tableIds;
 
             selection1 = app.SheetList.Value;
             if isempty(selection1) || ~ismember(selection1, sheetsSorted) || ~isfield(selectedECD.Table, ['x' selection1])
@@ -557,7 +534,12 @@ classdef winECD_exported < matlab.apps.AppBase
 
             [selectedECD, fileIndex] = getSelectedECD(app);            
             checkIfTableRead(app, selectedECD, fileIndex, {tableId})
+            
             tableIdData = selectedECD.Table.(['x' tableId]);
+
+            if ~istable(tableIdData)
+                tableIdData = table('Size', [0, 1], 'VariableTypes', {'cell'}, 'VariableNames', {'REG'});
+            end
             
             % Filtra os dados, caso aplicável.
             [filterIndex, filterStatus] = checkTableCustomFilter(app, selectedECD, tableId, 'active');
@@ -824,7 +806,7 @@ classdef winECD_exported < matlab.apps.AppBase
                     tableField = ['x' tableId];
                     numExpectedRows = expectedRowsByTableId(selectedECD, tableId);
 
-                    if ~isfield(selectedECD.Table, tableField) || isempty(numExpectedRows) || height(selectedECD.Table.(tableField)) ~= numExpectedRows
+                    if ~isfield(selectedECD.Table, tableField) || (~isempty(numExpectedRows) && height(selectedECD.Table.(tableField)) ~= numExpectedRows)
                         requiresReloadConfirmation = true;
                         break
                     end
@@ -832,15 +814,15 @@ classdef winECD_exported < matlab.apps.AppBase
 
                 if requiresReloadConfirmation
                     msgQuestion = sprintf([ ...
-                        'O arquivo é tratado como grande por possuir mais de %s. Por essa razão, o seu conteúdo não está ' ...
-                        'totalmente carregado na memória.<br><br>O registro %s ainda não foi lido, de forma que ' ...
-                        'o aplicativo precisará reler o arquivo para carregar esses dados, o que pode levar alguns segundos.<br><br>', ...
+                        'O registro %s não está carregado na memória, de forma que ' ...
+                        'o aplicativo precisará reler o arquivo para carregar esses ' ...
+                        'dados, o que pode levar alguns segundos.<br><br>', ...
                         'Deseja continuar?' ...
-                    ], textFormatGUI.bytes2human(app.mainApp.General.context.FILE.largeFileThresholdBytes), tableId);
+                    ], tableId);
                     userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
                     
                     if userSelection == "Não"
-                        error('auxApp:winECD:UserAbortedReload', 'Operation cancelled by user. Reload of file content was not authorized.')
+                        error('auxApp:winECD:UserAbortedReload', 'Operação cancelada pelo usuário.')
                     end
                 end
             end

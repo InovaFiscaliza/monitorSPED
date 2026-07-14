@@ -181,6 +181,14 @@ classdef Project < model.ProjectCommon
                         [~, uniqueDetailsIndexes] = unique({obj.entityDetails.id});
                         obj.entityDetails = obj.entityDetails(uniqueDetailsIndexes);
 
+                        % Registra nome do arquivo do projeto (.MAT), assim 
+                        % como índice do objeto, possibilitando releitura dos 
+                        % dados na mesma sessão do app.
+                        for kk = 1:numel(prjData.variables.ecdData)
+                            prjData.variables.ecdData(kk).GUI.loadedFile.Name = fileName;
+                            prjData.variables.ecdData(kk).GUI.loadedFile.Index = kk;
+                        end
+
                         % Pode ocorrer uma coincidência de fluxos que compõem
                         % o projeto e fluxos já lidos. Se evidenciado, serão
                         % mantidos os fluxos do projeto.

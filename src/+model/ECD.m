@@ -54,13 +54,15 @@ classdef ECD < handle
                 'default', struct('mode', 'auto', 'rate', []), ...
                 'current', struct('mode', 'auto', 'rate', []) ...
             ), ...
+            'tableIds', {{}}, ...
             'tableView', struct( ...
                 'id', {}, ...
                 'filter', {}, ...
                 'style', {}, ...
                 'sort', {}, ...
                 'width', {} ...
-            ) ...
+            ), ...
+            'loadedFile', struct('Name', '', 'Index', -1) ...
         )
         
         Enable = true
@@ -304,7 +306,7 @@ classdef ECD < handle
                     tableId = tableIdList{jj};
                     tableIdField = ['x' tableId];
                     
-                    if isfield(obj(ii).Table, tableIdField)
+                    if isfield(obj(ii).Table, tableIdField) && istable(obj(ii).Table.(tableIdField))
                         continue
                     end
 
@@ -336,7 +338,8 @@ classdef ECD < handle
         function update(obj, propertyName, updateType, varargin)
             arguments
                 obj
-                propertyName char {mustBeMember(propertyName, { 'GUI.TableView.Filter';
+                propertyName char {mustBeMember(propertyName, { 'GUI.TableIds';
+                                                                'GUI.TableView.Filter';
                                                                 'GUI.TableView.Style';
                                                                 'GUI.TableView.Sort';
                                                                 'GUI.TableView.Width';
@@ -355,6 +358,44 @@ classdef ECD < handle
             checkIfScalar(obj)
 
             switch propertyName
+                case 'GUI.TableIds'
+                    generalSettings = varargin{1};
+
+                    if ~isempty(obj.Content)
+                        ordinaryIds = getTableIds(obj);
+            
+                        % Algumas das tabelas customizadas existirão apenas se registros 
+                        % ordinários estiverem presentes na escrituração. Por exemplo,
+                        % "I200_I250" existe apenas se o registro "I200" existe.
+                        customIds = generalSettings.context.ECD.customTables.expected;
+                        notappplicableIds = {};
+            
+                        if isfield(obj.Table, 'x9900') && ~isempty(obj.Table.x9900)
+                            for ii = 1:numel(customIds)
+                                customId = customIds{ii};
+                                if startsWith(customId, '_')
+                                    continue
+                                end
+            
+                                mainMergedId = extractBefore(customId, '_');
+                                mainMergedIdIndex = find(strcmp(obj.Table.x9900.("REG_BLC"), mainMergedId));
+            
+                                if isempty(mainMergedIdIndex) || sum(obj.Table.x9900.("QTD_REG_BLC")(mainMergedIdIndex)) <= 0
+                                    notappplicableIds{end+1} = customId;
+                                end
+                            end
+                        end
+            
+                        % Posteriormente, define-se a lista de registros, mantendo a 
+                        % seleção inicial, caso registro já parseado.
+                        sheetsSorted = sort([ordinaryIds; setdiff(customIds, notappplicableIds)]);
+                    else
+                        sheetsSorted = sort(extractAfter(fieldnames(obj.Table), 'x'));
+                    end
+                    sheetsSorted = [sheetsSorted(startsWith(sheetsSorted, '_')); sheetsSorted(~startsWith(sheetsSorted, '_'))];
+                    
+                    obj.GUI.tableIds = sheetsSorted;
+
                 case 'GUI.TableView.Filter'
                     switch updateType
                         case 'createFilteringObject'
@@ -951,7 +992,7 @@ classdef ECD < handle
             for ii = 1:numel(obj)
                 for jj = 1:numel(tableIdList)
                     tableId = tableIdList{jj};
-                    tableIdStatus = isfield(obj(ii).Table, ['x' tableId]);
+                    tableIdStatus = isfield(obj(ii).Table, ['x' tableId]) && istable(obj(ii).Table.(['x' tableId]));
 
                     if ~tableIdStatus
                         status = true;
@@ -1196,6 +1237,12 @@ classdef ECD < handle
             checkIfScalar(obj)
             ordinaryId = false;
 
+            if isfield(obj.GUI, 'loadedFile') && ~isempty(obj.GUI.loadedFile.Name)
+                prjData = load(obj.GUI.loadedFile.Name, '-mat', 'variables');
+                obj.Table.(['x' tableId]) = prjData.variables.ecdData(obj.GUI.loadedFile.Index).Table.(['x' tableId]);
+                return
+            end
+
             switch tableId
                 case '_BALANCETE_GERAL'
                     obj.Table.x_BALANCETE_GERAL = createTrialBalanceTable(obj, 'I155+I355', generalSettings);
@@ -1382,6 +1429,7 @@ classdef ECD < handle
                         regexPattern = ['^\|' tableId '\|.*'];
                         regexMatches = regexp(obj.Content, regexPattern, 'match', 'lineanchors', 'dotexceptnewline')';
                         regexMatches = strrep(regexMatches, sprintf('\r'), '');
+
                     else
                         util.fileStream(obj, obj.FileFullName, generalSettings, false, {tableId});
                     end
