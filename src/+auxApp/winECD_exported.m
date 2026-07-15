@@ -1049,6 +1049,10 @@ classdef winECD_exported < matlab.apps.AppBase
                         tableId = tableIdFields{ii};
 
                         tableData = selectedECD.Table.(tableId);
+                        if ~istable(tableData)
+                            continue
+                        end
+
                         if ~isempty(tableData.Properties.RowNames)
                             tableData = [table(tableData.Properties.RowNames, 'VariableName', {'TIPO'}), tableData];
                         end
