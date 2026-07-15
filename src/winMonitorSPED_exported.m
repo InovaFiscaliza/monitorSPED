@@ -406,7 +406,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     'VariableNames', {'AuxAppName', 'Width', 'Height', 'IsFluid'} ...
                 );
                 popupSpecifications( 1, :) = {"ECDAccount",     794, 580, false};
-                popupSpecifications( 2, :) = {"ECDExport",      460, 480, false};
+                popupSpecifications( 2, :) = {"ECDExport",      460, 598, false};
                 popupSpecifications( 3, :) = {"ECDFilter",      518, 376, false};
                 popupSpecifications( 4, :) = {"ECDMemoryUsage", 460, 580, false};
                 popupSpecifications( 5, :) = {"IcmsRate",       448, 320, false};

@@ -361,37 +361,11 @@ classdef ECD < handle
                 case 'GUI.TableIds'
                     generalSettings = varargin{1};
 
+                    sheetsSorted = extractAfter(fieldnames(obj.Table), 'x');
                     if ~isempty(obj.Content)
-                        ordinaryIds = getTableIds(obj);
-            
-                        % Algumas das tabelas customizadas existirão apenas se registros 
-                        % ordinários estiverem presentes na escrituração. Por exemplo,
-                        % "I200_I250" existe apenas se o registro "I200" existe.
-                        customIds = generalSettings.context.ECD.customTables.expected;
-                        notappplicableIds = {};
-            
-                        if isfield(obj.Table, 'x9900') && ~isempty(obj.Table.x9900)
-                            for ii = 1:numel(customIds)
-                                customId = customIds{ii};
-                                if startsWith(customId, '_')
-                                    continue
-                                end
-            
-                                mainMergedId = extractBefore(customId, '_');
-                                mainMergedIdIndex = find(strcmp(obj.Table.x9900.("REG_BLC"), mainMergedId));
-            
-                                if isempty(mainMergedIdIndex) || sum(obj.Table.x9900.("QTD_REG_BLC")(mainMergedIdIndex)) <= 0
-                                    notappplicableIds{end+1} = customId;
-                                end
-                            end
-                        end
-            
-                        % Posteriormente, define-se a lista de registros, mantendo a 
-                        % seleção inicial, caso registro já parseado.
-                        sheetsSorted = sort([ordinaryIds; setdiff(customIds, notappplicableIds)]);
-                    else
-                        sheetsSorted = sort(extractAfter(fieldnames(obj.Table), 'x'));
+                        sheetsSorted = [sheetsSorted; getTableIds(obj); generalSettings.context.ECD.customTables.expected];
                     end
+                    sheetsSorted = unique(sheetsSorted);
                     sheetsSorted = [sheetsSorted(startsWith(sheetsSorted, '_')); sheetsSorted(~startsWith(sheetsSorted, '_'))];
                     
                     obj.GUI.tableIds = sheetsSorted;

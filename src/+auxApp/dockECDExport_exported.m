@@ -8,20 +8,25 @@ classdef dockECDExport_exported < matlab.apps.AppBase
         Tree                    matlab.ui.container.CheckBoxTree
         GeneralAspects          matlab.ui.container.TreeNode
         x0000                   matlab.ui.container.TreeNode
-        xI030                   matlab.ui.container.TreeNode
         x9900                   matlab.ui.container.TreeNode
+        xI010                   matlab.ui.container.TreeNode
+        xI030                   matlab.ui.container.TreeNode
+        xI050                   matlab.ui.container.TreeNode
+        xI075                   matlab.ui.container.TreeNode
         AccountBook             matlab.ui.container.TreeNode
         xI050_I051_I052         matlab.ui.container.TreeNode
         AccountDescription      matlab.ui.container.TreeNode
         AccountSummary          matlab.ui.container.TreeNode
+        xI150_I155              matlab.ui.container.TreeNode
         xI200_I250              matlab.ui.container.TreeNode
-        SummaryGeneral          matlab.ui.container.TreeNode
-        SummaryResults          matlab.ui.container.TreeNode
-        ContasAnotacao          matlab.ui.container.TreeNode
-        ConciliacaoGeral        matlab.ui.container.TreeNode
-        ConcilicaoInterconexao  matlab.ui.container.TreeNode
+        xI350_I355              matlab.ui.container.TreeNode
         ApuracaoGeral           matlab.ui.container.TreeNode
         ApuracaoInterconexao    matlab.ui.container.TreeNode
+        SummaryGeneral          matlab.ui.container.TreeNode
+        SummaryResults          matlab.ui.container.TreeNode
+        ConciliacaoGeral        matlab.ui.container.TreeNode
+        ConcilicaoInterconexao  matlab.ui.container.TreeNode
+        ContasAnotacao          matlab.ui.container.TreeNode
         RTFFiles                matlab.ui.container.TreeNode
         eFiscalizaLabel         matlab.ui.control.Label
     end
@@ -46,6 +51,23 @@ classdef dockECDExport_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         inputArgs
     end
+
+
+    methods (Access = private)
+        %-----------------------------------------------------------------%
+        function updateTree(app, index)
+            % selectedECD = app.mainApp.ecdObj(index);
+            % 
+            % if ~isfield(selectedECD.GUI, 'tableIds') || isempty(selectedECD.GUI.tableIds)
+            %     update(selectedECD, 'GUI.TableIds', [], app.mainApp.General)
+            % end
+            % sheetsSorted = selectedECD.GUI.tableIds;
+            % 
+            % tags = 
+
+            expand(app.Tree, 'all')
+        end
+    end
     
 
     % Callbacks that handle component events
@@ -57,8 +79,8 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             try
                 appEngine.boot(app, app.Role, mainApp, callingApp)
 
-                app.inputArgs = struct('context', context, 'index', index);    
-                expand(app.Tree, 'all')
+                app.inputArgs = struct('context', context, 'index', index);
+                updateTree(app, index)
                 
             catch ME
                 ui.Dialog(app.UIFigure, 'error', getReport(ME), 'CloseFcn', @(~,~)closeFcn(app));
@@ -112,7 +134,7 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             if isempty(Container)
                 app.UIFigure = uifigure('Visible', 'off');
                 app.UIFigure.AutoResizeChildren = 'off';
-                app.UIFigure.Position = [92 92 460 480];
+                app.UIFigure.Position = [92 92 460 598];
                 app.UIFigure.Name = 'monitorSPED';
                 app.UIFigure.Icon = 'icon_16.png';
                 app.UIFigure.CloseRequestFcn = createCallbackFcn(app, @closeFcn, true);
@@ -164,15 +186,30 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             app.x0000.Tag = 'x0000';
             app.x0000.Text = '0000';
 
+            % Create x9900
+            app.x9900 = uitreenode(app.GeneralAspects);
+            app.x9900.Tag = 'x9900';
+            app.x9900.Text = '9900';
+
+            % Create xI010
+            app.xI010 = uitreenode(app.GeneralAspects);
+            app.xI010.Tag = 'xI010';
+            app.xI010.Text = 'I010';
+
             % Create xI030
             app.xI030 = uitreenode(app.GeneralAspects);
             app.xI030.Tag = 'xI030';
             app.xI030.Text = 'I030';
 
-            % Create x9900
-            app.x9900 = uitreenode(app.GeneralAspects);
-            app.x9900.Tag = 'x9900';
-            app.x9900.Text = '9900';
+            % Create xI050
+            app.xI050 = uitreenode(app.GeneralAspects);
+            app.xI050.Tag = 'xI050';
+            app.xI050.Text = 'I050';
+
+            % Create xI075
+            app.xI075 = uitreenode(app.GeneralAspects);
+            app.xI075.Tag = 'xI075';
+            app.xI075.Text = 'I075';
 
             % Create AccountBook
             app.AccountBook = uitreenode(app.Tree);
@@ -192,35 +229,20 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             app.AccountSummary = uitreenode(app.Tree);
             app.AccountSummary.Text = 'Balancetes e tabelas de apuração';
 
+            % Create xI150_I155
+            app.xI150_I155 = uitreenode(app.AccountSummary);
+            app.xI150_I155.Tag = 'xI150_I155';
+            app.xI150_I155.Text = 'I150_I155';
+
             % Create xI200_I250
             app.xI200_I250 = uitreenode(app.AccountSummary);
             app.xI200_I250.Tag = 'xI200_I250';
             app.xI200_I250.Text = 'I200_I250';
 
-            % Create SummaryGeneral
-            app.SummaryGeneral = uitreenode(app.AccountSummary);
-            app.SummaryGeneral.Tag = 'x_BALANCETE_GERAL';
-            app.SummaryGeneral.Text = 'Balancete Geral';
-
-            % Create SummaryResults
-            app.SummaryResults = uitreenode(app.AccountSummary);
-            app.SummaryResults.Tag = 'x_BALANCETE_RESULTADO';
-            app.SummaryResults.Text = 'Balancete Resultado';
-
-            % Create ContasAnotacao
-            app.ContasAnotacao = uitreenode(app.AccountSummary);
-            app.ContasAnotacao.Tag = 'x_CONTAS_ANOTACAO';
-            app.ContasAnotacao.Text = 'Contas Anotação';
-
-            % Create ConciliacaoGeral
-            app.ConciliacaoGeral = uitreenode(app.AccountSummary);
-            app.ConciliacaoGeral.Tag = 'x_CONCILIACAO_GERAL';
-            app.ConciliacaoGeral.Text = 'Conciliação Geral';
-
-            % Create ConcilicaoInterconexao
-            app.ConcilicaoInterconexao = uitreenode(app.AccountSummary);
-            app.ConcilicaoInterconexao.Tag = 'x_CONCILIACAO_INTERCONEXAO';
-            app.ConcilicaoInterconexao.Text = 'Conciliação Interconexão';
+            % Create xI350_I355
+            app.xI350_I355 = uitreenode(app.AccountSummary);
+            app.xI350_I355.Tag = 'xI350_I355';
+            app.xI350_I355.Text = 'I350_I355';
 
             % Create ApuracaoGeral
             app.ApuracaoGeral = uitreenode(app.AccountSummary);
@@ -232,13 +254,38 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             app.ApuracaoInterconexao.Tag = 'x_APURACAO_INTERCONEXAO';
             app.ApuracaoInterconexao.Text = 'Apuração Interconexão';
 
+            % Create SummaryGeneral
+            app.SummaryGeneral = uitreenode(app.AccountSummary);
+            app.SummaryGeneral.Tag = 'x_BALANCETE_GERAL';
+            app.SummaryGeneral.Text = 'Balancete Geral';
+
+            % Create SummaryResults
+            app.SummaryResults = uitreenode(app.AccountSummary);
+            app.SummaryResults.Tag = 'x_BALANCETE_RESULTADO';
+            app.SummaryResults.Text = 'Balancete Resultado';
+
+            % Create ConciliacaoGeral
+            app.ConciliacaoGeral = uitreenode(app.AccountSummary);
+            app.ConciliacaoGeral.Tag = 'x_CONCILIACAO_GERAL';
+            app.ConciliacaoGeral.Text = 'Conciliação Geral';
+
+            % Create ConcilicaoInterconexao
+            app.ConcilicaoInterconexao = uitreenode(app.AccountSummary);
+            app.ConcilicaoInterconexao.Tag = 'x_CONCILIACAO_INTERCONEXAO';
+            app.ConcilicaoInterconexao.Text = 'Conciliação Interconexão';
+
+            % Create ContasAnotacao
+            app.ContasAnotacao = uitreenode(app.AccountSummary);
+            app.ContasAnotacao.Tag = 'x_CONTAS_ANOTACAO';
+            app.ContasAnotacao.Text = 'Contas Anotação';
+
             % Create RTFFiles
             app.RTFFiles = uitreenode(app.Tree);
             app.RTFFiles.Tag = 'xJ800|xJ801';
             app.RTFFiles.Text = 'Arquivos anexos .rtf (J800 e J801)';
 
             % Assign Checked Nodes
-            app.Tree.CheckedNodes = [app.x0000, app.SummaryResults, app.ContasAnotacao, app.ConciliacaoGeral, app.ConcilicaoInterconexao, app.ApuracaoGeral, app.ApuracaoInterconexao];
+            app.Tree.CheckedNodes = [app.x0000, app.SummaryResults, app.ContasAnotacao, app.ApuracaoGeral, app.ApuracaoInterconexao, app.ConciliacaoGeral, app.ConcilicaoInterconexao];
             % Assign Checked Nodes
             app.Tree.CheckedNodesChangedFcn = createCallbackFcn(app, @TreeCheckedNodesChanged, true);
 

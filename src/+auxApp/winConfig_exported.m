@@ -2,69 +2,71 @@ classdef winConfig_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure                     matlab.ui.Figure
-        GridLayout                   matlab.ui.container.GridLayout
-        DockModule                   matlab.ui.container.GridLayout
-        dockModule_Close             matlab.ui.control.Image
-        dockModule_Undock            matlab.ui.control.Image
-        SubTabGroup                  matlab.ui.container.TabGroup
-        SubTab1                      matlab.ui.container.Tab
-        SubGrid1                     matlab.ui.container.GridLayout
-        openAuxiliarApp2Debug        matlab.ui.control.CheckBox
-        openAuxiliarAppAsDocked      matlab.ui.control.CheckBox
-        versionInfo                  matlab.ui.control.Label
-        versionInfoRefresh           matlab.ui.control.Image
-        versionInfoLabel             matlab.ui.control.Label
-        SubTab2                      matlab.ui.container.Tab
-        SubGrid2                     matlab.ui.container.GridLayout
-        configAnalysisPanel2         matlab.ui.container.Panel
-        configAnalysisGrid2          matlab.ui.container.GridLayout
-        AddAccountDescription        matlab.ui.control.CheckBox
-        Cofins                       matlab.ui.control.Spinner
-        CofinsLabel                  matlab.ui.control.Label
-        PIS                          matlab.ui.control.Spinner
-        PISLabel                     matlab.ui.control.Label
-        ICMS                         matlab.ui.control.Spinner
-        ICMSLabel                    matlab.ui.control.Label
-        configAnalysisPanel2Label    matlab.ui.control.Label
-        configAnalysisPanel1         matlab.ui.container.Panel
-        configAnalysisGrid1          matlab.ui.container.GridLayout
-        EncodingOverride             matlab.ui.control.DropDown
-        EncodingOverrideLabel        matlab.ui.control.Label
-        CheckStatus                  matlab.ui.control.DropDown
-        CheckStatusLabel             matlab.ui.control.Label
-        SortMethod                   matlab.ui.control.DropDown
-        SortMethodLabel              matlab.ui.control.Label
-        InputType                    matlab.ui.control.DropDown
-        InputTypeLabel               matlab.ui.control.Label
-        configAnalysisRefresh        matlab.ui.control.Image
-        configAnalysisPanel1Label    matlab.ui.control.Label
-        SubTab3                      matlab.ui.container.Tab
-        SubGrid3                     matlab.ui.container.GridLayout
-        reportPanel                  matlab.ui.container.Panel
-        reportGrid                   matlab.ui.container.GridLayout
-        prjFileCompressionMode       matlab.ui.control.DropDown
-        prjFileCompressionModeLabel  matlab.ui.control.Label
-        reportLabel                  matlab.ui.control.Label
-        eFiscalizaPanel              matlab.ui.container.Panel
-        eFiscalizaGrid               matlab.ui.container.GridLayout
-        reportUnit                   matlab.ui.control.DropDown
-        reportUnitLabel              matlab.ui.control.Label
-        reportSystem                 matlab.ui.control.DropDown
-        reportSystemLabel            matlab.ui.control.Label
-        eFiscalizaRefresh            matlab.ui.control.Image
-        eFiscalizaLabel              matlab.ui.control.Label
-        SubTab4                      matlab.ui.container.Tab
-        SubGrid4                     matlab.ui.container.GridLayout
-        userPathButton               matlab.ui.control.Image
-        userPath                     matlab.ui.control.EditField
-        userPathLabel                matlab.ui.control.Label
-        DataHubPOSTButton            matlab.ui.control.Image
-        DataHubPOST                  matlab.ui.control.EditField
-        DATAHUBPOSTLabel             matlab.ui.control.Label
-        Toolbar                      matlab.ui.container.GridLayout
-        tool_openDevTools            matlab.ui.control.Image
-        tool_simulationMode          matlab.ui.control.Image
+        UIFigure                      matlab.ui.Figure
+        GridLayout                    matlab.ui.container.GridLayout
+        DockModule                    matlab.ui.container.GridLayout
+        dockModule_Close              matlab.ui.control.Image
+        dockModule_Undock             matlab.ui.control.Image
+        SubTabGroup                   matlab.ui.container.TabGroup
+        SubTab1                       matlab.ui.container.Tab
+        SubGrid1                      matlab.ui.container.GridLayout
+        openAuxiliarApp2Debug         matlab.ui.control.CheckBox
+        openAuxiliarAppAsDocked       matlab.ui.control.CheckBox
+        versionInfo                   matlab.ui.control.Label
+        versionInfoRefresh            matlab.ui.control.Image
+        versionInfoLabel              matlab.ui.control.Label
+        SubTab2                       matlab.ui.container.Tab
+        SubGrid2                      matlab.ui.container.GridLayout
+        configAnalysisPanel2          matlab.ui.container.Panel
+        configAnalysisGrid2           matlab.ui.container.GridLayout
+        AddAccountDescription         matlab.ui.control.CheckBox
+        Cofins                        matlab.ui.control.Spinner
+        CofinsLabel                   matlab.ui.control.Label
+        PIS                           matlab.ui.control.Spinner
+        PISLabel                      matlab.ui.control.Label
+        ICMS                          matlab.ui.control.Spinner
+        ICMSLabel                     matlab.ui.control.Label
+        CheckStatus                   matlab.ui.control.DropDown
+        CheckStatusLabel              matlab.ui.control.Label
+        configAnalysisPanel2Label     matlab.ui.control.Label
+        configAnalysisPanel1          matlab.ui.container.Panel
+        configAnalysisGrid1           matlab.ui.container.GridLayout
+        LargeFileThresholdBytes       matlab.ui.control.Spinner
+        LargeFileThresholdBytesLabel  matlab.ui.control.Label
+        EncodingOverride              matlab.ui.control.DropDown
+        EncodingOverrideLabel         matlab.ui.control.Label
+        SortMethod                    matlab.ui.control.DropDown
+        SortMethodLabel               matlab.ui.control.Label
+        InputType                     matlab.ui.control.DropDown
+        InputTypeLabel                matlab.ui.control.Label
+        configAnalysisRefresh         matlab.ui.control.Image
+        configAnalysisPanel1Label     matlab.ui.control.Label
+        SubTab3                       matlab.ui.container.Tab
+        SubGrid3                      matlab.ui.container.GridLayout
+        reportPanel                   matlab.ui.container.Panel
+        reportGrid                    matlab.ui.container.GridLayout
+        prjFileCompressionMode        matlab.ui.control.DropDown
+        prjFileCompressionModeLabel   matlab.ui.control.Label
+        reportLabel                   matlab.ui.control.Label
+        eFiscalizaPanel               matlab.ui.container.Panel
+        eFiscalizaGrid                matlab.ui.container.GridLayout
+        reportUnit                    matlab.ui.control.DropDown
+        reportUnitLabel               matlab.ui.control.Label
+        reportSystem                  matlab.ui.control.DropDown
+        reportSystemLabel             matlab.ui.control.Label
+        eFiscalizaRefresh             matlab.ui.control.Image
+        eFiscalizaLabel               matlab.ui.control.Label
+        SubTab4                       matlab.ui.container.Tab
+        SubGrid4                      matlab.ui.container.GridLayout
+        userPathButton                matlab.ui.control.Image
+        userPath                      matlab.ui.control.EditField
+        userPathLabel                 matlab.ui.control.Label
+        DataHubPOSTButton             matlab.ui.control.Image
+        DataHubPOST                   matlab.ui.control.EditField
+        DATAHUBPOSTLabel              matlab.ui.control.Label
+        Toolbar                       matlab.ui.container.GridLayout
+        tool_openDevTools             matlab.ui.control.Image
+        tool_simulationMode           matlab.ui.control.Image
     end
 
     
@@ -241,6 +243,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.InputType.Value   = app.mainApp.General.context.FILE.input;
             app.SortMethod.Value  = app.mainApp.General.context.FILE.sortMethod;
             app.CheckStatus.Value = app.mainApp.General.context.FILE.checkStatus;
+            app.LargeFileThresholdBytes.Value = app.mainApp.General.context.FILE.largeFileThresholdBytes;
 
             % ECD
             app.ICMS.Value   = 100 * app.mainApp.General.context.ECD.taxConfig.ICMS_INTERCONEXAO;
@@ -431,7 +434,7 @@ classdef winConfig_exported < matlab.apps.AppBase
         end
 
         % Value changed function: AddAccountDescription, CheckStatus, 
-        % ...and 6 other components
+        % ...and 7 other components
         function Config_AnalysisParameterValueChanged(app, event)
             
             switch event.Source
@@ -448,6 +451,9 @@ classdef winConfig_exported < matlab.apps.AppBase
                 case app.EncodingOverride
                     app.mainApp.General.context.FILE.encodingOverride = app.EncodingOverride.Value;
                     return
+
+                case app.LargeFileThresholdBytes
+                    app.mainApp.General.context.FILE.largeFileThresholdBytes = app.LargeFileThresholdBytes.Value;
 
                 case app.ICMS
                     app.mainApp.General.context.ECD.taxConfig.ICMS_INTERCONEXAO = app.ICMS.Value / 100;
@@ -712,7 +718,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create SubGrid2
             app.SubGrid2 = uigridlayout(app.SubTab2);
             app.SubGrid2.ColumnWidth = {'1x', 22};
-            app.SubGrid2.RowHeight = {17, 125, 22, '1x'};
+            app.SubGrid2.RowHeight = {17, 133, 22, '1x'};
             app.SubGrid2.RowSpacing = 5;
             app.SubGrid2.BackgroundColor = [1 1 1];
 
@@ -742,13 +748,14 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create configAnalysisGrid1
             app.configAnalysisGrid1 = uigridlayout(app.configAnalysisPanel1);
-            app.configAnalysisGrid1.ColumnWidth = {350, 230};
-            app.configAnalysisGrid1.RowHeight = {22, 22, 22, 22};
+            app.configAnalysisGrid1.ColumnWidth = {110, 110, 110, 110};
+            app.configAnalysisGrid1.RowHeight = {17, 22, 32, 22};
             app.configAnalysisGrid1.RowSpacing = 5;
             app.configAnalysisGrid1.BackgroundColor = [1 1 1];
 
             % Create InputTypeLabel
             app.InputTypeLabel = uilabel(app.configAnalysisGrid1);
+            app.InputTypeLabel.VerticalAlignment = 'bottom';
             app.InputTypeLabel.FontSize = 11;
             app.InputTypeLabel.Layout.Row = 1;
             app.InputTypeLabel.Layout.Column = 1;
@@ -761,15 +768,16 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.InputType.Enable = 'off';
             app.InputType.FontSize = 11;
             app.InputType.BackgroundColor = [1 1 1];
-            app.InputType.Layout.Row = 1;
-            app.InputType.Layout.Column = 2;
+            app.InputType.Layout.Row = 2;
+            app.InputType.Layout.Column = 1;
             app.InputType.Value = 'file';
 
             % Create SortMethodLabel
             app.SortMethodLabel = uilabel(app.configAnalysisGrid1);
+            app.SortMethodLabel.VerticalAlignment = 'bottom';
             app.SortMethodLabel.FontSize = 11;
-            app.SortMethodLabel.Layout.Row = 2;
-            app.SortMethodLabel.Layout.Column = 1;
+            app.SortMethodLabel.Layout.Row = 1;
+            app.SortMethodLabel.Layout.Column = [2 3];
             app.SortMethodLabel.Text = 'Visualização árvore:';
 
             % Create SortMethod
@@ -779,32 +787,17 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.SortMethod.FontSize = 11;
             app.SortMethod.BackgroundColor = [1 1 1];
             app.SortMethod.Layout.Row = 2;
-            app.SortMethod.Layout.Column = 2;
+            app.SortMethod.Layout.Column = [2 3];
             app.SortMethod.Value = 'CNPJ';
-
-            % Create CheckStatusLabel
-            app.CheckStatusLabel = uilabel(app.configAnalysisGrid1);
-            app.CheckStatusLabel.FontSize = 11;
-            app.CheckStatusLabel.Layout.Row = 3;
-            app.CheckStatusLabel.Layout.Column = 1;
-            app.CheckStatusLabel.Text = 'Consulta situação de arquivo na Receita Federal:';
-
-            % Create CheckStatus
-            app.CheckStatus = uidropdown(app.configAnalysisGrid1);
-            app.CheckStatus.Items = {'OnlyCache', 'Cache+RealTime', 'RealTime'};
-            app.CheckStatus.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
-            app.CheckStatus.FontSize = 11;
-            app.CheckStatus.BackgroundColor = [1 1 1];
-            app.CheckStatus.Layout.Row = 3;
-            app.CheckStatus.Layout.Column = 2;
-            app.CheckStatus.Value = 'Cache+RealTime';
 
             % Create EncodingOverrideLabel
             app.EncodingOverrideLabel = uilabel(app.configAnalysisGrid1);
+            app.EncodingOverrideLabel.VerticalAlignment = 'bottom';
+            app.EncodingOverrideLabel.WordWrap = 'on';
             app.EncodingOverrideLabel.FontSize = 11;
-            app.EncodingOverrideLabel.Layout.Row = 4;
-            app.EncodingOverrideLabel.Layout.Column = 1;
-            app.EncodingOverrideLabel.Text = 'Codificação do arquivo:';
+            app.EncodingOverrideLabel.Layout.Row = 3;
+            app.EncodingOverrideLabel.Layout.Column = [1 2];
+            app.EncodingOverrideLabel.Text = {'Codificação textual do arquivo:'; '(Padrão: ISO-8859-1)'};
 
             % Create EncodingOverride
             app.EncodingOverride = uidropdown(app.configAnalysisGrid1);
@@ -813,8 +806,28 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.EncodingOverride.FontSize = 11;
             app.EncodingOverride.BackgroundColor = [1 1 1];
             app.EncodingOverride.Layout.Row = 4;
-            app.EncodingOverride.Layout.Column = 2;
+            app.EncodingOverride.Layout.Column = [1 2];
             app.EncodingOverride.Value = '';
+
+            % Create LargeFileThresholdBytesLabel
+            app.LargeFileThresholdBytesLabel = uilabel(app.configAnalysisGrid1);
+            app.LargeFileThresholdBytesLabel.VerticalAlignment = 'bottom';
+            app.LargeFileThresholdBytesLabel.FontSize = 11;
+            app.LargeFileThresholdBytesLabel.Layout.Row = 3;
+            app.LargeFileThresholdBytesLabel.Layout.Column = [3 4];
+            app.LargeFileThresholdBytesLabel.Text = {'Tamanho mínimo para '; 'arquivo grande (bytes):'};
+
+            % Create LargeFileThresholdBytes
+            app.LargeFileThresholdBytes = uispinner(app.configAnalysisGrid1);
+            app.LargeFileThresholdBytes.Step = 10000000;
+            app.LargeFileThresholdBytes.Limits = [50000000 100000000];
+            app.LargeFileThresholdBytes.RoundFractionalValues = 'on';
+            app.LargeFileThresholdBytes.ValueDisplayFormat = '%d';
+            app.LargeFileThresholdBytes.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
+            app.LargeFileThresholdBytes.FontSize = 11;
+            app.LargeFileThresholdBytes.Layout.Row = 4;
+            app.LargeFileThresholdBytes.Layout.Column = 3;
+            app.LargeFileThresholdBytes.Value = 50000000;
 
             % Create configAnalysisPanel2Label
             app.configAnalysisPanel2Label = uilabel(app.SubGrid2);
@@ -822,7 +835,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.configAnalysisPanel2Label.FontSize = 10;
             app.configAnalysisPanel2Label.Layout.Row = 3;
             app.configAnalysisPanel2Label.Layout.Column = 1;
-            app.configAnalysisPanel2Label.Text = 'PROCESSO DE ANÁLISE DOS DADOS';
+            app.configAnalysisPanel2Label.Text = 'PROCESSO DE ANÁLISE DOS DADOS: VALORES PADRÕES DE TRIBUTOS + VISUALIZAÇÃO COLUNA "CTA"';
 
             % Create configAnalysisPanel2
             app.configAnalysisPanel2 = uipanel(app.SubGrid2);
@@ -833,17 +846,37 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create configAnalysisGrid2
             app.configAnalysisGrid2 = uigridlayout(app.configAnalysisPanel2);
-            app.configAnalysisGrid2.ColumnWidth = {350, 110, '1x'};
-            app.configAnalysisGrid2.RowHeight = {22, 22, 22, 22};
+            app.configAnalysisGrid2.ColumnWidth = {110, 110, 110, '1x'};
+            app.configAnalysisGrid2.RowHeight = {27, 22, 32, 22, 1, 22};
             app.configAnalysisGrid2.RowSpacing = 5;
             app.configAnalysisGrid2.BackgroundColor = [1 1 1];
 
+            % Create CheckStatusLabel
+            app.CheckStatusLabel = uilabel(app.configAnalysisGrid2);
+            app.CheckStatusLabel.VerticalAlignment = 'bottom';
+            app.CheckStatusLabel.WordWrap = 'on';
+            app.CheckStatusLabel.FontSize = 11;
+            app.CheckStatusLabel.Layout.Row = 1;
+            app.CheckStatusLabel.Layout.Column = [1 2];
+            app.CheckStatusLabel.Text = 'Consulta situação de arquivo na Receita Federal:';
+
+            % Create CheckStatus
+            app.CheckStatus = uidropdown(app.configAnalysisGrid2);
+            app.CheckStatus.Items = {'OnlyCache', 'Cache+RealTime', 'RealTime'};
+            app.CheckStatus.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
+            app.CheckStatus.FontSize = 11;
+            app.CheckStatus.BackgroundColor = [1 1 1];
+            app.CheckStatus.Layout.Row = 2;
+            app.CheckStatus.Layout.Column = [1 2];
+            app.CheckStatus.Value = 'Cache+RealTime';
+
             % Create ICMSLabel
             app.ICMSLabel = uilabel(app.configAnalysisGrid2);
+            app.ICMSLabel.VerticalAlignment = 'bottom';
             app.ICMSLabel.FontSize = 11;
-            app.ICMSLabel.Layout.Row = 1;
-            app.ICMSLabel.Layout.Column = 1;
-            app.ICMSLabel.Text = 'Valor padrão ICMS INTERCONEXÃO (%):';
+            app.ICMSLabel.Layout.Row = 3;
+            app.ICMSLabel.Layout.Column = [1 2];
+            app.ICMSLabel.Text = {'Valor padrão ICMS'; 'INTERCONEXÃO: (%)'};
 
             % Create ICMS
             app.ICMS = uispinner(app.configAnalysisGrid2);
@@ -852,15 +885,16 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.ICMS.ValueDisplayFormat = '%.2f';
             app.ICMS.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
             app.ICMS.FontSize = 11;
-            app.ICMS.Layout.Row = 1;
-            app.ICMS.Layout.Column = 2;
+            app.ICMS.Layout.Row = 4;
+            app.ICMS.Layout.Column = 1;
 
             % Create PISLabel
             app.PISLabel = uilabel(app.configAnalysisGrid2);
+            app.PISLabel.VerticalAlignment = 'bottom';
             app.PISLabel.FontSize = 11;
-            app.PISLabel.Layout.Row = 2;
-            app.PISLabel.Layout.Column = 1;
-            app.PISLabel.Text = 'Valor padrão PIS (%):';
+            app.PISLabel.Layout.Row = 3;
+            app.PISLabel.Layout.Column = 2;
+            app.PISLabel.Text = {'Valor padrão PIS:'; '(%)'};
 
             % Create PIS
             app.PIS = uispinner(app.configAnalysisGrid2);
@@ -869,16 +903,17 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.PIS.ValueDisplayFormat = '%.2f';
             app.PIS.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
             app.PIS.FontSize = 11;
-            app.PIS.Layout.Row = 2;
+            app.PIS.Layout.Row = 4;
             app.PIS.Layout.Column = 2;
             app.PIS.Value = 0.65;
 
             % Create CofinsLabel
             app.CofinsLabel = uilabel(app.configAnalysisGrid2);
+            app.CofinsLabel.VerticalAlignment = 'bottom';
             app.CofinsLabel.FontSize = 11;
             app.CofinsLabel.Layout.Row = 3;
-            app.CofinsLabel.Layout.Column = 1;
-            app.CofinsLabel.Text = 'Valor padrão COFINS (%):';
+            app.CofinsLabel.Layout.Column = 3;
+            app.CofinsLabel.Text = {'Valor padrão COFINS:'; '(%)'};
 
             % Create Cofins
             app.Cofins = uispinner(app.configAnalysisGrid2);
@@ -887,8 +922,8 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.Cofins.ValueDisplayFormat = '%.2f';
             app.Cofins.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
             app.Cofins.FontSize = 11;
-            app.Cofins.Layout.Row = 3;
-            app.Cofins.Layout.Column = 2;
+            app.Cofins.Layout.Row = 4;
+            app.Cofins.Layout.Column = 3;
             app.Cofins.Value = 3;
 
             % Create AddAccountDescription
@@ -896,8 +931,8 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.AddAccountDescription.ValueChangedFcn = createCallbackFcn(app, @Config_AnalysisParameterValueChanged, true);
             app.AddAccountDescription.Text = 'Habilita a inclusão da descrição da conta (coluna "CTA") sempre que o registro em análise possuir a coluna "COD_CTA".';
             app.AddAccountDescription.FontSize = 11;
-            app.AddAccountDescription.Layout.Row = 4;
-            app.AddAccountDescription.Layout.Column = [1 3];
+            app.AddAccountDescription.Layout.Row = 6;
+            app.AddAccountDescription.Layout.Column = [1 4];
 
             % Create SubTab3
             app.SubTab3 = uitab(app.SubTabGroup);
@@ -907,7 +942,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             % Create SubGrid3
             app.SubGrid3 = uigridlayout(app.SubTab3);
             app.SubGrid3.ColumnWidth = {'1x', 22};
-            app.SubGrid3.RowHeight = {17, 70, 22, '1x'};
+            app.SubGrid3.RowHeight = {17, 78, 22, '1x'};
             app.SubGrid3.RowSpacing = 5;
             app.SubGrid3.BackgroundColor = [1 1 1];
 
@@ -926,6 +961,7 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.eFiscalizaRefresh.Visible = 'off';
             app.eFiscalizaRefresh.Layout.Row = 1;
             app.eFiscalizaRefresh.Layout.Column = 2;
+            app.eFiscalizaRefresh.VerticalAlignment = 'bottom';
             app.eFiscalizaRefresh.ImageSource = 'Refresh_18.png';
 
             % Create eFiscalizaPanel
@@ -936,18 +972,17 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create eFiscalizaGrid
             app.eFiscalizaGrid = uigridlayout(app.eFiscalizaPanel);
-            app.eFiscalizaGrid.ColumnWidth = {350, 110, 110};
-            app.eFiscalizaGrid.RowHeight = {22, 22};
+            app.eFiscalizaGrid.ColumnWidth = {230, 110};
+            app.eFiscalizaGrid.RowHeight = {27, 22};
             app.eFiscalizaGrid.RowSpacing = 5;
             app.eFiscalizaGrid.BackgroundColor = [1 1 1];
 
             % Create reportSystemLabel
             app.reportSystemLabel = uilabel(app.eFiscalizaGrid);
-            app.reportSystemLabel.WordWrap = 'on';
             app.reportSystemLabel.FontSize = 11;
             app.reportSystemLabel.Layout.Row = 1;
             app.reportSystemLabel.Layout.Column = 1;
-            app.reportSystemLabel.Text = 'Ambiente do sistema de gestão à fiscalização:';
+            app.reportSystemLabel.Text = {'Ambiente do sistema de gestão à'; 'fiscalização:'};
 
             % Create reportSystem
             app.reportSystem = uidropdown(app.eFiscalizaGrid);
@@ -955,16 +990,16 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.reportSystem.ValueChangedFcn = createCallbackFcn(app, @Config_ProjectParameterValueChanged, true);
             app.reportSystem.FontSize = 11;
             app.reportSystem.BackgroundColor = [1 1 1];
-            app.reportSystem.Layout.Row = 1;
-            app.reportSystem.Layout.Column = [2 3];
+            app.reportSystem.Layout.Row = 2;
+            app.reportSystem.Layout.Column = 1;
             app.reportSystem.Value = 'eFiscaliza';
 
             % Create reportUnitLabel
             app.reportUnitLabel = uilabel(app.eFiscalizaGrid);
             app.reportUnitLabel.WordWrap = 'on';
             app.reportUnitLabel.FontSize = 11;
-            app.reportUnitLabel.Layout.Row = 2;
-            app.reportUnitLabel.Layout.Column = 1;
+            app.reportUnitLabel.Layout.Row = 1;
+            app.reportUnitLabel.Layout.Column = 2;
             app.reportUnitLabel.Text = 'Unidade responsável pela fiscalização:';
 
             % Create reportUnit
@@ -994,17 +1029,16 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create reportGrid
             app.reportGrid = uigridlayout(app.reportPanel);
-            app.reportGrid.ColumnWidth = {350, 110};
-            app.reportGrid.RowHeight = {22};
+            app.reportGrid.ColumnWidth = {110, '1x'};
+            app.reportGrid.RowHeight = {17, 22};
             app.reportGrid.RowSpacing = 5;
             app.reportGrid.BackgroundColor = [1 1 1];
 
             % Create prjFileCompressionModeLabel
             app.prjFileCompressionModeLabel = uilabel(app.reportGrid);
-            app.prjFileCompressionModeLabel.WordWrap = 'on';
             app.prjFileCompressionModeLabel.FontSize = 11;
             app.prjFileCompressionModeLabel.Layout.Row = 1;
-            app.prjFileCompressionModeLabel.Layout.Column = 1;
+            app.prjFileCompressionModeLabel.Layout.Column = [1 2];
             app.prjFileCompressionModeLabel.Text = 'Compressão aplicada ao arquivo de saída do projeto?';
 
             % Create prjFileCompressionMode
@@ -1013,8 +1047,8 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.prjFileCompressionMode.ValueChangedFcn = createCallbackFcn(app, @Config_ProjectParameterValueChanged, true);
             app.prjFileCompressionMode.FontSize = 11;
             app.prjFileCompressionMode.BackgroundColor = [1 1 1];
-            app.prjFileCompressionMode.Layout.Row = 1;
-            app.prjFileCompressionMode.Layout.Column = 2;
+            app.prjFileCompressionMode.Layout.Row = 2;
+            app.prjFileCompressionMode.Layout.Column = 1;
             app.prjFileCompressionMode.Value = 'Sim';
 
             % Create SubTab4
