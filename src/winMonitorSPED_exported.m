@@ -205,12 +205,15 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             try
                 switch eventName
                     case 'closeFcn'
-                        auxAppTag    = varargin{1};
-                        closeModule(app.tabGroupController, auxAppTag, app.General, 'normal')
+                        auxAppTag = varargin{1};
+                        closeModule(app.tabGroupController, auxAppTag, app.General)
 
                     case 'dockButtonPushed'
-                        auxAppTag    = varargin{1};
                         varargout{1} = {app};
+
+                    case 'onUpdateLastVisitedFolder'
+                        filePath = varargin{1};
+                        updateLastVisitedFolder(app, filePath)
 
                     otherwise
                         switch class(callingApp)
@@ -266,10 +269,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                         end
                                         varargout{1} = fileIndex;
 
-                                    case 'onUpdateLastVisitedFolder'
-                                        filePath = varargin{1};
-                                        updateLastVisitedFolder(app, filePath)
-
                                     case {'onReportGenerate', 'onUploadArtifacts'}
                                         context = varargin{1};
                                         varargin = varargin(2:end);
@@ -300,10 +299,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                     % auxApp.dockReportLib
                                     case {'onProjectRestart', 'onProjectLoad', 'onFinalReportFileChanged'}
                                         refreshProjectFiles(app, [], 'FileListChanged:ProjectLoad')
-                                        
-                                    case 'onUpdateLastVisitedFolder'
-                                        filePath = varargin{1};
-                                        updateLastVisitedFolder(app, filePath)
 
                                     case 'onFetchIssueDetails'
                                         context  = varargin{1};
@@ -591,7 +586,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function initializeUIComponents(app)
-            app.tabGroupController = ui.TabNavigator(app.NavBar, app.TabGroup, app.progressDialog);
+            app.tabGroupController = ui.TabNavigator(app.NavBar, app.TabGroup, app.progressDialog, app.jsBackDoor);
             addComponent(app.tabGroupController, "Built-in", "",                 app.Tab1Button, "AlwaysOn", struct('On', '', 'Off', ''), matlab.graphics.GraphicsPlaceholder, 1)
             addComponent(app.tabGroupController, "External", "auxApp.winECD",    app.Tab2Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      2)
             addComponent(app.tabGroupController, "External", "auxApp.winConfig", app.Tab3Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      3)
