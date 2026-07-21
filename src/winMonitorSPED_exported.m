@@ -9,8 +9,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         FigurePosition          matlab.ui.control.Image
         DataHubLamp             matlab.ui.control.Image
         jsBackDoor              matlab.ui.control.HTML
-        Tab3Button              matlab.ui.control.StateButton
+        Tab4Button              matlab.ui.control.StateButton
         ButtonsSeparator        matlab.ui.control.Image
+        Tab3Button              matlab.ui.control.StateButton
         Tab2Button              matlab.ui.control.StateButton
         Tab1Button              matlab.ui.control.StateButton
         AppName                 matlab.ui.control.Label
@@ -27,6 +28,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         FileSortMethodIcon      matlab.ui.control.Image
         FileModuleIntroduction  matlab.ui.control.Label
         tool_Grid               matlab.ui.container.GridLayout
+        tool_ReadFiles_2        matlab.ui.control.Image
         tool_UploadFinalFile    matlab.ui.control.Image
         tool_GenerateReport     matlab.ui.control.Image
         tool_OpenPopupProject   matlab.ui.control.Image
@@ -34,8 +36,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         tool_MergeFiles         matlab.ui.control.Image
         tool_Separator1         matlab.ui.control.Image
         tool_ReadFiles          matlab.ui.control.Image
-        Tab2_Playback           matlab.ui.container.Tab
-        Tab3_Config             matlab.ui.container.Tab
+        Tab2_ECD                matlab.ui.container.Tab
+        Tab3_EFD                matlab.ui.container.Tab
+        Tab4_Config             matlab.ui.container.Tab
         ContextMenu             matlab.ui.container.ContextMenu
         contextmenu_merge       matlab.ui.container.Menu
         contextmenu_del         matlab.ui.container.Menu
@@ -67,7 +70,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         receitaFederalObj
 
         projectData
-        ecdObj = model.ECD.empty        
+        ecdObj = model.ECD.empty
+        efdObj = model.EFD.empty
     end
 
 
@@ -465,6 +469,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         app.Tab1Button;
                         app.Tab2Button;
                         app.Tab3Button;
+                        app.Tab4Button;
                         app.FileModuleLegend;
                         app.FileTree; 
                         app.FileMetadata;
@@ -494,6 +499,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             struct('appName', appName, 'dataTag', app.Tab1Button.UserData.id,             'generation', 1, 'class', 'tab-navigator-button'), ...
                             struct('appName', appName, 'dataTag', app.Tab2Button.UserData.id,             'generation', 1, 'class', 'tab-navigator-button'), ...
                             struct('appName', appName, 'dataTag', app.Tab3Button.UserData.id,             'generation', 1, 'class', 'tab-navigator-button'), ...
+                            struct('appName', appName, 'dataTag', app.Tab4Button.UserData.id,             'generation', 1, 'class', 'tab-navigator-button'), ...
                             struct('appName', appName, 'dataTag', app.FileTree.UserData.id,               'listener', struct('componentName', 'mainApp.file_Tree', 'keyEvents', {{'Delete', 'Backspace'}})) ...
                         });
                     catch
@@ -589,7 +595,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tabGroupController = ui.TabNavigator(app.NavBar, app.TabGroup, app.progressDialog, app.jsBackDoor);
             addComponent(app.tabGroupController, "Built-in", "",                 app.Tab1Button, "AlwaysOn", struct('On', '', 'Off', ''), matlab.graphics.GraphicsPlaceholder, 1)
             addComponent(app.tabGroupController, "External", "auxApp.winECD",    app.Tab2Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      2)
-            addComponent(app.tabGroupController, "External", "auxApp.winConfig", app.Tab3Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      3)
+            addComponent(app.tabGroupController, "External", "auxApp.winEFD",    app.Tab3Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      3)
+            addComponent(app.tabGroupController, "External", "auxApp.winConfig", app.Tab4Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      4)
             app.tabGroupController.inlineSVG = true;
 
             addStyle(app.FileTree, uistyle('Interpreter', 'html'))
@@ -1102,11 +1109,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         % Callback function: AppInfo, DataHubLamp, FigurePosition, 
-        % ...and 3 other components
+        % ...and 4 other components
         function onTabNavigatorButtonPushed(app, event)
 
             switch event.Source
-                case {app.Tab1Button, app.Tab2Button, app.Tab3Button}
+                case {app.Tab1Button, app.Tab2Button, app.Tab3Button, app.Tab4Button}
                     openModule(app.tabGroupController, event.Source, event.PreviousValue, app.General, app)
 
                 case app.DataHubLamp
@@ -1525,6 +1532,75 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             end
 
         end
+
+        % Image clicked function: tool_ReadFiles_2
+        function tool_ReadFiles_2ImageClicked(app, event)
+            
+
+            fileFullName = {};
+            switch app.General.context.FILE.input
+                case 'file'
+                    [~, filePath, ~, fileName] = ui.Dialog(app.UIFigure, 'uigetfile', '', {'*.txt;*.sped;*.zip;*.mat', 'monitorSPED (*.txt,*.sped,*.zip,*.mat)'; '*.*', 'Todos os arquivos (*.*)'}, app.General.fileFolder.lastVisited, {'MultiSelect', 'on'});
+        
+                    if isempty(fileName)
+                        return
+                    elseif ~iscell(fileName)
+                        fileName = {fileName};
+                    end
+                    pathList = fullfile(filePath, fileName);
+
+                case 'folder'
+                    filePath = uigetdir(app.General.fileFolder.lastVisited);
+                    figure(app.UIFigure)
+
+                    if isequal(filePath, 0)
+                        return
+                    end
+                    pathList = {filePath};
+            end
+
+            [fileFullName, fileName] = util.getFilesFromPathList(pathList, app.General.fileFolder.tempPath, {'.txt', '', '.mat'});
+            updateLastVisitedFolder(app, filePath)
+
+            if isempty(fileFullName)
+                msgWarning = 'Não foi identificado arquivo em um dos formatos esperados.';
+                ui.Dialog(app.UIFigure, "warning", msgWarning);
+                return
+            end
+
+            d = ui.Dialog(app.UIFigure, "progressdlg", "Em andamento...");            
+            filesError = struct('File', {}, 'Error', {});
+
+            for ii = 1:numel(fileFullName)
+                d.Message = textFormatGUI.HTMLParagraph(sprintf('Em andamento a leitura do arquivo %d de %d:<br>• <b>%s</b>', ii, numel(fileFullName), fileName{ii}));
+
+                % Verifica se arquivo já foi lido, comparando o seu nome com 
+                % a variável app.efdObj.
+                if ~ismember(fileName{ii}, {app.efdObj.FileName})
+                    [~, ~, fileExt] = fileparts(fileFullName{ii});
+                    switch lower(fileExt)
+                        case {'.txt', ''}
+                            [app.efdObj, msg] = addFiles(app.efdObj, fileFullName{ii}, app.General);
+                        otherwise
+                            continue
+                    end
+
+                    if ~isempty(msg)
+                        filesError(end+1) = struct('File', sprintf('"%s"', fileName{ii}), 'Error', msg);
+                        continue
+                    end
+                end
+            end
+
+            % LOG
+            if ~isempty(filesError)
+                msgWarning = sprintf('Arquivos que apresentaram erro na leitura:\n%s\n\n', strjoin(strcat({'•&thinsp;<b>'}, {filesError.File}, {'</b>: <i>'}, {filesError.Error}), '</i>\n\n'));
+                ui.Dialog(app.UIFigure, "error", msgWarning);
+            end
+
+            delete(d)
+
+        end
     end
 
     % Component initialization
@@ -1576,7 +1652,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create tool_Grid
             app.tool_Grid = uigridlayout(app.file_Grid);
-            app.tool_Grid.ColumnWidth = {22, 5, 22, 22, '1x', 22, 22, 22};
+            app.tool_Grid.ColumnWidth = {22, 22, 5, 22, 22, '1x', 22, 22, 22};
             app.tool_Grid.RowHeight = {4, 17, 2};
             app.tool_Grid.ColumnSpacing = 5;
             app.tool_Grid.RowSpacing = 0;
@@ -1598,7 +1674,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_Separator1.ScaleMethod = 'none';
             app.tool_Separator1.Enable = 'off';
             app.tool_Separator1.Layout.Row = [1 3];
-            app.tool_Separator1.Layout.Column = 2;
+            app.tool_Separator1.Layout.Column = 3;
             app.tool_Separator1.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV.svg');
 
             % Create tool_MergeFiles
@@ -1607,7 +1683,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_MergeFiles.ImageClickedFcn = createCallbackFcn(app, @Toolbar_MergeFilesImageClicked, true);
             app.tool_MergeFiles.Enable = 'off';
             app.tool_MergeFiles.Layout.Row = [1 3];
-            app.tool_MergeFiles.Layout.Column = 3;
+            app.tool_MergeFiles.Layout.Column = 4;
             app.tool_MergeFiles.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Merge_18.png');
 
             % Create tool_CheckRFB
@@ -1616,7 +1692,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_CheckRFB.ImageClickedFcn = createCallbackFcn(app, @Toolbar_CheckStatusImageClicked, true);
             app.tool_CheckRFB.Enable = 'off';
             app.tool_CheckRFB.Layout.Row = [1 3];
-            app.tool_CheckRFB.Layout.Column = 4;
+            app.tool_CheckRFB.Layout.Column = 5;
             app.tool_CheckRFB.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'receita-federal-novo-logo-png_seeklogo-203693.png');
 
             % Create tool_OpenPopupProject
@@ -1624,7 +1700,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_OpenPopupProject.ScaleMethod = 'none';
             app.tool_OpenPopupProject.ImageClickedFcn = createCallbackFcn(app, @Toolbar_OpenPopupProjectImageClicked, true);
             app.tool_OpenPopupProject.Layout.Row = [1 3];
-            app.tool_OpenPopupProject.Layout.Column = 6;
+            app.tool_OpenPopupProject.Layout.Column = 7;
             app.tool_OpenPopupProject.ImageSource = 'organization-20px-black.svg';
 
             % Create tool_GenerateReport
@@ -1633,7 +1709,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_GenerateReport.ImageClickedFcn = createCallbackFcn(app, @Toolbar_GenerateReportImageClicked, true);
             app.tool_GenerateReport.Enable = 'off';
             app.tool_GenerateReport.Layout.Row = [1 3];
-            app.tool_GenerateReport.Layout.Column = 7;
+            app.tool_GenerateReport.Layout.Column = 8;
             app.tool_GenerateReport.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Publish_HTML_16.png');
 
             % Create tool_UploadFinalFile
@@ -1642,8 +1718,16 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_UploadFinalFile.ImageClickedFcn = createCallbackFcn(app, @Toolbar_UploadFinalFileImageClicked, true);
             app.tool_UploadFinalFile.Enable = 'off';
             app.tool_UploadFinalFile.Layout.Row = [1 3];
-            app.tool_UploadFinalFile.Layout.Column = 8;
+            app.tool_UploadFinalFile.Layout.Column = 9;
             app.tool_UploadFinalFile.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'up-20px.png');
+
+            % Create tool_ReadFiles_2
+            app.tool_ReadFiles_2 = uiimage(app.tool_Grid);
+            app.tool_ReadFiles_2.ScaleMethod = 'none';
+            app.tool_ReadFiles_2.ImageClickedFcn = createCallbackFcn(app, @tool_ReadFiles_2ImageClicked, true);
+            app.tool_ReadFiles_2.Layout.Row = [1 3];
+            app.tool_ReadFiles_2.Layout.Column = 2;
+            app.tool_ReadFiles_2.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Import_16.png');
 
             % Create SubTabGroup
             app.SubTabGroup = uitabgroup(app.file_Grid);
@@ -1719,21 +1803,24 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.FileTree.Layout.Row = 3;
             app.FileTree.Layout.Column = [2 3];
 
-            % Create Tab2_Playback
-            app.Tab2_Playback = uitab(app.TabGroup);
-            app.Tab2_Playback.AutoResizeChildren = 'off';
-            app.Tab2_Playback.BackgroundColor = 'none';
-            app.Tab2_Playback.ForegroundColor = [0.129411764705882 0.129411764705882 0.129411764705882];
+            % Create Tab2_ECD
+            app.Tab2_ECD = uitab(app.TabGroup);
+            app.Tab2_ECD.AutoResizeChildren = 'off';
+            app.Tab2_ECD.BackgroundColor = 'none';
+            app.Tab2_ECD.ForegroundColor = [0.129411764705882 0.129411764705882 0.129411764705882];
 
-            % Create Tab3_Config
-            app.Tab3_Config = uitab(app.TabGroup);
-            app.Tab3_Config.AutoResizeChildren = 'off';
-            app.Tab3_Config.BackgroundColor = 'none';
-            app.Tab3_Config.ForegroundColor = [0.129411764705882 0.129411764705882 0.129411764705882];
+            % Create Tab3_EFD
+            app.Tab3_EFD = uitab(app.TabGroup);
+
+            % Create Tab4_Config
+            app.Tab4_Config = uitab(app.TabGroup);
+            app.Tab4_Config.AutoResizeChildren = 'off';
+            app.Tab4_Config.BackgroundColor = 'none';
+            app.Tab4_Config.ForegroundColor = [0.129411764705882 0.129411764705882 0.129411764705882];
 
             % Create NavBar
             app.NavBar = uigridlayout(app.GridLayout);
-            app.NavBar.ColumnWidth = {101, '1x', 34, 34, 5, 34, '1x', 20, 20, 1, 20, 20};
+            app.NavBar.ColumnWidth = {101, '1x', 34, 34, 34, 5, 34, '1x', 20, 20, 1, 20, 20};
             app.NavBar.RowHeight = {5, 7, 20, 7, 5};
             app.NavBar.ColumnSpacing = 5;
             app.NavBar.RowSpacing = 0;
@@ -1774,28 +1861,38 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab2Button.Layout.Row = [2 4];
             app.Tab2Button.Layout.Column = 4;
 
+            % Create Tab3Button
+            app.Tab3Button = uibutton(app.NavBar, 'state');
+            app.Tab3Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
+            app.Tab3Button.Tag = 'EFD';
+            app.Tab3Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'graph-24px-white.svg');
+            app.Tab3Button.Text = '';
+            app.Tab3Button.BackgroundColor = [0.2 0.2 0.2];
+            app.Tab3Button.Layout.Row = [2 4];
+            app.Tab3Button.Layout.Column = 5;
+
             % Create ButtonsSeparator
             app.ButtonsSeparator = uiimage(app.NavBar);
             app.ButtonsSeparator.ScaleMethod = 'none';
             app.ButtonsSeparator.Enable = 'off';
             app.ButtonsSeparator.Layout.Row = [2 4];
-            app.ButtonsSeparator.Layout.Column = 5;
+            app.ButtonsSeparator.Layout.Column = 6;
             app.ButtonsSeparator.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV_White.svg');
 
-            % Create Tab3Button
-            app.Tab3Button = uibutton(app.NavBar, 'state');
-            app.Tab3Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
-            app.Tab3Button.Tag = 'CONFIG';
-            app.Tab3Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'gear-24px-white.svg');
-            app.Tab3Button.Text = '';
-            app.Tab3Button.BackgroundColor = [0.2 0.2 0.2];
-            app.Tab3Button.Layout.Row = [2 4];
-            app.Tab3Button.Layout.Column = 6;
+            % Create Tab4Button
+            app.Tab4Button = uibutton(app.NavBar, 'state');
+            app.Tab4Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
+            app.Tab4Button.Tag = 'CONFIG';
+            app.Tab4Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'gear-24px-white.svg');
+            app.Tab4Button.Text = '';
+            app.Tab4Button.BackgroundColor = [0.2 0.2 0.2];
+            app.Tab4Button.Layout.Row = [2 4];
+            app.Tab4Button.Layout.Column = 7;
 
             % Create jsBackDoor
             app.jsBackDoor = uihtml(app.NavBar);
             app.jsBackDoor.Layout.Row = 3;
-            app.jsBackDoor.Layout.Column = 8;
+            app.jsBackDoor.Layout.Column = 9;
 
             % Create DataHubLamp
             app.DataHubLamp = uiimage(app.NavBar);
@@ -1803,7 +1900,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.DataHubLamp.ImageClickedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.DataHubLamp.Visible = 'off';
             app.DataHubLamp.Layout.Row = 3;
-            app.DataHubLamp.Layout.Column = 9;
+            app.DataHubLamp.Layout.Column = 10;
             app.DataHubLamp.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'red-circle-blink.gif');
 
             % Create FigurePosition
@@ -1812,7 +1909,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.FigurePosition.ImageClickedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.FigurePosition.Visible = 'off';
             app.FigurePosition.Layout.Row = 3;
-            app.FigurePosition.Layout.Column = 11;
+            app.FigurePosition.Layout.Column = 12;
             app.FigurePosition.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'screen-normal-24px-white.svg');
 
             % Create AppInfo
@@ -1820,7 +1917,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.AppInfo.ScaleMethod = 'none';
             app.AppInfo.ImageClickedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.AppInfo.Layout.Row = 3;
-            app.AppInfo.Layout.Column = 12;
+            app.AppInfo.Layout.Column = 13;
             app.AppInfo.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'kebab-vertical-24px-white.svg');
 
             % Create ContextMenu
