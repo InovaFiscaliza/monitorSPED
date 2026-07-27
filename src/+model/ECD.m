@@ -361,7 +361,7 @@ classdef ECD < handle
                 case 'GUI.TableIds'
                     generalSettings = varargin{1};
 
-                    sheetsSorted = extractAfter(fieldnames(obj.Table), 'x');
+                    sheetsSorted = [extractAfter(fieldnames(obj.Table), 'x'); generalSettings.context.ECD.cacheTables];
                     if ~isempty(obj.Content)
                         sheetsSorted = [sheetsSorted; getTableIds(obj); generalSettings.context.ECD.customTables.expected];
                     end
