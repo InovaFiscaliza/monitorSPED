@@ -923,8 +923,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             createEFiscalizaObject(app, credentials)
 
-            [status1, icon1, msg1] = reportUploadToSEI(app, context, 'uploadDocument');
-            [status2, ~, msg2] = reportUploadToSEI(app, context, 'uploadExternalDocument');
+            [status1, icon1, msg1, seiReport] = reportUploadToSEI(app, context, 'uploadDocument', true);
+            [status2, ~, msg2] = reportUploadToSEI(app, context, 'uploadExternalDocument', false);
 
             if status1 && status2
                 msg1 = sprintf('• RELATÓRIO:\n%s\n\n• PLANILHA DE SUPORTE:\n%s', msg1, msg2);
@@ -934,7 +934,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             callingApp.progressDialog.Visible = 'hidden';
             
             if status1 && strcmp(app.projectData.modules.(context).ui.system, 'eFiscaliza')
-                [status3, msg3] = reportUploadFilesToSharepoint(app, context);
+                [status3, msg3] = reportUploadFilesToSharepoint(app, context, seiReport);
 
                 if ~status3
                     ui.Dialog(callingApp.UIFigure, 'error', msg3);
@@ -943,7 +943,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-------------------------------------------------------------------------%
-        function [status, icon, msg] = reportUploadToSEI(app, context, operation)
+        function [status, icon, msg, seiReport] = reportUploadToSEI(app, context, operation, updateUploadedFileList)
             try
                 env = strsplit(app.projectData.modules.(context).ui.system);
                 if isscalar(env)
@@ -963,6 +963,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 switch operation
                     case 'uploadDocument'
                         HTMLFile = getGeneratedDocumentFileName(app.projectData, '.html', context);
+                        correlationKey = model.ProjectCommon.extractCorrelationKey(HTMLFile);
 
                         [~, modelIdx]   = ismember(app.projectData.modules.(context).ui.reportModel, {app.projectData.report.templates.Name});
                         docType         = app.projectData.report.templates(modelIdx).DocumentType;
@@ -972,6 +973,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         docSpec.originId = docSpec.internal.originId;
                         docSpec.typeId = app.General.eFiscaliza.internal.typeIdMapping(docTypeIdx).id;
                         docSpec.nomeArvore = ['[' class.Constants.appName ']'];
+                        docSpec.note = sprintf('%s\ncorrelationKey="%s"', docSpec.note, correlationKey);
 
                         if app.projectData.modules.(context).ui.entity.status
                             docSpec.interessados = {struct( ...
@@ -980,7 +982,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             )};
                         end                        
 
-                        response = run(app.eFiscalizaObj, env, operation, issueInfo, unit, docSpec, HTMLFile);
+                        [response, seiReport] = run(app.eFiscalizaObj, env, operation, issueInfo, unit, docSpec, HTMLFile);
 
                     case 'uploadExternalDocument'
                         XLSXFile = getGeneratedDocumentFileName(app.projectData, '.xlsx', context);
@@ -1003,7 +1005,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             )};
                         end   
 
-                        response = run(app.eFiscalizaObj, env, operation, issueInfo, unit, docSpec, XLSXFile);
+                        [response, seiReport] = run(app.eFiscalizaObj, env, operation, issueInfo, unit, docSpec, XLSXFile);
 
                     otherwise
                         error('Unexpected call')
@@ -1013,27 +1015,31 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     error(response)
                 end
 
-                updateUploadedFiles(app.projectData, context, system, issue, response)
+                if updateUploadedFileList
+                    updateUploadedFiles(app.projectData, context, system, issue, response)
+                end
 
                 status = true;
-                icon   = 'success';
-                msg    = response;
+                icon = 'success';
+                msg = response;
 
             catch ME
                 app.eFiscalizaObj = [];
                 
                 status = false;
-                icon   = 'error';
-                msg    = ME.message;
+                icon = 'error';
+                msg = ME.message;
+                seiReport = '';
             end
         end
 
         %------------------------------------------------------------------------%
-        function [status, msg] = reportUploadFilesToSharepoint(app, context)        
+        function [status, msg] = reportUploadFilesToSharepoint(app, context, seiReport)        
             sharepointFileList = { ...
                 getGeneratedDocumentFileName(app.projectData, '.json',  context), ...
                 getGeneratedDocumentFileName(app.projectData, '.teams', context)  ...
             };
+            model.ProjectCommon.updateSeiReport(sharepointFileList{1}, seiReport)
         
             statusList = false(1, numel(sharepointFileList));
             msgList = {};
