@@ -253,10 +253,6 @@ classdef (Abstract) Controller
                             error('reportLibConnection:Controller', msgError)
                         end
 
-                        if ~isdeployed() && ~ismember(issueDetails.issueContext.solicitacao.classificacao.subtema, generalSettings.reportLib.allowedSubthemes)
-                            issueDetails.issueContext.solicitacao.classificacao.subtema = generalSettings.reportLib.allowedSubthemes{1};
-                        end
-
                     catch ME
                         if ~isdeployed()
                             issueDetails = struct( ...
