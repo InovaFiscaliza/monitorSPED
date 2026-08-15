@@ -602,7 +602,7 @@ classdef ECD < handle
                                     continue
                                 end
 
-                                accountDescription = lower(replace(accountTable.('DESCRIÇÃO'){ii}, textAnalysis.specialPont, ''));
+                                accountDescription = textAnalysis.normalizeWords(accountTable.('DESCRIÇÃO'){ii});
                                 hasPositiveMonthlyBalance = all(accountTable{ii, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}} >= 0);
                                 totalBalance = accountTable.('TOTAL')(ii);
 
