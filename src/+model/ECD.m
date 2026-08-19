@@ -1211,7 +1211,7 @@ classdef ECD < handle
             checkIfScalar(obj)
             ordinaryId = false;
 
-            if isfield(obj.GUI, 'loadedFile') && ~isempty(obj.GUI.loadedFile.Name)
+            if isfield(obj.GUI, 'loadedFile') && ~isempty(obj.GUI.loadedFile.Name) && ~ismember(tableId, generalSettings.context.ECD.cacheTables)
                 prjData = load(obj.GUI.loadedFile.Name, '-mat', 'variables');
                 obj.Table.(['x' tableId]) = prjData.variables.ecdData(obj.GUI.loadedFile.Index).Table.(['x' tableId]);
                 return
