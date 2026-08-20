@@ -12,12 +12,6 @@ classdef winEFD_exported < matlab.apps.AppBase
         tool_GenerateReport       matlab.ui.control.Image
         tool_OpenPopupProject     matlab.ui.control.Image
         tool_CompanyInfo          matlab.ui.control.Label
-        tool_Separator2           matlab.ui.control.Image
-        tool_DeleteAnnotation     matlab.ui.control.Image
-        tool_AutoFill             matlab.ui.control.Image
-        tool_Separator1           matlab.ui.control.Image
-        tool_AccountButton        matlab.ui.control.Image
-        tool_OpenPopupIcmsRate    matlab.ui.control.Image
         UITable2_AccountInfo      matlab.ui.control.Label
         UITable2_FilterIcon       matlab.ui.control.Image
         UITable2_FilterText       matlab.ui.control.Label
@@ -83,7 +77,7 @@ classdef winEFD_exported < matlab.apps.AppBase
     properties (Access = private)
         %-----------------------------------------------------------------%
         Role = 'secondaryApp'
-        Context = 'ECD'
+        Context = 'EFD'
     end
 
 
@@ -101,7 +95,7 @@ classdef winEFD_exported < matlab.apps.AppBase
     properties (Access = private)
         %-----------------------------------------------------------------%
         projectData
-        ecdObj
+        efdObj
     end
 
 
@@ -243,10 +237,6 @@ classdef winEFD_exported < matlab.apps.AppBase
                     elToModify = {
                         app.UITable1;
                         app.UITable2;
-                        app.tool_OpenPopupIcmsRate;
-                        app.tool_AccountButton;
-                        app.tool_AutoFill;
-                        app.tool_DeleteAnnotation;
                         app.tool_OpenPopupProject;
                         app.tool_GenerateReport;
                         app.tool_UploadFinalFile;
@@ -257,10 +247,6 @@ classdef winEFD_exported < matlab.apps.AppBase
 
                     try
                         sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
-                            struct('appName', appName, 'dataTag', app.tool_OpenPopupIcmsRate.UserData.id,'tooltip', struct('defaultPosition', 'top',    'textContent', 'Edita a alíquota global de referência do ICMS')), ...
-                            struct('appName', appName, 'dataTag', app.tool_AccountButton.UserData.id,    'tooltip', struct('defaultPosition', 'top',    'textContent', 'Edita, em formulário, informações das contas movimentadas')), ...
-                            struct('appName', appName, 'dataTag', app.tool_AutoFill.UserData.id,         'tooltip', struct('defaultPosition', 'top',    'textContent', 'Sugere anotação das contas movimentadas')), ...
-                            struct('appName', appName, 'dataTag', app.tool_DeleteAnnotation.UserData.id, 'tooltip', struct('defaultPosition', 'top',    'textContent', 'Exclui anotação das contas selecionadas')), ...
                             struct('appName', appName, 'dataTag', app.tool_OpenPopupProject.UserData.id, 'tooltip', struct('defaultPosition', 'top',    'textContent', 'Edita informações do projeto<br>(fiscalizada, arquivo de backup etc)')), ...
                             struct('appName', appName, 'dataTag', app.tool_GenerateReport.UserData.id,   'tooltip', struct('defaultPosition', 'top',    'textContent', 'Gera relatório')), ...
                             struct('appName', appName, 'dataTag', app.tool_UploadFinalFile.UserData.id,  'tooltip', struct('defaultPosition', 'top',    'textContent', 'Upload relatório')), ...
@@ -291,7 +277,7 @@ classdef winEFD_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function initializeAppProperties(app)
             app.projectData = app.mainApp.projectData;
-            app.ecdObj      = app.mainApp.ecdObj;
+            app.efdObj      = app.mainApp.efdObj;
         end
 
         %-----------------------------------------------------------------%
@@ -317,7 +303,7 @@ classdef winEFD_exported < matlab.apps.AppBase
                 selectionMode {mustBeMember(selectionMode, {'fromMainApp', 'keepIfPossible', 'keepCurrent'})} = 'fromMainApp'
             end
 
-            nonEmptyECDObject = ~isempty(app.ecdObj);
+            nonEmptyECDObject = ~isempty(app.efdObj);
 
             renderedElements  = {
                 app.ReconciliationFileButton;
@@ -358,7 +344,7 @@ classdef winEFD_exported < matlab.apps.AppBase
                 end
 
                 % Atualiza lista:
-                idsList = {app.ecdObj.CompanyId};
+                idsList = {app.efdObj.CompanyId};
                 [ids, ~, idsIndexes] = unique(idsList);
 
                 idsNames = {};
@@ -366,11 +352,11 @@ classdef winEFD_exported < matlab.apps.AppBase
                 
                 for ii = 1:numel(ids)
                     idIndexes = find(ii == idsIndexes);
-                    [~, idSortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(idIndexes)));
+                    [~, idSortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.efdObj(idIndexes)));
 
                     % Nome empresa que aparecerá no dropdown (idêntico à
                     % forma da uitree, no winMonitorSPED.mlapp)
-                    idsNames{end+1} = util.HtmlTextGenerator.generateTextId(app.ecdObj(idIndexes(1)), 'company-oriented');
+                    idsNames{end+1} = util.HtmlTextGenerator.generateTextId(app.efdObj(idIndexes(1)), 'company-oriented');
                     mappingIds = mappingIds.insert(string(ids{ii}), {idIndexes(idSortedIndexes)});
                 end
 
@@ -444,13 +430,13 @@ classdef winEFD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function [selectedECD, fileIndex] = getSelectedECD(app)
-            if isempty(app.ecdObj)
+            if isempty(app.efdObj)
                 selectedECD = [];
                 fileIndex   = [];
 
             else
                 companyIndexes  = getSelectedFileIdxsByCompany(app);
-                 [~, companySortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(companyIndexes)));
+                 [~, companySortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.efdObj(companyIndexes)));
                  companyIndexes = companyIndexes(companySortedIndexes);
     
                 if isnumeric(app.TimePeriodList.Value)
@@ -463,7 +449,7 @@ classdef winEFD_exported < matlab.apps.AppBase
                     fileIndex = fileIndex(1);
                 end
     
-                selectedECD = app.ecdObj(fileIndex);
+                selectedECD = app.efdObj(fileIndex);
             end
         end
 
@@ -480,7 +466,7 @@ classdef winEFD_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function updateTimePeriodList(app, fileIndex)
             companyIndexes = getSelectedFileIdxsByCompany(app);
-            [~, companySortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(companyIndexes)));
+            [~, companySortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.efdObj(companyIndexes)));
             
             companyIndexes = companyIndexes(companySortedIndexes);
             if isempty(fileIndex)
@@ -492,7 +478,7 @@ classdef winEFD_exported < matlab.apps.AppBase
             periodList = {};
             for ii = 1:numel(companyIndexes)
                 idx = companyIndexes(ii);
-                periodList{end+1} = util.HtmlTextGenerator.generateTextId(app.ecdObj(idx), 'period-oriented', true);
+                periodList{end+1} = util.HtmlTextGenerator.generateTextId(app.efdObj(idx), 'period-oriented', true);
             end
 
             set(app.TimePeriodList, 'Items', periodList, 'ItemsData', 1:numel(periodList))
@@ -547,7 +533,7 @@ classdef winEFD_exported < matlab.apps.AppBase
             if filterStatus
                 filterObj = selectedECD.GUI.tableView(filterIndex).filter;
                 displayDataIdxs = find(run(filterObj, 'filterRules', tableIdData));                
-                filterIconTooltip = strjoin(getFilterList(filterObj, ['ECD.x' tableId], 'on'), '\n');
+                filterIconTooltip = strjoin(getFilterList(filterObj, ['EFD.x' tableId], 'on'), '\n');
             else
                 displayDataIdxs = (1:height(tableIdData))';                
                 filterIconTooltip = '';
@@ -561,13 +547,13 @@ classdef winEFD_exported < matlab.apps.AppBase
             numVisibleRows = numel(displayDataIdxs);
 
             % Inclusão da coluna "CTA", caso habilitado.
-            if app.mainApp.General.context.ECD.accountDescriptionScope
-                variableNames = tableIdData.Properties.VariableNames;
-                variableToAdd = 'CTA';
-                if ismember('COD_CTA', variableNames) && ~ismember(variableToAdd, variableNames)
-                    tableIdData = addAccountDescription(selectedECD, tableIdData, variableNames, variableToAdd);
-                end
-            end
+            % if app.mainApp.General.context.ECD.accountDescriptionScope
+            %     variableNames = tableIdData.Properties.VariableNames;
+            %     variableToAdd = 'CTA';
+            %     if ismember('COD_CTA', variableNames) && ~ismember(variableToAdd, variableNames)
+            %         tableIdData = addAccountDescription(selectedECD, tableIdData, variableNames, variableToAdd);
+            %     end
+            % end
 
             % Definição dos rótulos das linhas, orientado à seguinte ordem
             % de priorização:
@@ -596,7 +582,7 @@ classdef winEFD_exported < matlab.apps.AppBase
             % (originalmente no formato "table") para "cell array".
             columnFormat = {};
             if ui.Table.hasCustomizableColumnFormat(tableIdData)
-                columnFormat = model.ECDBase.getFieldSpecification(columnNames, 'Format');
+                columnFormat = model.EFDBase.getFieldSpecification(columnNames, 'Format');
                 if isempty(columnFormat) || all(cellfun(@isempty, columnFormat))
                     columnFormat = {};
                 end
@@ -722,22 +708,16 @@ classdef winEFD_exported < matlab.apps.AppBase
             % Por outro lado, caso não tenha sido registrado fato contábil,
             % essa tabela será vazia.
 
-            nonEmptyECDObject                 = ~isempty(selectedECD);
-            hasSpecificNonEmptyTable          = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO') && ~isempty(selectedECD.Table.x_CONTAS_ANOTACAO);
-            reportFinalVersionGenerated       = ~isempty(app.projectData.modules.(app.Context).generatedFiles.lastHTMLDocFullPath);
+            nonEmptyECDObject = ~isempty(selectedECD);
+            reportFinalVersionGenerated = ~isempty(app.projectData.modules.(app.Context).generatedFiles.lastHTMLDocFullPath);
             
             tableIdView = {app.SheetList.Value};
             if ~isempty(app.SheetView_Second.Value)
                 tableIdView{end+1} = app.SheetView_Second.Value;
             end
 
-            app.tool_OpenPopupIcmsRate.Enable = nonEmptyECDObject;
-            app.tool_AccountButton.Enable     = hasSpecificNonEmptyTable;
-            app.tool_AutoFill.Enable          = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', tableIdView);
-            app.tool_DeleteAnnotation.Enable  = hasSpecificNonEmptyTable && ismember('_CONTAS_ANOTACAO', tableIdView);
-            app.tool_Separator2.Visible       = nonEmptyECDObject;
-            app.tool_GenerateReport.Enable    = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO');
-            app.tool_UploadFinalFile.Enable   = reportFinalVersionGenerated;
+            app.tool_GenerateReport.Enable  = nonEmptyECDObject && isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO');
+            app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated;
         end
 
         %-----------------------------------------------------------------%
@@ -1018,7 +998,7 @@ classdef winEFD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function exportFiles(app, fileIndex, rawTableIdFields)
-            selectedECD     = app.ecdObj(fileIndex);
+            selectedECD     = app.efdObj(fileIndex);
 
             defaultBaseName =  appEngine.util.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'monitorSPED');
             excelTempName   = [appEngine.util.DefaultFileName(app.mainApp.General.fileFolder.tempPath, 'monitorSPED') '.xlsx'];
@@ -1203,8 +1183,7 @@ classdef winEFD_exported < matlab.apps.AppBase
 
         end
 
-        % Callback function: ExportButton, FilterButton, MemoryUsageButton,
-        % 
+        % Button pushed function: ExportButton, FilterButton, 
         % ...and 1 other component
         function onPopupModuleRequest(app, event)
             
@@ -1282,68 +1261,12 @@ classdef winEFD_exported < matlab.apps.AppBase
 
         end
 
-        % Image clicked function: tool_AutoFill
-        function Toolbar_AutoFillImageClicked(app, event)
-            
-            selectedECD = getSelectedECD(app);
-            if ~isfield(selectedECD.Table, 'x_CONTAS_ANOTACAO')
-                return
-            end
-
-            msgQuestion = [ ...
-                'A sugestão de classificação será aplicada apenas às contas ainda não classificadas.<br><br>' ...
-                'Este é um processo inicial, baseado em regras determinísticas (palavras-chave e saldos mensais), ' ...
-                'podendo gerar classificações incorretas que devem ser revisadas pelo usuário.<br><br>' ...
-                'O campo "Observação" indicará a regra utilizada em cada caso.<br><br>' ...
-                'Deseja continuar?' ...
-            ];
-            userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
-            if userSelection == "Não"
-                return
-            end
-
-            update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'autoFill', app.mainApp.General)
-            forceUpdateTable(app)
-
-        end
-
-        % Image clicked function: tool_DeleteAnnotation
-        function Toolbar_DeleteAnnotationImageClicked(app, event)
-            
-            clickedTable = onFocusTable(app);
-            selectedECD = getSelectedECD(app);
-
-            if (isequal(clickedTable, app.UITable1) && isequal(app.SheetList.Value,        '_CONTAS_ANOTACAO')) || ...
-               (isequal(clickedTable, app.UITable2) && isequal(app.SheetView_Second.Value, '_CONTAS_ANOTACAO'))
-                d = getRowIndexMapping(app, 'guiToModel', clickedTable);
-
-                userCellSelection = clickedTable.Selection;
-                if ~isempty(userCellSelection)
-                    msgQuestion = 'Deseja limpar a classificação das contas selecionadas?';
-                    userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
-                    if userSelection == "Não"
-                        return
-                    end
-
-                    rowIndexes = d(unique(userCellSelection(:, 1)));
-                    update(selectedECD, 'Table.x_CONTAS_ANOTACAO', 'deleteAnnotation', app.mainApp.General, rowIndexes)
-                    forceUpdateTable(app)
-                end
-            end
-
-        end
-
-        % Image clicked function: tool_OpenPopupIcmsRate, 
-        % ...and 1 other component
+        % Image clicked function: tool_OpenPopupProject
         function Toolbar_OpenPopupAppImageClicked(app, event)
             
             switch event.Source
-                case app.tool_OpenPopupIcmsRate
-                    [~, fileIndex] = getSelectedECD(app);
-                    ipcMainMatlabOpenPopupApp(app.mainApp, app, 'IcmsRate', app.Context, fileIndex)
-
                 case app.tool_OpenPopupProject
-                    ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ReportLib', app.Context, app.ecdObj)
+                    ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ReportLib', app.Context, app.efdObj)
             end
 
         end
@@ -2555,7 +2478,7 @@ classdef winEFD_exported < matlab.apps.AppBase
 
             % Create Toolbar
             app.Toolbar = uigridlayout(app.GridLayout);
-            app.Toolbar.ColumnWidth = {22, 22, 5, 22, 22, 5, '1x', 22, 22, 22};
+            app.Toolbar.ColumnWidth = {'1x', 22, 22, 22};
             app.Toolbar.RowHeight = {4, 17, 2};
             app.Toolbar.ColumnSpacing = 5;
             app.Toolbar.RowSpacing = 0;
@@ -2564,59 +2487,6 @@ classdef winEFD_exported < matlab.apps.AppBase
             app.Toolbar.Layout.Column = [1 9];
             app.Toolbar.BackgroundColor = [0.9412 0.9412 0.9412];
 
-            % Create tool_OpenPopupIcmsRate
-            app.tool_OpenPopupIcmsRate = uiimage(app.Toolbar);
-            app.tool_OpenPopupIcmsRate.ScaleMethod = 'none';
-            app.tool_OpenPopupIcmsRate.ImageClickedFcn = createCallbackFcn(app, @Toolbar_OpenPopupAppImageClicked, true);
-            app.tool_OpenPopupIcmsRate.Enable = 'off';
-            app.tool_OpenPopupIcmsRate.Layout.Row = [1 3];
-            app.tool_OpenPopupIcmsRate.Layout.Column = 1;
-            app.tool_OpenPopupIcmsRate.ImageSource = 'percentage-20px.svg';
-
-            % Create tool_AccountButton
-            app.tool_AccountButton = uiimage(app.Toolbar);
-            app.tool_AccountButton.ScaleMethod = 'none';
-            app.tool_AccountButton.ImageClickedFcn = createCallbackFcn(app, @onPopupModuleRequest, true);
-            app.tool_AccountButton.Enable = 'off';
-            app.tool_AccountButton.Layout.Row = [1 3];
-            app.tool_AccountButton.Layout.Column = 2;
-            app.tool_AccountButton.ImageSource = 'Variable_edit_16.png';
-
-            % Create tool_Separator1
-            app.tool_Separator1 = uiimage(app.Toolbar);
-            app.tool_Separator1.ScaleMethod = 'none';
-            app.tool_Separator1.Enable = 'off';
-            app.tool_Separator1.Layout.Row = [1 3];
-            app.tool_Separator1.Layout.Column = 3;
-            app.tool_Separator1.ImageSource = 'LineV.svg';
-
-            % Create tool_AutoFill
-            app.tool_AutoFill = uiimage(app.Toolbar);
-            app.tool_AutoFill.ScaleMethod = 'fill';
-            app.tool_AutoFill.ImageClickedFcn = createCallbackFcn(app, @Toolbar_AutoFillImageClicked, true);
-            app.tool_AutoFill.Enable = 'off';
-            app.tool_AutoFill.Layout.Row = [1 3];
-            app.tool_AutoFill.Layout.Column = 4;
-            app.tool_AutoFill.ImageSource = 'AutoFill_36Blue.png';
-
-            % Create tool_DeleteAnnotation
-            app.tool_DeleteAnnotation = uiimage(app.Toolbar);
-            app.tool_DeleteAnnotation.ScaleMethod = 'fill';
-            app.tool_DeleteAnnotation.ImageClickedFcn = createCallbackFcn(app, @Toolbar_DeleteAnnotationImageClicked, true);
-            app.tool_DeleteAnnotation.Enable = 'off';
-            app.tool_DeleteAnnotation.Layout.Row = [1 3];
-            app.tool_DeleteAnnotation.Layout.Column = 5;
-            app.tool_DeleteAnnotation.ImageSource = 'delete-annotation-36px.png';
-
-            % Create tool_Separator2
-            app.tool_Separator2 = uiimage(app.Toolbar);
-            app.tool_Separator2.ScaleMethod = 'none';
-            app.tool_Separator2.Enable = 'off';
-            app.tool_Separator2.Visible = 'off';
-            app.tool_Separator2.Layout.Row = [1 3];
-            app.tool_Separator2.Layout.Column = 6;
-            app.tool_Separator2.ImageSource = 'LineV.svg';
-
             % Create tool_CompanyInfo
             app.tool_CompanyInfo = uilabel(app.Toolbar);
             app.tool_CompanyInfo.VerticalAlignment = 'top';
@@ -2624,7 +2494,7 @@ classdef winEFD_exported < matlab.apps.AppBase
             app.tool_CompanyInfo.FontSize = 9;
             app.tool_CompanyInfo.FontColor = [0.149 0.149 0.149];
             app.tool_CompanyInfo.Layout.Row = [1 3];
-            app.tool_CompanyInfo.Layout.Column = 7;
+            app.tool_CompanyInfo.Layout.Column = 1;
             app.tool_CompanyInfo.Interpreter = 'html';
             app.tool_CompanyInfo.Text = '';
 
@@ -2633,7 +2503,7 @@ classdef winEFD_exported < matlab.apps.AppBase
             app.tool_OpenPopupProject.ScaleMethod = 'none';
             app.tool_OpenPopupProject.ImageClickedFcn = createCallbackFcn(app, @Toolbar_OpenPopupAppImageClicked, true);
             app.tool_OpenPopupProject.Layout.Row = [1 3];
-            app.tool_OpenPopupProject.Layout.Column = 8;
+            app.tool_OpenPopupProject.Layout.Column = 2;
             app.tool_OpenPopupProject.ImageSource = 'organization-20px-black.svg';
 
             % Create tool_GenerateReport
@@ -2642,7 +2512,7 @@ classdef winEFD_exported < matlab.apps.AppBase
             app.tool_GenerateReport.ImageClickedFcn = createCallbackFcn(app, @Toolbar_ReportImageClicked, true);
             app.tool_GenerateReport.Enable = 'off';
             app.tool_GenerateReport.Layout.Row = [1 3];
-            app.tool_GenerateReport.Layout.Column = 9;
+            app.tool_GenerateReport.Layout.Column = 3;
             app.tool_GenerateReport.ImageSource = 'Publish_HTML_16.png';
 
             % Create tool_UploadFinalFile
@@ -2651,7 +2521,7 @@ classdef winEFD_exported < matlab.apps.AppBase
             app.tool_UploadFinalFile.ImageClickedFcn = createCallbackFcn(app, @Toolbar_UploadFinalFileImageClicked, true);
             app.tool_UploadFinalFile.Enable = 'off';
             app.tool_UploadFinalFile.Layout.Row = [1 3];
-            app.tool_UploadFinalFile.Layout.Column = 10;
+            app.tool_UploadFinalFile.Layout.Column = 4;
             app.tool_UploadFinalFile.ImageSource = 'up-20px.png';
 
             % Create DockModule

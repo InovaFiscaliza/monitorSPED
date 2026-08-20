@@ -12,6 +12,7 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
     properties (Access = private)
         %-----------------------------------------------------------------%
         Role = 'secondaryDockApp'
+        Context
     end
 
 
@@ -27,6 +28,7 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
     properties (Access = private)
         %-----------------------------------------------------------------%
         inputArgs
+        spedObj
         appHandleNameInBase
     end
 
@@ -39,7 +41,7 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
             if ~isempty(selectedRow)
                 tableId = app.UITable.Data.("REGISTRO"){selectedRow};
                 
-                if ~ismember(tableId, app.mainApp.General.context.ECD.cacheTables)
+                if ~ismember(tableId, app.mainApp.General.context.(app.Context).cacheTables)
                     index = app.inputArgs.index;
                     ipcMainMatlabCallsHandler(app.mainApp, app, 'onCacheCleanup', index, {tableId})
 
@@ -59,14 +61,14 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
                 'VariableTypes', {'cell', 'cell', 'cell'} ...
             );
 
-            tableIdList = sort(extractAfter(fieldnames(app.mainApp.ecdObj(index).Table), 'x'));
+            tableIdList = sort(extractAfter(fieldnames(app.spedObj(index).Table), 'x'));
 
             for ii = 1:numel(tableIdList)
                 tableId   = tableIdList{ii};
-                tableData = app.mainApp.ecdObj(index).Table.(['x' tableId]);
+                tableData = app.spedObj(index).Table.(['x' tableId]);
                 tableInfo = whos('tableData');
 
-                if ismember(tableId, app.mainApp.General.context.ECD.cacheTables)
+                if ismember(tableId, app.mainApp.General.context.(app.Context).cacheTables)
                     deletableRowsText = '🔒︎';
                 else
                     deletableRowsText = sprintf('<a href="matlab:evalin(''base'', ''deleteSelectedTables(%s)'')">❌</a>', app.appHandleNameInBase);
@@ -90,6 +92,13 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
                 appEngine.boot(app, app.Role, mainApp, callingApp)
 
                 app.inputArgs = struct('context', context, 'index', index);
+                app.Context = context;
+                switch context
+                    case 'ECD'
+                        app.spedObj = mainApp.ecdObj;
+                    otherwise % 'EFD'
+                        app.spedObj = mainApp.efdObj;
+                end
 
                 % Registra handle deste app no workspace "base", o que possibilita 
                 % excluir registros de tabelas por meio de cliques na uitable.

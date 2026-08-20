@@ -427,8 +427,6 @@ classdef (Abstract) EFDBase
         % Os campos "01" a "12", "TOTAL", "DESCRIÃƒâ€¡ÃƒÆ’O" e 
         %-------------------------------------------------------%
         FieldSpecification = cell2table({ ...
-
-
             'ARQ_RTF',                          'cell',         [],     'SequÃƒÂªncia de bytes que representem um ÃƒÂºnico arquivo no formato RTF (Rich Text Format).';
             '01',                               'double',       'bank', 'Campo das tabelas customizadas "x_BALANCETE" e "x_APURACAO"';
             '02',                               'double',       'bank', 'Campo das tabelas customizadas "x_BALANCETE" e "x_APURACAO"';
@@ -507,7 +505,7 @@ classdef (Abstract) EFDBase
             'COD_COMB',                         'cell',         [],     'Código do produto, conforme tabela publicada pela ANP';
             'COD_CONS',                         'cell',         [],     '- Código de classe de consumo de energia elétrica ou gás: 01 - Comercial 02 - Consumo Próprio 03 - Iluminação Pública 04 - Industrial 05 - Poder Público 06 - Residencial 07 - Rural 08 - Serviço Público. - Código de classe de consumo de Fornecimento D´água – Tabela 4.4.2. C 002* - OC OC';
             'COD_CONTRA',                       'cell',         [],     'CÃƒÂ³digo da conta consolidada da contrapartida.';
-            'COD_CTA',                          'cell',         [],     'CÃƒÂ³digo da conta analÃƒÂ­tica.';
+            'COD_CTA',                          'cell',         [],     'Código da conta analatíca.';
             'COD_CTA_EMP',                      'cell',         [],     'CÃƒÂ³digo da conta da empresa participante.';
             'COD_CTA_REC',                      'cell',         [],     'CÃƒÂ³digo da conta analÃƒÂ­tica.';
             'COD_CTA_REF',                      'cell',         [],     'CÃƒÂ³digo da conta conforme plano de contas referencial.';

@@ -118,13 +118,16 @@ function fileread_EFD(obj, fileFullName, generalSettings, isInitialLoad, recordI
     ordinaryRegs = setdiff(targetRegs, {'9900'});
     for ii = 1:numel(ordinaryRegs)
         reg = ordinaryRegs{ii};
+
         [tbl, userData] = initializeOrdinaryTable(obj, reg, occurrences.(['x' reg]), occurrenceLines.(['x' reg]));
         tbl.Properties.UserData = userData;
-        obj.Table.(['x' reg]) = tbl;
+        
+        if ~isempty(tbl)
+            obj.Table.(['x' reg]) = tbl;
+        end
     end
 
     obj.Table.x9900 = initialize9900(totalCounts);
-    obj.Table.x_RESULTADOS = initializeSummaryTable(summaryRows);
 
     for ii = 1:numel(compositeNames)
         compositeName = compositeNames{ii};
@@ -132,7 +135,7 @@ function fileread_EFD(obj, fileFullName, generalSettings, isInitialLoad, recordI
     end
 end
 
-
+%-------------------------------------------------------------------------%
 function payloads = loadPayloads(fileFullName)
     payloads = struct('SourceFile', {}, 'PayloadName', {}, 'Bytes', {});
     [~, ~, fileExt] = fileparts(fileFullName);
@@ -190,7 +193,7 @@ function payloads = loadPayloads(fileFullName)
     end
 end
 
-
+%-------------------------------------------------------------------------%
 function bytes = readFileBytes(fileFullName)
     fileID = fopen(fileFullName, 'r');
     if fileID == -1
@@ -200,14 +203,14 @@ function bytes = readFileBytes(fileFullName)
     fclose(fileID);
 end
 
-
+%-------------------------------------------------------------------------%
 function cleanupFolder(folderName)
     if isfolder(folderName)
         rmdir(folderName, 's')
     end
 end
 
-
+%-------------------------------------------------------------------------%
 function [encoding, encodingJson] = detectEncoding(byteArray, generalSettings)
     encodingInfo = table( ...
         'Size', [0, 3], ...
@@ -220,7 +223,7 @@ function [encoding, encodingJson] = detectEncoding(byteArray, generalSettings)
 
     for ii = 1:numel(encodingList)
         rawDecoded = lower(native2unicode(byteArray(1:detectionBytes), encodingList{ii}));
-        numSpecialChars = cellfun(@(x) numel(strfind(rawDecoded, x)), textAnalysis.specialMain);
+        numSpecialChars = cellfun(@(x) numel(strfind(rawDecoded, x)), textAnalysis.commonAccentedChars);
         encodingInfo(end+1, :) = {encodingList{ii}, sum(numSpecialChars > 0), sum(numSpecialChars)}; %#ok<AGROW>
     end
     encodingInfo = sortrows(encodingInfo, {'SpecialCharsTypeCount', 'SpecialCharsCount'}, 'descend');
@@ -233,7 +236,7 @@ function [encoding, encodingJson] = detectEncoding(byteArray, generalSettings)
     end
 end
 
-
+%-------------------------------------------------------------------------%
 function [occurrences, occurrenceLines, compositeEvents, counts, layout] = parsePayload(payloadText, fileIndex, compositeSheets, targetRegs, counts)
     lines = splitlines(string(payloadText));
     targetRegs = setdiff(targetRegs, {'9900'});
@@ -320,7 +323,7 @@ function [occurrences, occurrenceLines, compositeEvents, counts, layout] = parse
     end
 end
 
-
+%-------------------------------------------------------------------------%
 function countsMap = incrementCount(countsMap, key, increment)
     if isKey(countsMap, key)
         countsMap(key) = countsMap(key) + increment;
@@ -329,7 +332,7 @@ function countsMap = incrementCount(countsMap, key, increment)
     end
 end
 
-
+%-------------------------------------------------------------------------%
 function [tbl, userData] = initializeOrdinaryTable(obj, recordId, rows, lineNumbers)
     userData = lineNumbers;
 
@@ -350,7 +353,7 @@ function [tbl, userData] = initializeOrdinaryTable(obj, recordId, rows, lineNumb
     tbl = convertOrdinaryTableTypes(tbl, columnSpec.complete);
 end
 
-
+%-------------------------------------------------------------------------%
 function columnSpec = localGetColumnSpecification(obj, recordId, fieldCount)
     definition = model.EFDBase.(['x' recordId]);
     layoutIdx = [];
@@ -385,7 +388,7 @@ function columnSpec = localGetColumnSpecification(obj, recordId, fieldCount)
     );
 end
 
-
+%-------------------------------------------------------------------------%
 function tbl = convertOrdinaryTableTypes(tbl, variableNames)
     for ii = 1:numel(variableNames)
         variableName = variableNames{ii};
@@ -415,7 +418,7 @@ function tbl = convertOrdinaryTableTypes(tbl, variableNames)
     end
 end
 
-
+%-------------------------------------------------------------------------%
 function tbl = initialize9900(totalCounts)
     regNames = sort(totalCounts.keys);
     rows = cell(numel(regNames), 3);
@@ -433,33 +436,7 @@ function tbl = initialize9900(totalCounts)
     tbl = convertOrdinaryTableTypes(tbl, columnSpec.complete);
 end
 
-
-function tbl = initializeSummaryTable(summaryRows)
-    allRegs = {};
-    for ii = 1:numel(summaryRows)
-        allRegs = union(allRegs, summaryRows(ii).Counts.keys, 'stable'); %#ok<AGROW>
-    end
-    allRegs = sort(allRegs);
-
-    variableNames = matlab.lang.makeValidName([{'ARQ_IDX', 'ARQUIVO_ZIP_INTERNO', 'PAYLOAD'}, strcat('COUNT_', allRegs')]);
-    variableTypes = [{'double', 'cell', 'cell'}, repmat({'double'}, 1, numel(allRegs))];
-    tbl = table('Size', [numel(summaryRows), numel(variableNames)], 'VariableNames', variableNames, 'VariableTypes', variableTypes);
-
-    for ii = 1:numel(summaryRows)
-        tbl.ARQ_IDX(ii) = summaryRows(ii).FileIndex;
-        tbl.ARQUIVO_ZIP_INTERNO{ii} = summaryRows(ii).SourceFile;
-        tbl.PAYLOAD{ii} = summaryRows(ii).PayloadName;
-        for jj = 1:numel(allRegs)
-            if isKey(summaryRows(ii).Counts, allRegs{jj})
-                tbl{ii, 3 + jj} = summaryRows(ii).Counts(allRegs{jj});
-            else
-                tbl{ii, 3 + jj} = 0;
-            end
-        end
-    end
-end
-
-
+%-------------------------------------------------------------------------%
 function tbl = initializeCompositeTable(obj, regs, events)
     metadata = getCompositeMetadata(obj, regs, events);
     variableNames = {'CHAVE_PAI'};
@@ -493,7 +470,7 @@ function tbl = initializeCompositeTable(obj, regs, events)
     end
 end
 
-
+%-------------------------------------------------------------------------%
 function metadata = getCompositeMetadata(obj, regs, events)
     metadata = struct();
     for ii = 1:numel(regs)
@@ -509,7 +486,7 @@ function metadata = getCompositeMetadata(obj, regs, events)
     end
 end
 
-
+%-------------------------------------------------------------------------%
 function values = normalizeCompositeValues(fields, fieldNames)
     values = cell(1, numel(fieldNames));
     paddedFields = [fields, repmat({''}, 1, numel(fieldNames) - numel(fields))];

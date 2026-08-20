@@ -48,14 +48,14 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
     properties (Access = private)
         %-----------------------------------------------------------------%
         inputArgs
-        ecdObj
+        spedObj
     end
     
     
     methods (Access = private)
         %-----------------------------------------------------------------%
         function updateForm(app, index, tableId)
-            tableIdData    = app.ecdObj(index).Table.(['x' tableId]);
+            tableIdData    = app.spedObj(index).Table.(['x' tableId]);
 
             % DROPDOWN "COLUNAS"
             columnRawNames = tableIdData.Properties.VariableNames;
@@ -94,7 +94,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
                 delete(app.columnFilterList.Children)
             end
 
-            selectedECD = app.ecdObj(index);
+            selectedECD = app.spedObj(index);
             [filterIndex, filterStatus] = findCustomTableFilter(app, selectedECD, tableId, 'basic');
 
             if filterStatus
@@ -150,7 +150,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
         function cats = getCategories(app, columnName)
             index = app.inputArgs.index;
             tableId = app.TableIdList.Value;
-            tableIdData = app.ecdObj(index).Table.(['x' tableId]);
+            tableIdData = app.spedObj(index).Table.(['x' tableId]);
 
             cats = {};
             if iscategorical(tableIdData.(columnName))
@@ -160,7 +160,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function validateAndAddTableFilter(app)
-            selectedECD  = app.ecdObj(app.inputArgs.index);
+            selectedECD  = app.spedObj(app.inputArgs.index);
             tableId      = app.TableIdList.Value;
             
             [filterIndex, filterStatus] = findCustomTableFilter(app, selectedECD, tableId, 'basic');
@@ -198,7 +198,12 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
                 appEngine.boot(app, app.Role, mainApp, callingApp)
 
                 app.inputArgs = struct('context', context, 'index', index);
-                app.ecdObj = mainApp.ecdObj;
+                switch context
+                    case 'ECD'
+                        app.spedObj = mainApp.ecdObj;
+                    otherwise % 'EFD'
+                        app.spedObj = mainApp.efdObj;
+                end
 
                 set(app.TableIdList, 'Items', tableIdList, 'Value', selectedTableId)
                 onTableIdValueChanged(app)
@@ -222,11 +227,11 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
             index = app.inputArgs.index;
             tableId = app.TableIdList.Value;
 
-            if ~isfield(app.ecdObj(index).Table, ['x' tableId])
+            if ~isfield(app.spedObj(index).Table, ['x' tableId])
                 context = app.inputArgs.context;
                 ipcMainMatlabCallsHandler(app.mainApp, app, 'onTableReadRequired', context, tableId)
 
-                if exist('event', 'var') && ~isfield(app.ecdObj(index).Table, ['x' tableId])
+                if exist('event', 'var') && ~isfield(app.spedObj(index).Table, ['x' tableId])
                     app.TableIdList.Value = event.PreviousValue;
                     return
                 end
@@ -348,7 +353,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
 
             if ~isempty(selectedNodes)
                 index       = app.inputArgs.index;
-                selectedECD = app.ecdObj(index);
+                selectedECD = app.spedObj(index);
                 tableId     = app.TableIdList.Value;
 
                 [filterIndex, filterStatus] = findCustomTableFilter(app, selectedECD, tableId, 'basic');
@@ -368,7 +373,7 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
         % Callback function: columnFilterList
         function onColumnFilterCheckedNodesChanged(app, event)
             
-            selectedECD = app.ecdObj(app.inputArgs.index);
+            selectedECD = app.spedObj(app.inputArgs.index);
             tableId     = app.TableIdList.Value;
 
             [filterIndex, filterStatus] = findCustomTableFilter(app, selectedECD, tableId, 'basic');

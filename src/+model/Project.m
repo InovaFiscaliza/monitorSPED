@@ -34,7 +34,7 @@ classdef Project < model.ProjectCommon
         % ## LIFECYCLE MANAGEMENT ##
         %-----------------------------------------------------------------%
         function restart(obj, context)
-            contextList = {'FILE', 'ECD'};
+            contextList = {'FILE', 'ECD', 'EFD'};
             initialization(obj, contextList, obj.mainApp.General)
         end
 
@@ -52,7 +52,7 @@ classdef Project < model.ProjectCommon
         function save(obj, context, prjName, prjFile, outputFileCompressionMode, ecdObj)
             arguments
                 obj
-                context (1,:) char {mustBeMember(context, {'FILE', 'ECD'})}
+                context (1,:) char {mustBeMember(context, {'FILE', 'ECD', 'EFD'})}
                 prjName
                 prjFile
                 outputFileCompressionMode
@@ -90,7 +90,7 @@ classdef Project < model.ProjectCommon
         function [ecdObj, msg] = load(obj, context, fileName, generalSettings, ecdObj)
             arguments
                 obj
-                context (1,:) char {mustBeMember(context, {'FILE', 'ECD'})}
+                context (1,:) char {mustBeMember(context, {'FILE', 'ECD', 'EFD'})}
                 fileName
                 generalSettings
                 ecdObj
@@ -128,7 +128,7 @@ classdef Project < model.ProjectCommon
                         obj.file = fileName;
                         obj.hash = prjData.variables.hash;
 
-                        contextList = {'FILE', 'ECD'};
+                        contextList = {'FILE', 'ECD', 'EFD'};
                         for ii = 1:numel(contextList)
                             context = contextList{ii};
 

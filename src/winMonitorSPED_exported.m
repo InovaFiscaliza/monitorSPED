@@ -28,7 +28,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         FileSortMethodIcon      matlab.ui.control.Image
         FileModuleIntroduction  matlab.ui.control.Label
         tool_Grid               matlab.ui.container.GridLayout
-        tool_ReadFiles_2        matlab.ui.control.Image
         tool_UploadFinalFile    matlab.ui.control.Image
         tool_GenerateReport     matlab.ui.control.Image
         tool_OpenPopupProject   matlab.ui.control.Image
@@ -263,7 +262,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         
                             % auxApp.winECD (ECD)
                             case {'winMonitorSPED', 'winMonitorSPED_exported', ...
-                                  'auxApp.winECD',  'auxApp.winECD_exported'}
+                                  'auxApp.winECD',  'auxApp.winECD_exported', ...
+                                  'auxApp.winEFD',  'auxApp.winEFD_exported'}
                                 switch eventName
                                     case 'getSelectedFileIndex'
                                         fileIndex = 1;
@@ -283,7 +283,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                             nodeData = unique([app.FileTree.SelectedNodes.NodeData]);
         
                                             if isequal(nodeData, varargin{1})
-                                                app.FileMetadata.UserData = [];
+                                                app.FileMetadata.UserData.fileType = '';
+                                                app.FileMetadata.UserData.indexes = [];
                                                 onTreeSelectionChanged(app)
                                             end
                                         end
@@ -314,7 +315,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                             nodeData = unique([app.FileTree.SelectedNodes.NodeData]);
         
                                             if isequal(nodeData, varargin{1})
-                                                app.FileMetadata.UserData = [];
+                                                app.FileMetadata.UserData.fileType = '';
+                                                app.FileMetadata.UserData.indexes = [];
                                                 onTreeSelectionChanged(app)
                                             end
                                         end
@@ -384,7 +386,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 app
                 callingApp
                 auxAppName char {mustBeMember(auxAppName, {'ReportLib', 'IcmsRate', 'ECDExport', 'ECDAccount', 'ECDFilter', 'ECDMemoryUsage'})}
-                context    char {mustBeMember(context, {'mainApp', 'FILE', 'ECD', 'CONFIG'})}
+                context    char {mustBeMember(context, {'mainApp', 'FILE', 'ECD', 'EFD', 'CONFIG'})}
             end
 
             arguments (Repeating)
@@ -588,6 +590,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         function initializeAppProperties(app)
             app.projectData = model.Project(app, app.rootFolder);
             app.receitaFederalObj = ws.ReceitaFederal();
+
+            app.FileMetadata.UserData.fileType = '';
+            app.FileMetadata.UserData.indexes = [];
         end
 
         %-----------------------------------------------------------------%
@@ -639,31 +644,53 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             end
 
             if ~isempty(app.FileTree.Children)
-                app.FileMetadata.UserData = [];
+                app.FileMetadata.UserData.fileType = '';
+                app.FileMetadata.UserData.indexes = [];
                 delete(app.FileTree.Children)
             end
 
-            idsList = {app.ecdObj.CompanyId};
-            selectedNode = [];
-            
-            if ~isempty(idsList)
-                ids = unique(idsList);
+            hasECD = ~isempty(app.ecdObj);
+            hasEFD = ~isempty(app.efdObj);
 
-                switch app.FileSortMethodSelector.Value
-                    case 'CNPJ'
-                        selectedNode = createFileTreeNodes(app, idsList, ids, selectedNode, selectedNodeData);
-                    otherwise
-                        switch app.FileSortMethodSelector.Value
-                            case 'PERÍODO FISCAL'
-                                validTreeNodeText = '<font style="color: blue; font-weight: bold; text-decoration: underline;">VÁLIDOS</font> EM RELAÇÃO AO CRITÉRIO "PERÍODO FISCAL ANUAL"';
-                            case 'RECEITA FEDERAL'
-                                validTreeNodeText = '<font style="color: blue; font-weight: bold; text-decoration: underline;">VÁLIDOS</font> EM RELAÇÃO AO CRITÉRIO "ARQUIVO CONSTA NA BASE DA RECEITA FEDERAL"';
-                        end
-                        validTreeNode   = uitreenode(app.FileTree, 'Text', validTreeNodeText);
-                        selectedNode    = createFileTreeNodes(app, idsList, ids, selectedNode, selectedNodeData, validTreeNode,   'only-valid');
-                        
-                        invalidTreeNode = uitreenode(app.FileTree, 'Text', '<font style="color: red; font-weight: bold; text-decoration: underline;">INVÁLIDOS</font>');
-                        selectedNode    = createFileTreeNodes(app, idsList, ids, selectedNode, selectedNodeData, invalidTreeNode, 'only-invalid');
+            if hasECD
+                idsList = {app.ecdObj.CompanyId};
+                selectedNode = [];
+            
+                if ~isempty(idsList)
+                    ids = unique(idsList);
+    
+                    switch app.FileSortMethodSelector.Value
+                        case 'CNPJ'
+                            selectedNode = createFileTreeNodes(app, 'ECD', idsList, ids, selectedNode, selectedNodeData);
+                        otherwise
+                            switch app.FileSortMethodSelector.Value
+                                case 'PERÍODO FISCAL'
+                                    validTreeNodeText = '<font style="color: blue; font-weight: bold; text-decoration: underline;">VÁLIDOS</font> EM RELAÇÃO AO CRITÉRIO "PERÍODO FISCAL ANUAL"';
+                                case 'RECEITA FEDERAL'
+                                    validTreeNodeText = '<font style="color: blue; font-weight: bold; text-decoration: underline;">VÁLIDOS</font> EM RELAÇÃO AO CRITÉRIO "ARQUIVO CONSTA NA BASE DA RECEITA FEDERAL"';
+                            end
+                            validTreeNode   = uitreenode(app.FileTree, 'Text', validTreeNodeText);
+                            selectedNode    = createFileTreeNodes(app, 'ECD', idsList, ids, selectedNode, selectedNodeData, validTreeNode,   'only-valid');
+                            
+                            invalidTreeNode = uitreenode(app.FileTree, 'Text', '<font style="color: red; font-weight: bold; text-decoration: underline;">INVÁLIDOS</font>');
+                            selectedNode    = createFileTreeNodes(app, 'ECD', idsList, ids, selectedNode, selectedNodeData, invalidTreeNode, 'only-invalid');
+                    end
+                end
+            end
+
+            if hasEFD
+                idsList = {app.efdObj.CompanyId};
+                selectedNode = [];
+            
+                if ~isempty(idsList)
+                    ids = unique(idsList);
+    
+                    switch app.FileSortMethodSelector.Value
+                        case 'CNPJ'
+                            selectedNode = createFileTreeNodes(app, 'EFD', idsList, ids, selectedNode, selectedNodeData);
+                        otherwise
+                            % ...
+                    end
                 end
             end
 
@@ -685,9 +712,20 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function selectedNode = createFileTreeNodes(app, idsList, ids, selectedNode, selectedNodeData, varargin)
+        function spedObj = getSpedObj(app, fileType)
+            switch fileType
+                case 'ECD'
+                    spedObj = app.ecdObj;
+                otherwise % 'EFD
+                    spedObj = app.efdObj;
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function selectedNode = createFileTreeNodes(app, fileType, idsList, ids, selectedNode, selectedNodeData, varargin)
             arguments
                 app 
+                fileType {mustBeMember(fileType, {'ECD', 'EFD'})}
                 idsList 
                 ids 
                 selectedNode
@@ -697,6 +735,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             arguments (Repeating)
                 varargin
             end
+
+            spedObj = getSpedObj(app, fileType);
 
             switch app.FileSortMethodSelector.Value
                 case 'CNPJ'
@@ -710,7 +750,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 % Identifica fluxos relacionados a cada CNPJ, ordenando os 
                 % fluxos de acordo com a data de fim do seu período fiscal.
                 idIndexes   = find(strcmp(idsList, id));
-                [~, idSort] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(idIndexes)));
+                [~, idSort] = sort(arrayfun(@(x) x.Period(2), spedObj(idIndexes)));
                 idIndexes   = idIndexes(idSort);
 
                 % Aplica filtro, caso construção da árvore seja orientada
@@ -721,9 +761,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
     
                         switch app.FileSortMethodSelector.Value
                             case 'PERÍODO FISCAL'
-                                validFile = checkIfValidPeriod(app.ecdObj(index));
+                                validFile = checkIfValidPeriod(spedObj(index));
                             case 'RECEITA FEDERAL'
-                                validFile = checkIfValidStatus(app.ecdObj(index));
+                                validFile = checkIfValidStatus(spedObj(index));
                         end
     
                         if strcmp(requiredStatus, 'only-valid') && ~validFile
@@ -738,16 +778,16 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     end
                 end
 
-                textCompanyNode = util.HtmlTextGenerator.generateTextId(app.ecdObj(idIndexes(1)), 'company-oriented');
+                textCompanyNode = util.HtmlTextGenerator.generateTextId(spedObj(idIndexes(1)), 'company-oriented');
                 treeCompanyNode = uitreenode(parentNode, ...
                     'Text', textCompanyNode, ...
-                    'NodeData', idIndexes, 'ContextMenu', app.ContextMenu);
+                    'NodeData', idIndexes, 'ContextMenu', app.ContextMenu, 'Tag', fileType);
     
                 for idx = idIndexes
-                    textPeriodNode = util.HtmlTextGenerator.generateTextId(app.ecdObj(idx), 'period-oriented', true);
+                    textPeriodNode = util.HtmlTextGenerator.generateTextId(spedObj(idx), 'period-oriented', true);
                     treePeriodNode = uitreenode(treeCompanyNode, ...
                         'Text', textPeriodNode, ...
-                        'NodeData', idx, 'ContextMenu', app.ContextMenu);
+                        'NodeData', idx, 'ContextMenu', app.ContextMenu, 'Tag', fileType);
     
                     if ismember(idx, selectedNodeData)
                         selectedNode = [selectedNode, treePeriodNode];
@@ -757,10 +797,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function indexes = getSelectedECDIndexes(app)
+        function [indexes, fileType] = getSelectedECDIndexes(app)
             indexes = [];
+            fileType = '';
+
             if ~isempty(app.FileTree.SelectedNodes)
-                indexes = unique([app.FileTree.SelectedNodes.NodeData]);
+                % indexes = unique([app.FileTree.SelectedNodes.NodeData]);
+                indexes = app.FileTree.SelectedNodes.NodeData;
+                fileType = app.FileTree.SelectedNodes.Tag;
             end
         end
 
@@ -1144,18 +1188,22 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         % Selection changed function: FileTree
         function onTreeSelectionChanged(app, event)
             
-            indexes = getSelectedECDIndexes(app);
+            [index, fileType] = getSelectedECDIndexes(app);
             
-            if isempty(indexes)
-                app.FileMetadata.Text     = '';
-                app.FileMetadata.UserData = [];
+            if isempty(index)
+                app.FileMetadata.Text = '';
+                app.FileMetadata.UserData.fileType = '';
+                app.FileMetadata.UserData.indexes = [];
             else
-                if isequal(app.FileMetadata.UserData, indexes)
+                if isequal(app.FileMetadata.UserData.indexes, index)
                     return
                 end
 
-                app.FileMetadata.Text     = util.HtmlTextGenerator.File(app.ecdObj(indexes));
-                app.FileMetadata.UserData = indexes;
+                spedObj = getSpedObj(app, fileType);
+
+                app.FileMetadata.Text = util.HtmlTextGenerator.File(spedObj(index));
+                app.FileMetadata.UserData.fileType = fileType;
+                app.FileMetadata.UserData.indexes = index;
             end
 
             updateToolbar(app)
@@ -1232,23 +1280,41 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             for ii = 1:numel(fileFullName)
                 d.Message = textFormatGUI.HTMLParagraph(sprintf('Em andamento a leitura do arquivo %d de %d:<br>• <b>%s</b>', ii, numel(fileFullName), fileName{ii}));
 
-                % Verifica se arquivo já foi lido, comparando o seu nome com 
-                % a variável app.ecdObj.
-                if ~ismember(fileName{ii}, {app.ecdObj.FileName})
-                    [~, ~, fileExt] = fileparts(fileFullName{ii});
-                    switch lower(fileExt)
-                        case {'.txt', ''}
-                            [app.ecdObj, msg] = addFiles(app.ecdObj, app.projectData, app.General, fileFullName{ii}, [], app.receitaFederalObj);                        
-                        case '.mat'
-                            [app.ecdObj, msg] = load(app.projectData, app.Context, fileFullName{ii}, app.General, app.ecdObj);
-                        otherwise
-                            continue
-                    end
+                [~, ~, fileExt] = fileparts(fileFullName{ii});
+                fileType = model.SPED.classifyFile(fileFullName{ii});
 
-                    if ~isempty(msg)
-                        filesError(end+1) = struct('File', sprintf('"%s"', fileName{ii}), 'Error', msg);
-                        continue
-                    end
+                msg = '';
+                switch fileType
+                    case 'ECD'
+                        if ~ismember(fileName{ii}, {app.ecdObj.FileName})
+                            switch lower(fileExt)
+                                case {'.txt', ''}
+                                    [app.ecdObj, msg] = addFiles(app.ecdObj, app.projectData, app.General, fileFullName{ii}, [], app.receitaFederalObj);                        
+                                case '.mat'
+                                    [app.ecdObj, msg] = load(app.projectData, app.Context, fileFullName{ii}, app.General, app.ecdObj);
+                                otherwise
+                                    continue
+                            end
+                        end
+
+                    case 'EFD ICMS/IPI'
+                        if ~ismember(fileName{ii}, {app.efdObj.FileName})
+                            switch lower(fileExt)
+                                case {'.txt', ''}
+                                    [app.efdObj, msg] = addFiles(app.efdObj, fileFullName{ii}, app.General, app.receitaFederalObj);
+                                case '.mat'
+                                    msg = sprintf('Pendente ajustar função "load" do model.Project');
+                                otherwise
+                                    continue
+                            end
+                        end
+
+                    otherwise
+                        msg = sprintf('Unexpected file type "%s"', fileType);
+                end
+
+                if ~isempty(msg)
+                    filesError(end+1) = struct('File', sprintf('"%s"', fileName{ii}), 'Error', msg);
                 end
             end
 
@@ -1532,75 +1598,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             end
 
         end
-
-        % Image clicked function: tool_ReadFiles_2
-        function tool_ReadFiles_2ImageClicked(app, event)
-            
-
-            fileFullName = {};
-            switch app.General.context.FILE.input
-                case 'file'
-                    [~, filePath, ~, fileName] = ui.Dialog(app.UIFigure, 'uigetfile', '', {'*.txt;*.sped;*.zip;*.mat', 'monitorSPED (*.txt,*.sped,*.zip,*.mat)'; '*.*', 'Todos os arquivos (*.*)'}, app.General.fileFolder.lastVisited, {'MultiSelect', 'on'});
-        
-                    if isempty(fileName)
-                        return
-                    elseif ~iscell(fileName)
-                        fileName = {fileName};
-                    end
-                    pathList = fullfile(filePath, fileName);
-
-                case 'folder'
-                    filePath = uigetdir(app.General.fileFolder.lastVisited);
-                    figure(app.UIFigure)
-
-                    if isequal(filePath, 0)
-                        return
-                    end
-                    pathList = {filePath};
-            end
-
-            [fileFullName, fileName] = util.getFilesFromPathList(pathList, app.General.fileFolder.tempPath, {'.txt', '', '.mat'});
-            updateLastVisitedFolder(app, filePath)
-
-            if isempty(fileFullName)
-                msgWarning = 'Não foi identificado arquivo em um dos formatos esperados.';
-                ui.Dialog(app.UIFigure, "warning", msgWarning);
-                return
-            end
-
-            d = ui.Dialog(app.UIFigure, "progressdlg", "Em andamento...");            
-            filesError = struct('File', {}, 'Error', {});
-
-            for ii = 1:numel(fileFullName)
-                d.Message = textFormatGUI.HTMLParagraph(sprintf('Em andamento a leitura do arquivo %d de %d:<br>• <b>%s</b>', ii, numel(fileFullName), fileName{ii}));
-
-                % Verifica se arquivo já foi lido, comparando o seu nome com 
-                % a variável app.efdObj.
-                if ~ismember(fileName{ii}, {app.efdObj.FileName})
-                    [~, ~, fileExt] = fileparts(fileFullName{ii});
-                    switch lower(fileExt)
-                        case {'.txt', ''}
-                            [app.efdObj, msg] = addFiles(app.efdObj, fileFullName{ii}, app.General);
-                        otherwise
-                            continue
-                    end
-
-                    if ~isempty(msg)
-                        filesError(end+1) = struct('File', sprintf('"%s"', fileName{ii}), 'Error', msg);
-                        continue
-                    end
-                end
-            end
-
-            % LOG
-            if ~isempty(filesError)
-                msgWarning = sprintf('Arquivos que apresentaram erro na leitura:\n%s\n\n', strjoin(strcat({'•&thinsp;<b>'}, {filesError.File}, {'</b>: <i>'}, {filesError.Error}), '</i>\n\n'));
-                ui.Dialog(app.UIFigure, "error", msgWarning);
-            end
-
-            delete(d)
-
-        end
     end
 
     % Component initialization
@@ -1652,7 +1649,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create tool_Grid
             app.tool_Grid = uigridlayout(app.file_Grid);
-            app.tool_Grid.ColumnWidth = {22, 22, 5, 22, 22, '1x', 22, 22, 22};
+            app.tool_Grid.ColumnWidth = {22, 5, 22, 22, '1x', 22, 22, 22};
             app.tool_Grid.RowHeight = {4, 17, 2};
             app.tool_Grid.ColumnSpacing = 5;
             app.tool_Grid.RowSpacing = 0;
@@ -1674,7 +1671,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_Separator1.ScaleMethod = 'none';
             app.tool_Separator1.Enable = 'off';
             app.tool_Separator1.Layout.Row = [1 3];
-            app.tool_Separator1.Layout.Column = 3;
+            app.tool_Separator1.Layout.Column = 2;
             app.tool_Separator1.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV.svg');
 
             % Create tool_MergeFiles
@@ -1683,7 +1680,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_MergeFiles.ImageClickedFcn = createCallbackFcn(app, @Toolbar_MergeFilesImageClicked, true);
             app.tool_MergeFiles.Enable = 'off';
             app.tool_MergeFiles.Layout.Row = [1 3];
-            app.tool_MergeFiles.Layout.Column = 4;
+            app.tool_MergeFiles.Layout.Column = 3;
             app.tool_MergeFiles.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Merge_18.png');
 
             % Create tool_CheckRFB
@@ -1692,7 +1689,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_CheckRFB.ImageClickedFcn = createCallbackFcn(app, @Toolbar_CheckStatusImageClicked, true);
             app.tool_CheckRFB.Enable = 'off';
             app.tool_CheckRFB.Layout.Row = [1 3];
-            app.tool_CheckRFB.Layout.Column = 5;
+            app.tool_CheckRFB.Layout.Column = 4;
             app.tool_CheckRFB.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'receita-federal-novo-logo-png_seeklogo-203693.png');
 
             % Create tool_OpenPopupProject
@@ -1700,7 +1697,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_OpenPopupProject.ScaleMethod = 'none';
             app.tool_OpenPopupProject.ImageClickedFcn = createCallbackFcn(app, @Toolbar_OpenPopupProjectImageClicked, true);
             app.tool_OpenPopupProject.Layout.Row = [1 3];
-            app.tool_OpenPopupProject.Layout.Column = 7;
+            app.tool_OpenPopupProject.Layout.Column = 6;
             app.tool_OpenPopupProject.ImageSource = 'organization-20px-black.svg';
 
             % Create tool_GenerateReport
@@ -1709,7 +1706,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_GenerateReport.ImageClickedFcn = createCallbackFcn(app, @Toolbar_GenerateReportImageClicked, true);
             app.tool_GenerateReport.Enable = 'off';
             app.tool_GenerateReport.Layout.Row = [1 3];
-            app.tool_GenerateReport.Layout.Column = 8;
+            app.tool_GenerateReport.Layout.Column = 7;
             app.tool_GenerateReport.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Publish_HTML_16.png');
 
             % Create tool_UploadFinalFile
@@ -1718,16 +1715,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_UploadFinalFile.ImageClickedFcn = createCallbackFcn(app, @Toolbar_UploadFinalFileImageClicked, true);
             app.tool_UploadFinalFile.Enable = 'off';
             app.tool_UploadFinalFile.Layout.Row = [1 3];
-            app.tool_UploadFinalFile.Layout.Column = 9;
+            app.tool_UploadFinalFile.Layout.Column = 8;
             app.tool_UploadFinalFile.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'up-20px.png');
-
-            % Create tool_ReadFiles_2
-            app.tool_ReadFiles_2 = uiimage(app.tool_Grid);
-            app.tool_ReadFiles_2.ScaleMethod = 'none';
-            app.tool_ReadFiles_2.ImageClickedFcn = createCallbackFcn(app, @tool_ReadFiles_2ImageClicked, true);
-            app.tool_ReadFiles_2.Layout.Row = [1 3];
-            app.tool_ReadFiles_2.Layout.Column = 2;
-            app.tool_ReadFiles_2.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'Import_16.png');
 
             % Create SubTabGroup
             app.SubTabGroup = uitabgroup(app.file_Grid);
@@ -1797,7 +1786,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create FileTree
             app.FileTree = uitree(app.file_Grid);
-            app.FileTree.Multiselect = 'on';
             app.FileTree.SelectionChangedFcn = createCallbackFcn(app, @onTreeSelectionChanged, true);
             app.FileTree.FontSize = 11;
             app.FileTree.Layout.Row = 3;

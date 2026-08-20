@@ -1,62 +1,13 @@
-function resultTable = classifySPEDFilesByFirstLine(inputFolder, tempFolder)
+function [fileType, has0000, reason] = classifySPEDFilesByFirstLine(filePath)
 % classifySPEDFilesByFirstLine
 % Classifica arquivos SPED (ECD, ECF, EFD contribuições, EFD ICMS/IPI)
 % pela primeira linha (registro 0000).
-%
-% Uso:
-%   resultTable = classifySPEDFilesByFirstLine;
-%   resultTable = classifySPEDFilesByFirstLine('C:\InovaFiscaliza\zfiles', tempdir);
-%
-% Saida:
-%   Tabela com colunas:
-%   - FileName
-%   - FilePath
-%   - FirstLine
-%   - FileType
-%   - Has0000
-%   - Reason
 
-    if nargin < 1 || isempty(inputFolder)
-        inputFolder = 'C:\InovaFiscaliza\zfiles\EFD';
-    end
-    if nargin < 2 || isempty(tempFolder)
-        tempFolder = tempdir;
-    end
-
-    % Nao filtra por extensao para incluir payloads SPED sem extensao
-    % (ex.: ESCRITURACAO-<cnpj>-<dataIni>-<dataFim> dentro de .sped).
-    [filePathList, fileNameList] = util.getFilesFromPathList({inputFolder}, tempFolder);
-
-    %[filePathList, fileNameList] = getFilesFromPathListLocal({inputFolder}, tempFolder, {'.txt', '.rec'});
-    numFiles = numel(filePathList);
-
-    resultTable = table('Size', [numFiles, 6], ...
-                        'VariableTypes', {'string', 'string', 'string', 'string', 'logical', 'string'}, ...
-                        'VariableNames', {'FileName', 'FilePath', 'FirstLine', 'FileType', 'Has0000', 'Reason'});
-
-    for ii = 1:numFiles
-        filePath = filePathList{ii};
-        firstLine = readFirstLine(filePath);
-        [fileType, has0000, reason] = classifyFirstLine(firstLine);
-
-        resultTable.FileName(ii)  = string(fileNameList{ii});
-        resultTable.FilePath(ii)  = string(filePath);
-        resultTable.FirstLine(ii) = string(firstLine);
-        resultTable.FileType(ii)  = string(fileType);
-        resultTable.Has0000(ii)   = has0000;
-        resultTable.Reason(ii)    = string(reason);
-    end
-
-    % Mantem na saida apenas arquivos cujo primeiro registro e 0000.
-    resultTable = resultTable(resultTable.Has0000, :);
-
-    if nargout == 0
-        disp(resultTable)
-    end
+    firstLine = readFirstLine(filePath);
+    [fileType, has0000, reason] = classifyFirstLine(firstLine);
 end
 
-
-
+%-------------------------------------------------------------------------%
 function firstLine = readFirstLine(filePath)
     firstLine = '';
 
@@ -79,7 +30,7 @@ function firstLine = readFirstLine(filePath)
     clear cleaner
 end
 
-
+%-------------------------------------------------------------------------%
 function [fileType, has0000, reason] = classifyFirstLine(firstLine)
     fileType = 'DESCONHECIDO';
     has0000 = false;
@@ -136,7 +87,7 @@ function [fileType, has0000, reason] = classifyFirstLine(firstLine)
             fileType = 'EFD ICMS/IPI';
             reason = 'CNPJ valido no campo 7 do registro 0000';
         case 9
-            fileType = 'EFD contribuicoes';
+            fileType = 'EFD CONTRIBUIÇÕES';
             reason = 'CNPJ valido no campo 9 do registro 0000';
         case 0
             reason = 'Sem CNPJ valido no registro 0000';
@@ -145,7 +96,7 @@ function [fileType, has0000, reason] = classifyFirstLine(firstLine)
     end
 end
 
-
+%-------------------------------------------------------------------------%
 function tf = isValidCNPJ(rawValue)
     tf = false;
 
@@ -158,7 +109,7 @@ function tf = isValidCNPJ(rawValue)
         return
     end
 
-    if numel(unique(cnpj)) == 1
+    if isscalar(unique(cnpj))
         return
     end
 
@@ -170,7 +121,7 @@ function tf = isValidCNPJ(rawValue)
     tf = (nums(13) == d1) && (nums(14) == d2);
 end
 
-
+%-------------------------------------------------------------------------%
 function digit = cnpjCheckDigit(values, weights)
     sumValue = sum(values .* weights);
     remainder = mod(sumValue, 11);

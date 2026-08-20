@@ -155,7 +155,7 @@ function [encoding, encodingJson] = detectEncoding(fileFullName, fileSize, gener
 
     for ii = 1:numel(encodingList)
         rawDecoded = lower(native2unicode(sampleBytes, encodingList{ii}));
-        numSpecialChars = cellfun(@(x) numel(strfind(rawDecoded, x)), textAnalysis.specialMain);
+        numSpecialChars = cellfun(@(x) numel(strfind(rawDecoded, x)), textAnalysis.commonAccentedChars);
         encodingInfo(end+1, :) = {encodingList{ii}, sum(numSpecialChars > 0), sum(numSpecialChars)};
     end
     encodingInfo = sortrows(encodingInfo, {'SpecialCharsTypeCount', 'SpecialCharsCount'}, 'descend');

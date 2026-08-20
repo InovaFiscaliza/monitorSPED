@@ -1,5 +1,5 @@
 {
-    "version": 1.20,
+    "version": 1.24,
     "operationMode": {
         "Debug": false,
         "Dock": true,
@@ -131,6 +131,16 @@
                 "FUNTTEL": 0.005
             },
             "accountDescriptionScope": false
+        },
+        "EFD": {
+            "customTables": {
+                "expected": [],
+                "autoload": []
+            },
+            "cacheTables": [
+                "0000",
+                "9900"
+            ]
         }
     },
     "reportLib": {

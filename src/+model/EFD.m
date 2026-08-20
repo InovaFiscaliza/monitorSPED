@@ -1,4 +1,4 @@
-classdef EFD < handle
+classdef EFD < model.SPED
 
     % SINTAXE:
     % >> efdObj = model.EFD.empty;
@@ -6,57 +6,33 @@ classdef EFD < handle
 
     properties
         %-----------------------------------------------------------------%
-        FileName = ''
-        FileFullName = ''
-
-        Size
-        Hash = ''
-        Encoding = ''
-        EncodingInfo = ''
-
-        Content = ''
-        Layout = 1
-        Table
-
-        CompanyName
-        CompanyId % CNPJ
-        CompanyInfo = struct( ...
-            'CNPJ', {}, ...
-            'IE', {}, ...
-            'IM', {}, ...
-            'NIRE', {}, ...
-            'UF', {}, ...
-            'City', {} ...
+        GUI = struct( ...
+            'isRead', false,  ...
+            'hasTransactions', false, ...
+            'hasValidStatus', false, ...
+            'hasValidPeriod', false, ...
+            'warnings', {{}}, ...
+            'icmsRate', struct( ...
+                'source', 'default', ... % 'default' | 'manual'
+                'default', struct('mode', 'auto', 'rate', []), ...
+                'current', struct('mode', 'auto', 'rate', []) ...
+            ), ...
+            'tableIds', {{}}, ...
+            'tableView', struct( ...
+                'id', {}, ...
+                'filter', {}, ...
+                'style', {}, ...
+                'sort', {}, ...
+                'width', {} ...
+            ), ...
+            'loadedFile', struct('Name', '', 'Index', -1) ...
         )
-        
-        State
-        Period
-        PeriodMerged = false
-
-        Sources = struct( ...
-            'file', {}, ...
-            'period', {}, ...
-            'encoding', {}, ...
-            'terminator', {}, ...
-            'hash', {}, ...
-            'validationMessage', {}, ...
-            'validationStatus', {} ... % -2 (Erro) | -1 (Diverge) | 0 (Pendente) | 1 (Coincide)
-        )
-        
-        Enable = true
-        UUID = char(matlab.lang.internal.uuid())
-    end
-
-
-    properties (Constant)
-        %-----------------------------------------------------------------%
-        TERMINATOR (1,2) uint8 = [13, 10]
     end
 
 
     methods (Access = public)
         %-----------------------------------------------------------------%
-        function [obj, msg] = addFiles(obj, fileNameList, generalSettings)
+        function [obj, msg] = addFiles(obj, fileNameList, generalSettings, receitaFederalObj)
             if ~iscellstr(fileNameList)
                 fileNameList = cellstr(fileNameList);
             end
@@ -77,8 +53,10 @@ classdef EFD < handle
                 try
                     obj(idx).FileName = fileName;
                     obj(idx).FileFullName = fileFullName;
+                    obj(idx).FileType = 'EFDI'; % 'EFD ICMS/IPI'
+
                     util.fileread_EFD(obj(idx), fileFullName, generalSettings);
-                    initializeCompanyContext(obj(idx))
+                    initializeCompanyContext(obj(idx), generalSettings, receitaFederalObj)
 
                 catch ME
                     struct2table(ME.stack)
@@ -89,6 +67,74 @@ classdef EFD < handle
             end
 
             msg = strjoin(msg, '\n');
+        end
+
+        %-----------------------------------------------------------------%
+        function parseTableAndAddToCache(obj, tableIdList, generalSettings)
+            arguments
+                obj
+                tableIdList cell {mustBeText}
+                generalSettings
+            end
+
+            if isequal(tableIdList, {'all'})
+                isRead = true;
+                tableIdList = model.EFDBase.getImplementedTableIds();
+            end
+
+            for ii = 1:numel(obj)
+                for jj = 1:numel(tableIdList)
+                    tableId = tableIdList{jj};
+                    tableIdField = ['x' tableId];
+                    
+                    if isfield(obj(ii).Table, tableIdField) && istable(obj(ii).Table.(tableIdField))
+                        continue
+                    end
+
+                    parseTable(obj(ii), tableId, generalSettings);
+                    if isfield(obj(ii).Table, tableIdField) && ~isempty(obj(ii).Table.(tableIdField))
+                        obj.Table.(tableIdField) = model.ECDBase.normalizeStringColumns(obj.Table.(tableIdField));
+                    end
+
+                    % Valida se foi lido o número de linhas esperado...
+                    expectedRows = expectedRowsByTableId(obj, tableId);
+                    if ~isempty(expectedRows) && expectedRows > 0
+                        readRows = height(obj(ii).Table.(['x' tableId]));                            
+                        if expectedRows ~= readRows
+                            obj(ii).GUI.warnings{end+1} = matlab.jsonencode(struct( ...
+                                'id', tableId, ...
+                                'message', sprintf('expectedRows: %d, readRows: %d', expectedRows, readRows) ...
+                            ));
+                        end
+                    end
+                end
+
+                if exist('isRead', 'var')
+                    obj(ii).GUI.isRead = isRead;
+                end
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function status = isTableRead(obj, tableIdList, generalSettings)
+            arguments
+                obj
+                tableIdList (1,:) cell {mustBeText}
+                generalSettings
+            end
+
+            status = false;
+            for ii = 1:numel(obj)
+                for jj = 1:numel(tableIdList)
+                    tableId = tableIdList{jj};
+                    tableIdStatus = isfield(obj(ii).Table, ['x' tableId]) && istable(obj(ii).Table.(['x' tableId]));
+
+                    if ~tableIdStatus
+                        status = true;
+                        parseTableAndAddToCache(obj(ii), {tableId}, generalSettings)
+                    end
+                end
+            end
         end
 
         %-----------------------------------------------------------------%
@@ -144,7 +190,6 @@ classdef EFD < handle
             checkIfScalar(obj)
 
             sheetMap = {
-                'Resultados',      'x_RESULTADOS';
                 '0000',            'x0000';
                 '0100',            'x0100';
                 '0150',            'x0150';
@@ -179,9 +224,140 @@ classdef EFD < handle
         end
 
         %-----------------------------------------------------------------%
-        function checkIfScalar(obj)
-            if ~isscalar(obj)
-                error('model:EFD:ScalarObjectRequired', 'This method requires a scalar object.')
+        function update(obj, propertyName, updateType, varargin)
+            arguments
+                obj
+                propertyName char {mustBeMember(propertyName, { 'GUI.TableIds';
+                                                                'GUI.TableView.Filter';
+                                                                'GUI.TableView.Style';
+                                                                'GUI.TableView.Sort';
+                                                                'GUI.TableView.Width';
+                                                                'GUI.IcmsRate';
+                                                                'Table.NonEssentialFiles';
+                                                                'Table.x_CONTAS_ANOTACAO';
+                                                                'Table.x_APURACAO_GERAL'; ...
+                                                                'Table.x_CONCILIACAO' })}
+                updateType
+            end
+
+            arguments (Repeating)
+                varargin
+            end
+
+            checkIfScalar(obj)
+
+            switch propertyName
+                case 'GUI.TableIds'
+                    generalSettings = varargin{1};
+
+                    sheetsSorted = extractAfter(fieldnames(obj.Table), 'x');
+                    if ~isempty(obj.Content)
+                        sheetsSorted = [sheetsSorted; getTableIds(obj); generalSettings.context.EFD.customTables.expected];
+                    end
+                    sheetsSorted = unique(sheetsSorted);
+                    sheetsSorted = [sheetsSorted(startsWith(sheetsSorted, '_')); sheetsSorted(~startsWith(sheetsSorted, '_'))];
+                    
+                    obj.GUI.tableIds = sheetsSorted;
+
+                case 'GUI.TableView.Filter'
+                    switch updateType
+                        case 'createFilteringObject'
+                            tableId = varargin{1};
+                            filterIdx = varargin{2};
+                            obj.GUI.tableView(filterIdx).id     = tableId;
+                            obj.GUI.tableView(filterIdx).filter = tableFiltering;
+
+                        otherwise
+                            error('model:EFD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
+                    end
+
+                case 'GUI.TableView.Style'
+                    switch updateType
+                        case 'addStyle'
+                            tableId = varargin{1};
+                            styleIdx = varargin{2};
+                            styleConfig = varargin{3};
+                            obj.GUI.tableView(styleIdx).id = tableId;
+                            obj.GUI.tableView(styleIdx).style = styleConfig;
+
+                        case 'removeSelectedCellStyle'
+                            styleIdx = varargin{1};
+                            styleConfig = varargin{2};
+                            obj.GUI.tableView(styleIdx).style = styleConfig;
+
+                        case 'removeTableStyle'
+                            styleIdx = varargin{1};                            
+                            obj.GUI.tableView(styleIdx).style = {};
+
+                        otherwise
+                            error('model:EFD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
+                    end
+
+                case 'GUI.TableView.Sort'
+                    tableId = varargin{1};
+                    [~, displayIdx] = ismember(tableId, {obj.GUI.tableView.id});
+
+                    switch updateType
+                        case 'applySort'
+                            if ~displayIdx
+                                displayIdx = numel(obj.GUI.tableView) + 1;
+                            end
+
+                            columnName = varargin{2};
+                            dataIdxs = varargin{3};
+
+                            obj.GUI.tableView(displayIdx).id   = tableId;
+                            obj.GUI.tableView(displayIdx).sort = struct( ...
+                                'columnName', columnName, ...
+                                'dataIdxs', dataIdxs ...
+                            );
+
+                        case 'clearSort'
+                            if displayIdx
+                                obj.GUI.tableView(displayIdx).sort = [];
+                            end
+
+                        otherwise
+                            error('model:EFD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
+                    end
+
+                case 'GUI.TableView.Width'
+                    tableId = varargin{1};
+                    [~, widthIdx] = ismember(tableId, {obj.GUI.tableView.id});
+
+                    switch updateType
+                        case 'updateColumnWidths'
+                            displayedColumnCount = varargin{2};
+                            columnWidthUpdates = varargin{3};
+
+                            if widthIdx && isfield(obj.GUI.tableView(widthIdx), 'width') && ~isempty(obj.GUI.tableView(widthIdx).width)
+                                widthCells = obj.GUI.tableView(widthIdx).width;
+                                if numel(widthCells) ~= displayedColumnCount
+                                    widthCells = repmat({'auto'}, 1, displayedColumnCount);
+                                end
+
+                            else
+                                widthIdx = numel(obj.GUI.tableView) + 1;
+                                widthCells = repmat({'auto'}, 1, displayedColumnCount);
+                            end
+
+                            widths = str2double(extractBefore({columnWidthUpdates.width}, 'px'));
+                            widthCells([columnWidthUpdates.idx]) = num2cell(widths);
+
+                            widthCells(cellfun(@(x) isequal(x, 10), widthCells)) = {'1x'};
+                            widthCells(cellfun(@(x) isequal(x, 75), widthCells)) = {'auto'};
+
+                            obj.GUI.tableView(widthIdx).id    = tableId;
+                            obj.GUI.tableView(widthIdx).width = widthCells;
+
+                        case 'resetColumnWidths'
+                            if widthIdx
+                                obj.GUI.tableView(widthIdx).width = [];
+                            end
+
+                        otherwise
+                            error('model:EFD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
+                    end
             end
         end
     end
@@ -189,7 +365,7 @@ classdef EFD < handle
 
     methods (Access = private)
         %-----------------------------------------------------------------%
-        function initializeCompanyContext(obj)
+        function initializeCompanyContext(obj, generalSettings, receitaFederalObj)
             if isfield(obj.Table, 'x0000') && ~isempty(obj.Table.x0000)
                 obj.Table.x0000 = sortrows(obj.Table.x0000, 'DT_INI');
                 obj.CompanyName = upper(strtrim(obj.Table.x0000.NOME{end}));
@@ -224,6 +400,10 @@ classdef EFD < handle
                         'validationStatus', 0 ...
                     ); %#ok<AGROW>
                 end
+            end
+
+            if ~isempty(receitaFederalObj)
+                checkFileStatus(obj, receitaFederalObj, generalSettings.context.FILE.encodingList);
             end
         end
     end
