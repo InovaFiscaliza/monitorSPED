@@ -317,7 +317,7 @@ classdef ECD < model.SPED
                 case 'GUI.TableIds'
                     generalSettings = varargin{1};
 
-                    sheetsSorted = extractAfter(fieldnames(obj.Table), 'x');
+                    sheetsSorted = [extractAfter(fieldnames(obj.Table), 'x'); generalSettings.context.ECD.cacheTables];
                     if ~isempty(obj.Content)
                         sheetsSorted = [sheetsSorted; getTableIds(obj); generalSettings.context.ECD.customTables.expected];
                     end
@@ -1051,7 +1051,7 @@ classdef ECD < model.SPED
             checkIfScalar(obj)
             ordinaryId = false;
 
-            if isfield(obj.GUI, 'loadedFile') && ~isempty(obj.GUI.loadedFile.Name)
+            if isfield(obj.GUI, 'loadedFile') && ~isempty(obj.GUI.loadedFile.Name) && ~ismember(tableId, generalSettings.context.ECD.cacheTables)
                 prjData = load(obj.GUI.loadedFile.Name, '-mat', 'variables');
                 obj.Table.(['x' tableId]) = prjData.variables.ecdData(obj.GUI.loadedFile.Index).Table.(['x' tableId]);
                 return

@@ -50,6 +50,9 @@ classdef winConfig_exported < matlab.apps.AppBase
         reportLabel                   matlab.ui.control.Label
         eFiscalizaPanel               matlab.ui.container.Panel
         eFiscalizaGrid                matlab.ui.container.GridLayout
+        SubthemesButton               matlab.ui.control.Image
+        SubthemesList                 matlab.ui.control.EditField
+        SubthemesLabel                matlab.ui.control.Label
         reportUnit                    matlab.ui.control.DropDown
         reportUnitLabel               matlab.ui.control.Label
         reportSystem                  matlab.ui.control.DropDown
@@ -166,14 +169,11 @@ classdef winConfig_exported < matlab.apps.AppBase
                     updatePanel_Analysis(app)
 
                 case 3
-                    elToModify = {
-                        app.eFiscalizaRefresh
-                    };
-                    ui.CustomizationBase.getElementsDataTag(elToModify);
+                    ui.CustomizationBase.getElementsDataTag({app.SubthemesButton});
 
                     try
                         sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
-                            struct('appName', appName, 'dataTag', app.eFiscalizaRefresh.UserData.id, 'tooltip', struct('defaultPosition', 'top', 'textContent', 'Retorna às configurações iniciais')) ...
+                            struct('appName', class(app), 'dataTag', app.SubthemesButton.UserData.id, 'tooltip', struct('defaultPosition', 'top', 'textContent', 'Habilita ou desabilita a edição da lista de subtemas<br>Ex: "Tributário - FUST", "Tributário - FUNTTEL", ""')) ...
                         });
                     catch
                     end
@@ -256,8 +256,12 @@ classdef winConfig_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function updatePanel_Report(app)
-            app.reportSystem.Value  = app.mainApp.General.reportLib.system;
+            app.reportSystem.Value = app.mainApp.General.reportLib.system;
             set(app.reportUnit, 'Items', app.mainApp.General.eFiscaliza.defaultValues.unit, 'Value', app.mainApp.General.reportLib.unit)
+
+            app.SubthemesButton.UserData.status = false;
+            app.SubthemesButton.ImageSource = 'Edit_32.png';
+            set(app.SubthemesList, 'Editable', 'off', 'FontColor', [0.65,0.65,0.65], 'Value', textFormatGUI.cellstr2ListWithQuotes(app.mainApp.General.reportLib.allowedSubthemes, 'none'))
             
             if ismember(app.mainApp.General.reportLib.outputCompressionMode, app.prjFileCompressionMode.Items)
                 app.prjFileCompressionMode.Value = app.mainApp.General.reportLib.outputCompressionMode;
@@ -566,6 +570,56 @@ classdef winConfig_exported < matlab.apps.AppBase
                 app.mainApp.General_I.fileFolder = app.mainApp.General.fileFolder;
                 saveGeneralSettings(app)
                 updatePanel_Folder(app)
+            end
+
+        end
+
+        % Callback function: SubthemesButton, SubthemesList
+        function Config_SubthemesEdition(app, event)
+            
+            switch event.Source
+                case app.SubthemesButton
+                    app.SubthemesButton.UserData.status = ~app.SubthemesButton.UserData.status;
+                    if app.SubthemesButton.UserData.status
+                        app.SubthemesButton.ImageSource = 'Edit_32Filled.png';
+                        set(app.SubthemesList, 'Editable', 'on', 'FontColor', [0,0,0])
+                    else
+                        app.SubthemesButton.ImageSource = 'Edit_32.png';
+                        set(app.SubthemesList, 'Editable', 'off', 'FontColor', [0.65,0.65,0.65])
+                    end
+
+                case app.SubthemesList
+                    parts = strsplit(event.Value, ',');
+                    try
+                        requiredSubthemes = unique(strtrim(extractBetween(parts, '"', '"')));
+                    catch
+                        app.SubthemesList.Value = event.PreviousValue;
+                        return
+                    end
+
+                    currentSubthemes = sort(app.mainApp.General.reportLib.allowedSubthemes);
+
+                    if numel(requiredSubthemes) ~= numel(parts) || isequal(currentSubthemes, requiredSubthemes)
+                        app.SubthemesList.Value = event.PreviousValue;
+                        return
+                    end
+
+                    msgQuestion = sprintf([ ...
+                        'LISTA ATUAL:\n%s\n\nLISTA PROPOSTA:\n%s\n\n' ...
+                        'Confirma a troca da lista de subtemas?' ...
+                    ], textFormatGUI.cellstr2ListWithQuotes(currentSubthemes, 'none'), textFormatGUI.cellstr2ListWithQuotes(requiredSubthemes, 'none'));
+
+                    userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
+                    if userSelection == "Não"
+                        app.SubthemesList.Value = event.PreviousValue;
+                        return
+                    end
+
+                    app.mainApp.General.reportLib.allowedSubthemes = requiredSubthemes;
+                    app.mainApp.General_I.reportLib = app.mainApp.General.reportLib;
+
+                    updatePanel_Report(app)
+                    saveGeneralSettings(app)
             end
 
         end
@@ -972,7 +1026,7 @@ classdef winConfig_exported < matlab.apps.AppBase
 
             % Create eFiscalizaGrid
             app.eFiscalizaGrid = uigridlayout(app.eFiscalizaPanel);
-            app.eFiscalizaGrid.ColumnWidth = {230, 110};
+            app.eFiscalizaGrid.ColumnWidth = {230, 110, '1x', 18};
             app.eFiscalizaGrid.RowHeight = {27, 22};
             app.eFiscalizaGrid.RowSpacing = 5;
             app.eFiscalizaGrid.BackgroundColor = [1 1 1];
@@ -1011,6 +1065,30 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.reportUnit.Layout.Row = 2;
             app.reportUnit.Layout.Column = 2;
             app.reportUnit.Value = {};
+
+            % Create SubthemesLabel
+            app.SubthemesLabel = uilabel(app.eFiscalizaGrid);
+            app.SubthemesLabel.FontSize = 11;
+            app.SubthemesLabel.Layout.Row = 1;
+            app.SubthemesLabel.Layout.Column = 3;
+            app.SubthemesLabel.Text = {'Subtemas aceitos para fins de'; 'elaboração do relato:'};
+
+            % Create SubthemesList
+            app.SubthemesList = uieditfield(app.eFiscalizaGrid, 'text');
+            app.SubthemesList.ValueChangedFcn = createCallbackFcn(app, @Config_SubthemesEdition, true);
+            app.SubthemesList.Editable = 'off';
+            app.SubthemesList.FontSize = 11;
+            app.SubthemesList.FontColor = [0.651 0.651 0.651];
+            app.SubthemesList.Layout.Row = 2;
+            app.SubthemesList.Layout.Column = [3 4];
+
+            % Create SubthemesButton
+            app.SubthemesButton = uiimage(app.eFiscalizaGrid);
+            app.SubthemesButton.ImageClickedFcn = createCallbackFcn(app, @Config_SubthemesEdition, true);
+            app.SubthemesButton.Layout.Row = 1;
+            app.SubthemesButton.Layout.Column = 4;
+            app.SubthemesButton.VerticalAlignment = 'bottom';
+            app.SubthemesButton.ImageSource = 'Edit_32.png';
 
             % Create reportLabel
             app.reportLabel = uilabel(app.SubGrid3);

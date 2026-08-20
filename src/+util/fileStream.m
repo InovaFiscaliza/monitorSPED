@@ -224,7 +224,7 @@ function result = streamParse(fileFullName, encoding, recordIds, stopAt9999, chu
     sawI150 = false;
 
     if computeHash
-        md = java.security.MessageDigest.getInstance('SHA-1');
+        hashCtx = initializeSha1Context();
     end
 
     fileID = fopen(fileFullName, 'r');
@@ -240,8 +240,7 @@ function result = streamParse(fileFullName, encoding, recordIds, stopAt9999, chu
     result.recordStarts = recordStarts;
 
     if computeHash
-        digest = typecast(md.digest(), 'uint8');
-        result.fileHash = lower(reshape(dec2hex(digest, 2).', 1, []));
+        result.fileHash = finalizeSha1Context(hashCtx);
     else
         result.fileHash = '';
     end
@@ -327,7 +326,7 @@ function result = streamParse(fileFullName, encoding, recordIds, stopAt9999, chu
         end
 
         if computeHash
-            md.update(typecast(searchBytes, 'int8'));
+            hashCtx = updateSha1Context(hashCtx, searchBytes);
         end
 
         % Decodificação compartilhada: conteúdo textual e tabelas de fatos
@@ -414,6 +413,64 @@ function result = streamParse(fileFullName, encoding, recordIds, stopAt9999, chu
         recordLines{r} = [recordLines{r}; lines];
         recordStarts{r} = [recordStarts{r}; positions];
     end
+end
+
+
+%-------------------------------------------------------------------------%
+function hashCtx = initializeSha1Context()
+    % Inicializa SHA-1 priorizando .NET e com fallback para Java.
+    hashCtx = struct('backend', '', 'module', []);
+
+    try
+        dotNetModule = System.Security.Cryptography.SHA1Managed;
+        dotNetModule.Initialize();
+
+        hashCtx.backend = 'dotnet';
+        hashCtx.module = dotNetModule;
+
+    catch dotNetError
+        try
+            javaModule = java.security.MessageDigest.getInstance('SHA-1');
+
+            hashCtx.backend = 'java';
+            hashCtx.module = javaModule;
+
+        catch javaError
+            error('util:fileStream:SHA1BackendError', 'Both SHA-1 backends failed. DotNet error: "%s", Java error: "%s"', dotNetError.message, javaError.message)
+        end
+    end
+end
+
+
+%-------------------------------------------------------------------------%
+function hashCtx = updateSha1Context(hashCtx, bytes)
+    switch hashCtx.backend
+        case 'dotnet'
+            n = numel(bytes);
+            if n > 0
+                hashCtx.module.TransformBlock(bytes, 0, n, bytes, 0);
+            end
+
+        otherwise % 'java'
+            hashCtx.module.update(typecast(bytes, 'int8'));
+    end
+end
+
+
+%-------------------------------------------------------------------------%
+function hashHex = finalizeSha1Context(hashCtx)
+    switch hashCtx.backend
+        case 'dotnet'
+            % Finaliza sem bytes adicionais: todos os dados foram passados em
+            % TransformBlock durante a leitura em streaming.
+            hashCtx.module.TransformFinalBlock(uint8([]), 0, 0);
+            hashBytes = uint8(hashCtx.module.Hash);
+
+        otherwise % 'java'
+            hashBytes = typecast(hashCtx.module.digest(), 'uint8');
+    end
+
+    hashHex = sprintf('%02x', hashBytes);
 end
 
 

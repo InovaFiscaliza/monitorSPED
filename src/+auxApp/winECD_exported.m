@@ -147,8 +147,18 @@ classdef winECD_exported < matlab.apps.AppBase
                                 accountName = varargin{1};
                                 
                                 for uiTable = [app.UITable1, app.UITable2]
-                                    if ~isempty(uiTable.Data) && ismember('COD_CTA', uiTable.Data.Properties.VariableNames)
-                                        [~, accountNameIdx] = ismember(accountName, uiTable.Data.COD_CTA);
+                                    if ~isempty(uiTable.Data)
+                                        [~, columnNameIdx] = ismember('COD_CTA', uiTable.ColumnName);
+                                        if ~columnNameIdx
+                                            return
+                                        end
+
+                                        if istable(uiTable.Data)
+                                            [~, accountNameIdx] = ismember(accountName, uiTable.Data.COD_CTA);
+                                        else
+                                            [~, accountNameIdx] = ismember(accountName, uiTable.Data(:, columnNameIdx));
+                                        end
+
                                         if accountNameIdx
                                             columnWidth = width(uiTable.Data);
                                             uiTable.Selection = [accountNameIdx * ones(columnWidth, 1), (1:columnWidth)'];
