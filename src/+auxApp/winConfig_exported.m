@@ -169,10 +169,15 @@ classdef winConfig_exported < matlab.apps.AppBase
                     updatePanel_Analysis(app)
 
                 case 3
-                    ui.CustomizationBase.getElementsDataTag({app.SubthemesButton});
+                    elToModify = {
+                        app.eFiscalizaRefresh;
+                        app.SubthemesButton
+                    };
+                    ui.CustomizationBase.getElementsDataTag(elToModify);
 
                     try
                         sendEventToHTMLSource(app.jsBackDoor, 'initializeComponents', { ...
+                            struct('appName', appName, 'dataTag', app.eFiscalizaRefresh.UserData.id, 'tooltip', struct('defaultPosition', 'top', 'textContent', 'Retorna às configurações iniciais')), ...
                             struct('appName', class(app), 'dataTag', app.SubthemesButton.UserData.id, 'tooltip', struct('defaultPosition', 'top', 'textContent', 'Habilita ou desabilita a edição da lista de subtemas<br>Ex: "Tributário - FUST", "Tributário - FUNTTEL", ""')) ...
                         });
                     catch
@@ -1015,7 +1020,6 @@ classdef winConfig_exported < matlab.apps.AppBase
             app.eFiscalizaRefresh.Visible = 'off';
             app.eFiscalizaRefresh.Layout.Row = 1;
             app.eFiscalizaRefresh.Layout.Column = 2;
-            app.eFiscalizaRefresh.VerticalAlignment = 'bottom';
             app.eFiscalizaRefresh.ImageSource = 'Refresh_18.png';
 
             % Create eFiscalizaPanel
