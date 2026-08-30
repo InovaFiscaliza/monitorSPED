@@ -375,7 +375,7 @@
                             {
                                 "Editable": "false",
                                 "ColumnName": "Janeiro",
-                                "Precision": "%.2f",
+                                "Precision": "%s",
                                 "Width": "auto",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
@@ -383,7 +383,7 @@
                             {
                                 "Editable": "false",
                                 "ColumnName": "Fevereiro",
-                                "Precision": "%.2f",
+                                "Precision": "%s",
                                 "Width": "auto",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
@@ -391,7 +391,7 @@
                             {
                                 "Editable": "false",
                                 "ColumnName": "Março",
-                                "Precision": "%.2f",
+                                "Precision": "%s",
                                 "Width": "auto",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
@@ -399,7 +399,7 @@
                             {
                                 "Editable": "false",
                                 "ColumnName": "Abril",
-                                "Precision": "%.2f",
+                                "Precision": "%s",
                                 "Width": "auto",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
@@ -407,7 +407,7 @@
                             {
                                 "Editable": "false",
                                 "ColumnName": "Maio",
-                                "Precision": "%.2f",
+                                "Precision": "%s",
                                 "Width": "auto",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
@@ -415,7 +415,7 @@
                             {
                                 "Editable": "false",
                                 "ColumnName": "Junho",
-                                "Precision": "%.2f",
+                                "Precision": "%s",
                                 "Width": "auto",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
@@ -423,7 +423,7 @@
                             {
                                 "Editable": "false",
                                 "ColumnName": "Julho",
-                                "Precision": "%.2f",
+                                "Precision": "%s",
                                 "Width": "auto",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
@@ -431,7 +431,7 @@
                             {
                                 "Editable": "false",
                                 "ColumnName": "Agosto",
-                                "Precision": "%.2f",
+                                "Precision": "%s",
                                 "Width": "auto",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
@@ -439,7 +439,7 @@
                             {
                                 "Editable": "false",
                                 "ColumnName": "Setembro",
-                                "Precision": "%.2f",
+                                "Precision": "%s",
                                 "Width": "auto",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
@@ -447,7 +447,7 @@
                             {
                                 "Editable": "false",
                                 "ColumnName": "Outubro",
-                                "Precision": "%.2f",
+                                "Precision": "%s",
                                 "Width": "auto",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
@@ -455,7 +455,7 @@
                             {
                                 "Editable": "false",
                                 "ColumnName": "Novembro",
-                                "Precision": "%.2f",
+                                "Precision": "%s",
                                 "Width": "auto",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
@@ -463,15 +463,15 @@
                             {
                                 "Editable": "false",
                                 "ColumnName": "Dezembro",
-                                "Precision": "%.2f",
+                                "Precision": "%s",
                                 "Width": "auto",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Total",
-                                "Precision": "%.2f",
+                                "ColumnName": "Total (R$)",
+                                "Precision": "%s",
                                 "Width": "auto",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right; font-weight: bold;\""

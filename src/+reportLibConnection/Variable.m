@@ -135,21 +135,22 @@ classdef (Abstract) Variable
 
                 case 'TotalValue'
                     fieldValue = sum(ecdObj.Table.x_BALANCETE_RESULTADO.TOTAL);
+
                     if fieldValue < 0
-                        fieldValue = sprintf('<font style="color:red;">R$ %.2f</font>', fieldValue);
+                        fieldValue = sprintf('<font style="color:red;">R$ %s</font>', util.formatBrazilianCurrency(fieldValue));
                     else
-                        fieldValue = sprintf('R$ %.2f', fieldValue);
+                        fieldValue = sprintf('R$ %s', util.formatBrazilianCurrency(fieldValue));
                     end
 
                 case 'FUST'
                     [~, rowIdx]  = ismember('VALOR APURADO FUST', ecdObj.Table.('x_APURACAO_GERAL').TIPO);
                     fustValue    = abs(ecdObj.Table.('x_APURACAO_GERAL'){rowIdx, 'TOTAL'});
-                    fieldValue   = sprintf('R$ %.2f (%s)', fustValue, util.numberToPortugueseCurrency(fustValue));
+                    fieldValue   = sprintf('R$ %s (%s)', util.formatBrazilianCurrency(fustValue), util.numberToPortugueseCurrency(fustValue));
 
                 case 'FUNTTEL'
                     [~, rowIdx]  = ismember('VALOR APURADO FUNTTEL', ecdObj.Table.('x_APURACAO_GERAL').TIPO);
                     funttelValue = abs(ecdObj.Table.('x_APURACAO_GERAL'){rowIdx, 'TOTAL'});
-                    fieldValue   = sprintf('R$ %.2f (%s)', funttelValue, util.numberToPortugueseCurrency(funttelValue));
+                    fieldValue   = sprintf('R$ %s (%s)', util.formatBrazilianCurrency(funttelValue), util.numberToPortugueseCurrency(funttelValue));
 
                 otherwise
                     error('UnexpectedFieldName')

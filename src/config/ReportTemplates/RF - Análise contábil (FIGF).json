@@ -627,8 +627,8 @@
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Total",
-                                "Precision": "%.2f",
+                                "ColumnName": "Total (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
@@ -727,48 +727,48 @@
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "ROB-Telecom<br>(GERAL)",
-                                "Precision": "%.2f",
+                                "ColumnName": "ROB-Telecom (R$)<br>(GERAL)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "ICMS",
-                                "Precision": "%.2f",
+                                "ColumnName": "ICMS (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "PIS",
-                                "Precision": "%.2f",
+                                "ColumnName": "PIS (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Cofins",
-                                "Precision": "%.2f",
+                                "ColumnName": "Cofins (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Fust",
-                                "Precision": "%.2f",
+                                "ColumnName": "Fust (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Funttel",
-                                "Precision": "%.2f",
+                                "ColumnName": "Funttel (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
@@ -805,48 +805,48 @@
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "ROB-Telecom<br>(INTERCONEXÃO)",
-                                "Precision": "%.2f",
+                                "ColumnName": "ROB-Telecom (R$)<br>(INTERCONEXÃO)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "ICMS",
-                                "Precision": "%.2f",
+                                "ColumnName": "ICMS (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "PIS",
-                                "Precision": "%.2f",
+                                "ColumnName": "PIS (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Cofins",
-                                "Precision": "%.2f",
+                                "ColumnName": "Cofins (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Fust",
-                                "Precision": "%.2f",
+                                "ColumnName": "Fust (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Funttel",
-                                "Precision": "%.2f",
+                                "ColumnName": "Funttel (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
@@ -883,48 +883,48 @@
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "ROB-Telecom<br>(SEM INTERCONEXÃO)",
-                                "Precision": "%.2f",
+                                "ColumnName": "ROB-Telecom (R$)<br>(SEM INTERCONEXÃO)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "ICMS",
-                                "Precision": "%.2f",
+                                "ColumnName": "ICMS (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "PIS",
-                                "Precision": "%.2f",
+                                "ColumnName": "PIS (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Cofins",
-                                "Precision": "%.2f",
+                                "ColumnName": "Cofins (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Fust",
-                                "Precision": "%.2f",
+                                "ColumnName": "Fust (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""
                             },
                             {
                                 "Editable": "false",
-                                "ColumnName": "Funttel",
-                                "Precision": "%.2f",
+                                "ColumnName": "Funttel (R$)",
+                                "Precision": "%s",
                                 "Width": "130px",
                                 "ContainerStyle": "",
                                 "TextStyle": " style=\"text-align: right;\""

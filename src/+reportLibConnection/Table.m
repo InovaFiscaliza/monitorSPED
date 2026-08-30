@@ -149,6 +149,9 @@ classdef (Abstract) Table
                     rawTable = ecdObj.Table.('x_APURACAO_GERAL');
                     rawTable = ensureRowNames(rawTable, 'TIPO');
                     rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, 'ROB TELECOM', 'ROB TELECOM (GERAL)');
+
+                    numericVariables = getNumericVariables(rawTable);
+                    rawTable = formatBrazilianCurrency(rawTable, numericVariables);
                     
                     Table = [table(rawTable.Properties.RowNames, 'VariableName', {'TIPO'}), rawTable];
 
@@ -176,6 +179,9 @@ classdef (Abstract) Table
                     rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, {icmsEscolhido, pisEscolhido, cofinsEscolhido}, {'ICMS', 'PIS', 'COFINS'});
                     rawTable = cell2table(table2cell(rawTable)', 'VariableNames', rawTable.Properties.RowNames, 'RowNames', rawTable.Properties.VariableNames);
                     rawTable = multiplyByMinusOne(rawTable, {'ICMS', 'PIS', 'COFINS', 'VALOR APURADO FUST', 'VALOR APURADO FUNTTEL'});
+
+                    numericVariables = getNumericVariables(rawTable);
+                    rawTable = formatBrazilianCurrency(rawTable, numericVariables);
                     
                     Table = [table(rawTable.Properties.RowNames, 'VariableName', {'MÊS'}), rawTable];
 
@@ -192,6 +198,9 @@ classdef (Abstract) Table
                     rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, {'ICMS ESTIMADO', 'PIS ESTIMADO', 'COFINS ESTIMADO'}, {'ICMS', 'PIS', 'COFINS'});
                     rawTable = cell2table(table2cell(rawTable)', 'VariableNames', rawTable.Properties.RowNames, 'RowNames', rawTable.Properties.VariableNames);
                     rawTable = multiplyByMinusOne(rawTable, {'ICMS', 'PIS', 'COFINS', 'VALOR APURADO FUST', 'VALOR APURADO FUNTTEL'});
+
+                    numericVariables = getNumericVariables(rawTable);
+                    rawTable = formatBrazilianCurrency(rawTable, numericVariables);
                     
                     Table = [table(rawTable.Properties.RowNames, 'VariableName', {'MÊS'}), rawTable];
 
@@ -203,8 +212,11 @@ classdef (Abstract) Table
                     rawTableItx = ensureRowNames(rawTableItx, 'TIPO');
 
                     commonVariables = intersect(rawTableGeral.Properties.VariableNames, rawTableItx.Properties.VariableNames);
-                    
                     rawTable = rawTableGeral(:, commonVariables) - rawTableItx(:, commonVariables);
+
+                    numericVariables = getNumericVariables(rawTable);
+                    rawTable = formatBrazilianCurrency(rawTable, numericVariables);
+
                     Table = [table(rawTable.Properties.RowNames, 'VariableName', {'MÊS'}), rawTable];
             end
 
@@ -217,6 +229,20 @@ classdef (Abstract) Table
 
             function tbl = multiplyByMinusOne(tbl, variableNames)
                 tbl(:, variableNames) = tbl(:, variableNames) .* -1;
+            end
+
+            function numericVariables = getNumericVariables(tbl)
+                numericVariableIdxs = find(strcmp(matlab.Compatibility.resolveTableVariableTypes(tbl), 'double'));
+                numericVariables = tbl.Properties.VariableNames(numericVariableIdxs);
+            end
+
+            function tbl = formatBrazilianCurrency(tbl, variableNames)
+                variableNames = string(variableNames);
+
+                for variableName = variableNames
+                    values = arrayfun(@(x) util.formatBrazilianCurrency(x), tbl.(variableName), 'UniformOutput', false);
+                    tbl.(variableName) = values;
+                end
             end
         end
 
