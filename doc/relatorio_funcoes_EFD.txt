@@ -1,0 +1,169 @@
+RELATORIO DE FUNCOES - EFD.m, EFDBase.m e filtered_EFD.m
+Data: 2026-08-21
+
+Observacao inicial:
+- O arquivo filtered_EFD.m nao foi localizado no workspace.
+- Em seu lugar, foi analisado o arquivo utilitario fileread_EFD.m, que e o mais aderente ao nome informado.
+
+======================================================================
+1) ARQUIVO: src/+model/EFD.m
+======================================================================
+
+1. addFiles(obj, fileNameList, generalSettings, receitaFederalObj)
+   Papel:
+   - Adiciona arquivos EFD ao objeto.
+   - Evita duplicidade por nome de arquivo.
+   - Chama a leitura do arquivo (util.fileread_EFD) e a inicializacao do contexto da empresa.
+   - Acumula mensagens de erro por arquivo.
+
+2. parseTableAndAddToCache(obj, tableIdList, generalSettings)
+   Papel:
+   - Faz parse das tabelas solicitadas e grava em cache no objeto.
+   - Aceita "all" e resolve os registros implementados.
+   - Normaliza colunas de string e valida quantidade de linhas lidas vs. esperadas.
+
+3. isTableRead(obj, tableIdList, generalSettings)
+   Papel:
+   - Verifica se cada tabela ja foi lida.
+   - Se nao foi, dispara leitura on-demand chamando parseTableAndAddToCache.
+
+4. getColumnSpecifications(obj, tableIdList)
+   Papel:
+   - Resolve, por layout, as colunas obrigatorias, opcionais e completas de cada registro.
+
+5. expectedRowsByTableId(obj, tableId)
+   Papel:
+   - Calcula quantidade esperada de linhas de um registro com base no x9900.
+
+6. update(obj, propertyName, updateType, varargin)
+   Papel:
+   - Centraliza atualizacoes de estado de GUI:
+     * IDs de tabelas
+     * filtros
+     * estilos
+     * ordenacao
+     * largura de colunas
+
+7. initializeCompanyContext(obj, generalSettings, receitaFederalObj) [privada]
+   Papel:
+   - Extrai dados de empresa/periodo a partir de x0000.
+   - Monta fontes a partir de x_RESULTADOS, quando existir.
+   - Aciona validacao de status de arquivo na Receita Federal.
+
+Analise de remocao (EFD.m):
+- Nao ha candidata clara a remocao.
+- Todas as funcoes suportam fluxo funcional da classe (carga, parse, GUI e contexto).
+
+======================================================================
+2) ARQUIVO: src/+model/EFDBase.m
+======================================================================
+
+1. path()
+   Papel:
+   - Retorna o caminho da classe EFDBase.
+
+2. getImplementedTableIds(removePrefixFlag)
+   Papel:
+   - Lista os registros implementados (propriedades iniciadas por "x").
+
+3. validateFieldMapping()
+   Papel:
+   - Verifica se todos os campos usados nos mapeamentos de registros existem em FieldSpecification.
+
+4. getFieldSpecification(field, specType)
+   Papel:
+   - Retorna metadado de campo (DataType, Format ou Description).
+
+5. defaultValue(dataType)
+   Papel:
+   - Retorna valor padrao por tipo de dado (cell, datetime, double).
+
+6. cellToTable(blockData, columnSpec)
+   Papel:
+   - Converte dados em tabela, respeitando colunas obrigatorias/opcionais.
+
+7. initializeCustomTable(tableId, varargin)
+   Papel:
+   - Inicializa tabelas customizadas de balancete, anotacao, apuracao e conciliacao.
+
+Analise de remocao (EFDBase.m):
+- Potencialmente removiveis (sem referencias internas em src/tests):
+  * path()
+  * validateFieldMapping()
+  * defaultValue(dataType)
+  * initializeCustomTable(tableId, varargin)
+
+- Justificativa:
+  * Nao foram encontradas chamadas no codigo interno analisado.
+  * Podem ainda estar em uso por codigo externo, scripts locais, GUI runtime ou chamadas dinamicas.
+
+- Recomendacao:
+  * Marcar como candidatas, nao remover imediatamente sem validacao operacional.
+
+======================================================================
+3) ARQUIVO ANALISADO NO LUGAR DE filtered_EFD.m: src/+util/fileread_EFD.m
+======================================================================
+
+Funcao principal:
+1. fileread_EFD(obj, fileFullName, generalSettings, isInitialLoad, recordIds)
+   Papel:
+   - Le leitura completa do arquivo/payload, detecta encoding,
+     faz parse de registros e popula tabelas no objeto EFD.
+
+Funcoes auxiliares locais (subfuncoes):
+2. loadPayloads(fileFullName)
+   Papel: carrega payloads de .zip/.sped/.txt, inclusive zips aninhados.
+
+3. readFileBytes(fileFullName)
+   Papel: leitura de bytes brutos.
+
+4. cleanupFolder(folderName)
+   Papel: remove pasta temporaria de extracao.
+
+5. detectEncoding(byteArray, generalSettings)
+   Papel: detecta encoding por heuristica de caracteres acentuados.
+
+6. parsePayload(payloadText, fileIndex, compositeSheets, targetRegs, counts)
+   Papel: parse linha a linha, contagem de registros e montagem de eventos compostos.
+
+7. incrementCount(countsMap, key, increment)
+   Papel: incremento utilitario em mapa de contagens.
+
+8. initializeOrdinaryTable(obj, recordId, rows, lineNumbers)
+   Papel: cria tabela de registros ordinarios e UserData de linha-fonte.
+
+9. localGetColumnSpecification(obj, recordId, fieldCount)
+   Papel: resolve colunas por layout/largura detectada.
+
+10. convertOrdinaryTableTypes(tbl, variableNames)
+    Papel: converte campos para tipos numerico e data.
+
+11. initialize9900(totalCounts)
+    Papel: gera tabela consolidada do registro 9900.
+
+12. initializeCompositeTable(obj, regs, events)
+    Papel: gera tabela para estruturas pai-filho compostas.
+
+13. getCompositeMetadata(obj, regs, events)
+    Papel: define metadados de campos para compostos.
+
+14. normalizeCompositeValues(fields, fieldNames)
+    Papel: normaliza valores de compostos (datas, numeros e texto).
+
+Analise de remocao (fileread_EFD.m):
+- Nao ha candidatas claras.
+- Todas as subfuncoes participam do pipeline da funcao principal.
+
+======================================================================
+CONCLUSAO GERAL
+======================================================================
+
+- EFD.m: manter todas as funcoes.
+- EFDBase.m: ha 4 candidatas potenciais a remocao (path, validateFieldMapping, defaultValue, initializeCustomTable), mas somente apos confirmar ausencia de uso externo.
+- filtered_EFD.m: nao encontrado; foi analisado fileread_EFD.m no lugar.
+
+Plano seguro sugerido antes de remover qualquer funcao candidata:
+1) Instrumentar logs/telemetria temporaria de chamada.
+2) Executar fluxo completo da aplicacao e casos de uso da GUI.
+3) Rodar validacao em ambiente de homologacao.
+4) Remover gradualmente com fallback/reversao simples.

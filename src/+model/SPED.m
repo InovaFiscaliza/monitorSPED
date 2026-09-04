@@ -102,7 +102,25 @@ classdef SPED < handle
                         obj(ii).Sources(index).hash = fileHash;
                     end
 
-                    [validationMessage, validationStatus]    = Get(receitaFederalObj, checkType, obj(ii).FileType, fileHash);
+                    switch obj(ii).FileType
+                        case 'EFDI'
+                            file_id = util.calculateFileHashMD5(obj(ii).FileFullName);
+                            cnpj = '';
+                            ie = '';
+                            if ~isempty(obj(ii).CompanyInfo)
+                                companyInfo = obj(ii).CompanyInfo;
+                                if numel(companyInfo) > 1
+                                    companyInfo = companyInfo(end);
+                                end
+                                cnpj = companyInfo.CNPJ;
+                                ie = companyInfo.IE;
+                            end
+
+                            [validationMessage, validationStatus] = Get(receitaFederalObj, checkType, obj(ii).FileType, cnpj, ie, file_id);
+
+                        otherwise
+                            [validationMessage, validationStatus] = Get(receitaFederalObj, checkType, obj(ii).FileType, fileHash);
+                    end
                     obj(ii).Sources(index).validationMessage = validationMessage;
                     obj(ii).Sources(index).validationStatus  = validationStatus;
 

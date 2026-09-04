@@ -1,0 +1,270 @@
+RELATORIO SOBRE COMPOSITESHEETS DO EFD
+Data: 2026-08-24
+
+OBSERVACAO INICIAL
+
+O arquivo filtered_EFD.m nao foi localizado no workspace. A definicao de compositeSheets esta em:
+
+src/+util/fileread_EFD.m
+
+As conclusoes abaixo referem-se a esse arquivo.
+
+======================================================================
+1. FUNCAO DAS COMPOSITESHEETS
+======================================================================
+
+Cada entrada de compositeSheets define uma hierarquia de registros EFD. O primeiro registro e tratado como pai e os demais como filhos.
+
+Durante o processamento, o leitor:
+
+- identifica os registros durante o parse;
+- associa cada registro filho ao ultimo registro pai encontrado;
+- cria eventos compostos;
+- gera uma tabela composta no objeto EFD;
+- usa CHAVE_PAI para relacionar os registros;
+- preserva o arquivo de origem e a linha original por meio de campos como *_ARQ_IDX e *_LINHA_TXT.
+
+O comportamento e implementado principalmente pelas funcoes:
+
+- parsePayload
+- initializeCompositeTable
+- getCompositeMetadata
+- normalizeCompositeValues
+
+======================================================================
+2. COMPOSITESHEETS EXISTENTES
+======================================================================
+
+2.1 xC100_C170_C190
+
+Relacao:
+
+C100 -> C170 -> C190
+
+Registros:
+
+- C100: documento fiscal;
+- C170: itens do documento;
+- C190: resumo por CST, CFOP e aliquota.
+
+Relevancia: ALTA.
+
+Deve ser mantida. E importante para analise fiscal, conferencia de itens e comparacao entre os valores detalhados e totalizados.
+
+Observacao estrutural: C170 e C190 normalmente sao registros relacionados ao contexto de C100, mas nao necessariamente existe uma relacao direta entre C170 e C190. A estrutura conceitual mais precisa e:
+
+C100
+|- C170
+|- C190
+
+Sugestao de nomenclatura futura:
+
+- xC100_ITEMS para C100 e C170;
+- xC100_SUMMARY para C100 e C190.
+
+2.2 xD500_D510_D590
+
+Relacao:
+
+D500 -> D510 -> D590
+
+Registros:
+
+- D500: documento de servico/comunicacao;
+- D510: itens do documento;
+- D590: resumo fiscal.
+
+Relevancia: ALTA.
+
+Deve ser mantida. E util para analise de documentos de comunicacao e telecomunicacao, seus itens e respectivos resumos fiscais.
+
+Estrutura conceitual mais precisa:
+
+D500
+|- D510
+|- D590
+
+2.3 xD695_D696_D697
+
+Relacao:
+
+D695 -> D696 -> D697
+
+Registros:
+
+- D695: documento ou intervalo de documentos;
+- D696: totalizacao por CST e CFOP;
+- D697: reparticao dos valores por UF.
+
+Relevancia: ALTA.
+
+Deve ser mantida. E relevante para analise de documentos de transporte, partilha de valores e consolidacao por unidade federativa.
+
+Estrutura conceitual:
+
+D695
+|- D696
+|- D697
+
+2.4 xD700_E_FILHOS
+
+Relacao:
+
+D700 -> D730, D731, D735, D737
+
+Registros:
+
+- D700: documento principal;
+- D730: totalizacao por CST e CFOP;
+- D731: valores de FCP;
+- D735: observacoes;
+- D737: ajustes.
+
+Relevancia: ALTA.
+
+Deve ser mantida. Reune dados fiscais, ajustes e observacoes associados a um documento de comunicacao ou telecomunicacao.
+
+O nome xD700_E_FILHOS nao e ideal, pois a letra E pode ser confundida com o Bloco E. Nomes mais claros seriam:
+
+- xD700_CHILDREN;
+- xD700_D730_D731_D735_D737.
+
+2.5 xD750_D760_D761
+
+Relacao:
+
+D750 -> D760 -> D761
+
+Registros:
+
+- D750: documento;
+- D760: totalizacao;
+- D761: FCP.
+
+Relevancia: ALTA.
+
+Deve ser mantida. E util para analise de documentos de servicos de comunicacao e respectivos valores de FCP.
+
+Estrutura conceitual:
+
+D750
+|- D760
+|- D761
+
+======================================================================
+3. QUAIS DEVEM SER DESCARTADAS?
+======================================================================
+
+Nenhuma das cinco composicoes deve ser descartada por invalidade no layout. Todas representam agrupamentos fiscais validos.
+
+Entretanto, nao foram encontrados consumidores especificos dessas tabelas compostas fora do proprio leitor fileread_EFD.m. Isso indica duas possibilidades:
+
+1. As tabelas sao usadas por codigo externo, pela interface grafica ou por uma funcionalidade futura.
+2. As tabelas sao geradas, mas atualmente nao sao consultadas pela aplicacao.
+
+Caso a segunda hipotese seja confirmada, elas podem ser removidas ou sua criacao pode ser tornada opcional para reduzir consumo de memoria e tempo de processamento.
+
+Recomendacao:
+
+- manter as cinco composicoes por enquanto;
+- verificar chamadas externas e uso pela GUI;
+- remover somente apos confirmar que campos como CHAVE_PAI, *_ARQ_IDX e *_LINHA_TXT nao sao consultados.
+
+======================================================================
+4. OUTRAS TABELAS COMPOSTAS SUGERIDAS
+======================================================================
+
+4.1 H005_H010_H020
+
+Hierarquia:
+
+H005
+|- H010
+|- H020
+
+Registros:
+
+- H005: inventario;
+- H010: itens do inventario;
+- H020: informacoes complementares de ICMS.
+
+Prioridade: ALTA.
+
+E uma boa candidata para analise de inventario e conciliacao de estoque.
+
+Sugestao:
+
+'xH005_H010_H020', {{'H005', 'H010', 'H020'}}
+
+4.2 Composicoes do Bloco K
+
+Sugestoes de grupos menores:
+
+- xK210_K215: ordem de producao e item consumido;
+- xK230_K235: ordem de producao e insumos;
+- xK250_K255: producao e consumo;
+- xK260_K265: movimentacao e consumo;
+- xK270_K275: apuracao e itens relacionados.
+
+Prioridade: MEDIA a ALTA, dependendo do uso do Bloco K.
+
+E preferivel criar grupos menores do que uma unica tabela composta para todo o Bloco K, pois as relacoes sao distintas.
+
+4.3 Composicoes do Bloco C
+
+Sugestoes:
+
+- xC100_ITEMS: {{'C100', 'C170'}};
+- xC100_SUMMARY: {{'C100', 'C190'}};
+- xC100_ADJUSTMENTS: {{'C100', 'C195', 'C197'}}.
+
+Prioridade: ALTA para documentos fiscais.
+
+Nao e recomendado agrupar todos os filhos de C100 em uma unica tabela plana, pois existem muitos registros opcionais e de naturezas diferentes.
+
+4.4 Composicoes do Bloco D
+
+Sugestoes:
+
+- xD100_ITEMS: {{'D100', 'D110'}};
+- xD100_SUMMARY: {{'D100', 'D190'}}.
+
+Prioridade: MEDIA.
+
+Outros registros relacionados a D100 devem ser agrupados somente se houver uma necessidade concreta da aplicacao.
+
+4.5 Composicoes do Bloco E
+
+Possivel hierarquia:
+
+E110
+|- E111
+|- E112
+|- E113
+|- E115
+|- E116
+
+Prioridade: MEDIA.
+
+Deve ser criada somente se o sistema precisar navegar da apuracao para seus ajustes, documentos e informacoes complementares.
+
+======================================================================
+5. RECOMENDACAO FINAL
+======================================================================
+
+Manter as cinco composicoes atuais. Nenhuma deve ser descartada por ser invalida.
+
+Prioridade recomendada para novas composicoes:
+
+1. H005_H010_H020, para inventario;
+2. K210_K215, K230_K235, K250_K255, K260_K265 e K270_K275, para producao e estoque;
+3. C100_ITEMS e C100_SUMMARY, para documentos fiscais;
+4. D100_ITEMS e D100_SUMMARY, para documentos de servico;
+5. E110 com seus filhos, somente se houver necessidade de navegacao na apuracao.
+
+Antes de remover ou adicionar composicoes, recomenda-se:
+
+- confirmar o uso das tabelas pela GUI e por scripts externos;
+- verificar o impacto de memoria e tempo de processamento;
+- criar testes com arquivos EFD que contenham os registros pai e filho;
+- manter as tabelas compostas opcionais se nem todos os fluxos precisarem delas.

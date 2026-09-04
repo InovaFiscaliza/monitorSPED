@@ -179,49 +179,7 @@ classdef EFD < model.SPED
                 end
             end
         end
-
-        %-----------------------------------------------------------------%
-        function exportMacroLikeWorkbook(obj, outputFile)
-            arguments
-                obj (1,1) model.EFD
-                outputFile (1,:) char
-            end
-
-            checkIfScalar(obj)
-
-            sheetMap = {
-                '0000',            'x0000';
-                '0100',            'x0100';
-                '0150',            'x0150';
-                '0200',            'x0200';
-                '0400',            'x0400';
-                '0450',            'x0450';
-                '0460',            'x0460';
-                '0500',            'x0500';
-                '0600',            'x0600';
-                '1400',            'x1400';
-                'C100_C170_C190',  'xC100_C170_C190';
-                'D500_D510_D590',  'xD500_D510_D590';
-                'D695_D696_D697',  'xD695_D696_D697';
-                'D700_E_FILHOS',   'xD700_E_FILHOS';
-                'D750_D760_D761',  'xD750_D760_D761'
-            };
-
-            if isfile(outputFile)
-                delete(outputFile)
-            end
-
-            for ii = 1:size(sheetMap, 1)
-                sheetName = sheetMap{ii, 1};
-                fieldName = sheetMap{ii, 2};
-
-                if ~isfield(obj.Table, fieldName) || ~istable(obj.Table.(fieldName))
-                    continue
-                end
-
-                writetable(obj.Table.(fieldName), outputFile, 'Sheet', sheetName, 'WriteMode', 'overwritesheet', 'UseExcel', false)
-            end
-        end
+  
 
         %-----------------------------------------------------------------%
         function update(obj, propertyName, updateType, varargin)

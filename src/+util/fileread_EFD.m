@@ -10,11 +10,11 @@ function fileread_EFD(obj, fileFullName, generalSettings, isInitialLoad, recordI
     end
 
     compositeSheets = struct( ... % %#ok<NASGU>
-        'xC100_C170_C190', {{'C100', 'C170', 'C190'}}, ...
-        'xD500_D510_D590', {{'D500', 'D510', 'D590'}}, ...
-        'xD695_D696_D697', {{'D695', 'D696', 'D697'}}, ...
-        'xD700_E_FILHOS',  {{'D700', 'D730', 'D731', 'D735', 'D737'}}, ...
-        'xD750_D760_D761', {{'D750', 'D760', 'D761'}} ...
+        'xC100_C170_C190', {{'C100', 'C170', 'C190'}}, ... % NF-e (55) e NFC-e (65): NF de vendas, remessas, etc. c/incidência de ICMS (C100, C170, C190 - op. de saída)
+        'xD500_D510_D590', {{'D500', 'D510', 'D590'}}, ... %  NFSC (21) e NFST (22): D500, D510, D530, D590 - op. de saída
+        'xD695_D696_D697', {{'D695', 'D696', 'D697'}}, ... % NFSC (21) e NFST (22): D695, D696, D697
+        'xD700_E_FILHOS',  {{'D700', 'D730', 'D731', 'D735', 'D737'}}, ... % NFCom (62): D700, D730, D731, D735, D737
+        'xD750_D760_D761', {{'D750', 'D760', 'D761'}} ... % NFCom (62): D750, D760, D761)
     );
     targetRegs = unique([recordIds, {'9900'}]);
 
@@ -131,7 +131,8 @@ function fileread_EFD(obj, fileFullName, generalSettings, isInitialLoad, recordI
 
     for ii = 1:numel(compositeNames)
         compositeName = compositeNames{ii};
-        obj.Table.(compositeName) = initializeCompositeTable(obj, compositeSheets.(compositeName), compositeEvents.(compositeName));
+        tbl = initializeCompositeTable(obj, compositeSheets.(compositeName), compositeEvents.(compositeName));
+        obj.Table.(compositeName) = enrichCompositeTable(obj, tbl, compositeSheets.(compositeName));
     end
 end
 
@@ -448,26 +449,54 @@ function tbl = initializeCompositeTable(obj, regs, events)
         variableTypes = [variableTypes, repmat({'cell'}, 1, numel(metadata.(reg).FieldNames)), {'double', 'double'}]; %#ok<AGROW>
     end
 
-    tbl = table('Size', [numel(events), numel(variableNames)], 'VariableNames', matlab.lang.makeValidName(variableNames), 'VariableTypes', variableTypes);
-
-    for ii = 1:height(tbl)
-        tbl.CHAVE_PAI(ii) = events(ii).parentKey;
+    if isempty(events)
+        tbl = table('Size', [0, numel(variableNames)], 'VariableNames', matlab.lang.makeValidName(variableNames), 'VariableTypes', variableTypes);
+        return
     end
 
-    for rowIndex = 1:numel(events)
-        event = events(rowIndex);
+    parentKeys = [events.parentKey];
+    uniqueParentKeys = unique(parentKeys, 'stable');
+    tbl = table('Size', [numel(uniqueParentKeys), numel(variableNames)], 'VariableNames', matlab.lang.makeValidName(variableNames), 'VariableTypes', variableTypes);
+    tbl.CHAVE_PAI = uniqueParentKeys';
+
+    for eventIndex = 1:numel(events)
+        event = events(eventIndex);
+        rowIndex = find(uniqueParentKeys == event.parentKey, 1);
         reg = event.reg;
         fieldNames = metadata.(reg).FieldNames;
         values = normalizeCompositeValues(event.fields, fieldNames);
         prefixedFieldNames = matlab.lang.makeValidName(strcat(reg, '_', fieldNames));
 
         for colIndex = 1:numel(prefixedFieldNames)
-            tbl.(prefixedFieldNames{colIndex}){rowIndex} = values{colIndex};
+            columnName = prefixedFieldNames{colIndex};
+            value = values{colIndex};
+            if isempty(value)
+                continue
+            end
+
+            currentValue = tbl.(columnName){rowIndex};
+            if isempty(currentValue)
+                tbl.(columnName){rowIndex} = value;
+            end
         end
 
-        tbl.([reg, '_ARQ_IDX'])(rowIndex) = event.fileIndex;
-        tbl.([reg, '_LINHA_TXT'])(rowIndex) = event.sourceLine;
+        sourceFileColumn = [reg, '_ARQ_IDX'];
+        sourceLineColumn = [reg, '_LINHA_TXT'];
+        if tbl.(sourceFileColumn)(rowIndex) == 0
+            tbl.(sourceFileColumn)(rowIndex) = event.fileIndex;
+            tbl.(sourceLineColumn)(rowIndex) = event.sourceLine;
+        end
     end
+
+    hasRecord = false(height(tbl), 1);
+    for ii = 1:numel(regs)
+        reg = regs{ii};
+        fieldNames = metadata.(reg).FieldNames;
+        fieldNames = fieldNames(~strcmp(fieldNames, 'REG'));
+        prefixedFieldNames = matlab.lang.makeValidName(strcat(reg, '_', fieldNames));
+        hasRecord = hasRecord | any(~cellfun(@isempty, tbl{:, prefixedFieldNames}), 2);
+    end
+    tbl = tbl(hasRecord, :);
 end
 
 %-------------------------------------------------------------------------%
@@ -509,5 +538,182 @@ function values = normalizeCompositeValues(fields, fieldNames)
         else
             values{ii} = rawValue;
         end
+    end
+end
+
+%-------------------------------------------------------------------------%
+function tbl = enrichCompositeTable(obj, tbl, regs)
+    % Adiciona a descrição textual (entre parênteses) aos campos codificados
+    % das composite sheets, no mesmo formato usado no relatório de referência
+    % "Análise_Sped_EFD_ICMS_IPI" (COD_PART/COD_ITEM ligados aos registros
+    % 0150/0200, e campos de domínio do Guia Prático EFD ICMS/IPI).
+    for ii = 1:numel(regs)
+        reg = regs{ii};
+        tbl = enrichCodPart(obj, tbl, reg);
+        tbl = enrichCodItem(obj, tbl, reg);
+        tbl = enrichDomainField(tbl, reg, 'COD_SIT', domainTable('COD_SIT'));
+        tbl = enrichDomainField(tbl, reg, 'IND_PGTO', domainTable('IND_PGTO'));
+        tbl = enrichDomainField(tbl, reg, 'TP_ASSINANTE', domainTable('TP_ASSINANTE'));
+        tbl = enrichDomainField(tbl, reg, 'CST_IPI', domainTable('CST_IPI'));
+        tbl = enrichDomainField(tbl, reg, 'CST_ICMS', domainTable('CST_ICMS'), @(code) code(max(1, end-1):end));
+    end
+end
+
+%-------------------------------------------------------------------------%
+function tbl = enrichCodPart(obj, tbl, reg)
+    columnName = matlab.lang.makeValidName([reg, '_COD_PART']);
+    if ~ismember(columnName, tbl.Properties.VariableNames) || ~isfield(obj.Table, 'x0150') || isempty(obj.Table.x0150)
+        return
+    end
+
+    part = obj.Table.x0150;
+    for rowIndex = 1:height(tbl)
+        code = tbl.(columnName){rowIndex};
+        if isempty(code)
+            continue
+        end
+
+        matchIndex = find(strcmp(part.COD_PART, code), 1);
+        if isempty(matchIndex)
+            continue
+        end
+
+        codMunLabel = part.COD_MUN{matchIndex};
+        municipio = util.lookupMunicipioIBGE(codMunLabel);
+        if ~isempty(municipio)
+            codMunLabel = sprintf('%s (%s)', codMunLabel, municipio);
+        end
+
+        tbl.(columnName){rowIndex} = sprintf('%s (%s); CNPJ: %s; CPF: %s; %s; End.: %s; Núm.: %s; Compl.: %s; Bairro: %s', ...
+            code, part.NOME{matchIndex}, part.CNPJ{matchIndex}, part.CPF{matchIndex}, codMunLabel, ...
+            part.END{matchIndex}, part.NUM{matchIndex}, part.COMPL{matchIndex}, part.BAIRRO{matchIndex});
+    end
+end
+
+%-------------------------------------------------------------------------%
+function tbl = enrichCodItem(obj, tbl, reg)
+    columnName = matlab.lang.makeValidName([reg, '_COD_ITEM']);
+    if ~ismember(columnName, tbl.Properties.VariableNames) || ~isfield(obj.Table, 'x0200') || isempty(obj.Table.x0200)
+        return
+    end
+
+    item = obj.Table.x0200;
+    for rowIndex = 1:height(tbl)
+        code = tbl.(columnName){rowIndex};
+        if isempty(code)
+            continue
+        end
+
+        matchIndex = find(strcmp(item.COD_ITEM, code), 1);
+        if isempty(matchIndex)
+            continue
+        end
+
+        tbl.(columnName){rowIndex} = sprintf('%s (%s); Tipo_item: %s; Alíq_ICMS: %s', ...
+            code, item.DESCR_ITEM{matchIndex}, item.TIPO_ITEM{matchIndex}, num2str(item.ALIQ_ICMS(matchIndex)));
+    end
+end
+
+%-------------------------------------------------------------------------%
+function tbl = enrichDomainField(tbl, reg, fieldName, domainMap, keyExtractor)
+    if nargin < 5 || isempty(keyExtractor)
+        keyExtractor = @(code) code;
+    end
+
+    columnName = matlab.lang.makeValidName([reg, '_', fieldName]);
+    if ~ismember(columnName, tbl.Properties.VariableNames) || isempty(domainMap)
+        return
+    end
+
+    for rowIndex = 1:height(tbl)
+        code = tbl.(columnName){rowIndex};
+        if isempty(code)
+            continue
+        end
+
+        key = keyExtractor(code);
+        if ~isKey(domainMap, key)
+            continue
+        end
+        tbl.(columnName){rowIndex} = sprintf('%s (%s)', code, domainMap(key));
+    end
+end
+
+%-------------------------------------------------------------------------%
+function domainMap = domainTable(fieldName)
+    % Tabelas de domínio do Guia Prático da EFD ICMS/IPI (Receita Federal).
+    switch fieldName
+        case 'COD_SIT'
+            entries = { ...
+                '00', 'Regular'; ...
+                '01', 'Extemporâneo'; ...
+                '02', 'Extemporâneo (não emitido por Doc. Fiscal Eletrônico)'; ...
+                '03', 'Cancelado'; ...
+                '04', 'Denegado'; ...
+                '05', 'Numeração inutilizada'; ...
+                '06', 'Não circulou/serviço não realizado'; ...
+                '07', 'Regime Especial/Norma Específica'; ...
+                '08', 'Documento complementar' ...
+            };
+
+        case 'IND_PGTO'
+            entries = { ...
+                '0', 'À Vista'; ...
+                '1', 'A Prazo'; ...
+                '2', 'Outros' ...
+            };
+
+        case 'TP_ASSINANTE'
+            entries = { ...
+                '1', 'Com./Ind.'; ...
+                '2', 'Residencial'; ...
+                '3', 'Rural'; ...
+                '4', 'Poder Público'; ...
+                '5', 'Tarifa Reduzida'; ...
+                '6', 'Rede de Telecomunicação'; ...
+                '7', 'Teleassinatura Especial'; ...
+                '9', 'Outros' ...
+            };
+
+        case 'CST_ICMS' % dois últimos dígitos do código (tributação), ignorando o dígito de origem
+            entries = { ...
+                '00', 'Trib. integralmente'; ...
+                '10', 'Trib. c/ cobrança do ICMS por ST'; ...
+                '20', 'Com redução de base de cálculo'; ...
+                '30', 'Isenta/não trib. c/ cobrança do ICMS por ST'; ...
+                '40', 'Isenta'; ...
+                '41', 'Não tributada'; ...
+                '50', 'Suspensão'; ...
+                '51', 'Diferimento'; ...
+                '60', 'ICMS cobrado anteriormente por ST'; ...
+                '70', 'Redução de BC c/ cobrança do ICMS por ST'; ...
+                '90', 'Outras' ...
+            };
+
+        case 'CST_IPI'
+            entries = { ...
+                '00', 'Entrada c/ recuperação de crédito'; ...
+                '01', 'Entrada trib. c/ alíquota zero'; ...
+                '02', 'Entrada isenta'; ...
+                '03', 'Entrada não tributada'; ...
+                '04', 'Entrada imune'; ...
+                '05', 'Entrada com suspensão'; ...
+                '49', 'Outras entradas'; ...
+                '50', 'Saída tributada'; ...
+                '51', 'Saída trib. c/ alíquota zero'; ...
+                '52', 'Saída isenta'; ...
+                '53', 'Saída não tributada'; ...
+                '54', 'Saída imune'; ...
+                '55', 'Saída com suspensão'; ...
+                '99', 'Outras saídas' ...
+            };
+
+        otherwise
+            entries = {};
+    end
+
+    domainMap = containers.Map('KeyType', 'char', 'ValueType', 'char');
+    for ii = 1:size(entries, 1)
+        domainMap(entries{ii, 1}) = entries{ii, 2};
     end
 end

@@ -1636,7 +1636,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab1_File = uitab(app.TabGroup);
             app.Tab1_File.AutoResizeChildren = 'off';
             app.Tab1_File.BackgroundColor = 'none';
-            app.Tab1_File.ForegroundColor = [0.129411764705882 0.129411764705882 0.129411764705882];
 
             % Create file_Grid
             app.file_Grid = uigridlayout(app.Tab1_File);
@@ -1656,7 +1655,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tool_Grid.Padding = [10 5 10 5];
             app.tool_Grid.Layout.Row = 5;
             app.tool_Grid.Layout.Column = [1 7];
-            app.tool_Grid.BackgroundColor = [0.96078431372549 0.96078431372549 0.96078431372549];
 
             % Create tool_ReadFiles
             app.tool_ReadFiles = uiimage(app.tool_Grid);
@@ -1729,7 +1727,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.SubTab1.AutoResizeChildren = 'off';
             app.SubTab1.Title = 'ARQUIVOS';
             app.SubTab1.BackgroundColor = 'none';
-            app.SubTab1.ForegroundColor = [0.129411764705882 0.129411764705882 0.129411764705882];
 
             % Create SubGrid1
             app.SubGrid1 = uigridlayout(app.SubTab1);
@@ -1779,6 +1776,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.FileMetadata.VerticalAlignment = 'top';
             app.FileMetadata.WordWrap = 'on';
             app.FileMetadata.FontSize = 11;
+            app.FileMetadata.FontColor = [0 0 0];
             app.FileMetadata.Layout.Row = 3;
             app.FileMetadata.Layout.Column = [5 6];
             app.FileMetadata.Interpreter = 'html';
@@ -1788,6 +1786,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.FileTree = uitree(app.file_Grid);
             app.FileTree.SelectionChangedFcn = createCallbackFcn(app, @onTreeSelectionChanged, true);
             app.FileTree.FontSize = 11;
+            app.FileTree.FontColor = [0 0 0];
             app.FileTree.Layout.Row = 3;
             app.FileTree.Layout.Column = [2 3];
 
@@ -1795,7 +1794,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab2_ECD = uitab(app.TabGroup);
             app.Tab2_ECD.AutoResizeChildren = 'off';
             app.Tab2_ECD.BackgroundColor = 'none';
-            app.Tab2_ECD.ForegroundColor = [0.129411764705882 0.129411764705882 0.129411764705882];
 
             % Create Tab3_EFD
             app.Tab3_EFD = uitab(app.TabGroup);
@@ -1804,7 +1802,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab4_Config = uitab(app.TabGroup);
             app.Tab4_Config.AutoResizeChildren = 'off';
             app.Tab4_Config.BackgroundColor = 'none';
-            app.Tab4_Config.ForegroundColor = [0.129411764705882 0.129411764705882 0.129411764705882];
 
             % Create NavBar
             app.NavBar = uigridlayout(app.GridLayout);
