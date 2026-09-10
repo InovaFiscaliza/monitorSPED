@@ -132,13 +132,14 @@ classdef (Abstract) Table
         end
 
         %-----------------------------------------------------------------%
-        function [Table, rawTable] = TabelaApuracao(analyzedData, tableType)
+        function [Table, rawTable] = TabelaApuracao(analyzedData, tableType, applyBrazilianCurrencyFormat)
             arguments
                 analyzedData
                 tableType char {mustBeMember(tableType, {'APURAÇÃO GERAL COMPLETA', ...
                                                          'APURAÇÃO GERAL RESUMIDA', ...
                                                          'APURAÇÃO SOMENTE INTERCONEXÃO', ...
                                                          'APURAÇÃO EXCLUINDO INTERCONEXÃO'})}
+            applyBrazilianCurrencyFormat (1, 1) logical = true
             end
 
             ecdObj = analyzedData.InfoSet.ecdObj;
@@ -150,8 +151,10 @@ classdef (Abstract) Table
                     rawTable = ensureRowNames(rawTable, 'TIPO');
                     rawTable.Properties.RowNames = replace(rawTable.Properties.RowNames, 'ROB TELECOM', 'ROB TELECOM (GERAL)');
 
-                    numericVariables = getNumericVariables(rawTable);
-                    rawTable = formatBrazilianCurrency(rawTable, numericVariables);
+                    if applyBrazilianCurrencyFormat
+                        numericVariables = getNumericVariables(rawTable);
+                        rawTable = formatBrazilianCurrency(rawTable, numericVariables);
+                    end
                     
                     Table = [table(rawTable.Properties.RowNames, 'VariableName', {'TIPO'}), rawTable];
 
@@ -180,8 +183,10 @@ classdef (Abstract) Table
                     rawTable = cell2table(table2cell(rawTable)', 'VariableNames', rawTable.Properties.RowNames, 'RowNames', rawTable.Properties.VariableNames);
                     rawTable = multiplyByMinusOne(rawTable, {'ICMS', 'PIS', 'COFINS', 'VALOR APURADO FUST', 'VALOR APURADO FUNTTEL'});
 
-                    numericVariables = getNumericVariables(rawTable);
-                    rawTable = formatBrazilianCurrency(rawTable, numericVariables);
+                    if applyBrazilianCurrencyFormat
+                        numericVariables = getNumericVariables(rawTable);
+                        rawTable = formatBrazilianCurrency(rawTable, numericVariables);
+                    end
                     
                     Table = [table(rawTable.Properties.RowNames, 'VariableName', {'MÊS'}), rawTable];
 
@@ -199,14 +204,16 @@ classdef (Abstract) Table
                     rawTable = cell2table(table2cell(rawTable)', 'VariableNames', rawTable.Properties.RowNames, 'RowNames', rawTable.Properties.VariableNames);
                     rawTable = multiplyByMinusOne(rawTable, {'ICMS', 'PIS', 'COFINS', 'VALOR APURADO FUST', 'VALOR APURADO FUNTTEL'});
 
-                    numericVariables = getNumericVariables(rawTable);
-                    rawTable = formatBrazilianCurrency(rawTable, numericVariables);
+                    if applyBrazilianCurrencyFormat
+                        numericVariables = getNumericVariables(rawTable);
+                        rawTable = formatBrazilianCurrency(rawTable, numericVariables);
+                    end
                     
                     Table = [table(rawTable.Properties.RowNames, 'VariableName', {'MÊS'}), rawTable];
 
                 case 'APURAÇÃO EXCLUINDO INTERCONEXÃO'
-                    [~, rawTableGeral] = reportLibConnection.Table.TabelaApuracao(analyzedData, 'APURAÇÃO GERAL RESUMIDA');
-                    [~, rawTableItx]   = reportLibConnection.Table.TabelaApuracao(analyzedData, 'APURAÇÃO SOMENTE INTERCONEXÃO');
+                    [~, rawTableGeral] = reportLibConnection.Table.TabelaApuracao(analyzedData, 'APURAÇÃO GERAL RESUMIDA', false);
+                    [~, rawTableItx]   = reportLibConnection.Table.TabelaApuracao(analyzedData, 'APURAÇÃO SOMENTE INTERCONEXÃO', false);
                     
                     rawTableGeral = ensureRowNames(rawTableGeral, 'TIPO');
                     rawTableItx = ensureRowNames(rawTableItx, 'TIPO');
@@ -214,8 +221,10 @@ classdef (Abstract) Table
                     commonVariables = intersect(rawTableGeral.Properties.VariableNames, rawTableItx.Properties.VariableNames);
                     rawTable = rawTableGeral(:, commonVariables) - rawTableItx(:, commonVariables);
 
-                    numericVariables = getNumericVariables(rawTable);
-                    rawTable = formatBrazilianCurrency(rawTable, numericVariables);
+                    if applyBrazilianCurrencyFormat
+                        numericVariables = getNumericVariables(rawTable);
+                        rawTable = formatBrazilianCurrency(rawTable, numericVariables);
+                    end
 
                     Table = [table(rawTable.Properties.RowNames, 'VariableName', {'MÊS'}), rawTable];
             end
