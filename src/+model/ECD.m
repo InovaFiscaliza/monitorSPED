@@ -602,83 +602,20 @@ classdef ECD < handle
                                     continue
                                 end
 
-                                accountDescription = textAnalysis.normalizeWords(accountTable.('DESCRIÇÃO'){ii});
-                                hasPositiveMonthlyBalance = all(accountTable{ii, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}} >= 0);
-                                totalBalance = accountTable.('TOTAL')(ii);
+                                monthlyBalances = accountTable{ii, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}};
+                                totalBalance    = accountTable.('TOTAL')(ii);
 
-                                % Identifica qual das descrições possuem as palavras 
-                                % "ICMS", "PIS" ou "COFINS", e qual delas aparece no 
-                                % final da descrição (e mais próxima da descrição da 
-                                % conta analítica sob análise).
-                                taxOptions    = {'icms', ' pis', 'cofins'};
-                                taxValidation = repmat({[]}, 1, 3);
-                                
-                                for jj = 1:numel(taxOptions)
-                                    taxTempValidation = strfind(accountDescription, taxOptions{jj});
-                                    if ~isempty(taxTempValidation)
-                                        taxValidation{jj} = taxTempValidation(end);
-                                    end
+                                [category, note] = util.classifyApuradoCategory(string(accountTable.('DESCRIÇÃO'){ii}), monthlyBalances, totalBalance);
+
+                                if category == "-"
+                                    continue
                                 end
-                                
-                                if ~isempty(cell2mat(taxValidation))
-                                    taxValidationMax = max(cell2mat(taxValidation));
-                                    taxValidationMaxIndex = find(cellfun(@(x) isequal(taxValidationMax, x), taxValidation), 1);
 
-                                    switch taxValidationMaxIndex
-                                        case 1 % ICMS
-                                            obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "ICMS Telecom";
-                                            obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Descrição inclui termo "ICMS"';
+                                obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = category;
+                                obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = note;
 
-                                        case 2 % PIS
-                                            obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "PIS Telecom";
-                                            obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Descrição inclui termo "PIS"';
-
-                                        case 3 % COFINS
-                                            obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "COFINS Telecom";
-                                            obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = '[auto] Descrição inclui termo "COFINS"';
-                                    end
-
-                                else
-                                    if totalBalance <= 0
-                                        continue
-                                    end
-
-                                    keywords = struct( ...
-                                        'nonTelecom', {{'nao telecom', ' sva ', 'valor adicionado', 'valor adcionado', ' locacao', 'instalacao'}}, ...
-                                        'telecom',    {{'telecom', 'servico', 'receita'}} ...
-                                    );
-
-                                    normalizedDescription = textAnalysis.normalizeWords(accountTable.('DESCRIÇÃO'){ii});
-                                    nonTelecomMatchMask   = cellfun(@(x) contains(normalizedDescription, x), keywords.nonTelecom);
-                                    telecomTermsMatchMask = cellfun(@(x) contains(normalizedDescription, x), keywords.telecom);
-
-                                    if any(nonTelecomMatchMask)
-                                        nonTelecomWords = upper(strcat({'"'}, strtrim(keywords.nonTelecom(nonTelecomMatchMask)), {'"'}));
-                                        if isscalar(nonTelecomWords)
-                                            nonTelecomWords = char(nonTelecomWords);
-                                            classificationNote = sprintf('[auto] Descrição inclui termo %s', nonTelecomWords);
-                                        else
-                                            nonTelecomWords = strjoin({strjoin(nonTelecomWords(1:end-1), ', '), nonTelecomWords{end}}, ' e ');
-                                            classificationNote = sprintf('[auto] Descrição inclui termos %s', nonTelecomWords);
-                                        end
-
-                                        obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "Não";
-                                        obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = classificationNote;
-
-                                    elseif sum(telecomTermsMatchMask) >= 2
-                                        telecomWords = upper(strcat({'"'}, strtrim(keywords.telecom(telecomTermsMatchMask)), {'"'}));
-                                        telecomWords = strjoin({strjoin(telecomWords(1:end-1), ', '), telecomWords{end}}, ' e ');
-
-                                        if hasPositiveMonthlyBalance
-                                            classificationNote = sprintf('[auto] Saldos mensais não negativos e descrição inclui termos %s', telecomWords);
-                                        else
-                                            classificationNote = sprintf('[auto] Saldo anual positivo e descrição inclui termos %s', telecomWords);
-                                        end
-
-                                        obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎')(ii)   = "Sim";
-                                        obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){ii}  = jsonencode(obj.GUI.icmsRate.current);
-                                        obj.Table.x_CONTAS_ANOTACAO.('Observação  ✎'){ii} = classificationNote;
-                                    end
+                                if category == "Sim"
+                                    obj.Table.x_CONTAS_ANOTACAO.('Alíquota ICMS'){ii} = jsonencode(obj.GUI.icmsRate.current);
                                 end
                             end
 
