@@ -597,6 +597,13 @@ classdef ECD < handle
                                 'RightVariables', {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 'TOTAL'} ...
                             );
 
+                            % Receita candidata total da empresa (arquivo SPED
+                            % atual), usada por util.classifyAccountCategory
+                            % como sinal de magnitude para o termo genérico da
+                            % regra "Sim" (conta precisa ser uma fatia relevante 
+                            % da receita da própria empresa).
+                            entityRevenueTotal = util.computeEntityRevenueTotal(string(accountTable.('DESCRIÇÃO')), accountTable.('TOTAL'));
+
                             for ii = 1:height(accountTable)
                                 if accountTable.('Apurado?  ✎')(ii) ~= "-"
                                     continue
@@ -605,7 +612,7 @@ classdef ECD < handle
                                 monthlyBalances = accountTable{ii, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}};
                                 totalBalance    = accountTable.('TOTAL')(ii);
 
-                                [category, note] = util.classifyApuradoCategory(string(accountTable.('DESCRIÇÃO'){ii}), monthlyBalances, totalBalance);
+                                [category, note] = util.classifyAccountCategory(string(accountTable.('DESCRIÇÃO'){ii}), monthlyBalances, totalBalance, entityRevenueTotal);
 
                                 if category == "-"
                                     continue
