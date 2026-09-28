@@ -9,13 +9,7 @@ function fileread_EFD(obj, fileFullName, generalSettings, isInitialLoad, recordI
                                       'D700', 'D730', 'D731', 'D735', 'D737', 'D750', 'D760', 'D761'}
     end
 
-    compositeSheets = struct( ... % %#ok<NASGU>
-        'xC100_C170_C190', {{'C100', 'C170', 'C190'}}, ... % NF-e (55) e NFC-e (65): NF de vendas, remessas, etc. c/incidência de ICMS (C100, C170, C190 - op. de saída)
-        'xD500_D510_D590', {{'D500', 'D510', 'D590'}}, ... %  NFSC (21) e NFST (22): D500, D510, D530, D590 - op. de saída
-        'xD695_D696_D697', {{'D695', 'D696', 'D697'}}, ... % NFSC (21) e NFST (22): D695, D696, D697
-        'xD700_E_FILHOS',  {{'D700', 'D730', 'D731', 'D735', 'D737'}}, ... % NFCom (62): D700, D730, D731, D735, D737
-        'xD750_D760_D761', {{'D750', 'D760', 'D761'}} ... % NFCom (62): D750, D760, D761)
-    );
+    compositeSheets = model.EFDBase.efdCompositeSheets();
     targetRegs = unique([recordIds, {'9900'}]);
 
     payloads = loadPayloads(fileFullName);
@@ -127,12 +121,28 @@ function fileread_EFD(obj, fileFullName, generalSettings, isInitialLoad, recordI
         end
     end
 
-    obj.Table.x9900 = initialize9900(totalCounts);
+    % Assim como as tabelas compostas, o x9900 só é reconstruído numa carga
+    % inicial completa; numa releitura parcial (recordIds restrito), "totalCounts"
+    % refletiria apenas os registros solicitados, sobrescrevendo o x9900
+    % cacheado com uma contagem incompleta.
+    if isInitialLoad
+        obj.Table.x9900 = initialize9900(totalCounts);
+    end
 
     for ii = 1:numel(compositeNames)
         compositeName = compositeNames{ii};
+
+        % Numa releitura parcial (recordIds restrito, ex.: recuperação de um
+        % único registro removido do cache), só reconstrói a tabela composta
+        % se TODOS os registros que a compõem fizerem parte de targetRegs;
+        % caso contrário, preserva a tabela composta já cacheada.
+        if ~all(ismember(compositeSheets.(compositeName), targetRegs))
+            continue
+        end
+
         tbl = initializeCompositeTable(obj, compositeSheets.(compositeName), compositeEvents.(compositeName));
-        obj.Table.(compositeName) = enrichCompositeTable(obj, tbl, compositeSheets.(compositeName));
+        tbl = enrichCompositeTable(obj, tbl, compositeSheets.(compositeName));
+        obj.Table.(compositeName) = mergeCompositeColumnNames(obj, tbl, compositeSheets.(compositeName));
     end
 end
 
@@ -445,8 +455,20 @@ function tbl = initializeCompositeTable(obj, regs, events)
 
     for ii = 1:numel(regs)
         reg = regs{ii};
-        variableNames = [variableNames, strcat(reg, '_', metadata.(reg).FieldNames), {[reg, '_ARQ_IDX'], [reg, '_LINHA_TXT']}]; %#ok<AGROW>
-        variableTypes = [variableTypes, repmat({'cell'}, 1, numel(metadata.(reg).FieldNames)), {'double', 'double'}]; %#ok<AGROW>
+        fieldNames = metadata.(reg).FieldNames;
+        prefixedFieldNames = strcat(reg, '_', fieldNames);
+
+        % Além do valor "vencedor" (1º não vazio) por campo, mantém-se em
+        % colunas "..._VALUES" o CONJUNTO de valores distintos vistos por
+        % campo/registro-pai, para os campos NÃO monetários (classificatórios,
+        % como CST_ICMS/CFOP/ALIQ_ICMS) — usado por mergeCompositeColumnNames
+        % para comparar por conjunto, já que esses campos podem legitimamente
+        % ter múltiplos valores por documento (um por item).
+        isMonetary = startsWith(fieldNames, 'VL_');
+        valueSetNames = strcat(prefixedFieldNames(~isMonetary), '_VALUES');
+
+        variableNames = [variableNames, prefixedFieldNames, valueSetNames, {[reg, '_ARQ_IDX'], [reg, '_LINHA_TXT']}]; %#ok<AGROW>
+        variableTypes = [variableTypes, repmat({'cell'}, 1, numel(fieldNames) + numel(valueSetNames)), {'double', 'double'}]; %#ok<AGROW>
     end
 
     if isempty(events)
@@ -475,8 +497,35 @@ function tbl = initializeCompositeTable(obj, regs, events)
             end
 
             currentValue = tbl.(columnName){rowIndex};
-            if isempty(currentValue)
-                tbl.(columnName){rowIndex} = value;
+
+            % Campos "VL_*" (valores monetários) são somados entre múltiplos
+            % registros-filho do mesmo pai (ex.: vários D510/itens ou vários
+            % D590/resumos por CST-CFOP-alíquota de um mesmo D500) — do
+            % contrário, apenas o 1º filho seria considerado, subestimando o
+            % total e gerando falsa divergência com o valor agregado do D500.
+            % Demais campos (códigos, identificadores, alíquotas) mantêm o
+            % comportamento original de "primeiro valor não vazio", além de
+            % acumular o conjunto completo de valores em "..._VALUES".
+            if startsWith(fieldNames{colIndex}, 'VL_') && isnumeric(value)
+                if isempty(currentValue)
+                    currentValue = 0;
+                end
+                tbl.(columnName){rowIndex} = currentValue + value;
+
+            else
+                if isempty(currentValue)
+                    tbl.(columnName){rowIndex} = value;
+                end
+
+                valueSetColumn = [columnName, '_VALUES'];
+                valueSet = tbl.(valueSetColumn){rowIndex};
+                if ~iscell(valueSet)
+                    valueSet = {};
+                end
+                if ~any(cellfun(@(x) isequal(x, value), valueSet))
+                    valueSet{end+1} = value; %#ok<AGROW>
+                end
+                tbl.(valueSetColumn){rowIndex} = valueSet;
             end
         end
 
@@ -538,6 +587,208 @@ function values = normalizeCompositeValues(fields, fieldNames)
         else
             values{ii} = rawValue;
         end
+    end
+end
+
+%-------------------------------------------------------------------------%
+function tbl = mergeCompositeColumnNames(obj, tbl, regs)
+    % Remove o prefixo "<REG>_" dos nomes das colunas mescladas (CHAVE_PAI e
+    % as colunas de rastreio *_ARQ_IDX/*_LINHA_TXT/*_VALUES permanecem como
+    % estão, ou são descartadas ao final, no caso de *_VALUES).
+    % Quando o mesmo campo aparece em mais de um registro de origem (ex.:
+    % CST_ICMS em C170 e C190), mantém-se uma única coluna, com o primeiro
+    % valor não vazio (na ordem de "regs"); divergências entre os valores
+    % de origem são registradas em obj.GUI.warnings.
+    variableNames = tbl.Properties.VariableNames;
+    reservedMask  = endsWith(variableNames, {'_ARQ_IDX', '_LINHA_TXT', '_VALUES'}) | strcmp(variableNames, 'CHAVE_PAI');
+
+    bareNames  = {};
+    sourceCols = {};
+
+    for ii = 1:numel(regs)
+        reg = regs{ii};
+        prefix = matlab.lang.makeValidName([reg '_']);
+        regColumnIdxs = find(startsWith(variableNames, prefix) & ~reservedMask);
+
+        for jj = regColumnIdxs
+            columnName = variableNames{jj};
+            bareName = extractAfter(columnName, prefix);
+
+            [~, bareIdx] = ismember(bareName, bareNames);
+            if bareIdx == 0
+                bareNames{end+1}  = bareName; %#ok<AGROW>
+                sourceCols{end+1} = {columnName}; %#ok<AGROW>
+            else
+                sourceCols{bareIdx}{end+1} = columnName;
+            end
+        end
+    end
+
+    for ii = 1:numel(bareNames)
+        bareName = bareNames{ii};
+        cols = sourceCols{ii};
+
+        mergedValues = tbl.(cols{1});
+        conflictCount = 0;
+
+        % Campos classificatórios (não monetários) têm uma coluna irmã
+        % "..._VALUES" com o conjunto completo de valores vistos por linha;
+        % quando presente para TODAS as colunas-fonte, a comparação usa esse
+        % conjunto em vez do valor único "vencedor" — um documento pode ter
+        % legitimamente vários itens com CST_ICMS/CFOP/ALIQ_ICMS distintos,
+        % e comparar só o "1º valor" de cada registro-filho geraria falsa
+        % divergência sempre que a ordem dos itens não coincidisse entre os
+        % registros de origem (ex.: C170 x C190).
+        valueSetCols  = strcat(cols, '_VALUES');
+        useValueSets  = all(ismember(valueSetCols, variableNames));
+        if useValueSets
+            mergedValueSet = tbl.(valueSetCols{1});
+        end
+
+        for jj = 2:numel(cols)
+            otherValues = tbl.(cols{jj});
+            emptyMask = cellfun(@isempty, mergedValues);
+
+            if useValueSets
+                otherValueSet = tbl.(valueSetCols{jj});
+                hasBothSets = ~cellfun(@isempty, mergedValueSet) & ~cellfun(@isempty, otherValueSet);
+                conflictMask = hasBothSets & ~cellfun(@compositeValueSetsMatch, mergedValueSet, otherValueSet);
+                mergedValueSet = cellfun(@unionCompositeValues, mergedValueSet, otherValueSet, 'UniformOutput', false);
+            else
+                % Campos monetários ("VL_*") somados a partir de múltiplos
+                % itens (ver initializeCompositeTable) podem diferir do
+                % total do documento por até poucos centavos, por
+                % arredondamento por item; compareCompositeValues tolera
+                % essa diferença, sinalizando só divergências materiais.
+                conflictMask = ~emptyMask & ~cellfun(@isempty, otherValues) & ~cellfun(@compareCompositeValues, mergedValues, otherValues);
+            end
+
+            conflictCount = conflictCount + sum(conflictMask);
+            mergedValues(emptyMask) = otherValues(emptyMask);
+        end
+
+        % "REG" sempre diverge entre os registros de origem por definição
+        % (identifica o próprio tipo do registro: D500, D510, D590 etc.) —
+        % não é uma divergência de dado, então não gera warning.
+        if conflictCount > 0 && ~strcmp(bareName, 'REG')
+            obj.GUI.warnings{end+1} = matlab.jsonencode(struct( ...
+                'id', 'CompositeColumnMerge', ...
+                'message', sprintf('Campo "%s": %d linha(s) com valores divergentes entre %s; mantido o valor do registro de maior prioridade.', bareName, conflictCount, strjoin(cols, ', ')) ...
+            ));
+        end
+
+        % A remoção do prefixo não pode falhar por causa de uma conversão de
+        % tipo inesperada (ex.: tabela mesclada vazia); se normalizeMergedColumn
+        % falhar, mantém-se o valor como texto simples.
+        try
+            columnData = normalizeMergedColumn(bareName, mergedValues);
+        catch
+            columnData = cellfun(@(x) char(string(x)), mergedValues, 'UniformOutput', false);
+        end
+
+        tbl = removevars(tbl, cols);
+        tbl.(bareName) = columnData;
+    end
+
+    % Colunas "..._VALUES" são bookkeeping interno (comparação de conjuntos);
+    % nunca devem aparecer na tabela composta final exposta à UI/relatório.
+    valueSetColumns = tbl.Properties.VariableNames(endsWith(tbl.Properties.VariableNames, '_VALUES'));
+    if ~isempty(valueSetColumns)
+        tbl = removevars(tbl, valueSetColumns);
+    end
+    valueSetColumns = tbl.Properties.VariableNames(endsWith(tbl.Properties.VariableNames, '_PAI'));
+    if ~isempty(valueSetColumns)
+        tbl = removevars(tbl, valueSetColumns);  
+    end
+    valueSetColumns = tbl.Properties.VariableNames(endsWith(tbl.Properties.VariableNames, '_LINHA_TXT'));
+    if ~isempty(valueSetColumns)
+        tbl = removevars(tbl, valueSetColumns);  
+    end
+    valueSetColumns = tbl.Properties.VariableNames(endsWith(tbl.Properties.VariableNames, '_ARQ_IDX'));
+    if ~isempty(valueSetColumns)
+        tbl = removevars(tbl, valueSetColumns);
+    end
+    tbl.REG(:) = {strjoin(regs,'_')};
+end
+
+%-------------------------------------------------------------------------%
+function tf = compareCompositeValues(a, b)
+    % Valores numéricos toleram diferença de até 2 centavos (arredondamento
+    % por item ao somar múltiplos D510/D590 de um mesmo D500); demais tipos
+    % exigem igualdade exata.
+    if isequal(a, b)
+        tf = true;
+    elseif isa(a, 'double') && isa(b, 'double') && ~isempty(a) && ~isempty(b)
+        tf = abs(a - b) < 0.02;
+    else
+        tf = false;
+    end
+end
+
+%-------------------------------------------------------------------------%
+function tf = compositeValueSetsMatch(setA, setB)
+    % Células nunca preenchidas ficam como "[]" (double, valor padrão de
+    % coluna "cell" em table()), não "{}" — cellfun exige um cell array de
+    % verdade, então normaliza-se antes de compará-los.
+    if ~iscell(setA)
+        setA = {};
+    end
+    if ~iscell(setB)
+        setB = {};
+    end
+
+    % Dois conjuntos de valores são equivalentes quando todo elemento de um
+    % tem correspondente (via compareCompositeValues) no outro, nos dois
+    % sentidos — independe de ordem, duplicatas ou de qual registro-filho
+    % apareceu primeiro no arquivo.
+    tf = all(cellfun(@(a) any(cellfun(@(b) compareCompositeValues(a, b), setB)), setA)) && ...
+         all(cellfun(@(b) any(cellfun(@(a) compareCompositeValues(a, b), setA)), setB));
+end
+
+%-------------------------------------------------------------------------%
+function merged = unionCompositeValues(setA, setB)
+    if ~iscell(setA)
+        setA = {};
+    end
+    if ~iscell(setB)
+        setB = {};
+    end
+
+    merged = setA;
+    for ii = 1:numel(setB)
+        if ~any(cellfun(@(x) compareCompositeValues(x, setB{ii}), merged))
+            merged{end+1} = setB{ii}; %#ok<AGROW>
+        end
+    end
+end
+
+%-------------------------------------------------------------------------%
+function columnData = normalizeMergedColumn(bareName, values)
+    % Garante um único formato por coluna, dentre os aceitos por
+    % ui.Table.hasCustomizableColumnFormat (cellstr, double etc.). Células
+    % nunca preenchidas ficam como "[]" (double, valor padrão de coluna
+    % "cell" em table()); aqui são substituídas pelo valor padrão do tipo
+    % real do campo, e a coluna é convertida para esse tipo único. Campos de
+    % data (DataType "datetime") são tratados como texto, pois
+    % normalizeCompositeValues já os grava como string formatada "dd/mm/aaaa".
+    try
+        dataType = model.EFDBase.getFieldSpecification(bareName, 'DataType');
+    catch
+        dataType = 'cell';
+    end
+
+    missingMask = cellfun(@(x) isa(x, 'double') && isempty(x), values);
+
+    switch dataType
+        case 'double'
+            values(missingMask) = {model.EFDBase.defaultValue('double')};
+            columnData = cell2mat(values);
+
+        otherwise % texto ('cell' ou 'datetime', armazenado como string formatada)
+            values(missingMask) = {''};
+            nonCharMask = ~cellfun(@ischar, values);
+            values(nonCharMask) = cellfun(@(x) char(string(x)), values(nonCharMask), 'UniformOutput', false);
+            columnData = values;
     end
 end
 

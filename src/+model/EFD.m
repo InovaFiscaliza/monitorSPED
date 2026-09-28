@@ -8,15 +8,9 @@ classdef EFD < model.SPED
         %-----------------------------------------------------------------%
         GUI = struct( ...
             'isRead', false,  ...
-            'hasTransactions', false, ...
             'hasValidStatus', false, ...
             'hasValidPeriod', false, ...
             'warnings', {{}}, ...
-            'icmsRate', struct( ...
-                'source', 'default', ... % 'default' | 'manual'
-                'default', struct('mode', 'auto', 'rate', []), ...
-                'current', struct('mode', 'auto', 'rate', []) ...
-            ), ...
             'tableIds', {{}}, ...
             'tableView', struct( ...
                 'id', {}, ...
@@ -51,6 +45,7 @@ classdef EFD < model.SPED
                 idx = numel(obj)+1;                
 
                 try
+                    obj(idx) = model.EFD(); % constrói explicitamente; evita o getDefaultScalarElement (model.SPED) do array heterogêneo
                     obj(idx).FileName = fileName;
                     obj(idx).FileFullName = fileFullName;
                     obj(idx).FileType = 'EFDI'; % 'EFD ICMS/IPI'
@@ -179,6 +174,13 @@ classdef EFD < model.SPED
                 end
             end
         end
+
+        %-----------------------------------------------------------------%
+        function [status, msg] = validateReportGenerationRequirements(obj)
+            % place holder
+            status = true;
+            msg = '';
+        end
   
 
         %-----------------------------------------------------------------%
@@ -190,7 +192,6 @@ classdef EFD < model.SPED
                                                                 'GUI.TableView.Style';
                                                                 'GUI.TableView.Sort';
                                                                 'GUI.TableView.Width';
-                                                                'GUI.IcmsRate';
                                                                 'Table.NonEssentialFiles';
                                                                 'Table.x_CONTAS_ANOTACAO';
                                                                 'Table.x_APURACAO_GERAL'; ...
@@ -316,6 +317,25 @@ classdef EFD < model.SPED
                         otherwise
                             error('model:EFD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
                     end
+
+                case 'Table.NonEssentialFiles'
+                    switch updateType
+                        case 'onCacheCleanup'
+                            if isempty(varargin{1})
+                                return
+                            end
+
+                            tableIdList = strcat({'x'}, varargin{1});
+                            tableIdList = tableIdList(isfield(obj.Table, tableIdList));
+
+                            obj.Table = rmfield(obj.Table, tableIdList);
+
+                        otherwise
+                            error('model:EFD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
+                    end
+
+                otherwise
+                    error('model:EFD:UnexpectedPropertyName', 'Unexpected property name "%s".', propertyName);
             end
         end
     end
@@ -326,8 +346,9 @@ classdef EFD < model.SPED
         function initializeCompanyContext(obj, generalSettings, receitaFederalObj)
             if isfield(obj.Table, 'x0000') && ~isempty(obj.Table.x0000)
                 obj.Table.x0000 = sortrows(obj.Table.x0000, 'DT_INI');
+                
                 obj.CompanyName = upper(strtrim(obj.Table.x0000.NOME{end}));
-                obj.CompanyId = obj.Table.x0000.CNPJ{end};
+                obj.CompanyId = checkCNPJOrCPF(obj.Table.x0000.CNPJ{end}, 'NumberValidation');
                 obj.CompanyInfo(1) = struct( ...
                     'CNPJ', obj.Table.x0000.CNPJ{end}, ...
                     'IE', obj.Table.x0000.IE{end}, ...
@@ -363,6 +384,33 @@ classdef EFD < model.SPED
             if ~isempty(receitaFederalObj)
                 checkFileStatus(obj, receitaFederalObj, generalSettings.context.FILE.encodingList);
             end
+
+            obj.GUI.hasValidPeriod = checkIfValidPeriod(obj);
+            obj.GUI.hasValidStatus = checkIfValidStatus(obj);
+        end
+    end
+
+
+    methods (Access = protected)
+        %-----------------------------------------------------------------%
+        function parseTable(obj, tableId, generalSettings)
+            % Ao contrário do ECD, o EFD não tem parser incremental nativo por
+            % registro; fileread_EFD sempre relê o arquivo por completo. Para
+            % que apenas o registro solicitado (removido do cache via
+            % "onCacheCleanup") seja reconstruído — preservando os demais já
+            % cacheados —, restringe-se "recordIds" aos registros ordinários
+            % que compõem especificamente "tableId".
+            checkIfScalar(obj)
+
+            compositeSheets = model.EFDBase.efdCompositeSheets();
+            compositeField  = ['x' tableId];
+            if isfield(compositeSheets, compositeField)
+                recordIds = compositeSheets.(compositeField);
+            else
+                recordIds = {tableId};
+            end
+
+            util.fileread_EFD(obj, obj.FileFullName, generalSettings, false, recordIds)
         end
     end
 end

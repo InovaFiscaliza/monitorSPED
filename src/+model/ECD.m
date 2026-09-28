@@ -60,6 +60,7 @@ classdef ECD < model.SPED
                 idx = numel(obj)+1;                
 
                 try
+                    obj(idx) = model.ECD(); % constrói explicitamente; evita o getDefaultScalarElement (model.SPED) do array heterogêneo
                     obj(idx).FileName = fileName;
                     obj(idx).FileFullName = fileFullName;
                     obj(idx).FileType = 'ECD';
@@ -906,25 +907,6 @@ classdef ECD < model.SPED
 
                 entryHistoryCount = obj.Table.x_CONTAS_HISTORICO.('TOTAL DE LANÇAMENTOS')(index);
                 entryHistoryUniqueValues = obj.Table.x_CONTAS_HISTORICO.('LANÇAMENTOS NORMALIZADOS DEDUPLICADOS'){index};
-            end
-        end
-
-        %-----------------------------------------------------------------%
-        function validFile = checkIfValidPeriod(obj)
-            checkIfScalar(obj)
-
-            yearsCovered = unique(year(obj.Period));
-            if isscalar(yearsCovered)
-                monthsCovered = [];
-                for ii = 1:numel(obj.Sources)
-                    [beginPeriod, endPeriod] = bounds(obj.Sources(ii).period);
-                    monthsCovered = [monthsCovered, month(beginPeriod):month(endPeriod)];
-                end
-                monthsCovered = unique(monthsCovered);
-
-                validFile = isequal(monthsCovered, 1:12);
-            else
-                validFile = false;
             end
         end
 

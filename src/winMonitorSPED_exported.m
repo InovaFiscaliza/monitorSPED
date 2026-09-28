@@ -69,8 +69,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         receitaFederalObj
 
         projectData
-        ecdObj = model.ECD.empty
-        efdObj = model.EFD.empty
+
+        spedObj = model.SPED.empty % array heterogêneo: mistura model.ECD e model.EFD
     end
 
 
@@ -247,9 +247,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                         end
         
                                     case {'onICMSTaxChanged', 'onPISTaxChanged', 'onCOFINSTaxChanged'}
-                                        for ii = 1:numel(app.ecdObj)
-                                            if isfield(app.ecdObj(ii).Table, 'x_APURACAO_GERAL')
-                                                update(app.ecdObj(ii), 'Table.x_APURACAO_GERAL', 'accountValueChanged', app.General)
+                                        for ii = find(strcmp({app.spedObj.FileType}, 'ECD'))
+                                            if isfield(app.spedObj(ii).Table, 'x_APURACAO_GERAL')
+                                                update(app.spedObj(ii), 'Table.x_APURACAO_GERAL', 'accountValueChanged', app.General)
                                             end
                                         end
 
@@ -322,7 +322,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                         end
                                         
                                     % auxApp.dockECDExport
-                                    case 'onExportECD'
+                                    case 'onExportSPED'
                                         context  = varargin{1};
                                         varargin = [{eventName}, varargin(2:end)];
                                         ipcMainMatlabCallAuxiliarApp(app, context, 'MATLAB', varargin{:})
@@ -346,7 +346,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                         tableIdList = varargin{2};
                                         
                                         for fileIndex = fileIndexes
-                                            update(app.ecdObj(fileIndex), 'Table.NonEssentialFiles', 'onCacheCleanup', tableIdList)
+                                            update(app.spedObj(fileIndex), 'Table.NonEssentialFiles', 'onCacheCleanup', tableIdList)
                                             ipcMainMatlabCallsHandler(app, app, 'onAccountingDataUpdated', fileIndex);
                                         end
         
@@ -633,6 +633,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             if contains(updateType, 'FileListChanged')
                 ipcMainMatlabCallAuxiliarApp(app, 'ECD', 'MATLAB', updateType)
+                ipcMainMatlabCallAuxiliarApp(app, 'EFD', 'MATLAB', updateType)
             end
         end
 
@@ -649,11 +650,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 delete(app.FileTree.Children)
             end
 
-            hasECD = ~isempty(app.ecdObj);
-            hasEFD = ~isempty(app.efdObj);
-
-            if hasECD
-                idsList = {app.ecdObj.CompanyId};
+            if ~isempty(app.spedObj)
+                idsList = {app.spedObj.CompanyId};
                 selectedNode = [];
             
                 if ~isempty(idsList)
@@ -661,7 +659,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
     
                     switch app.FileSortMethodSelector.Value
                         case 'CNPJ'
-                            selectedNode = createFileTreeNodes(app, 'ECD', idsList, ids, selectedNode, selectedNodeData);
+                            selectedNode = createFileTreeNodes(app, idsList, ids, selectedNode, selectedNodeData);
                         otherwise
                             switch app.FileSortMethodSelector.Value
                                 case 'PERÍODO FISCAL'
@@ -670,40 +668,24 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                     validTreeNodeText = '<font style="color: blue; font-weight: bold; text-decoration: underline;">VÁLIDOS</font> EM RELAÇÃO AO CRITÉRIO "ARQUIVO CONSTA NA BASE DA RECEITA FEDERAL"';
                             end
                             validTreeNode   = uitreenode(app.FileTree, 'Text', validTreeNodeText);
-                            selectedNode    = createFileTreeNodes(app, 'ECD', idsList, ids, selectedNode, selectedNodeData, validTreeNode,   'only-valid');
+                            selectedNode    = createFileTreeNodes(app, idsList, ids, selectedNode, selectedNodeData, validTreeNode,   'only-valid');
                             
                             invalidTreeNode = uitreenode(app.FileTree, 'Text', '<font style="color: red; font-weight: bold; text-decoration: underline;">INVÁLIDOS</font>');
-                            selectedNode    = createFileTreeNodes(app, 'ECD', idsList, ids, selectedNode, selectedNodeData, invalidTreeNode, 'only-invalid');
+                            selectedNode    = createFileTreeNodes(app, idsList, ids, selectedNode, selectedNodeData, invalidTreeNode, 'only-invalid');
                     end
                 end
-            end
 
-            if hasEFD
-                idsList = {app.efdObj.CompanyId};
-                selectedNode = [];
-            
-                if ~isempty(idsList)
-                    ids = unique(idsList);
-    
-                    switch app.FileSortMethodSelector.Value
-                        case 'CNPJ'
-                            selectedNode = createFileTreeNodes(app, 'EFD', idsList, ids, selectedNode, selectedNodeData);
-                        otherwise
-                            % ...
-                    end
-                end
-            end
+                expand(app.FileTree, 'all')
 
-            expand(app.FileTree, 'all')
-
-            if ~isempty(app.FileTree.Children)
-                if ~isempty(selectedNode)
-                    app.FileTree.SelectedNodes = selectedNode;
-                else
-                    if isempty(app.FileTree.Children(1).Children)
-                        app.FileTree.SelectedNodes = app.FileTree.Children(1);
+                if ~isempty(app.FileTree.Children)
+                    if ~isempty(selectedNode)
+                        app.FileTree.SelectedNodes = selectedNode;
                     else
-                        app.FileTree.SelectedNodes = app.FileTree.Children(1).Children(1);
+                        if isempty(app.FileTree.Children(1).Children)
+                            app.FileTree.SelectedNodes = app.FileTree.Children(1);
+                        else
+                            app.FileTree.SelectedNodes = app.FileTree.Children(1).Children(1);
+                        end
                     end
                 end
             end
@@ -712,20 +694,23 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function spedObj = getSpedObj(app, fileType)
+        function [spedObj, globalIndexes] = getSpedObj(app, fileType)
+            % "globalIndexes" mapeia cada elemento do subconjunto retornado
+            % (ECD ou EFD) para a sua posição em app.spedObj (índice global,
+            % usado como NodeData da árvore e trocado entre apps via IPC).
             switch fileType
                 case 'ECD'
-                    spedObj = app.ecdObj;
-                otherwise % 'EFD
-                    spedObj = app.efdObj;
+                    globalIndexes = find(strcmp({app.spedObj.FileType}, 'ECD'));
+                otherwise % 'EFD'
+                    globalIndexes = find(strcmp({app.spedObj.FileType}, 'EFDI'));
             end
+            spedObj = app.spedObj(globalIndexes);
         end
 
         %-----------------------------------------------------------------%
-        function selectedNode = createFileTreeNodes(app, fileType, idsList, ids, selectedNode, selectedNodeData, varargin)
+        function selectedNode = createFileTreeNodes(app, idsList, ids, selectedNode, selectedNodeData, varargin)
             arguments
                 app 
-                fileType {mustBeMember(fileType, {'ECD', 'EFD'})}
                 idsList 
                 ids 
                 selectedNode
@@ -736,7 +721,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 varargin
             end
 
-            spedObj = getSpedObj(app, fileType);
+            spedObjSubset = app.spedObj;
 
             switch app.FileSortMethodSelector.Value
                 case 'CNPJ'
@@ -750,7 +735,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 % Identifica fluxos relacionados a cada CNPJ, ordenando os 
                 % fluxos de acordo com a data de fim do seu período fiscal.
                 idIndexes   = find(strcmp(idsList, id));
-                [~, idSort] = sort(arrayfun(@(x) x.Period(2), spedObj(idIndexes)));
+                [~, idSort] = sort(arrayfun(@(x) x.Period(2), spedObjSubset(idIndexes)));
                 idIndexes   = idIndexes(idSort);
 
                 % Aplica filtro, caso construção da árvore seja orientada
@@ -761,9 +746,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
     
                         switch app.FileSortMethodSelector.Value
                             case 'PERÍODO FISCAL'
-                                validFile = checkIfValidPeriod(spedObj(index));
+                                validFile = checkIfValidPeriod(spedObjSubset(index));
                             case 'RECEITA FEDERAL'
-                                validFile = checkIfValidStatus(spedObj(index));
+                                validFile = checkIfValidStatus(spedObjSubset(index));
                         end
     
                         if strcmp(requiredStatus, 'only-valid') && ~validFile
@@ -778,17 +763,27 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     end
                 end
 
-                textCompanyNode = util.HtmlTextGenerator.generateTextId(spedObj(idIndexes(1)), 'company-oriented');
+                textCompanyNode = util.HtmlTextGenerator.generateTextId(spedObjSubset(idIndexes(1)), 'company-oriented');
                 treeCompanyNode = uitreenode(parentNode, ...
                     'Text', textCompanyNode, ...
-                    'NodeData', idIndexes, 'ContextMenu', app.ContextMenu, 'Tag', fileType);
-    
+                    'NodeData', idIndexes, 'ContextMenu', app.ContextMenu);
+                %addStyle(app.FileTree, uistyle('Icon', nodeIcon), 'node', treeCompanyNode)
+
                 for idx = idIndexes
-                    textPeriodNode = util.HtmlTextGenerator.generateTextId(spedObj(idx), 'period-oriented', true);
+                    fileType = spedObjSubset(idx).FileType;
+                    switch fileType
+                        case 'ECD'
+                            nodeIcon = 'graph-24px-black.svg';
+                        case 'EFDI'
+                            nodeIcon = 'collection-black.svg';
+                    end
+
+                    textPeriodNode = util.HtmlTextGenerator.generateTextId(spedObjSubset(idx), 'period-oriented', true);
                     treePeriodNode = uitreenode(treeCompanyNode, ...
                         'Text', textPeriodNode, ...
                         'NodeData', idx, 'ContextMenu', app.ContextMenu, 'Tag', fileType);
-    
+                    addStyle(app.FileTree, uistyle('Icon', nodeIcon), 'node', treePeriodNode)
+
                     if ismember(idx, selectedNodeData)
                         selectedNode = [selectedNode, treePeriodNode];
                     end
@@ -799,12 +794,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function [indexes, fileType] = getSelectedECDIndexes(app)
             indexes = [];
-            fileType = '';
+            fileType = {}; % {} | {'ECD'} | {'EFDI'} | {'ECD', 'EFDI'}
 
             if ~isempty(app.FileTree.SelectedNodes)
-                % indexes = unique([app.FileTree.SelectedNodes.NodeData]);
-                indexes = app.FileTree.SelectedNodes.NodeData;
-                fileType = app.FileTree.SelectedNodes.Tag;
+                indexes = unique([app.FileTree.SelectedNodes.NodeData]);
+                fileType = unique({app.spedObj(indexes).FileType});
             end
         end
 
@@ -817,15 +811,16 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function updateToolbar(app)
-            indexes = getSelectedECDIndexes(app);
+            [indexes, fileType] = getSelectedECDIndexes(app);
+            isECD = isequal(fileType, {'ECD'});
 
             nonEmptySelection               = ~isempty(indexes);
             nonScalarSelection              = ~isscalar(indexes);
             reportFinalVersionGenerated     = ~isempty(app.projectData.modules.(app.Context).generatedFiles.lastHTMLDocFullPath);
 
-            app.tool_MergeFiles.Enable      = nonEmptySelection && nonScalarSelection;
+            app.tool_MergeFiles.Enable      = nonEmptySelection && nonScalarSelection && isECD;
             app.tool_CheckRFB.Enable        = nonEmptySelection;
-            app.tool_GenerateReport.Enable  = nonEmptySelection;
+            app.tool_GenerateReport.Enable  = nonEmptySelection && isECD;
             app.tool_UploadFinalFile.Enable = reportFinalVersionGenerated;
 
             app.contextmenu_merge.Enable    = app.tool_MergeFiles.Enable;
@@ -884,7 +879,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             arguments
                 app
                 eventName {mustBeMember(eventName, {'onFetchIssueDetails', 'onReportGenerate', 'onUploadArtifacts'})}
-                context {mustBeMember(context, {'FILE', 'ECD'})}
+                context {mustBeMember(context, {'FILE', 'ECD', 'EFD'})}
                 credentials
             end
 
@@ -948,7 +943,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             createEFiscalizaObject(app, credentials)
             try
-                reportLibConnection.Controller.Run(app, callingApp, context, app.ecdObj(indexes))
+                reportLibConnection.Controller.Run(app, callingApp, context, app.spedObj(indexes))
                 if app == callingApp
                     updateToolbar(app)
                 else
@@ -1126,7 +1121,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             end
 
             msgQuestion = '';
-            if checkIfUpdateNeeded(app.projectData, app.ecdObj)
+            if checkIfUpdateNeeded(app.projectData, app.spedObj)
                 msgQuestion = sprintf([ ...
                     'O projeto "%s" foi modificado (nome, arquivo de saída, ' ...
                     'lista de arquivos de entrada ou tabelas de anotação das ' ...
@@ -1188,22 +1183,20 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         % Selection changed function: FileTree
         function onTreeSelectionChanged(app, event)
             
-            [index, fileType] = getSelectedECDIndexes(app);
+            [indexes, fileType] = getSelectedECDIndexes(app);
             
-            if isempty(index)
+            if isempty(indexes)
                 app.FileMetadata.Text = '';
                 app.FileMetadata.UserData.fileType = '';
                 app.FileMetadata.UserData.indexes = [];
             else
-                if isequal(app.FileMetadata.UserData.indexes, index)
+                if isequal(app.FileMetadata.UserData.indexes, indexes)
                     return
                 end
 
-                spedObj = getSpedObj(app, fileType);
-
-                app.FileMetadata.Text = util.HtmlTextGenerator.File(spedObj(index));
+                app.FileMetadata.Text = util.HtmlTextGenerator.File(app.spedObj(indexes));
                 app.FileMetadata.UserData.fileType = fileType;
-                app.FileMetadata.UserData.indexes = index;
+                app.FileMetadata.UserData.indexes = indexes;
             end
 
             updateToolbar(app)
@@ -1286,22 +1279,34 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 msg = '';
                 switch fileType
                     case 'ECD'
-                        if ~ismember(fileName{ii}, {app.ecdObj.FileName})
+                        [ecdSubset, ecdGlobalIndexes] = getSpedObj(app, 'ECD');
+                        if ~ismember(fileName{ii}, {ecdSubset.FileName})
                             switch lower(fileExt)
                                 case {'.txt', ''}
-                                    [app.ecdObj, msg] = addFiles(app.ecdObj, app.projectData, app.General, fileFullName{ii}, [], app.receitaFederalObj);                        
+                                    [newEcd, msg] = addFiles(model.ECD.empty, app.projectData, app.General, fileFullName{ii}, [], app.receitaFederalObj);
+                                    if isempty(msg)
+                                        app.spedObj = [app.spedObj, newEcd]; % append: preserva os índices globais existentes
+                                    end
                                 case '.mat'
-                                    [app.ecdObj, msg] = load(app.projectData, app.Context, fileFullName{ii}, app.General, app.ecdObj);
+                                    [ecdSubset, msg] = load(app.projectData, app.Context, fileFullName{ii}, app.General, ecdSubset);
+                                    if isempty(msg)
+                                        otherIndexes = setdiff(1:numel(app.spedObj), ecdGlobalIndexes, 'stable');
+                                        app.spedObj  = [app.spedObj(otherIndexes), ecdSubset];
+                                    end
                                 otherwise
                                     continue
                             end
                         end
 
                     case 'EFD ICMS/IPI'
-                        if ~ismember(fileName{ii}, {app.efdObj.FileName})
+                        [efdSubset] = getSpedObj(app, 'EFD');
+                        if ~ismember(fileName{ii}, {efdSubset.FileName})
                             switch lower(fileExt)
                                 case {'.txt', ''}
-                                    [app.efdObj, msg] = addFiles(app.efdObj, fileFullName{ii}, app.General, app.receitaFederalObj);
+                                    [newEfd, msg] = addFiles(model.EFD.empty, fileFullName{ii}, app.General, app.receitaFederalObj);
+                                    if isempty(msg)
+                                        app.spedObj = [app.spedObj, newEfd]; % append: preserva os índices globais existentes
+                                    end
                                 case '.mat'
                                     msg = sprintf('Pendente ajustar função "load" do model.Project');
                                 otherwise
@@ -1335,18 +1340,18 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         % Callback function: contextmenu_merge, tool_MergeFiles
         function Toolbar_MergeFilesImageClicked(app, event)
 
-            indexes = getSelectedECDIndexes(app);
+            indexes = getSelectedECDIndexes(app); % índices globais em app.spedObj, sempre do tipo ECD
 
             if numel(indexes) >= 2
-                if ~isscalar(unique({app.ecdObj(indexes).CompanyId}))
+                if ~isscalar(unique({app.spedObj(indexes).CompanyId}))
                     ui.Dialog(app.UIFigure, 'info', 'A mesclagem é aplicável apenas a registros de uma mesma empresa.');
                     return
-                elseif ~isscalar(unique(year([app.ecdObj(indexes).Period])))
+                elseif ~isscalar(unique(year([app.spedObj(indexes).Period])))
                     ui.Dialog(app.UIFigure, 'info', 'A mesclagem é aplicável apenas a registros de um mesmo ano fiscal.');
                     return
                 end
 
-                encodings = unique({app.ecdObj(indexes).Encoding});
+                encodings = unique({app.spedObj(indexes).Encoding});
                 if ~isscalar(encodings)
                     msgQuestion = sprintf([ ...
                         'Encodings diferentes detectados - %s. Isso pode indicar falha ' ...
@@ -1363,8 +1368,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                 app.progressDialog.Visible = 'visible';
 
-                [app.ecdObj, msg] = mergeFiles(app.ecdObj, app.projectData, app.General, indexes, app.General.fileFolder.tempPath);
+                [ecdSubset, ecdGlobalIndexes] = getSpedObj(app, 'ECD');
+                [~, localIndexes] = ismember(indexes, ecdGlobalIndexes);
+
+                [ecdSubset, msg] = mergeFiles(ecdSubset, app.projectData, app.General, localIndexes, app.General.fileFolder.tempPath);
                 if isempty(msg)
+                    % mergeFiles não altera os elementos existentes, apenas
+                    % anexa o novo registro mesclado ao final.
+                    app.spedObj = [app.spedObj, ecdSubset(end)];
                     refreshProjectFiles(app, indexes, 'FileListChanged:Merge')
                 else
                     ui.Dialog(app.UIFigure, "error", msg); 
@@ -1381,14 +1392,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             indexes = getSelectedECDIndexes(app);
 
             if ~isempty(indexes)
-                if all([app.ecdObj(indexes).PeriodMerged])
+                if all([app.spedObj(indexes).PeriodMerged])
                     ui.Dialog(app.UIFigure, 'info', 'Consulta à Receita Federal não é aplicável a registro mesclado.');
                     return
                 end
 
                 app.progressDialog.Visible = 'visible';
 
-                checkFileFlag = checkFileStatus(app.ecdObj(indexes), app.receitaFederalObj, app.General.context.FILE.encodingList, app.General.context.FILE.checkStatus);
+                checkFileFlag = checkFileStatus(app.spedObj(indexes), app.receitaFederalObj, app.General.context.FILE.encodingList, app.General.context.FILE.checkStatus);
                 if checkFileFlag
                     refreshProjectFiles(app, indexes, 'FileStatusChecked')
                 end
@@ -1401,7 +1412,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         % Image clicked function: tool_OpenPopupProject
         function Toolbar_OpenPopupProjectImageClicked(app, event)
 
-            ipcMainMatlabOpenPopupApp(app, app, 'ReportLib', app.Context, app.ecdObj)
+            ipcMainMatlabOpenPopupApp(app, app, 'ReportLib', app.Context, app.spedObj)
 
         end
 
@@ -1417,7 +1428,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             indexes = getSelectedECDIndexes(app);
 
             if ~isempty(indexes)
-                if numel(indexes) < numel(app.ecdObj)
+                ecdCount = sum(strcmp({app.spedObj.FileType}, 'ECD'));
+                if numel(indexes) < ecdCount
                     msgQuestion   = 'Deseja gerar inventário de TODOS os arquivos lidos, ou apenas do SELECIONADO?';
                     userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Todos', 'Selecionado', 'Cancelar'}, 1, 3);
 
@@ -1425,7 +1437,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         case 'Cancelar'
                             return
                         case 'Todos'
-                            indexes = 1:numel(app.ecdObj);
+                            indexes = find(strcmp({app.spedObj.FileType}, 'ECD'));
                     end
                 end
 
@@ -1520,7 +1532,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             end
 
             storedReportHash  = app.projectData.modules.(context).generatedFiles.id;
-            currentReportHash = model.ProjectBase.computeReportFileInventoryHash(app.ecdObj);
+            currentReportHash = model.ProjectBase.computeReportFileInventoryHash(app.spedObj(strcmp({app.spedObj.FileType}, 'ECD')));
 
             if ~isequal(storedReportHash, currentReportHash)
                 [~, generatedHtmlFileName, generatedHtmlFileExt] = fileparts(generatedHtmlFilePath);
@@ -1591,8 +1603,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             indexes = getSelectedECDIndexes(app);
 
             if ~isempty(indexes)
-                delete(app.ecdObj(indexes))
-                app.ecdObj(indexes) = [];
+                delete(app.spedObj(indexes))
+                app.spedObj(indexes) = [];
                 
                 refreshProjectFiles(app, [], 'FileListChanged:Del')
             end
@@ -1613,7 +1625,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.UIFigure = uifigure('Visible', 'off');
             app.UIFigure.AutoResizeChildren = 'off';
             app.UIFigure.Color = [0.9412 0.9412 0.9412];
-            app.UIFigure.Position = [100 100 1244 660];
+            app.UIFigure.Position = [100 100 1099 660];
             app.UIFigure.Name = 'monitorSPED';
             app.UIFigure.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'icon_16.png');
             app.UIFigure.CloseRequestFcn = createCallbackFcn(app, @closeFcn, true);
@@ -1784,6 +1796,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create FileTree
             app.FileTree = uitree(app.file_Grid);
+            app.FileTree.Multiselect = 'on';
             app.FileTree.SelectionChangedFcn = createCallbackFcn(app, @onTreeSelectionChanged, true);
             app.FileTree.FontSize = 11;
             app.FileTree.FontColor = [0 0 0];
@@ -1829,6 +1842,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab1Button = uibutton(app.NavBar, 'state');
             app.Tab1Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.Tab1Button.Tag = 'FILE';
+            app.Tab1Button.Tooltip = {'Leitura de arquivos'};
             app.Tab1Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'folder-active-24px-yellow.svg');
             app.Tab1Button.Text = '';
             app.Tab1Button.BackgroundColor = [0.2 0.2 0.2];
@@ -1840,6 +1854,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab2Button = uibutton(app.NavBar, 'state');
             app.Tab2Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.Tab2Button.Tag = 'ECD';
+            app.Tab2Button.Tooltip = {'ECD'};
             app.Tab2Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'graph-24px-white.svg');
             app.Tab2Button.Text = '';
             app.Tab2Button.BackgroundColor = [0.2 0.2 0.2];
@@ -1850,7 +1865,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab3Button = uibutton(app.NavBar, 'state');
             app.Tab3Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.Tab3Button.Tag = 'EFD';
-            app.Tab3Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'graph-24px-white.svg');
+            app.Tab3Button.Tooltip = {'EFD ICMS/IPI'};
+            app.Tab3Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'collection.svg');
             app.Tab3Button.Text = '';
             app.Tab3Button.BackgroundColor = [0.2 0.2 0.2];
             app.Tab3Button.Layout.Row = [2 4];
@@ -1868,6 +1884,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab4Button = uibutton(app.NavBar, 'state');
             app.Tab4Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.Tab4Button.Tag = 'CONFIG';
+            app.Tab4Button.Tooltip = {'Configurações gerais'};
             app.Tab4Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'gear-24px-white.svg');
             app.Tab4Button.Text = '';
             app.Tab4Button.BackgroundColor = [0.2 0.2 0.2];

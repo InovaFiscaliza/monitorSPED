@@ -33,12 +33,12 @@ classdef (Abstract) Controller
 
     methods (Static)
         %-----------------------------------------------------------------%
-        function Run(mainApp, callingApp, context, ecdObj)
+        function Run(mainApp, callingApp, context, spedObj)
             arguments
                 mainApp
                 callingApp
-                context {mustBeMember(context, {'FILE', 'ECD'})}
-                ecdObj
+                context {mustBeMember(context, {'FILE', 'ECD', 'EFD'})} % Todo: Migrar EFD p/ EFDI
+                spedObj
             end
 
             appName = class.Constants.appName;
@@ -176,7 +176,7 @@ classdef (Abstract) Controller
                                                    'tbl_TabelaAnotacao_OnOff',          'reportLibConnection.Table.TabelaAnotacao(analyzedData, "on/off")'), ...
                                 'Project',  projectData, ...
                                 'Context',  context, ...
-                                'Object',   ecdObj, ...
+                                'Object',   spedObj, ...
                                 'Settings', generalSettings);
 
             fieldsUnnecessary = {'rootFolder', 'entryPointFolder', 'tempSessionFolder', 'ctfRoot'};
@@ -194,23 +194,23 @@ classdef (Abstract) Controller
             %-------------------------------------------------------------%
             dataOverview = struct('ID', {}, 'InfoSet', {}, 'HTML', {});
 
-            idsList = {ecdObj.CompanyId};
+            idsList = {spedObj.CompanyId};
             ids = unique(idsList);
 
             for id = ids
                 idIndexes   = find(strcmp(idsList, id));
-                [~, idSort] = sort(arrayfun(@(x) x.Period(2), ecdObj(idIndexes)));
+                [~, idSort] = sort(arrayfun(@(x) x.Period(2), spedObj(idIndexes)));
                 idIndexes   = idIndexes(idSort);
 
                 nireInfo  = '';
-                if ~isempty(ecdObj(idIndexes(1)).CompanyInfo.NIRE)
-                    nireInfo = sprintf('%s - ', ecdObj(idIndexes(1)).CompanyInfo.NIRE);
+                if ~isempty(spedObj(idIndexes(1)).CompanyInfo.NIRE)
+                    nireInfo = sprintf('%s - ', spedObj(idIndexes(1)).CompanyInfo.NIRE);
                 end
-                companyId = sprintf('%s - %s%s', ecdObj(idIndexes(1)).CompanyId, nireInfo, ecdObj(idIndexes(1)).CompanyName);
+                companyId = sprintf('%s - %s%s', spedObj(idIndexes(1)).CompanyId, nireInfo, spedObj(idIndexes(1)).CompanyName);
 
                 dataOverview(end+1) = struct('ID',      companyId,                           ...
                                              'InfoSet', struct('indexes', idIndexes,         ...
-                                                               'ecdObj', ecdObj(idIndexes)), ...
+                                                               'ecdObj', spedObj(idIndexes)), ...
                                              'HTML',    struct('Component', {}, 'Source', {}, 'Value', {}));
             end
 
@@ -291,21 +291,21 @@ classdef (Abstract) Controller
                         JSONFile     = fullfile(generalSettings.fileFolder.tempPath, [sharepointFileBase '.json']);
                         TEAMSFile    = fullfile(generalSettings.fileFolder.tempPath, [sharepointFileBase '.teams']);
 
-                        JSONContent  = reportLibConnection.Table.scarabJsonFile(projectData, context, ecdObj, correlationKey, mainApp.executionMode, issueDetails);
+                        JSONContent  = reportLibConnection.Table.scarabJsonFile(projectData, context, spedObj, correlationKey, mainApp.executionMode, issueDetails);
                         TEAMSContent = reportLibConnection.Table.scarabTeamsFileContent(issueDetails, sharepointFileBase);
 
                         writematrix(JSONContent,  JSONFile,  "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite", "Encoding", "UTF-8")
                         writematrix(TEAMSContent, TEAMSFile, "FileType", "text", "QuoteStrings", "none", "WriteMode", "overwrite", "Encoding", "UTF-8")
 
-                        if isscalar(ecdObj)
+                        if isscalar(spedObj)
                             try
                                 tableIdList = {'0000', '_BALANCETE_RESULTADO', '_CONTAS_ANOTACAO', '_CONCILIACAO_GERAL', '_CONCILIACAO_INTERCONEXAO', '_APURACAO_GERAL', '_APURACAO_INTERCONEXAO'};
-                                isTableRead(ecdObj, tableIdList, generalSettings);
+                                isTableRead(spedObj, tableIdList, generalSettings);
     
                                 tempExcelFile = fullfile(generalSettings.fileFolder.tempPath, [sharepointFileBase '.xlsx']);
                                 for ii = 1:numel(tableIdList)
                                     tableId = tableIdList{ii};
-                                    tableData = ecdObj.Table.(['x' tableId]);
+                                    tableData = spedObj.Table.(['x' tableId]);
                                     if ~isempty(tableData.Properties.RowNames)
                                         tableData = [table(tableData.Properties.RowNames, 'VariableName', {'TIPO'}), tableData];
                                     end
@@ -335,9 +335,9 @@ classdef (Abstract) Controller
 
                     switch context
                         case 'FILE'
-                            generatedFileId = model.ProjectBase.computeReportFileInventoryHash(ecdObj);
-                        case 'ECD'
-                            generatedFileId = model.ProjectBase.computeReportAnalysisResultsHash(ecdObj);
+                            generatedFileId = model.ProjectBase.computeReportFileInventoryHash(spedObj);
+                        otherwise 
+                            generatedFileId = model.ProjectBase.computeReportAnalysisResultsHash(spedObj);       
                     end
                     updateGeneratedFiles(projectData, context, generatedFileId, RAWFiles, HTMLFile, JSONFile, XLSXFile, TEAMSFile, ZIPFile)
             end

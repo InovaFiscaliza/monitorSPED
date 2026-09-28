@@ -162,7 +162,7 @@ classdef winECD_exported < matlab.apps.AppBase
                                 end
                                 
                             % auxApp.dockECDExport >> winMonitorSPED >> auxApp.winECD
-                            case 'onExportECD'
+                            case 'onExportSPED'
                                 exportFiles(app, varargin{:})
 
                             % auxApp.dockECDFilter >> winMonitorSPED >> auxApp.winECD
@@ -291,7 +291,7 @@ classdef winECD_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function initializeAppProperties(app)
             app.projectData = app.mainApp.projectData;
-            app.ecdObj      = app.mainApp.ecdObj;
+            app.ecdObj      = app.mainApp.spedObj;% array global (mesmos índices do mainApp), filtrado por FileType onde necessário
         end
 
         %-----------------------------------------------------------------%
@@ -317,7 +317,7 @@ classdef winECD_exported < matlab.apps.AppBase
                 selectionMode {mustBeMember(selectionMode, {'fromMainApp', 'keepIfPossible', 'keepCurrent'})} = 'fromMainApp'
             end
 
-            nonEmptyECDObject = ~isempty(app.ecdObj);
+            nonEmptyECDObject = any(strcmp({app.ecdObj.FileType}, 'ECD'));
 
             renderedElements  = {
                 app.ReconciliationFileButton;
@@ -358,14 +358,15 @@ classdef winECD_exported < matlab.apps.AppBase
                 end
 
                 % Atualiza lista:
-                idsList = {app.ecdObj.CompanyId};
+                ecdGlobalIndexes = find(strcmp({app.ecdObj.FileType}, 'ECD'));
+                idsList = {app.ecdObj(ecdGlobalIndexes).CompanyId};
                 [ids, ~, idsIndexes] = unique(idsList);
 
                 idsNames = {};
                 mappingIds = dictionary();
                 
                 for ii = 1:numel(ids)
-                    idIndexes = find(ii == idsIndexes);
+                    idIndexes = ecdGlobalIndexes(ii == idsIndexes);
                     [~, idSortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.ecdObj(idIndexes)));
 
                     % Nome empresa que aparecerá no dropdown (idêntico à
@@ -384,6 +385,15 @@ classdef winECD_exported < matlab.apps.AppBase
                     case 'fromMainApp'
                         fileIndex = ipcMainMatlabCallsHandler(app.mainApp, app, 'getSelectedFileIndex');
                         companyIndex = find(cellfun(@(x) ismember(fileIndex, x), app.CompanyNameList.UserData.values), 1);
+
+                        if isempty(companyIndex)
+                            % O arquivo selecionado no mainApp pode ser de outro
+                            % tipo (ex.: EFD); nesse caso, seleciona-se a primeira
+                            % empresa da lista deste módulo.
+                            companyIndex = 1;
+                            fileIndex = [];
+                        end
+                        
                         app.CompanyNameList.Value = app.CompanyNameList.Items{companyIndex};
                         updateTimePeriodList(app, fileIndex)
                         TimePeriodListValueChanged(app)
@@ -444,7 +454,7 @@ classdef winECD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function [selectedECD, fileIndex] = getSelectedECD(app)
-            if isempty(app.ecdObj)
+            if isempty(app.CompanyNameList.Items)
                 selectedECD = [];
                 fileIndex   = [];
 
@@ -1102,7 +1112,10 @@ classdef winECD_exported < matlab.apps.AppBase
                     copyfile(outputfiles{1}, fileFullPath, 'f')
 
                     if ~strcmp(app.mainApp.executionMode, 'webApp')
-                        appEngine.util.OperationSystem('openFile', fileFullPath)
+                        try
+                            appEngine.util.OperationSystem('openFile', fileFullPath)
+                        catch
+                        end
                     end
                 else
                     zip(fileFullPath, outputfiles)
@@ -1343,7 +1356,7 @@ classdef winECD_exported < matlab.apps.AppBase
                     ipcMainMatlabOpenPopupApp(app.mainApp, app, 'IcmsRate', app.Context, fileIndex)
 
                 case app.tool_OpenPopupProject
-                    ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ReportLib', app.Context, app.ecdObj)
+                    ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ReportLib', app.Context, app.ecdObj(strcmp({app.ecdObj.FileType}, 'ECD')))
             end
 
         end
@@ -2050,7 +2063,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.CompanyNameList.Items = {};
             app.CompanyNameList.ValueChangedFcn = createCallbackFcn(app, @CompanyNameListValueChanged, true);
             app.CompanyNameList.FontSize = 11;
-            app.CompanyNameList.FontColor = [0.129411764705882 0.129411764705882 0.129411764705882];
             app.CompanyNameList.BackgroundColor = [1 1 1];
             app.CompanyNameList.Layout.Row = 1;
             app.CompanyNameList.Layout.Column = [2 4];
@@ -2069,7 +2081,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.TimePeriodList.Items = {};
             app.TimePeriodList.ValueChangedFcn = createCallbackFcn(app, @TimePeriodListValueChanged, true);
             app.TimePeriodList.FontSize = 11;
-            app.TimePeriodList.FontColor = [0.129411764705882 0.129411764705882 0.129411764705882];
             app.TimePeriodList.BackgroundColor = [1 1 1];
             app.TimePeriodList.Layout.Row = 2;
             app.TimePeriodList.Layout.Column = 2;
@@ -2089,7 +2100,6 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetList.Items = {};
             app.SheetList.ValueChangedFcn = createCallbackFcn(app, @SheetViewFirstValueChanged, true);
             app.SheetList.FontSize = 11;
-            app.SheetList.FontColor = [0.129411764705882 0.129411764705882 0.129411764705882];
             app.SheetList.BackgroundColor = [1 1 1];
             app.SheetList.Layout.Row = 2;
             app.SheetList.Layout.Column = 4;
@@ -2192,6 +2202,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetViewStatus.Text = 'Tela';
             app.SheetViewStatus.BackgroundColor = [0.9608 0.9608 0.9608];
             app.SheetViewStatus.FontSize = 10;
+            app.SheetViewStatus.FontColor = [0 0 0];
             app.SheetViewStatus.Layout.Row = [1 2];
             app.SheetViewStatus.Layout.Column = 1;
 
@@ -2200,6 +2211,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetView_First.Items = {};
             app.SheetView_First.ValueChangedFcn = createCallbackFcn(app, @SheetViewFirstValueChanged, true);
             app.SheetView_First.FontSize = 11;
+            app.SheetView_First.FontColor = [0 0 0];
             app.SheetView_First.BackgroundColor = [1 1 1];
             app.SheetView_First.Layout.Row = 1;
             app.SheetView_First.Layout.Column = 2;
@@ -2212,6 +2224,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetHeight_First.ValueDisplayFormat = '%d';
             app.SheetHeight_First.ValueChangedFcn = createCallbackFcn(app, @SheetViewHeightValueChanged, true);
             app.SheetHeight_First.FontSize = 11;
+            app.SheetHeight_First.FontColor = [0 0 0];
             app.SheetHeight_First.Enable = 'off';
             app.SheetHeight_First.Layout.Row = 1;
             app.SheetHeight_First.Layout.Column = 3;
@@ -2223,6 +2236,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetView_Second.ValueChangedFcn = createCallbackFcn(app, @SheetViewSecondValueChanged, true);
             app.SheetView_Second.Enable = 'off';
             app.SheetView_Second.FontSize = 11;
+            app.SheetView_Second.FontColor = [0 0 0];
             app.SheetView_Second.BackgroundColor = [1 1 1];
             app.SheetView_Second.Layout.Row = 2;
             app.SheetView_Second.Layout.Column = 2;
@@ -2235,6 +2249,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SheetHeight_Second.ValueDisplayFormat = '%d';
             app.SheetHeight_Second.ValueChangedFcn = createCallbackFcn(app, @SheetViewHeightValueChanged, true);
             app.SheetHeight_Second.FontSize = 11;
+            app.SheetHeight_Second.FontColor = [0 0 0];
             app.SheetHeight_Second.Enable = 'off';
             app.SheetHeight_Second.Layout.Row = 2;
             app.SheetHeight_Second.Layout.Column = 3;
@@ -2334,6 +2349,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontWeight.BackgroundColor = [0.9804 0.9804 0.9804];
             app.FontWeight.FontName = 'Century';
             app.FontWeight.FontWeight = 'bold';
+            app.FontWeight.FontColor = [0 0 0];
             app.FontWeight.Enable = 'off';
             app.FontWeight.Layout.Row = 2;
             app.FontWeight.Layout.Column = 11;
@@ -2345,6 +2361,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.FontStyle.BackgroundColor = [0.9804 0.9804 0.9804];
             app.FontStyle.FontName = 'Century';
             app.FontStyle.FontAngle = 'italic';
+            app.FontStyle.FontColor = [0 0 0];
             app.FontStyle.Enable = 'off';
             app.FontStyle.Layout.Row = 2;
             app.FontStyle.Layout.Column = 12;

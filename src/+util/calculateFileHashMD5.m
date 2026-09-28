@@ -13,8 +13,6 @@ function hashHex = calculateFileHashMD5(fileFullName)
     byteArray = fread(fid, Inf, '*uint8');
     fclose(fid);
 
-    md5 = java.security.MessageDigest.getInstance('MD5');
-    md5.update(typecast(byteArray, 'int8')); % reinterpreta os bits, sem saturar valores >= 128
-    hashHex = lower(sprintf('%02x', typecast(md5.digest(), 'uint8')));
+    hashHex = Hash.md5(byteArray);
 end
 

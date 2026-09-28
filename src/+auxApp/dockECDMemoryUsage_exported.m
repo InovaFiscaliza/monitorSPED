@@ -93,12 +93,7 @@ classdef dockECDMemoryUsage_exported < matlab.apps.AppBase
 
                 app.inputArgs = struct('context', context, 'index', index);
                 app.Context = context;
-                switch context
-                    case 'ECD'
-                        app.spedObj = mainApp.ecdObj;
-                    otherwise % 'EFD'
-                        app.spedObj = mainApp.efdObj;
-                end
+                app.spedObj = mainApp.spedObj; % "index" já é um índice global em mainApp.spedObj
 
                 % Registra handle deste app no workspace "base", o que possibilita 
                 % excluir registros de tabelas por meio de cliques na uitable.

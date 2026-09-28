@@ -1,0 +1,370 @@
+[
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "OBJETIVO",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Atendimento à demanda de fiscalização cadastrada no eFiscaliza sob a <b>Atividade de Inspeção nº %.0f</b>.",
+                        "Variable": "var_Issue"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "INTRODUÇÃO",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "A Anatel detém a competência de fiscalização para apuração dos valores de contribuições devidas ao Fundo de Universalização dos Serviços de Telecomunicações (FUST) e ao Fundo para o Desenvolvimento Tecnológico das Telecomunicações (FUNTTEL), bem como da apuração do ônus contratual decorrente da prorrogação de outorgas do setor de telecomunicações (ÔNUS).",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Esta análise tem como base a Escrituração Fiscal Digital do ICMS e do IPI (EFD ICMS/IPI), módulo do Sistema Público de Escrituração Digital (SPED).",
+                        "Variable": []
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "METODOLOGIA",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "A fiscalização tributária tem início com a coleta, junto à empresa fiscalizada, dos documentos e esclarecimentos necessários à apuração dos valores devidos ao FUST e ao FUNTTEL.",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "Uma vez obtida a Escrituração Fiscal Digital do ICMS e do IPI (EFD ICMS/IPI), módulo do Sistema Público de Escrituração Digital (SPED), os dados são processados para análise.",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "Nesse processamento, verifica-se a integridade e a autenticidade de cada arquivo. Para tanto, calcula-se um identificador próprio do arquivo (a partir de seu conteúdo, do CNPJ e da Inscrição Estadual da empresa) e realiza-se a validação por meio de <i>webservice</i> disponibilizado pela Receita Federal, a fim de confirmar sua correspondência com o arquivo registrado na base de dados do órgão.",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "true",
+                        "Text": "Após confirmada a validade, passa-se à análise do conteúdo de cada arquivo, conforme os procedimentos descritos a seguir:",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "List",
+                    "Data": [
+                        {
+                            "Editable": "true",
+                            "Text": "O arquivo é estruturado em registros organizados por blocos: o Bloco 0 reúne os dados de abertura e identificação da empresa; o Bloco C, os documentos fiscais relativos à circulação de mercadorias (ICMS/IPI); e o Bloco D, os documentos fiscais relativos à prestação de serviços de comunicação, telecomunicação e energia elétrica.",
+                            "Variable": []
+                        },
+                        {
+                            "Editable": "true",
+                            "Text": "Os registros de encerramento (9900, 9990 e 9999) totalizam a quantidade de ocorrências de cada registro do arquivo, o que permite verificar a integridade estrutural da escrituração.",
+                            "Variable": []
+                        },
+                        {
+                            "Editable": "true",
+                            "Text": "Para os fins desta fiscalização, dá-se ênfase ao registro \"D500\", que identifica os documentos fiscais de prestação de serviços de comunicação e telecomunicação &ndash; base primária para a apuração da Receita Operacional Bruta de Telecomunicações (ROB TELECOM), utilizada na estimativa da base de cálculo do FUST, do FUNTTEL e do ônus contratual.",
+                            "Variable": []
+                        },
+                        {
+                            "Editable": "true",
+                            "Text": "Ressalta-se que o valor de ICMS é excluído da base de cálculo do PIS e da COFINS, em consonância com a decisão do Supremo Tribunal Federal (STF) no julgamento do Recurso Extraordinário nº 574.706, que fixou a tese de repercussão geral de que \"o ICMS não compõe a base de cálculo para fins de incidência do PIS e da COFINS\".",
+                            "Variable": []
+                        },
+                        {
+                            "Editable": "true",
+                            "Text": "Por fim, com base nos elementos identificados nos registros supracitados, definem-se a base de cálculo e os valores devidos ao FUST e ao FUNTTEL.",
+                            "Variable": []
+                        }
+                    ]
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Na tabela apresentada a seguir consta detalhes do(s) arquivo(s) sob análise relacionado(s) à empresa <b>%s</b>, inscrita no CNPJ sob o nº %s, contendo informações do período %s.",
+                        "Variable": [
+                            "var_EntityName",
+                            "var_EntityId",                            
+                            "var_Period"
+                        ]
+                    }
+                },
+                {
+                    "Type": "Table",
+                    "Data": {
+                        "Origin": "FunctionEvaluation",
+                        "Source": "tbl_SourceFileStatus",
+                        "Columns": [
+                            2,
+                            3,
+                            4,
+                            5,
+                            6,
+                            7
+                        ],
+                        "Caption": "Arquivo(s) sob análise.",
+                        "Settings": [
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Período contábil",
+                                "Precision": "%s",
+                                "Width": "140px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Arquivo",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Codificação",
+                                "Precision": "%s",
+                                "Width": "80px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Hash",
+                                "Precision": "%s",
+                                "Width": "230px"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Resposta webservice",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "Situação",
+                                "Precision": "%s",
+                                "Width": "70px"
+                            }
+                        ],
+                        "Intro": [],
+                        "Error": [],
+                        "LineBreak": 0
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "RESULTADOS",
+            "Variable": [],
+            "Component": [
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "A empresa <b>%s</b>, inscrita no CNPJ sob o nº %s, apresentou arquivo de Escrituração Fiscal Digital do ICMS e do IPI (EFD ICMS/IPI) com as informações detalhadas a seguir.",
+                        "Variable": [
+                            "var_EntityName",
+                            "var_EntityId"
+                        ]
+                    }
+                },
+                {
+                    "Type": "Table",
+                    "Data": {
+                        "Origin": "FunctionEvaluation",
+                        "Source": "tbl_Raw+0000",
+                        "Columns": [
+                            "DT_INI", 
+                            "DT_FIN", 
+                            "NOME", 
+                            "CNPJ", 
+                            "UF", 
+                            "IE", 
+                            "COD_MUN", 
+                            "IM"
+                        ],
+                        "Caption": "Registro \"0000\".",
+                        "Settings": [
+                            {
+                                "Editable": "false",
+                                "ColumnName": "DT_INI",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "DT_FIN",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "NOME",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "CNPJ",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "UF",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "IE",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "COD_MUN",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            },
+                            {
+                                "Editable": "false",
+                                "ColumnName": "IM",
+                                "Precision": "%s",
+                                "Width": "auto"
+                            }
+                        ],
+                        "Intro": [],
+                        "Error": [],
+                        "LineBreak": 1
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Registro \"9900\", que totaliza a quantidade de ocorrências de cada registro presente no arquivo, permitindo verificar a integridade estrutural da escrituração.",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Table",
+                    "Data": {
+                        "Origin": "FunctionEvaluation",
+                        "Source": "tbl_Raw+9900",
+                        "Columns": ["REG", "REG_BLC", "QTD_REG_BLC"],
+                        "Caption": "Registro \"9900\".",
+                        "Settings": [
+                            { "Editable": "false", "ColumnName": "REG", "Precision": "%s", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "REG_BLC", "Precision": "%s", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "QTD_REG_BLC", "Precision": "%d", "Width": "auto" }
+                        ],
+                        "Intro": [],
+                        "Error": [],
+                        "LineBreak": 1
+                    }
+                },
+                {
+                    "Type": "ItemN2",
+                    "Data": {
+                        "Editable": "false",
+                        "Text": "Registro \"D500\", que identifica os documentos fiscais de prestação de serviços de comunicação e telecomunicação &ndash; base primária para a apuração da Receita Operacional Bruta de Telecomunicações (ROB TELECOM), utilizada na estimativa da base de cálculo do FUST, do FUNTTEL e do ônus contratual.",
+                        "Variable": []
+                    }
+                },
+                {
+                    "Type": "Table",
+                    "Data": {
+                        "Origin": "FunctionEvaluation",
+                        "Source": "tbl_Raw+D500",
+                        "Columns": ["IND_OPER", "IND_EMIT", "COD_PART", "COD_MOD", "COD_SIT", "SER", "SUB", "NUM_DOC", "DT_DOC", "DT_A_P", "VL_DOC", "VL_DESC", "VL_SERV", "VL_SERV_NT", "VL_TERC", "VL_DA", "VL_BC_ICMS", "VL_ICMS", "COD_INF", "VL_PIS", "VL_COFINS", "COD_CTA", "TP_ASSINANTE"],
+                        "Caption": "Registro \"D500\".",
+                        "Settings": [
+                            { "Editable": "false", "ColumnName": "IND_OPER", "Precision": "%s", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "IND_EMIT", "Precision": "%s", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "COD_PART", "Precision": "%s", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "COD_MOD", "Precision": "%s", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "COD_SIT", "Precision": "%s", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "SER", "Precision": "%s", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "SUB", "Precision": "%s", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "NUM_DOC", "Precision": "%s", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "DT_DOC", "Precision": "%s", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "DT_A_P", "Precision": "%s", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "VL_DOC", "Precision": "%.2f", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "VL_DESC", "Precision": "%.2f", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "VL_SERV", "Precision": "%.2f", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "VL_SERV_NT", "Precision": "%.2f", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "VL_TERC", "Precision": "%.2f", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "VL_DA", "Precision": "%.2f", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "VL_BC_ICMS", "Precision": "%.2f", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "VL_ICMS", "Precision": "%.2f", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "COD_INF", "Precision": "%s", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "VL_PIS", "Precision": "%.2f", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "VL_COFINS", "Precision": "%.2f", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "COD_CTA", "Precision": "%s", "Width": "auto" },
+                            { "Editable": "false", "ColumnName": "TP_ASSINANTE", "Precision": "%s", "Width": "auto" }
+                        ],
+                        "Intro": [],
+                        "Error": [],
+                        "LineBreak": 1
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "Type": "ItemN1",
+        "Recurrence": 0,
+        "Data": {
+            "Editable": "false",
+            "Text": "CONCLUSÃO",
+            "Variable": [],
+            "Component": {
+                "Type": "ItemN2",
+                "Data": {
+                    "Editable": "false",
+                    "Text": "Ante o exposto, conclui-se este relatório de atividades.",
+                    "Variable": []
+                }
+            }
+        }
+    }
+]

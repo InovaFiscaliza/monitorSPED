@@ -1,4 +1,6 @@
-classdef SPED < handle
+classdef SPED < handle & matlab.mixin.Heterogeneous
+    % A herança de matlab.mixin.Heterogeneous viabiliza um único array
+    % "app.spedObj", misturando instâncias de model.ECD e model.EFD.
 
     properties
         %-----------------------------------------------------------------%
@@ -186,6 +188,25 @@ classdef SPED < handle
                 end
         
                 validFile = all(filesValidation);
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function validFile = checkIfValidPeriod(obj)
+            checkIfScalar(obj)
+
+            yearsCovered = unique(year(obj.Period));
+            if isscalar(yearsCovered)
+                monthsCovered = [];
+                for ii = 1:numel(obj.Sources)
+                    [beginPeriod, endPeriod] = bounds(obj.Sources(ii).period);
+                    monthsCovered = [monthsCovered, month(beginPeriod):month(endPeriod)];
+                end
+                monthsCovered = unique(monthsCovered);
+
+                validFile = isequal(monthsCovered, 1:12);
+            else
+                validFile = false;
             end
         end
     end

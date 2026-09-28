@@ -1361,5 +1361,20 @@ classdef (Abstract) EFDBase
                     tableOut.("TIPO")(:) = {'ROB TELECOM'};
             end
         end
+
+        %-----------------------------------------------------------------%
+        function compositeSheets = efdCompositeSheets()
+            % Registros SPED EFD (ICMS/IPI) que compõem cada tabela composta (mesclada).
+            % Compartilhado entre util.fileread_EFD e model.EFD.parseTable, de forma que
+            % ambos concordem sobre quais registros ordinários precisam ser relidos para
+            % reconstruir corretamente uma tabela composta específica.
+            compositeSheets = struct( ...
+                'xC100_C170_C190', {{'C100', 'C170', 'C190'}}, ... % NF-e (55) e NFC-e (65): NF de vendas, remessas, etc. c/incidência de ICMS (C100, C170, C190 - op. de saída)
+                'xD500_D510_D590', {{'D500', 'D510', 'D590'}}, ... %  NFSC (21) e NFST (22): D500, D510, D530, D590 - op. de saída
+                'xD695_D696_D697', {{'D695', 'D696', 'D697'}}, ... % NFSC (21) e NFST (22): D695, D696, D697
+                'xD700_E_FILHOS',  {{'D700', 'D730', 'D731', 'D735', 'D737'}}, ... % NFCom (62): D700, D730, D731, D735, D737
+                'xD750_D760_D761', {{'D750', 'D760', 'D761'}} ... % NFCom (62): D750, D760, D761)
+            );
+        end
     end
 end

@@ -198,13 +198,8 @@ classdef dockECDFilter_exported < matlab.apps.AppBase
                 appEngine.boot(app, app.Role, mainApp, callingApp)
 
                 app.inputArgs = struct('context', context, 'index', index);
-                switch context
-                    case 'ECD'
-                        app.spedObj = mainApp.ecdObj;
-                    otherwise % 'EFD'
-                        app.spedObj = mainApp.efdObj;
-                end
-
+                app.spedObj = mainApp.spedObj; % "index" já é um índice global em mainApp.spedObj
+               
                 set(app.TableIdList, 'Items', tableIdList, 'Value', selectedTableId)
                 onTableIdValueChanged(app)
 

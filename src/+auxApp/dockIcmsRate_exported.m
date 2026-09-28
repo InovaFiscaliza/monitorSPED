@@ -63,12 +63,12 @@ classdef dockIcmsRate_exported < matlab.apps.AppBase
     methods (Access = private)
         %-----------------------------------------------------------------%
         function updateLayout(app, index)
-            app.EntityInfo.Text = util.HtmlTextGenerator.icmsRateDetails(app.mainApp.ecdObj(index));
+            app.EntityInfo.Text = util.HtmlTextGenerator.icmsRateDetails(app.mainApp.spedObj(index));
 
-            currentIcmsRate = app.mainApp.ecdObj(index).GUI.icmsRate.current.rate;
+            currentIcmsRate = app.mainApp.spedObj(index).GUI.icmsRate.current.rate;
             updateIcmsRatePanel(app, currentIcmsRate)
 
-            app.IcmsRateRefresh.Visible = ~strcmp(app.mainApp.ecdObj(index).GUI.icmsRate.source, 'default');
+            app.IcmsRateRefresh.Visible = ~strcmp(app.mainApp.spedObj(index).GUI.icmsRate.source, 'default');
         end
 
         %-----------------------------------------------------------------%
@@ -185,7 +185,7 @@ classdef dockIcmsRate_exported < matlab.apps.AppBase
 
             switch event.Source
                 case app.IcmsRateRefresh
-                    update(app.mainApp.ecdObj(index), 'GUI.IcmsRate', 'refresh')
+                    update(app.mainApp.spedObj(index), 'GUI.IcmsRate', 'refresh')
                     ipcMainMatlabCallsHandler(app.mainApp, app, 'onIcmsRateChanged', index);
                     setIcmsRateEditModeLayout(app, 'off')
 
@@ -199,10 +199,10 @@ classdef dockIcmsRate_exported < matlab.apps.AppBase
                     end
 
                 case app.IcmsRateConfirmButton
-                    currentIcmsRate = app.mainApp.ecdObj(index).GUI.icmsRate.current.rate;
+                    currentIcmsRate = app.mainApp.spedObj(index).GUI.icmsRate.current.rate;
                     newIcmsRateInfo = createIcmsRateInfo(app);
                     if ~isequal(currentIcmsRate, newIcmsRateInfo)
-                        update(app.mainApp.ecdObj(index), 'GUI.IcmsRate', 'valueChanged', newIcmsRateInfo)
+                        update(app.mainApp.spedObj(index), 'GUI.IcmsRate', 'valueChanged', newIcmsRateInfo)
                         ipcMainMatlabCallsHandler(app.mainApp, app, 'onIcmsRateChanged', index);
                     end
                     setIcmsRateEditModeLayout(app, 'off')

@@ -191,7 +191,20 @@ classdef dockReportLib_exported < matlab.apps.AppBase
             d = ui.Dialog(app.UIFigure, "progressdlg", "Em andamento...");
             
             try
-                [app.mainApp.ecdObj, msg] = load(app.projectData, context, fileFullPath, app.mainApp.General, varargin{:});
+                [updatedSubset, msg] = load(app.projectData, context, fileFullPath, app.mainApp.General, varargin{:});
+                
+                % "context" define o subconjunto de app.mainApp.spedObj a ser
+                % substituído: 'FILE' abrange o projeto completo (ECD + EFD);
+                % 'ECD'/'EFD' preservam o restante do array intacto.
+                switch context
+                    case 'ECD'
+                        app.mainApp.spedObj = [app.mainApp.spedObj(~strcmp({app.mainApp.spedObj.FileType}, 'ECD')), updatedSubset];
+                    case 'EFD'
+                        app.mainApp.spedObj = [app.mainApp.spedObj(~strcmp({app.mainApp.spedObj.FileType}, 'EFDI')), updatedSubset];
+                    otherwise % 'FILE'
+                        app.mainApp.spedObj = updatedSubset;
+                end
+
                 ipcMainMatlabCallsHandler(app.mainApp, app, 'onProjectLoad', context)
                 updatePanel(app, context)
 
@@ -235,9 +248,13 @@ classdef dockReportLib_exported < matlab.apps.AppBase
                 return
             end
 
-            if ~isempty(app.mainApp.ecdObj)
+            if ~isempty(varargin{1})
                 tablesToClearBeforeSave = app.mainApp.General.reportLib.tablesToClearBeforeSave;
-                ipcMainMatlabCallsHandler(app.mainApp, app, 'onCacheCleanup', 1:numel(app.mainApp.ecdObj), tablesToClearBeforeSave)
+                % "varargin{1}" é um snapshot (subconjunto por FileType, ou o
+                % array completo); mapeia-se cada elemento para o seu índice
+                % global em app.mainApp.spedObj por identidade de handle.
+                globalIndexes = arrayfun(@(x) find(app.mainApp.spedObj == x, 1), varargin{1});
+                ipcMainMatlabCallsHandler(app.mainApp, app, 'onCacheCleanup', globalIndexes, tablesToClearBeforeSave)
             end
 
             save(app.projectData, context, projectName, projectFile, app.mainApp.General.reportLib.outputCompressionMode, varargin{:})

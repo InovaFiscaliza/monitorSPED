@@ -49,29 +49,29 @@ classdef Project < model.ProjectCommon
         end
 
         %-----------------------------------------------------------------%
-        function save(obj, context, prjName, prjFile, outputFileCompressionMode, ecdObj)
+        function save(obj, context, prjName, prjFile, outputFileCompressionMode, spedObj)
             arguments
                 obj
                 context (1,:) char {mustBeMember(context, {'FILE', 'ECD', 'EFD'})}
                 prjName
                 prjFile
                 outputFileCompressionMode
-                ecdObj
+                spedObj
             end
 
             source    = class.Constants.appName;
             type      = 'ProjectData';
-            version   = 1;
+            version   = 2;
             userData  = [];
 
-            prjHash   = model.ProjectBase.computeProjectHash(prjName, prjFile, ecdObj, obj.issueDetails, obj.entityDetails);
+            prjHash   = model.ProjectBase.computeProjectHash(prjName, prjFile, spedObj, obj.issueDetails, obj.entityDetails);
             variables = struct( ...
                 'name',    prjName, ...
                 'hash',    prjHash, ...
                 'modules', obj.modules, ...
                 'issueDetails', obj.issueDetails, ...
                 'entityDetails', obj.entityDetails, ...
-                'ecdData', ecdObj ...
+                'spedData', spedObj ...
             );
 
             compressionMode = {};
@@ -87,13 +87,13 @@ classdef Project < model.ProjectCommon
         end
 
         %-----------------------------------------------------------------%
-        function [ecdObj, msg] = load(obj, context, fileName, generalSettings, ecdObj)
+        function [spedObj, msg] = load(obj, context, fileName, generalSettings, spedObj)
             arguments
                 obj
                 context (1,:) char {mustBeMember(context, {'FILE', 'ECD', 'EFD'})}
                 fileName
                 generalSettings
-                ecdObj
+                spedObj
             end
 
             % Em 23/01/2026, a versão 1 do projeto contempla instâncias das 
@@ -121,7 +121,7 @@ classdef Project < model.ProjectCommon
                 end
     
                 switch prjData.version
-                    case 1
+                    case 2
                         restart(obj)
 
                         obj.name = prjData.variables.name;
@@ -184,22 +184,22 @@ classdef Project < model.ProjectCommon
                         % Registra nome do arquivo do projeto (.MAT), assim 
                         % como índice do objeto, possibilitando releitura dos 
                         % dados na mesma sessão do app.
-                        for kk = 1:numel(prjData.variables.ecdData)
-                            prjData.variables.ecdData(kk).GUI.loadedFile.Name = fileName;
-                            prjData.variables.ecdData(kk).GUI.loadedFile.Index = kk;
+                        for kk = 1:numel(prjData.variables.spedData)
+                            prjData.variables.spedData(kk).GUI.loadedFile.Name = fileName;
+                            prjData.variables.spedData(kk).GUI.loadedFile.Index = kk;
                         end
 
                         % Pode ocorrer uma coincidência de fluxos que compõem
                         % o projeto e fluxos já lidos. Se evidenciado, serão
                         % mantidos os fluxos do projeto.
-                        idx = ismember({ecdObj.Hash}, {prjData.variables.ecdData.Hash});
+                        idx = ismember({spedObj.Hash}, {prjData.variables.spedData.Hash});
                         if any(idx)
-                            delete(ecdObj(idx))
-                            ecdObj(idx) = [];
+                            delete(spedObj(idx))
+                            spedObj(idx) = [];
                         end
     
-                        ecdObj = [ecdObj, prjData.variables.ecdData];
-                        model.ECDBase.ensureTableSchema(ecdObj, generalSettings);
+                        spedObj = [spedObj, prjData.variables.spedData];
+                        model.ECDBase.ensureTableSchema(spedObj, generalSettings);
     
                     otherwise
                         error('UnexpectedVersion')

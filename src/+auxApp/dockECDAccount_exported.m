@@ -96,7 +96,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
             app.UIAxes = plot.axesCreationController(app.MonthlyBalanceChartPanel);
 
             % Atualiza lista de contas de resultado:
-            app.AccountList.Items = app.mainApp.ecdObj(index).Table.x_CONTAS_ANOTACAO.("COD_CTA");
+            app.AccountList.Items = app.mainApp.spedObj(index).Table.x_CONTAS_ANOTACAO.("COD_CTA");
             if ismember(accountName, app.AccountList.Items)
                 app.AccountList.Value = accountName;
             else
@@ -111,7 +111,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function updateLayout(app, index, accountName)
-            selectedECD  = app.mainApp.ecdObj(index);
+            selectedECD  = app.mainApp.spedObj(index);
             [accountTable, index, htmlContent] = util.HtmlTextGenerator.AccountInfo(selectedECD, accountName, app.mainApp.General);
             
             % Árvore de descrição da conta:
@@ -155,7 +155,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function rateJsonInfo = createRateJsonInfo(app)
             fileIndex    = app.inputArgs.index;
-            selectedECD  = app.mainApp.ecdObj(fileIndex);
+            selectedECD  = app.mainApp.spedObj(fileIndex);
 
             switch app.IcmsRateMode.Value
                 case 'auto'
@@ -251,7 +251,7 @@ classdef dockECDAccount_exported < matlab.apps.AppBase
         function parameterValueChanged(app, event)
             
             fileIndex    = app.inputArgs.index;
-            selectedECD  = app.mainApp.ecdObj(fileIndex);
+            selectedECD  = app.mainApp.spedObj(fileIndex);
             accountIndex = app.currentAccount.index;
             generalSettings = app.mainApp.General;
 

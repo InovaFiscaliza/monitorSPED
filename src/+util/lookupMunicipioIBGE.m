@@ -20,6 +20,8 @@ end
 function municipioMap = loadMunicipioMap()
     municipioMap = containers.Map('KeyType', 'char', 'ValueType', 'char');
 
+    % [IBGE, msgError] = gpsLib.checkIfIBGEIsGlobal();
+
     matPath = 'C:\InovaFiscaliza\SupportPackages\src\General\resources\IBGE.mat';
     if ~isfile(matPath)
         return

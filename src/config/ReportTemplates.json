@@ -42,5 +42,16 @@
         "Version": "1.00",
         "Release": "23/02/2026",
         "UserData": []
+    },
+    {
+        "Name": "Análise contábil (EFDI)",
+        "File": "RA - Análise contábil (EFDI).json",
+        "Module": "EFD",
+        "DocumentType": "Relatório de Atividades",
+        "Description": "...",
+        "Author": "...",
+        "Version": "1.00",
+        "Release": "09/09/2026",
+        "UserData": []
     }
 ]

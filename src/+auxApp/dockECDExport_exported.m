@@ -54,7 +54,7 @@ classdef dockECDExport_exported < matlab.apps.AppBase
     methods (Access = private)
         %-----------------------------------------------------------------%
         function updateTree(app, index)
-            % selectedECD = app.mainApp.ecdObj(index);
+            % selectedECD = app.mainApp.spedObj(index);
             % 
             % if ~isfield(selectedECD.GUI, 'tableIds') || isempty(selectedECD.GUI.tableIds)
             %     update(selectedECD, 'GUI.TableIds', [], app.mainApp.General)
@@ -62,6 +62,51 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             % sheetsSorted = selectedECD.GUI.tableIds;
             % 
             % tags = 
+
+            context = app.inputArgs.context;
+
+            if strcmp(context, 'EFD')
+                % A árvore criada em tempo de design contempla apenas os
+                % registros do ECD; substitui-se pelos mesmos registros
+                % exibidos no SheetList do winEFD (selectedECD.GUI.tableIds),
+                % garantindo paridade exata entre as duas telas.
+                delete([app.GeneralAspects, app.AccountSummary, app.RTFFiles])
+
+                selectedEFD = app.mainApp.spedObj(index);
+                if ~isfield(selectedEFD.GUI, 'tableIds') || isempty(selectedEFD.GUI.tableIds)
+                    update(selectedEFD, 'GUI.TableIds', [], app.mainApp.General)
+                end
+                tableIds = selectedEFD.GUI.tableIds;
+
+                % Registros ordinários (ex.: "0000", "C100") x tabelas
+                % compostas/de apuração (ex.: "C100_C170_C190"), estas
+                % identificadas pelo "_" que une os registros de origem.
+                ordinaryIds  = tableIds(~contains(tableIds, '_'));
+                compositeIds = tableIds(contains(tableIds, '_'));
+
+                groupNodes = matlab.ui.container.TreeNode.empty;
+
+                if ~isempty(ordinaryIds)
+                    ordinaryGroupNode = uitreenode(app.Tree, 'Text', 'Registros ordinários');
+                    for ii = 1:numel(ordinaryIds)
+                        uitreenode(ordinaryGroupNode, 'Text', ordinaryIds{ii}, 'Tag', ['x' ordinaryIds{ii}]);
+                    end
+                    groupNodes(end+1) = ordinaryGroupNode;
+                end
+
+                if ~isempty(compositeIds)
+                    compositeGroupNode = uitreenode(app.Tree, 'Text', 'Balancetes e tabelas de apuração');
+                    for ii = 1:numel(compositeIds)
+                        uitreenode(compositeGroupNode, 'Text', compositeIds{ii}, 'Tag', ['x' compositeIds{ii}]);
+                    end
+                    groupNodes(end+1) = compositeGroupNode;
+                end
+
+                % EFD não possui registros de arquivos anexos (RTF), ao
+                % contrário do ECD (J800/J801); grupo omitido quando vazio.
+
+                app.Tree.CheckedNodes = groupNodes;
+            end
 
             expand(app.Tree, 'all')
         end
@@ -107,7 +152,7 @@ classdef dockECDExport_exported < matlab.apps.AppBase
             tableIdFields = {app.Tree.CheckedNodes.Tag};
             tableIdFields(cellfun(@(x) isempty(x), tableIdFields)) = [];
 
-            ipcMainMatlabCallsHandler(app.mainApp, app, 'onExportECD', context, index, tableIdFields)
+            ipcMainMatlabCallsHandler(app.mainApp, app, 'onExportSPED', context, index, tableIdFields)
 
         end
 

@@ -108,7 +108,7 @@ classdef (Abstract) HtmlTextGenerator
                     end
 
                     hasTransactions = '';
-                    if ~ecdObj.GUI.hasTransactions
+                    if strcmp(ecdObj.FileType, 'ECD') && isfield(ecdObj.GUI, 'hasTransactions') && ~ecdObj.GUI.hasTransactions
                         hasTransactions = util.HtmlTextGenerator.unicodeToHtmlHexMap.('ProhibitedSign').(mapField); 
                     end
 
@@ -149,7 +149,7 @@ classdef (Abstract) HtmlTextGenerator
                     end
 
                     hasTransactions = '';
-                    if ~ecdObj.GUI.hasTransactions
+                    if strcmp(ecdObj.FileType, 'ECD') && isfield(ecdObj.GUI, 'hasTransactions') && ~ecdObj.GUI.hasTransactions
                         hasTransactions = util.HtmlTextGenerator.unicodeToHtmlHexMap.('ProhibitedSign').(mapField); 
                     end
 
@@ -189,6 +189,7 @@ classdef (Abstract) HtmlTextGenerator
                     groupName = 'TempFileName';
                 end
                 dataStruct(1) = struct('group', groupName, 'value', sprintf('"%s"', ecdObj.FileName));
+                dataStruct(2) = struct('group', 'FileType', 'value', ecdObj.FileType);
                 
                 if ecdObj.PeriodMerged
                     dataStruct(end+1) = struct('group', 'Origin', 'value', textFormatGUI.cellstr2Bullets(cellfun(@(x) sprintf('"%s"', x), {ecdObj.Sources.file}, 'UniformOutput', false)));
@@ -215,13 +216,15 @@ classdef (Abstract) HtmlTextGenerator
                     dataStruct(end+1) = struct('group', 'REGISTROS LIDOS OU CRIADOS', 'value', strjoin(readOrdinaryIds, ', '));
                 end
 
-                dataStruct(end+1) = struct('group', 'ALÍQUOTA GLOBAL DE REFERÊNCIA DO ICMS', 'value', matlab.jsonencode(ecdObj.GUI.icmsRate));
+                if strcmp(ecdObj.FileType, 'ECD') && isfield(ecdObj.GUI, 'icmsRate')
+                    dataStruct(end+1) = struct('group', 'ALÍQUOTA GLOBAL DE REFERÊNCIA DO ICMS', 'value', matlab.jsonencode(ecdObj.GUI.icmsRate));
+                end
 
                 if ~isempty(ecdObj.GUI.warnings)
                     dataStruct(end+1) = struct('group', ['ALERTAS ' util.HtmlTextGenerator.unicodeToHtmlHexMap.('ExclamationMark').unicode], 'value', ['<font style="color: red;">' strjoin(ecdObj.GUI.warnings, '<br>') '</font>']);
                 end
                 
-                if ~ecdObj.GUI.hasTransactions
+                if strcmp(ecdObj.FileType, 'ECD') && isfield(ecdObj.GUI, 'hasTransactions') && ~ecdObj.GUI.hasTransactions
                     hasTransactionsMessage = [ ...
                         '<font style="color: red;">Empresa provavelmente está inativa, sem movimentação fiscal. ' ...
                         'Isto porque não foram encontrados contas de resultados (I050) ou lançamentos contábeis (I155 ou I200) ' ...
