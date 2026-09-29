@@ -1,13 +1,33 @@
-function classifyAccountCategoryTest(inputFilename)
+function classifyAccountCategoryTest(inputFilename, inputFileType, descriptionScope)
     arguments
-        inputFilename char = 'C:\Users\anatel_master\Downloads\appMonitorSPED.xlsx'
+        inputFilename char = ''
+        inputFileType {mustBeMember(inputFileType, {'Base bruta scarab', 'Auditorias válidas QlikSense'})} = 'Auditorias válidas QlikSense'
+        descriptionScope {mustBeMember(descriptionScope, {'completa', 'ultimoNivel'})} = 'completa'
     end
 
-    t = readtable(inputFilename, 'VariableNamingRule', 'preserve', 'Sheet', 'CONTAS');
-    t = removevars(t, {'correlationKey', 'entityName', 'entityState', 'entryHistoryCount', 'deduplicatedEntryHistory', 'periodYear', 'entitySelfDeclaration', 'auditorIcmsConfig'});
+    if isempty(inputFilename)
+        inputFilename = defaultInputFilename(inputFileType);
+    end
+
+    % "Auditorias válidas QlikSense" não tem lançamentos mensais (só
+    % entityId/description/auditorAccountType/total).
+    hasMonthlyBalances = inputFileType == "Base bruta scarab";
+    if hasMonthlyBalances
+        t = readtable(inputFilename, 'VariableNamingRule', 'preserve', 'Sheet', 'CONTAS');
+        t = removevars(t, {'correlationKey', 'entityName', 'entityState', 'entryHistoryCount', 'deduplicatedEntryHistory', 'periodYear', 'entitySelfDeclaration', 'auditorIcmsConfig'});
+    else
+        t = readtable(inputFilename, 'VariableNamingRule', 'preserve');
+    end
 
     desc  = string(t.('description'));
     total = toNumeric(t.('total'));
+
+    % "ultimoNivel" usa apenas o trecho após o último "↳" (nome da conta
+    % analítica em si, sem as categorias superiores da hierarquia).
+    classifyDesc = desc;
+    if descriptionScope == "ultimoNivel"
+        classifyDesc = extractLastLevel(desc);
+    end
 
     % Receita candidata total de cada empresa (soma dos saldos positivos
     % das contas não-tributárias da MESMA empresa), usada por
@@ -22,10 +42,14 @@ function classifyAccountCategoryTest(inputFilename)
     end
     entityRevenueTotalPerRow = entityRevenueTotal(entityIndex);
 
-    months = {'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'};
-    monthlyBalances = zeros(height(t), 12);
-    for m = 1:12
-        monthlyBalances(:, m) = toNumeric(t.(months{m}));
+    if hasMonthlyBalances
+        months = {'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'};
+        monthlyBalances = zeros(height(t), 12);
+        for m = 1:12
+            monthlyBalances(:, m) = toNumeric(t.(months{m}));
+        end
+    else
+        monthlyBalances = zeros(height(t), 0);
     end
 
     % "-" e "Não" têm o mesmo significado para fins de análise (ambos
@@ -39,27 +63,64 @@ function classifyAccountCategoryTest(inputFilename)
 
     parpoolCheck()
     parfor ii = 1:n
-        apuradoOld(ii)  = classifyAccountCategory_v1_00(desc(ii), monthlyBalances(ii, :), total(ii));
-        if apuradoOld(ii) == "-"
-            apuradoOld(ii) = "Não";
+        % O algoritmo v1.00 (baseline antigo) depende de lançamentos
+        % mensais, indisponíveis em "Auditorias válidas QlikSense".
+        if hasMonthlyBalances
+            apuradoOld(ii) = classifyAccountCategory_v1_00(desc(ii), monthlyBalances(ii, :), total(ii));
+            if apuradoOld(ii) == "-"
+                apuradoOld(ii) = "Não";
+            end
         end
 
-        apuradoNovo(ii) = util.classifyAccountCategory(desc(ii),     monthlyBalances(ii, :), total(ii), entityRevenueTotalPerRow(ii));
+        apuradoNovo(ii) = util.classifyAccountCategory(classifyDesc(ii), monthlyBalances(ii, :), total(ii), entityRevenueTotalPerRow(ii));
         if apuradoNovo(ii) == "-"
             apuradoNovo(ii) = "Não";
         end
     end
 
-    t.apurado_old  = apuradoOld;
     t.apurado_novo = apuradoNovo;
 
+    % "Não" é tratada como classe negativa: acerto (mesmo entre "Não"s)
+    % é verdadeiro positivo; algoritmo aponta categoria indevida sobre
+    % conta que é "Não" é falso positivo; demais divergências (conta com
+    % categoria real não identificada corretamente) são falso negativo.
+    statusApuradoNovo = repmat("Falso negativo", n, 1);
+    statusApuradoNovo(actualCollapsed == apuradoNovo) = "Verdadeiro positivo";
+    statusApuradoNovo(actualCollapsed == "Não" & apuradoNovo ~= "Não") = "Falso positivo";
+    t.status_apurado_novo = statusApuradoNovo;
+
     categories = unique(actualCollapsed);
-    metrics = [ ...
-        computeMetrics(actualCollapsed, apuradoOld,  categories, 'old'); ...
-        computeMetrics(actualCollapsed, apuradoNovo, categories, 'novo') ...
-    ];
+    metrics = computeMetrics(actualCollapsed, apuradoNovo, categories, ['novo_' descriptionScope]);
+
+    if hasMonthlyBalances
+        t.apurado_old = apuradoOld;
+        metrics = [computeMetrics(actualCollapsed, apuradoOld, categories, 'old'); metrics];
+    end
+
+    [outputFolder, outputName] = fileparts(inputFilename);
+    outputFilename = fullfile(outputFolder, [outputName '_classificado.xlsx']);
+    writetable(t, outputFilename);
 
     disp(metrics)
+end
+
+%-------------------------------------------------------------------------%
+function filename = defaultInputFilename(inputFileType)
+    switch inputFileType
+        case 'Base bruta scarab'
+            filename = 'C:\Users\anatel_master\Downloads\appMonitorSPED.xlsx';
+        case 'Auditorias válidas QlikSense'
+            filename = 'C:\Users\anatel_master\Downloads\Contas de resultado anotadas.xlsx';
+    end
+end
+
+%-------------------------------------------------------------------------%
+function lastLevelDesc = extractLastLevel(desc)
+    lastLevelDesc = strings(size(desc));
+    for ii = 1:numel(desc)
+        parts = strsplit(desc(ii), '↳');
+        lastLevelDesc(ii) = strtrim(parts{end});
+    end
 end
 
 %-------------------------------------------------------------------------%
