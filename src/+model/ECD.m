@@ -598,11 +598,11 @@ classdef ECD < handle
                             );
 
                             % Receita candidata total da empresa (arquivo SPED
-                            % atual), usada por util.classifyAccountCategory
+                            % atual), usada por util.Classification.computeEntityRevenueTotal
                             % como sinal de magnitude para o termo genérico da
                             % regra "Sim" (conta precisa ser uma fatia relevante 
                             % da receita da própria empresa).
-                            entityRevenueTotal = util.computeEntityRevenueTotal(string(accountTable.('DESCRIÇÃO')), accountTable.('TOTAL'));
+                            entityRevenueTotal = util.Classification.computeEntityRevenueTotal(string(accountTable.('DESCRIÇÃO')), accountTable.('TOTAL'));
 
                             for ii = 1:height(accountTable)
                                 if accountTable.('Apurado?  ✎')(ii) ~= "-"
@@ -612,7 +612,7 @@ classdef ECD < handle
                                 monthlyBalances = accountTable{ii, {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'}};
                                 totalBalance    = accountTable.('TOTAL')(ii);
 
-                                [category, note] = util.classifyAccountCategory(string(accountTable.('DESCRIÇÃO'){ii}), monthlyBalances, totalBalance, entityRevenueTotal);
+                                [category, note] = util.Classification.classifyAccountCategory(string(accountTable.('DESCRIÇÃO'){ii}), monthlyBalances, totalBalance, entityRevenueTotal);
 
                                 if category == "-"
                                     continue

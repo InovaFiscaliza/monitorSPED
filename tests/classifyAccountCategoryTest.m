@@ -1,126 +1,68 @@
-function classifyAccountCategoryTest(inputFilename, inputFileType, descriptionScope)
+function classifyAccountCategoryTest(inputFilename)
     arguments
-        inputFilename char = ''
-        inputFileType {mustBeMember(inputFileType, {'Base bruta scarab', 'Auditorias válidas QlikSense'})} = 'Auditorias válidas QlikSense'
-        descriptionScope {mustBeMember(descriptionScope, {'completa', 'ultimoNivel'})} = 'completa'
+        inputFilename char = 'C:\Users\anatel_master\Downloads\Contas de resultado anotadas.xlsx'
     end
 
-    if isempty(inputFilename)
-        inputFilename = defaultInputFilename(inputFileType);
-    end
-
-    % "Auditorias válidas QlikSense" não tem lançamentos mensais (só
-    % entityId/description/auditorAccountType/total).
-    hasMonthlyBalances = inputFileType == "Base bruta scarab";
-    if hasMonthlyBalances
-        t = readtable(inputFilename, 'VariableNamingRule', 'preserve', 'Sheet', 'CONTAS');
-        t = removevars(t, {'correlationKey', 'entityName', 'entityState', 'entryHistoryCount', 'deduplicatedEntryHistory', 'periodYear', 'entitySelfDeclaration', 'auditorIcmsConfig'});
-    else
-        t = readtable(inputFilename, 'VariableNamingRule', 'preserve');
-    end
+    t = readtable(inputFilename, 'VariableNamingRule', 'preserve');
 
     desc  = string(t.('description'));
-    total = toNumeric(t.('total'));
+    total = t.('total');
+    monthlyBalances = t{:, {'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'}};
 
-    % "ultimoNivel" usa apenas o trecho após o último "↳" (nome da conta
-    % analítica em si, sem as categorias superiores da hierarquia).
-    classifyDesc = desc;
-    if descriptionScope == "ultimoNivel"
-        classifyDesc = extractLastLevel(desc);
+    % Receita candidata de cada arquivo SPED (empresa + ano), como em model.ECD.
+    fileId = string(t.('entityId')) + "|" + string(t.('periodYear'));
+    [uFiles, ~, fileIndex] = unique(fileId);
+    fileRevenueTotal = zeros(numel(uFiles), 1);
+    parfor ii = 1:numel(uFiles)
+        mask = fileIndex == ii;
+        fileRevenueTotal(ii) = util.Classification.computeEntityRevenueTotal(desc(mask), total(mask)); %#ok<PFBNS>
     end
+    entityRevenueTotal = fileRevenueTotal(fileIndex);
 
-    % Receita candidata total de cada empresa (soma dos saldos positivos
-    % das contas não-tributárias da MESMA empresa), usada por
-    % util.classifyAccountCategory como sinal de magnitude para o termo
-    % genérico da regra "Sim" (ver util.computeEntityRevenueTotal).
-    entityId = string(t.('entityId'));
-    [uEntities, ~, entityIndex] = unique(entityId);
-    entityRevenueTotal = zeros(numel(uEntities), 1);
-    parfor e = 1:numel(uEntities)
-        mask = entityIndex == e;
-        entityRevenueTotal(e) = util.computeEntityRevenueTotal(desc(mask), total(mask)); %#ok<PFBNS>
-    end
-    entityRevenueTotalPerRow = entityRevenueTotal(entityIndex);
-
-    if hasMonthlyBalances
-        months = {'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'};
-        monthlyBalances = zeros(height(t), 12);
-        for m = 1:12
-            monthlyBalances(:, m) = toNumeric(t.(months{m}));
-        end
-    else
-        monthlyBalances = zeros(height(t), 0);
-    end
-
-    % "-" e "Não" têm o mesmo significado para fins de análise (ambos
-    % indicam conta não vinculada à receita/tributo de telecom).
-    actualCollapsed = strtrim(string(t.('auditorAccountType')));
-    actualCollapsed(actualCollapsed == "-" | actualCollapsed == "") = "Não";
+    % "-" e "Não" têm o mesmo significado (conta não vinculada à telecom).
+    actual = strtrim(string(t.('auditorAccountType')));
+    actual(actual == "-" | actual == "") = "Não";
 
     n = height(t);
-    apuradoOld  = repmat("-", n, 1);
-    apuradoNovo = repmat("-", n, 1);
+    predictedOld = repmat("Não", n, 1);
+    predictedNew = repmat("Não", n, 1);
 
     parpoolCheck()
     parfor ii = 1:n
-        % O algoritmo v1.00 (baseline antigo) depende de lançamentos
-        % mensais, indisponíveis em "Auditorias válidas QlikSense".
-        if hasMonthlyBalances
-            apuradoOld(ii) = classifyAccountCategory_v1_00(desc(ii), monthlyBalances(ii, :), total(ii));
-            if apuradoOld(ii) == "-"
-                apuradoOld(ii) = "Não";
-            end
+        category = classifyAccountCategory_v1_00(desc(ii), monthlyBalances(ii, :), total(ii));
+        if category ~= "-"
+            predictedOld(ii) = category;
         end
 
-        apuradoNovo(ii) = util.classifyAccountCategory(classifyDesc(ii), monthlyBalances(ii, :), total(ii), entityRevenueTotalPerRow(ii));
-        if apuradoNovo(ii) == "-"
-            apuradoNovo(ii) = "Não";
+        category = util.Classification.classifyAccountCategory(desc(ii), monthlyBalances(ii, :), total(ii), entityRevenueTotal(ii));
+        if category ~= "-"
+            predictedNew(ii) = category;
         end
     end
 
-    t.apurado_novo = apuradoNovo;
+    t.apurado_old = predictedOld;
+    t.apurado_novo = predictedNew;
 
-    % "Não" é tratada como classe negativa: acerto (mesmo entre "Não"s)
-    % é verdadeiro positivo; algoritmo aponta categoria indevida sobre
-    % conta que é "Não" é falso positivo; demais divergências (conta com
-    % categoria real não identificada corretamente) são falso negativo.
-    statusApuradoNovo = repmat("Falso negativo", n, 1);
-    statusApuradoNovo(actualCollapsed == apuradoNovo) = "Verdadeiro positivo";
-    statusApuradoNovo(actualCollapsed == "Não" & apuradoNovo ~= "Não") = "Falso positivo";
-    t.status_apurado_novo = statusApuradoNovo;
+    % Falso positivo: o auditor marcou "Não" e o algoritmo apontou categoria.
+    status = repmat("Falso negativo", n, 1);
+    status(actual == predictedNew) = "Verdadeiro positivo";
+    status(actual == "Não" & predictedNew ~= "Não") = "Falso positivo";
+    t.status_apurado_novo = status;
 
-    categories = unique(actualCollapsed);
-    metrics = computeMetrics(actualCollapsed, apuradoNovo, categories, ['novo_' descriptionScope]);
+    categories = unique(actual);
+    metrics = [ ...
+        computeMetrics(actual, predictedOld, categories, 'old'); ...
+        computeMetrics(actual, predictedNew, categories, 'novo') ...
+    ];
 
-    if hasMonthlyBalances
-        t.apurado_old = apuradoOld;
-        metrics = [computeMetrics(actualCollapsed, apuradoOld, categories, 'old'); metrics];
-    end
+    oldPrecision = metrics.acuracia_geral(find(strcmp(metrics.algoritmo, 'old'), 1));
+    newPrecision = metrics.acuracia_geral(find(strcmp(metrics.algoritmo, 'novo'), 1));
+    
+    disp(metrics)
+    fprintf('Acurácia geral: old = %.2f%% | novo = %.2f%%\n', 100 * oldPrecision, 100 * newPrecision);
 
     [outputFolder, outputName] = fileparts(inputFilename);
-    outputFilename = fullfile(outputFolder, [outputName '_classificado.xlsx']);
-    writetable(t, outputFilename);
-
-    disp(metrics)
-end
-
-%-------------------------------------------------------------------------%
-function filename = defaultInputFilename(inputFileType)
-    switch inputFileType
-        case 'Base bruta scarab'
-            filename = 'C:\Users\anatel_master\Downloads\appMonitorSPED.xlsx';
-        case 'Auditorias válidas QlikSense'
-            filename = 'C:\Users\anatel_master\Downloads\Contas de resultado anotadas.xlsx';
-    end
-end
-
-%-------------------------------------------------------------------------%
-function lastLevelDesc = extractLastLevel(desc)
-    lastLevelDesc = strings(size(desc));
-    for ii = 1:numel(desc)
-        parts = strsplit(desc(ii), '↳');
-        lastLevelDesc(ii) = strtrim(parts{end});
-    end
+    writetable(t, fullfile(outputFolder, [outputName '_classificado.xlsx']));
 end
 
 %-------------------------------------------------------------------------%
@@ -155,35 +97,7 @@ function metrics = computeMetrics(actual, predicted, categories, algorithmName)
     );
 end
 
-%-------------------------------------------------------------------------%
-function out = toNumeric(col)
-    if isnumeric(col)
-        out = double(col);
-        return
-    end
 
-    if iscell(col)
-        out = zeros(numel(col), 1);
-        for ii = 1:numel(col)
-            v = col{ii};
-            if isnumeric(v)
-                out(ii) = double(v);
-            elseif isempty(v)
-                out(ii) = 0;
-            else
-                s = strtrim(string(v));
-                s = replace(s, '.', '');
-                s = replace(s, ',', '.');
-                out(ii) = str2double(s);
-            end
-        end
-        out(isnan(out)) = 0;
-        return
-    end
-
-    out = str2double(string(col));
-    out(isnan(out)) = 0;
-end
 
 %-------------------------------------------------------------------------%
 function [category, note] = classifyAccountCategory_v1_00(description, monthlyBalances, totalBalance)
