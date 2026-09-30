@@ -31,42 +31,47 @@ classdef (Abstract) HtmlTextGenerator
         %-----------------------------------------------------------------%
         % WINMONITORSPED: APPINFO
         %-----------------------------------------------------------------%
-        function htmlContent = AppInfo(appGeneral, rootFolder, executionMode, renderCount, outputFormat)
+        function htmlContent = getAppInfo(generalSettings, rootFolder, executionMode, renderCount, eFiscalizaObj, outputFormat)
             arguments
-                appGeneral 
+                generalSettings 
                 rootFolder 
                 executionMode
                 renderCount
+                eFiscalizaObj
                 outputFormat char {mustBeMember(outputFormat, {'popup', 'textview'})} = 'textview'
             end
         
-            appName    = class.Constants.appName;
-            appVersion = appGeneral.AppVersion;
-            appURL     = util.publicLink(appName, rootFolder, appName);
+            appName = class.Constants.appName;
+            appVersion = generalSettings.AppVersion;
+            appURL = util.publicLink(appName, rootFolder, appName);
         
             switch executionMode
                 case {'MATLABEnvironment', 'desktopStandaloneApp'}
-                    appMode = 'desktopApp';        
+                    appMode = 'desktopApp';    
+
                 case 'webApp'
                     computerName = appEngine.util.OperationSystem('computerName');
-                    if strcmpi(computerName, appGeneral.computerName.webServer)
+                    if strcmpi(computerName, generalSettings.computerName.webServer)
                         appMode = 'webServer';
                     else
                         appMode = 'deployServer';                    
                     end
             end
         
-            dataStruct    = struct('group', 'COMPUTADOR',     'value', struct('Machine', rmfield(appVersion.machine, 'name'), 'Mode', sprintf('%s - %s', executionMode, appMode)));
-            dataStruct(2) = struct('group', 'MATLAB',         'value', rmfield(appVersion.matlab, 'name'));
+            displayEntry = struct('group', 'COMPUTADOR', 'value', struct('Machine', rmfield(appVersion.machine, 'name'), 'Mode', sprintf('%s - %s', executionMode, appMode)));
+            displayEntry(2) = struct('group', 'MATLAB', 'value', rmfield(appVersion.matlab, 'name'));
             if ~isempty(appVersion.browser)
-                dataStruct(3) = struct('group', 'NAVEGADOR',  'value', rmfield(appVersion.browser, 'name'));
+                displayEntry(3) = struct('group', 'NAVEGADOR', 'value', rmfield(appVersion.browser, 'name'));
             end
-            dataStruct(end+1) = struct('group', 'RENDERIZAÇÕES','value', renderCount);
-            dataStruct(end+1) = struct('group', 'APLICATIVO', 'value', appVersion.application);
-            
+            displayEntry(end+1) = struct('group', 'RENDERIZAÇÕES','value', renderCount);
+            displayEntry(end+1) = struct('group', 'APLICATIVO', 'value', appVersion.application);
+
+            if ~isempty(eFiscalizaObj)
+                displayEntry(end+1) = struct('group', 'USUÁRIO AUTENTICADO', 'value', eFiscalizaObj.login);
+            end            
         
-            freeInitialText = sprintf('<font style="font-size: 12px;">O repositório das ferramentas desenvolvidas no Laboratório de inovação da SFI pode ser acessado <a href="%s" target="_blank">aqui</a>.</font>\n\n', appURL.Sharepoint);
-            htmlContent     = textFormatGUI.struct2PrettyPrintList(dataStruct, 'print -1', freeInitialText, outputFormat);
+            htmlIntro = sprintf('<font style="font-size: 12px;">O repositório das ferramentas desenvolvidas no Laboratório de inovação da SFI pode ser acessado <a href="%s" target="_blank">aqui</a>.</font>\n\n', appURL.Sharepoint);
+            htmlContent = textFormatGUI.struct2PrettyPrintList(displayEntry, 'print -1', htmlIntro, outputFormat);
         end
 
         %-----------------------------------------------------------------%

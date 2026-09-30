@@ -146,9 +146,17 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
                     case 'customForm'
                         switch event.HTMLEventData.uuid
+                            case 'getAuthenticatedUser'
+                                createEFiscalizaObject(app, event.HTMLEventData)
+
                             case {'onFetchIssueDetails', 'onReportGenerate', 'onUploadArtifacts'}
                                 eventName = event.HTMLEventData.uuid;
                                 context = event.HTMLEventData.context;
+
+                                if isfield(event.HTMLEventData, 'error')
+                                    ws.eFiscaliza.getCredentials('manual', app.executionMode, app.jsBackDoor, eventName, context);
+                                    return
+                                end
 
                                 varargin = {};
                                 if isfield(event.HTMLEventData, 'varargin')
@@ -215,6 +223,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         filePath = varargin{1};
                         updateLastVisitedFolder(app, filePath)
 
+                    case {'onReportGenerate', 'onUploadArtifacts'}
+                        context = varargin{1};
+                        varargin = varargin(2:end);
+                        reportHandleOperation(app, eventName, context, [], varargin{:})
+
                     otherwise
                         switch class(callingApp)
                             % auxApp.winConfig (CONFIG)
@@ -268,11 +281,6 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                                             fileIndex = fileIndex(1);
                                         end
                                         varargout{1} = fileIndex;
-
-                                    case {'onReportGenerate', 'onUploadArtifacts'}
-                                        context = varargin{1};
-                                        varargin = varargin(2:end);
-                                        reportHandleOperation(app, eventName, context, [], varargin{:})
 
                                     case 'onAccountingDataUpdated'
                                         if ~isempty(app.FileTree.SelectedNodes)
@@ -582,6 +590,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         function initializeAppProperties(app)
             app.projectData = model.Project(app, app.rootFolder);
             app.receitaFederalObj = ws.ReceitaFederal();
+
+            if strcmp(app.executionMode, 'webApp')
+                url = ws.eFiscaliza.CURRENT_USER_URL;
+                sendEventToHTMLSource(app.jsBackDoor, 'getAuthenticatedUser', struct('eventName', 'getAuthenticatedUser', 'context', app.Context, 'url', url));
+            end
         end
 
         %-----------------------------------------------------------------%
@@ -797,34 +810,28 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function createEFiscalizaObject(app, credentials)
             if ~isempty(credentials)
-                app.eFiscalizaObj = ws.eFiscaliza(credentials.login, credentials.password);
+                loginMode = 'mfa';
+                if ~isfield(credentials, 'mfaLogin')
+                    loginMode = 'manual';
+                end
+
+                app.eFiscalizaObj = ws.eFiscaliza(loginMode, credentials.login, credentials.password);
             end
         end
 
         %-----------------------------------------------------------------%
         function reportDispatchOperation(app, eventName, varargin)
-            arguments
-                app
-                eventName {mustBeMember(eventName, {'onReportGenerate', 'onUploadArtifacts'})}
-            end
-
-            arguments (Repeating)
-                varargin
-            end
-
             if isempty(app.eFiscalizaObj) || ~isvalid(app.eFiscalizaObj)
-                dialogBox    = struct('id', 'login',    'label', 'Usuário: ', 'type', 'text');
-                dialogBox(2) = struct('id', 'password', 'label', 'Senha: ',   'type', 'password');
+                eventData = ws.eFiscaliza.getCredentials('auto', app.executionMode, app.jsBackDoor, eventName, app.Context, varargin{:});
+                if ~isempty(eventData)
+                    eventData.uuid = eventName;
+                    eventData.context = app.Context;
+                    eventData.varargin = varargin{:};
 
-                customFormData = struct('UUID', eventName, 'Fields', dialogBox, 'Context', app.Context);
-                if ~isempty(varargin)
-                    customFormData.Varargin = varargin;
+                    ipcMainJSEventsHandler(app, struct('HTMLEventName', 'customForm', 'HTMLEventData', eventData))
                 end
-
-                sendEventToHTMLSource(app.jsBackDoor, 'customForm', customFormData)
-
             else
-                reportHandleOperation(app, eventName, app.Context, [], varargin{:})
+                ipcMainMatlabCallsHandler(app, app, eventName, app.Context, varargin{:})
             end
         end
 
@@ -876,10 +883,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     msg = util.HtmlTextGenerator.issueDetails(system, issue, details);
                     icon = 'info';
                 else
-                    app.eFiscalizaObj = [];
+                    delete(app.eFiscalizaObj)
+
                     msg = msgError;
                     icon = 'error';
                 end
+
                 ui.Dialog(app.UIFigure, icon, msg);
             end
 
@@ -905,8 +914,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 end
 
             catch ME
-                app.eFiscalizaObj = [];
-                ui.Dialog(callingApp.UIFigure, 'error', ME.message);
+                delete(app.eFiscalizaObj)
+                ui.Dialog(callingApp.UIFigure, 'error', getReport(ME));
             end
 
             callingApp.progressDialog.Visible = 'hidden';
@@ -1024,7 +1033,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 msg = response;
 
             catch ME
-                app.eFiscalizaObj = [];
+                delete(app.eFiscalizaObj)
                 
                 status = false;
                 icon = 'error';
@@ -1128,11 +1137,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     focus(findobj(app.NavBar.Children, 'Type', 'uistatebutton', 'Value', true))
 
                 case app.AppInfo
-                    appInfo = util.HtmlTextGenerator.AppInfo( ...
+                    appInfo = util.HtmlTextGenerator.getAppInfo( ...
                         app.General, ...
                         app.rootFolder, ...
                         app.executionMode, ...
                         app.renderCount, ...
+                        app.eFiscalizaObj, ...
                         "popup" ...
                     );
                     ui.Dialog(app.UIFigure, 'info', appInfo);

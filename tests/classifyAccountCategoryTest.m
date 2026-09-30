@@ -13,6 +13,8 @@ function classifyAccountCategoryTest(inputFilename)
     fileId = string(t.('entityId')) + "|" + string(t.('periodYear'));
     [uFiles, ~, fileIndex] = unique(fileId);
     fileRevenueTotal = zeros(numel(uFiles), 1);
+    
+    parpoolCheck()
     parfor ii = 1:numel(uFiles)
         mask = fileIndex == ii;
         fileRevenueTotal(ii) = util.Classification.computeEntityRevenueTotal(desc(mask), total(mask)); %#ok<PFBNS>
@@ -27,7 +29,6 @@ function classifyAccountCategoryTest(inputFilename)
     predictedOld = repmat("Não", n, 1);
     predictedNew = repmat("Não", n, 1);
 
-    parpoolCheck()
     parfor ii = 1:n
         category = classifyAccountCategory_v1_00(desc(ii), monthlyBalances(ii, :), total(ii));
         if category ~= "-"
