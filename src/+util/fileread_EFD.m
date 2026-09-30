@@ -830,7 +830,7 @@ function tbl = enrichCodPart(obj, tbl, reg)
         end
 
         codMunLabel = part.COD_MUN{matchIndex};
-        municipio = util.lookupMunicipioIBGE(codMunLabel);
+        municipio = gpsLib.lookupMunicipioIBGE(codMunLabel);
         if ~isempty(municipio)
             codMunLabel = sprintf('%s (%s)', codMunLabel, municipio);
         end
