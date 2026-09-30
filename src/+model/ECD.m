@@ -648,90 +648,77 @@ classdef ECD < handle
                         case 'accountValueChanged'
                             generalSettings   = varargin{1};
                             
-                            itxIcmsDefaultTax = generalSettings.context.ECD.taxConfig.ICMS_INTERCONEXAO; % 0;
+                            itxIcmsDefaultTax = generalSettings.context.ECD.taxConfig.ICMS_INTERCONEXAO; % 0; (editável em auxApp.winConfig)
                             pisDefaultTax     = generalSettings.context.ECD.taxConfig.PIS;               % 0.0065;
                             cofinsDefaultTax  = generalSettings.context.ECD.taxConfig.COFINS;            % 0.03;
                             fustDefaultTax    = generalSettings.context.ECD.taxConfig.FUST;              % 0.01;
                             funttelDefaultTax = generalSettings.context.ECD.taxConfig.FUNTTEL;           % 0.005;
                             monthIds          = {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'};
                             
-                            
+                            % #####################
                             % ## _APURACAO_GERAL ## 
+                            % #####################
                             robContabilIdx    = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "Sim");
                             icmsContabilIdx   = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "ICMS Telecom");
                             pisContabilIdx    = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "PIS Telecom");
                             cofinsContabilIdx = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "COFINS Telecom");
 
                             % (a) ROB / ICMS
-                            robContabil       = zeros(1, 12);
-                            robContabilTable  = innerjoin(obj.Table.x_CONTAS_ANOTACAO(robContabilIdx, {'COD_CTA', 'Alíquota ICMS'}), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
+                            robContabil = zeros(1, 12);
+                            robContabilTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO(robContabilIdx, {'COD_CTA', 'Alíquota ICMS'}), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
                             if ~isempty(robContabilTable)
-                                robContabil   = sum(robContabilTable{:, monthIds}, 1);
+                                robContabil = sum(robContabilTable{:, monthIds}, 1);
                             end
-                            robContabil       = applyReconciliationAdjustment(obj, robContabil, '_CONCILIACAO_GERAL', 'ROB TELECOM');
+                            robContabil = applyReconciliationAdjustment(obj, robContabil, '_CONCILIACAO_GERAL', 'ROB TELECOM');
                             
-                            icmsEstimado      = zeros(1, 12);
+                            icmsEstimado = zeros(1, 12);
                             for ii = 1:height(robContabilTable)
-                                icmsInfo      = jsondecode(robContabilTable.('Alíquota ICMS'){ii});
-                                icmsRate      = icmsInfo.rate';
+                                icmsInfo = jsondecode(robContabilTable.('Alíquota ICMS'){ii});
+                                icmsRate = icmsInfo.rate';
 
                                 if isscalar(icmsRate)
-                                    icmsRate  = icmsRate .* ones(1, 12);
+                                    icmsRate = icmsRate .* ones(1, 12);
                                 end
 
-                                icmsEstimado  = icmsEstimado - icmsRate .* robContabilTable{ii, monthIds};
+                                icmsEstimado = icmsEstimado - icmsRate .* robContabilTable{ii, monthIds};
                             end
-                            icmsEstimado      = fix(100 * icmsEstimado) / 100;
-                            icmsEstimado       = applyReconciliationAdjustment(obj, icmsEstimado, '_CONCILIACAO_GERAL', 'ICMS ESTIMADO');
+                            icmsEstimado = fix(100 * icmsEstimado) / 100;
+                            icmsEstimado = applyReconciliationAdjustment(obj, icmsEstimado, '_CONCILIACAO_GERAL', 'ICMS ESTIMADO');
                             
-                            icmsContabil      = zeros(1, 12);
+                            icmsContabil = zeros(1, 12);
                             icmsContabilTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO(icmsContabilIdx, 'COD_CTA'), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);                            
                             if ~isempty(icmsContabilTable)
-                                icmsContabil  = sum(icmsContabilTable{:, monthIds}, 1);
+                                icmsContabil = sum(icmsContabilTable{:, monthIds}, 1);
                             end
-                            icmsContabil      = applyReconciliationAdjustment(obj, icmsContabil, '_CONCILIACAO_GERAL', 'ICMS CONTÁBIL');
-
-                            if abs(sum(icmsEstimado)) < abs(sum(icmsContabil))
-                                icmsEscolhido = icmsEstimado;
-                            else
-                                icmsEscolhido = icmsContabil;
-                            end
+                            icmsContabil = applyReconciliationAdjustment(obj, icmsContabil, '_CONCILIACAO_GERAL', 'ICMS CONTÁBIL');
+                            icmsEscolhido = model.ECD.selectSmallerAbsTotal(icmsEstimado, icmsContabil);
 
                             % (b) PIS/COFINS
                             baseCalculoPisCofins = robContabil + icmsEscolhido;                            
                             
-                            pisEstimado          = - fix(100 * pisDefaultTax .* baseCalculoPisCofins) / 100;
-                            pisContabil          = zeros(1, 12);
-                            pisContabilTable     = innerjoin(obj.Table.x_CONTAS_ANOTACAO(pisContabilIdx,    'COD_CTA'), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
+                            pisEstimado = - fix(100 * pisDefaultTax .* baseCalculoPisCofins) / 100;
+                            pisContabil = zeros(1, 12);
+                            pisContabilTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO(pisContabilIdx,    'COD_CTA'), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
                             if ~isempty(pisContabilTable)
-                                pisContabil      = sum(pisContabilTable{:, monthIds}, 1);
+                                pisContabil = sum(pisContabilTable{:, monthIds}, 1);
                             end
-                            pisContabil          = applyReconciliationAdjustment(obj, pisContabil, '_CONCILIACAO_GERAL', 'PIS CONTÁBIL');
+                            pisContabil = applyReconciliationAdjustment(obj, pisContabil, '_CONCILIACAO_GERAL', 'PIS CONTÁBIL');
                             
-                            cofinsEstimado       = - fix(100 * cofinsDefaultTax .* baseCalculoPisCofins) / 100;
-                            cofinsContabil       = zeros(1, 12);
-                            cofinsContabilTable  = innerjoin(obj.Table.x_CONTAS_ANOTACAO(cofinsContabilIdx, 'COD_CTA'), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
+                            cofinsEstimado = - fix(100 * cofinsDefaultTax .* baseCalculoPisCofins) / 100;
+                            cofinsContabil = zeros(1, 12);
+                            cofinsContabilTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO(cofinsContabilIdx, 'COD_CTA'), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
                             if ~isempty(cofinsContabilTable)
-                                cofinsContabil   = sum(cofinsContabilTable{:, monthIds}, 1);
+                                cofinsContabil = sum(cofinsContabilTable{:, monthIds}, 1);
                             end
-                            cofinsContabil       = applyReconciliationAdjustment(obj, cofinsContabil, '_CONCILIACAO_GERAL', 'COFINS CONTÁBIL');
+                            cofinsContabil = applyReconciliationAdjustment(obj, cofinsContabil, '_CONCILIACAO_GERAL', 'COFINS CONTÁBIL');
                             
-                            if abs(sum(pisEstimado)) < abs(sum(pisContabil))
-                                pisEscolhido     = pisEstimado;
-                            else
-                                pisEscolhido     = pisContabil;
-                            end
-
-                            if abs(sum(cofinsEstimado)) < abs(sum(cofinsContabil))
-                                cofinsEscolhido  = cofinsEstimado;
-                            else
-                                cofinsEscolhido  = cofinsContabil;
-                            end
+                            pisEscolhido = model.ECD.selectSmallerAbsTotal(pisEstimado, pisContabil);
+                            cofinsEscolhido = model.ECD.selectSmallerAbsTotal(cofinsEstimado, cofinsContabil);
 
                             % (c) FUST/FUNTTEL
                             baseCalculoFustFunttel = baseCalculoPisCofins + pisEscolhido + cofinsEscolhido;
-                            fustApurado            = - fix(100 * fustDefaultTax    .* baseCalculoFustFunttel) / 100;
-                            funttelApurado         = - fix(100 * funttelDefaultTax .* baseCalculoFustFunttel) / 100;
+                            fustApurado = - fix(100 * fustDefaultTax .* baseCalculoFustFunttel) / 100;
+                            funttelApurado = - fix(100 * funttelDefaultTax .* baseCalculoFustFunttel) / 100;
 
                             % (d) ATUALIZA TABELA
                             obj.Table.x_APURACAO_GERAL( 1, [monthIds, {'TOTAL'}]) = num2cell([robContabil,            sum(robContabil)]);
@@ -746,32 +733,41 @@ classdef ECD < handle
                             obj.Table.x_APURACAO_GERAL(10, [monthIds, {'TOTAL'}]) = num2cell([fustApurado,            sum(fustApurado)]);
                             obj.Table.x_APURACAO_GERAL(11, [monthIds, {'TOTAL'}]) = num2cell([funttelApurado,         sum(funttelApurado)]);
 
-                            
+
+                            % ############################
                             % ## _APURACAO_INTERCONEXÃO ## 
-                            itxRobContabilIdx   = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "Sim" & ismember(obj.Table.x_CONTAS_ANOTACAO.('Interconexão?  ✎'), ["ITX", "EILD"]));
+                            % ############################
+                            itxRobContabilIdx = find(obj.Table.x_CONTAS_ANOTACAO.('Apurado?  ✎') == "Sim" & ismember(obj.Table.x_CONTAS_ANOTACAO.('Interconexão?  ✎'), ["ITX", "EILD"]));
                             
                             % (a) ROB / ICMS INTERCONEXÃO
-                            itxRobContabil      = zeros(1, 12);
-                            itxIcmsEstimado     = zeros(1, 12);
+                            itxRobContabil = zeros(1, 12);
+                            itxIcmsEstimado = zeros(1, 12);
 
                             itxRobContabilTable = innerjoin(obj.Table.x_CONTAS_ANOTACAO(itxRobContabilIdx, {'COD_CTA', 'Alíquota ICMS'}), obj.Table.x_BALANCETE_RESULTADO, "Keys", "COD_CTA", "RightVariables", monthIds);
                             if ~isempty(itxRobContabilTable)
-                                itxRobContabil  = sum(itxRobContabilTable{:, monthIds}, 1);
-                                itxRobContabil  = applyReconciliationAdjustment(obj, itxRobContabil,  '_CONCILIACAO_INTERCONEXAO', 'ROB TELECOM');
+                                itxRobContabil = sum(itxRobContabilTable{:, monthIds}, 1);
+                                itxRobContabil = applyReconciliationAdjustment(obj, itxRobContabil,  '_CONCILIACAO_INTERCONEXAO', 'ROB TELECOM');
 
                                 itxIcmsEstimado = - fix(100 * itxIcmsDefaultTax .* itxRobContabil) / 100;
                             end
 
+                            itxIcmsEstimado = model.ECD.capByReference(itxIcmsEstimado, icmsEscolhido);
+
                             % (b) PIS/COFINS INTERCONEXÃO
                             itxBaseCalculoPisCofins = itxRobContabil + itxIcmsEstimado;
 
-                            itxPisEstimado      = - fix(100 * pisDefaultTax    .* itxBaseCalculoPisCofins) / 100;
-                            itxCofinsEstimado   = - fix(100 * cofinsDefaultTax .* itxBaseCalculoPisCofins) / 100;
+                            itxPisEstimado = - fix(100 * pisDefaultTax .* itxBaseCalculoPisCofins) / 100;
+                            itxPisEstimado = model.ECD.capByReference(itxPisEstimado, pisEscolhido);
+
+                            itxCofinsEstimado = - fix(100 * cofinsDefaultTax .* itxBaseCalculoPisCofins) / 100;
+                            itxCofinsEstimado = model.ECD.capByReference(itxCofinsEstimado, cofinsEscolhido);
 
                             % (c) FUST/FUNTTEL INTERCONEXÃO
                             itxBaseCalculoFustFunttel = itxBaseCalculoPisCofins + itxPisEstimado + itxCofinsEstimado;
-                            itxFustApurado      = - fix(100 * fustDefaultTax    .* itxBaseCalculoFustFunttel) / 100;
-                            itxFunttelApurado   = - fix(100 * funttelDefaultTax .* itxBaseCalculoFustFunttel) / 100;
+                            itxBaseCalculoFustFunttel = model.ECD.capByReference(itxBaseCalculoFustFunttel, baseCalculoFustFunttel);
+
+                            itxFustApurado = - fix(100 * fustDefaultTax .* itxBaseCalculoFustFunttel) / 100;
+                            itxFunttelApurado = - fix(100 * funttelDefaultTax .* itxBaseCalculoFustFunttel) / 100;
 
                             % (d) ATUALIZA TABELA INTERCONEXÃO
                             obj.Table.x_APURACAO_INTERCONEXAO(1, [monthIds, {'TOTAL'}]) = num2cell([itxRobContabil,            sum(itxRobContabil)]);
@@ -1774,6 +1770,26 @@ classdef ECD < handle
                 updatedMonthlyData = monthlyData + monthlyAdjustment;
             else
                 updatedMonthlyData = monthlyData;
+            end
+        end
+    end
+
+
+    methods (Static, Access = private)
+        %-----------------------------------------------------------------%
+        function value = capByReference(value, reference)
+            % Valor de interconexão não pode exceder, em módulo, o total apurado.
+            if abs(sum(reference)) < abs(sum(value))
+                value = reference;
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function selected = selectSmallerAbsTotal(estimated, accounting)
+            if abs(sum(estimated)) < abs(sum(accounting))
+                selected = estimated;
+            else
+                selected = accounting;
             end
         end
     end

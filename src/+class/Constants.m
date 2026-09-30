@@ -3,10 +3,10 @@ classdef (Abstract) Constants
     properties (Constant)
         %-----------------------------------------------------------------%
         appName = 'monitorSPED'
-        appVersion = '1.01.12'
+        appVersion = '1.01.13'
 
         windowSize = [1244, 660]
-        windowMinSize = [ 950, 660]
+        windowMinSize = [950, 660]
     end
 
     
