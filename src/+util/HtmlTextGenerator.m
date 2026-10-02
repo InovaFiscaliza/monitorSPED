@@ -66,7 +66,7 @@ classdef (Abstract) HtmlTextGenerator
             displayEntry(end+1) = struct('group', 'RENDERIZAÇÕES','value', renderCount);
             displayEntry(end+1) = struct('group', 'APLICATIVO', 'value', appVersion.application);
 
-            if ~isempty(eFiscalizaObj)
+            if ~isempty(eFiscalizaObj) && isvalid(eFiscalizaObj)
                 displayEntry(end+1) = struct('group', 'USUÁRIO AUTENTICADO', 'value', eFiscalizaObj.login);
             end            
         
