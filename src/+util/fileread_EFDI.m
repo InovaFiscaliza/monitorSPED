@@ -1,6 +1,6 @@
-function fileread_EFD(obj, fileFullName, generalSettings, isInitialLoad, recordIds)
+function fileread_EFDI(obj, fileFullName, generalSettings, isInitialLoad, recordIds)
     arguments
-        obj             (1,1) model.EFD
+        obj             (1,1) model.EFDI
         fileFullName    (1,:) char
         generalSettings (1,1) struct
         isInitialLoad   (1,1) logical = true
@@ -9,12 +9,12 @@ function fileread_EFD(obj, fileFullName, generalSettings, isInitialLoad, recordI
                                       'D700', 'D730', 'D731', 'D735', 'D737', 'D750', 'D760', 'D761'}
     end
 
-    compositeSheets = model.EFDBase.efdCompositeSheets();
+    compositeSheets = model.EFDIBase.efdiCompositeSheets();
     targetRegs = unique([recordIds, {'9900'}]);
 
     payloads = loadPayloads(fileFullName);
     if isempty(payloads)
-        error('util:fileread_EFD:EmptyPayload', 'No readable EFD payload was found in "%s".', fileFullName)
+        error('util:fileread_EFDI:EmptyPayload', 'No readable EFDI payload was found in "%s".', fileFullName)
     end
 
     totalCounts = containers.Map('KeyType', 'char', 'ValueType', 'double');
@@ -208,7 +208,7 @@ end
 function bytes = readFileBytes(fileFullName)
     fileID = fopen(fileFullName, 'r');
     if fileID == -1
-        error('util:fileread_EFD:FileNotFound', 'File not found: %s', fileFullName)
+        error('util:fileread_EFDI:FileNotFound', 'File not found: %s', fileFullName)
     end
     bytes = fread(fileID, [1, inf], 'uint8=>uint8');
     fclose(fileID);
@@ -349,7 +349,7 @@ function [tbl, userData] = initializeOrdinaryTable(obj, recordId, rows, lineNumb
 
     if isempty(rows)
         columnSpec = localGetColumnSpecification(obj, recordId, []);
-        columnTypes = model.EFDBase.getFieldSpecification(columnSpec.complete, 'DataType');
+        columnTypes = model.EFDIBase.getFieldSpecification(columnSpec.complete, 'DataType');
         tbl = table('Size', [0, numel(columnSpec.complete)], 'VariableNames', columnSpec.complete, 'VariableTypes', columnTypes);
         return
     end
@@ -360,13 +360,13 @@ function [tbl, userData] = initializeOrdinaryTable(obj, recordId, rows, lineNumb
 
     normalizedRows = cellfun(@(x) [x, repmat({''}, 1, fieldCount - numel(x))], rows, 'UniformOutput', false);
     mergedRows = vertcat(normalizedRows{:});
-    tbl = model.EFDBase.cellToTable(mergedRows, columnSpec);
+    tbl = model.SPED.createTableFromRecords(mergedRows, columnSpec);
     tbl = convertOrdinaryTableTypes(tbl, columnSpec.complete);
 end
 
 %-------------------------------------------------------------------------%
 function columnSpec = localGetColumnSpecification(obj, recordId, fieldCount)
-    definition = model.EFDBase.(['x' recordId]);
+    definition = model.EFDIBase.(['x' recordId]);
     layoutIdx = [];
 
     if ~isempty(fieldCount)
@@ -407,7 +407,7 @@ function tbl = convertOrdinaryTableTypes(tbl, variableNames)
             continue
         end
 
-        switch model.EFDBase.getFieldSpecification(variableName, 'DataType')
+        switch model.EFDIBase.getFieldSpecification(variableName, 'DataType')
             case 'double'
                 if ~isa(tbl.(variableName), 'double')
                     emptyIndexes = cellfun(@isempty, tbl.(variableName));
@@ -443,7 +443,7 @@ function tbl = initialize9900(totalCounts)
         'optional', {{}}, ...
         'complete', {{'REG', 'REG_BLC', 'QTD_REG_BLC'}} ...
     );
-    tbl = model.EFDBase.cellToTable(rows, columnSpec);
+    tbl = model.SPED.createTableFromRecords(rows, columnSpec);
     tbl = convertOrdinaryTableTypes(tbl, columnSpec.complete);
 end
 
@@ -575,7 +575,7 @@ function values = normalizeCompositeValues(fields, fieldNames)
             continue
         end
 
-        dataType = model.EFDBase.getFieldSpecification(fieldNames{ii}, 'DataType');
+        dataType = model.EFDIBase.getFieldSpecification(fieldNames{ii}, 'DataType');
         if strcmp(dataType, 'datetime') || startsWith(fieldNames{ii}, 'DT_')
             if numel(rawValue) == 8 && all(isstrprop(rawValue, 'digit'))
                 values{ii} = sprintf('%s/%s/%s', rawValue(1:2), rawValue(3:4), rawValue(5:8));
@@ -772,7 +772,7 @@ function columnData = normalizeMergedColumn(bareName, values)
     % data (DataType "datetime") são tratados como texto, pois
     % normalizeCompositeValues já os grava como string formatada "dd/mm/aaaa".
     try
-        dataType = model.EFDBase.getFieldSpecification(bareName, 'DataType');
+        dataType = model.EFDIBase.getFieldSpecification(bareName, 'DataType');
     catch
         dataType = 'cell';
     end
@@ -781,7 +781,7 @@ function columnData = normalizeMergedColumn(bareName, values)
 
     switch dataType
         case 'double'
-            values(missingMask) = {model.EFDBase.defaultValue('double')};
+            values(missingMask) = {model.SPED.getMissingValue('double')};
             columnData = cell2mat(values);
 
         otherwise % texto ('cell' ou 'datetime', armazenado como string formatada)

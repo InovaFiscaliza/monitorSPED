@@ -604,7 +604,7 @@ function tbl = initializeOrdinaryTable(layout, recordId, fileBlock)
 
     else
         mergedFileBlock = split(extractBetween(fileBlock, 2, strlength(fileBlock) - 1), '|', 2);
-        tbl = model.ECDBase.cellToTable(mergedFileBlock, columnSpec);
+        tbl = model.SPED.createTableFromRecords(mergedFileBlock, columnSpec);
 
         % Conversão de unidades...
         for ii = 1:numel(columnSpec.complete)

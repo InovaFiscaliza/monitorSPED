@@ -496,43 +496,6 @@ classdef (Abstract) ECDBase
         end
 
         %-----------------------------------------------------------------%
-        function value = defaultValue(dataType)
-            switch dataType
-                case 'cell'
-                    value = {''};
-                case 'datetime'
-                    value = datetime([0,0,0,0,0,0]);
-                case 'double'
-                    value = -1;
-                otherwise
-                    error('ECDBase:UnexpectedDataType', 'Unexpected data type "%s"', dataType)
-            end
-        end
-
-        %-----------------------------------------------------------------%
-        function tableOut = cellToTable(blockData, columnSpec)
-            numInputColumns = width(blockData);
-            numRequiredColumns = numel(columnSpec.required);
-            numCompleteColumns = numel(columnSpec.complete);
-
-            switch numInputColumns
-                case numRequiredColumns
-                    tableOut = cell2table(blockData, 'VariableNames', columnSpec.required);
-    
-                    for ii = 1:numel(columnSpec.optional)
-                        columnName = columnSpec.optional{ii};
-                        tableOut.(columnName) = repmat({''}, height(tableOut), 1);
-                    end
-    
-                case numCompleteColumns
-                    tableOut = cell2table(blockData, 'VariableNames', columnSpec.complete);
-    
-                otherwise
-                    error('ECDBase:UnexpectedTableWidth', 'Unexpected table width - Expected: %d or %d, Received: %s', numRequiredColumns, numCompleteColumns, numInputColumns)
-            end
-        end
-
-        %-----------------------------------------------------------------%
         function tableOut = initializeCustomTable(tableId, varargin)
             arguments
                 tableId {mustBeMember(tableId, {'_BALANCETE_GERAL', '_CONTAS_ANOTACAO', '_CONTAS_DESCRICAO', '_CONTAS_HISTORICO', '_APURACAO_GERAL', '_APURACAO_INTERCONEXAO', '_CONCILIACAO_GERAL', '_CONCILIACAO_INTERCONEXAO'})}

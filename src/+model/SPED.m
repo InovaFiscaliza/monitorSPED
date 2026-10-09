@@ -1,6 +1,6 @@
 classdef SPED < handle & matlab.mixin.Heterogeneous
     % A herança de matlab.mixin.Heterogeneous viabiliza um único array
-    % "app.spedObj", misturando instâncias de model.ECD e model.EFD.
+    % "app.spedObj", misturando instâncias de model.ECD, model.EFDI e model.EFDC.
 
     properties
         %-----------------------------------------------------------------%
@@ -105,7 +105,10 @@ classdef SPED < handle & matlab.mixin.Heterogeneous
                     end
 
                     switch obj(ii).FileType
-                        case 'EFDI'
+                        case 'ECD'
+                            [validationMessage, validationStatus] = Get(receitaFederalObj, checkType, obj(ii).FileType, fileHash);
+
+                        case {'EFDI', 'EFDC'} 
                             file_id = util.calculateFileHashMD5(obj(ii).FileFullName);
                             cnpj = '';
                             ie = '';
@@ -121,7 +124,7 @@ classdef SPED < handle & matlab.mixin.Heterogeneous
                             [validationMessage, validationStatus] = Get(receitaFederalObj, checkType, obj(ii).FileType, cnpj, ie, file_id);
 
                         otherwise
-                            [validationMessage, validationStatus] = Get(receitaFederalObj, checkType, obj(ii).FileType, fileHash);
+                            error('model:SPED:UnexpectedFileType', 'Unexpected file type')
                     end
                     obj(ii).Sources(index).validationMessage = validationMessage;
                     obj(ii).Sources(index).validationStatus  = validationStatus;
@@ -216,6 +219,43 @@ classdef SPED < handle & matlab.mixin.Heterogeneous
         %-----------------------------------------------------------------%
         function [fileType, has0000, reason] = classifyFile(filePath)
             [fileType, has0000, reason] = util.classifySPEDFilesByFirstLine(filePath);
+        end
+
+        %-----------------------------------------------------------------%
+        function value = getMissingValue(dataType)
+            switch dataType
+                case 'cell'
+                    value = {''};
+                case 'datetime'
+                    value = datetime([0,0,0,0,0,0]);
+                case 'double'
+                    value = -1;
+                otherwise
+                    error('SPED:UnexpectedDataType', 'Unexpected data type "%s"', dataType)
+            end
+        end
+
+        %-----------------------------------------------------------------%
+        function tableOut = createTableFromRecords(blockData, columnSpec)
+            numInputColumns = width(blockData);
+            numRequiredColumns = numel(columnSpec.required);
+            numCompleteColumns = numel(columnSpec.complete);
+
+            switch numInputColumns
+                case numRequiredColumns
+                    tableOut = cell2table(blockData, 'VariableNames', columnSpec.required);
+
+                    for ii = 1:numel(columnSpec.optional)
+                        columnName = columnSpec.optional{ii};
+                        tableOut.(columnName) = repmat({''}, height(tableOut), 1);
+                    end
+
+                case numCompleteColumns
+                    tableOut = cell2table(blockData, 'VariableNames', columnSpec.complete);
+
+                otherwise
+                    error('SPED:UnexpectedTableWidth', 'Unexpected table width - Expected: %d or %d, Received: %d', numRequiredColumns, numCompleteColumns, numInputColumns)
+            end
         end
     end
 

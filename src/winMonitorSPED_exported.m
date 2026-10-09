@@ -9,10 +9,12 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         FigurePosition          matlab.ui.control.Image
         DataHubLamp             matlab.ui.control.Image
         jsBackDoor              matlab.ui.control.HTML
+        Tab5Button              matlab.ui.control.StateButton
+        ButtonsSeparator2       matlab.ui.control.Image
         Tab4Button              matlab.ui.control.StateButton
-        ButtonsSeparator        matlab.ui.control.Image
         Tab3Button              matlab.ui.control.StateButton
         Tab2Button              matlab.ui.control.StateButton
+        ButtonsSeparator1       matlab.ui.control.Image
         Tab1Button              matlab.ui.control.StateButton
         AppName                 matlab.ui.control.Label
         TabGroup                matlab.ui.container.TabGroup
@@ -36,8 +38,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         tool_Separator1         matlab.ui.control.Image
         tool_ReadFiles          matlab.ui.control.Image
         Tab2_ECD                matlab.ui.container.Tab
-        Tab3_EFD                matlab.ui.container.Tab
-        Tab4_Config             matlab.ui.container.Tab
+        Tab3_EFDI               matlab.ui.container.Tab
+        Tab4_EFDC               matlab.ui.container.Tab
+        Tab5_Config             matlab.ui.container.Tab
         ContextMenu             matlab.ui.container.ContextMenu
         contextmenu_merge       matlab.ui.container.Menu
         contextmenu_del         matlab.ui.container.Menu
@@ -263,7 +266,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             % auxApp.winECD (ECD)
                             case {'winMonitorSPED', 'winMonitorSPED_exported', ...
                                   'auxApp.winECD',  'auxApp.winECD_exported', ...
-                                  'auxApp.winEFD',  'auxApp.winEFD_exported'}
+                                  'auxApp.winEFDI',  'auxApp.winEFDI_exported', ...
+                                  'auxApp.winEFDC', 'auxApp.winEFDC_exported'}
                                 switch eventName
                                     case 'getSelectedFileIndex'
                                         fileIndex = 1;
@@ -386,7 +390,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 app
                 callingApp
                 auxAppName char {mustBeMember(auxAppName, {'ReportLib', 'IcmsRate', 'ECDExport', 'ECDAccount', 'ECDFilter', 'ECDMemoryUsage'})}
-                context    char {mustBeMember(context, {'mainApp', 'FILE', 'ECD', 'EFD', 'CONFIG'})}
+                context    char {mustBeMember(context, {'mainApp', 'FILE', 'ECD', 'EFDI', 'EFDC', 'CONFIG'})}
             end
 
             arguments (Repeating)
@@ -471,6 +475,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         app.Tab1Button;
                         app.Tab2Button;
                         app.Tab3Button;
+                        app.Tab5Button;
                         app.Tab4Button;
                         app.FileModuleLegend;
                         app.FileTree; 
@@ -501,6 +506,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             struct('appName', appName, 'dataTag', app.Tab1Button.UserData.id,             'generation', 1, 'class', 'tab-navigator-button'), ...
                             struct('appName', appName, 'dataTag', app.Tab2Button.UserData.id,             'generation', 1, 'class', 'tab-navigator-button'), ...
                             struct('appName', appName, 'dataTag', app.Tab3Button.UserData.id,             'generation', 1, 'class', 'tab-navigator-button'), ...
+                            struct('appName', appName, 'dataTag', app.Tab5Button.UserData.id,             'generation', 1, 'class', 'tab-navigator-button'), ...
                             struct('appName', appName, 'dataTag', app.Tab4Button.UserData.id,             'generation', 1, 'class', 'tab-navigator-button'), ...
                             struct('appName', appName, 'dataTag', app.FileTree.UserData.id,               'listener', struct('componentName', 'mainApp.file_Tree', 'keyEvents', {{'Delete', 'Backspace'}})) ...
                         });
@@ -573,6 +579,16 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     end
             end
 
+            % Arquivo salvo por versões anteriores pode não conter os contextos EFDI/EFDC.
+            for context = {'EFDI', 'EFDC'}
+                if ~isfield(app.General_I.context, context{1})
+                    app.General_I.context.(context{1}) = struct( ...
+                        'customTables', struct('expected', {{}}, 'autoload', {{}}), ...
+                        'cacheTables', {{'0000', '9900'}} ...
+                    );
+                end
+            end
+
             app.General = app.General_I;        
             app.General.AppVersion = util.getAppVersion(app.rootFolder, MFilePath, tempDir);
             sendEventToHTMLSource(app.jsBackDoor, 'getNavigatorBasicInformation')
@@ -600,8 +616,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.tabGroupController = ui.TabNavigator(app.NavBar, app.TabGroup, app.progressDialog, app.jsBackDoor);
             addComponent(app.tabGroupController, "Built-in", "",                 app.Tab1Button, "AlwaysOn", struct('On', '', 'Off', ''), matlab.graphics.GraphicsPlaceholder, 1)
             addComponent(app.tabGroupController, "External", "auxApp.winECD",    app.Tab2Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      2)
-            addComponent(app.tabGroupController, "External", "auxApp.winEFD",    app.Tab3Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      3)
-            addComponent(app.tabGroupController, "External", "auxApp.winConfig", app.Tab4Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      4)
+            addComponent(app.tabGroupController, "External", "auxApp.winEFDI",   app.Tab3Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      3)
+            addComponent(app.tabGroupController, "External", "auxApp.winEFDC",   app.Tab4Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      4)
+            addComponent(app.tabGroupController, "External", "auxApp.winConfig", app.Tab5Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      5)
             app.tabGroupController.inlineSVG = true;
 
             addStyle(app.FileTree, uistyle('Interpreter', 'html'))
@@ -633,7 +650,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             if contains(updateType, 'FileListChanged')
                 ipcMainMatlabCallAuxiliarApp(app, 'ECD', 'MATLAB', updateType)
-                ipcMainMatlabCallAuxiliarApp(app, 'EFD', 'MATLAB', updateType)
+                ipcMainMatlabCallAuxiliarApp(app, 'EFDI', 'MATLAB', updateType)
+                ipcMainMatlabCallAuxiliarApp(app, 'EFDC', 'MATLAB', updateType)
             end
         end
 
@@ -652,6 +670,9 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             if ~isempty(app.spedObj)
                 idsList = {app.spedObj.CompanyId};
+                % Remove empty CompanyId values to avoid unique() failure
+                validMask = ~cellfun(@isempty, idsList);
+                idsList = idsList(validMask);
                 selectedNode = [];
             
                 if ~isempty(idsList)
@@ -696,13 +717,17 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function [spedObj, globalIndexes] = getSpedObj(app, fileType)
             % "globalIndexes" mapeia cada elemento do subconjunto retornado
-            % (ECD ou EFD) para a sua posição em app.spedObj (índice global,
+            % (ECD, EFDI ou EFDC) para a sua posição em app.spedObj (índice global,
             % usado como NodeData da árvore e trocado entre apps via IPC).
             switch fileType
                 case 'ECD'
                     globalIndexes = find(strcmp({app.spedObj.FileType}, 'ECD'));
-                otherwise % 'EFD'
+                case 'EFDI'
                     globalIndexes = find(strcmp({app.spedObj.FileType}, 'EFDI'));
+                case 'EFDC'
+                    globalIndexes = find(strcmp({app.spedObj.FileType}, 'EFDC'));
+                otherwise
+                    error('winMonitorSPED:UnknownFileType', 'Unknown file type: %s', fileType);
             end
             spedObj = app.spedObj(globalIndexes);
         end
@@ -776,6 +801,8 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             nodeIcon = 'graph-24px-black.svg';
                         case 'EFDI'
                             nodeIcon = 'collection-black.svg';
+                        case 'EFDC'
+                            nodeIcon = 'book-black.svg';
                     end
 
                     textPeriodNode = util.HtmlTextGenerator.generateTextId(spedObjSubset(idx), 'period-oriented', true);
@@ -843,7 +870,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function createEFiscalizaObject(app, credentials)
             if ~isempty(credentials)
-                app.eFiscalizaObj = ws.eFiscaliza(credentials.login, credentials.password);
+                app.eFiscalizaObj = ws.eFiscaliza('manual', credentials.login, credentials.password);
             end
         end
 
@@ -879,7 +906,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             arguments
                 app
                 eventName {mustBeMember(eventName, {'onFetchIssueDetails', 'onReportGenerate', 'onUploadArtifacts'})}
-                context {mustBeMember(context, {'FILE', 'ECD', 'EFD'})}
+                context {mustBeMember(context, {'FILE', 'ECD', 'EFDI', 'EFDC'})}
                 credentials
             end
 
@@ -1148,11 +1175,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         end
 
         % Callback function: AppInfo, DataHubLamp, FigurePosition, 
-        % ...and 4 other components
+        % ...and 5 other components
         function onTabNavigatorButtonPushed(app, event)
 
             switch event.Source
-                case {app.Tab1Button, app.Tab2Button, app.Tab3Button, app.Tab4Button}
+                case {app.Tab1Button, app.Tab2Button, app.Tab3Button, app.Tab5Button, app.Tab4Button}
                     openModule(app.tabGroupController, event.Source, event.PreviousValue, app.General, app)
 
                 case app.DataHubLamp
@@ -1299,13 +1326,29 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                         end
 
                     case 'EFD ICMS/IPI'
-                        [efdSubset] = getSpedObj(app, 'EFD');
-                        if ~ismember(fileName{ii}, {efdSubset.FileName})
+                        [efdiSubset] = getSpedObj(app, 'EFDI');
+                        if ~ismember(fileName{ii}, {efdiSubset.FileName})
                             switch lower(fileExt)
                                 case {'.txt', ''}
-                                    [newEfd, msg] = addFiles(model.EFD.empty, fileFullName{ii}, app.General, app.receitaFederalObj);
+                                    [newEfdi, msg] = addFiles(model.EFDI.empty, fileFullName{ii}, app.General, app.receitaFederalObj);
                                     if isempty(msg)
-                                        app.spedObj = [app.spedObj, newEfd]; % append: preserva os índices globais existentes
+                                        app.spedObj = [app.spedObj, newEfdi]; % append: preserva os índices globais existentes
+                                    end
+                                case '.mat'
+                                    msg = sprintf('Pendente ajustar função "load" do model.Project');
+                                otherwise
+                                    continue
+                            end
+                        end
+
+                    case 'EFD CONTRIBUIÇÕES'
+                        [efdcSubset] = getSpedObj(app, 'EFDC');
+                        if ~ismember(fileName{ii}, {efdcSubset.FileName})
+                            switch lower(fileExt)
+                                case {'.txt', ''}
+                                    [newEfdc, msg] = addFiles(model.EFDC.empty, fileFullName{ii}, app.General, app.receitaFederalObj);
+                                    if isempty(msg)
+                                        app.spedObj = [app.spedObj, newEfdc]; % append: preserva os índices globais existentes
                                     end
                                 case '.mat'
                                     msg = sprintf('Pendente ajustar função "load" do model.Project');
@@ -1808,17 +1851,20 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab2_ECD.AutoResizeChildren = 'off';
             app.Tab2_ECD.BackgroundColor = 'none';
 
-            % Create Tab3_EFD
-            app.Tab3_EFD = uitab(app.TabGroup);
+            % Create Tab3_EFDI
+            app.Tab3_EFDI = uitab(app.TabGroup);
 
-            % Create Tab4_Config
-            app.Tab4_Config = uitab(app.TabGroup);
-            app.Tab4_Config.AutoResizeChildren = 'off';
-            app.Tab4_Config.BackgroundColor = 'none';
+            % Create Tab4_EFDC
+            app.Tab4_EFDC = uitab(app.TabGroup);
+
+            % Create Tab5_Config
+            app.Tab5_Config = uitab(app.TabGroup);
+            app.Tab5_Config.AutoResizeChildren = 'off';
+            app.Tab5_Config.BackgroundColor = 'none';
 
             % Create NavBar
             app.NavBar = uigridlayout(app.GridLayout);
-            app.NavBar.ColumnWidth = {101, '1x', 34, 34, 34, 5, 34, '1x', 20, 20, 1, 20, 20};
+            app.NavBar.ColumnWidth = {101, '1x', 34, 5, 34, 34, 34, 5, 34, '1x', 20, 20, 1, 20, 20};
             app.NavBar.RowHeight = {5, 7, 20, 7, 5};
             app.NavBar.ColumnSpacing = 5;
             app.NavBar.RowSpacing = 0;
@@ -1836,7 +1882,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.AppName.Layout.Row = [1 5];
             app.AppName.Layout.Column = [1 2];
             app.AppName.Interpreter = 'html';
-            app.AppName.Text = {'monitorSPED v. 1.00.0'; '<font style="font-size: 9px;">R2024a</font>'};
+            app.AppName.Text = {'monitorSPED v. 1.10.0'; '<font style="font-size: 9px;">R2024a</font>'};
 
             % Create Tab1Button
             app.Tab1Button = uibutton(app.NavBar, 'state');
@@ -1850,6 +1896,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab1Button.Layout.Column = 3;
             app.Tab1Button.Value = true;
 
+            % Create ButtonsSeparator1
+            app.ButtonsSeparator1 = uiimage(app.NavBar);
+            app.ButtonsSeparator1.ScaleMethod = 'none';
+            app.ButtonsSeparator1.Enable = 'off';
+            app.ButtonsSeparator1.Layout.Row = [2 4];
+            app.ButtonsSeparator1.Layout.Column = 4;
+            app.ButtonsSeparator1.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV_White.svg');
+
             % Create Tab2Button
             app.Tab2Button = uibutton(app.NavBar, 'state');
             app.Tab2Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
@@ -1859,42 +1913,53 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab2Button.Text = '';
             app.Tab2Button.BackgroundColor = [0.2 0.2 0.2];
             app.Tab2Button.Layout.Row = [2 4];
-            app.Tab2Button.Layout.Column = 4;
+            app.Tab2Button.Layout.Column = 5;
 
             % Create Tab3Button
             app.Tab3Button = uibutton(app.NavBar, 'state');
             app.Tab3Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
-            app.Tab3Button.Tag = 'EFD';
+            app.Tab3Button.Tag = 'EFDI';
             app.Tab3Button.Tooltip = {'EFD ICMS/IPI'};
             app.Tab3Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'collection.svg');
             app.Tab3Button.Text = '';
             app.Tab3Button.BackgroundColor = [0.2 0.2 0.2];
             app.Tab3Button.Layout.Row = [2 4];
-            app.Tab3Button.Layout.Column = 5;
-
-            % Create ButtonsSeparator
-            app.ButtonsSeparator = uiimage(app.NavBar);
-            app.ButtonsSeparator.ScaleMethod = 'none';
-            app.ButtonsSeparator.Enable = 'off';
-            app.ButtonsSeparator.Layout.Row = [2 4];
-            app.ButtonsSeparator.Layout.Column = 6;
-            app.ButtonsSeparator.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV_White.svg');
+            app.Tab3Button.Layout.Column = 6;
 
             % Create Tab4Button
             app.Tab4Button = uibutton(app.NavBar, 'state');
             app.Tab4Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
-            app.Tab4Button.Tag = 'CONFIG';
-            app.Tab4Button.Tooltip = {'Configurações gerais'};
-            app.Tab4Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'gear-24px-white.svg');
+            app.Tab4Button.Tag = 'EFDC';
+            app.Tab4Button.Tooltip = {'EFD CONTIBUIÇÕES'};
+            app.Tab4Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'book.svg');
             app.Tab4Button.Text = '';
             app.Tab4Button.BackgroundColor = [0.2 0.2 0.2];
             app.Tab4Button.Layout.Row = [2 4];
             app.Tab4Button.Layout.Column = 7;
 
+            % Create ButtonsSeparator2
+            app.ButtonsSeparator2 = uiimage(app.NavBar);
+            app.ButtonsSeparator2.ScaleMethod = 'none';
+            app.ButtonsSeparator2.Enable = 'off';
+            app.ButtonsSeparator2.Layout.Row = [2 4];
+            app.ButtonsSeparator2.Layout.Column = 8;
+            app.ButtonsSeparator2.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'LineV_White.svg');
+
+            % Create Tab5Button
+            app.Tab5Button = uibutton(app.NavBar, 'state');
+            app.Tab5Button.ValueChangedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
+            app.Tab5Button.Tag = 'CONFIG';
+            app.Tab5Button.Tooltip = {'Configurações gerais'};
+            app.Tab5Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'gear-24px-white.svg');
+            app.Tab5Button.Text = '';
+            app.Tab5Button.BackgroundColor = [0.2 0.2 0.2];
+            app.Tab5Button.Layout.Row = [2 4];
+            app.Tab5Button.Layout.Column = 9;
+
             % Create jsBackDoor
             app.jsBackDoor = uihtml(app.NavBar);
             app.jsBackDoor.Layout.Row = 3;
-            app.jsBackDoor.Layout.Column = 9;
+            app.jsBackDoor.Layout.Column = 11;
 
             % Create DataHubLamp
             app.DataHubLamp = uiimage(app.NavBar);
@@ -1902,7 +1967,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.DataHubLamp.ImageClickedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.DataHubLamp.Visible = 'off';
             app.DataHubLamp.Layout.Row = 3;
-            app.DataHubLamp.Layout.Column = 10;
+            app.DataHubLamp.Layout.Column = 12;
             app.DataHubLamp.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'red-circle-blink.gif');
 
             % Create FigurePosition
@@ -1911,7 +1976,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.FigurePosition.ImageClickedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.FigurePosition.Visible = 'off';
             app.FigurePosition.Layout.Row = 3;
-            app.FigurePosition.Layout.Column = 12;
+            app.FigurePosition.Layout.Column = 14;
             app.FigurePosition.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'screen-normal-24px-white.svg');
 
             % Create AppInfo
@@ -1919,7 +1984,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.AppInfo.ScaleMethod = 'none';
             app.AppInfo.ImageClickedFcn = createCallbackFcn(app, @onTabNavigatorButtonPushed, true);
             app.AppInfo.Layout.Row = 3;
-            app.AppInfo.Layout.Column = 13;
+            app.AppInfo.Layout.Column = 15;
             app.AppInfo.ImageSource = fullfile(pathToMLAPP, 'resources', 'Icons', 'kebab-vertical-24px-white.svg');
 
             % Create ContextMenu

@@ -1288,7 +1288,7 @@ classdef ECD < model.SPED
                     numLoops = numLoops + 1;
                     numRows  = min(height(fileBlock), MIN_ROW_COUNT);
                     mergedFileBlock = split(extractBetween(fileBlock(1:numRows), 2, fileBlockLengths(1:numRows)), '|', 2);
-                    tableTempOut = model.ECDBase.cellToTable(mergedFileBlock, columnsSpec);
+                    tableTempOut = model.SPED.createTableFromRecords(mergedFileBlock, columnsSpec);
 
                     fileBlock(1:numRows) = [];
                     fileBlockLengths(1:numRows) = [];
@@ -1300,7 +1300,7 @@ classdef ECD < model.SPED
 
             else
                 mergedFileBlock = split(extractBetween(fileBlock, 2, strlength(fileBlock) - 1), '|', 2);
-                tableOut = model.ECDBase.cellToTable(mergedFileBlock, columnsSpec);
+                tableOut = model.SPED.createTableFromRecords(mergedFileBlock, columnsSpec);
             end
 
             % Conversão de unidades...

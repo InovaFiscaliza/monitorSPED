@@ -1,4 +1,4 @@
-classdef (Abstract) EFDBase
+classdef (Abstract) EFDIBase
     % Cadastro de fichas e dos seus campos, de acordo com os diversos layouts
     % dos arquivos. Na pasta "doc" consta os PDFs descrevendo cada layout,
      % mas outras informações podem ser obtidas em http://sped.rfb.gov.br/
@@ -1175,7 +1175,7 @@ classdef (Abstract) EFDBase
                 removePrefixFlag (1,1) logical = true
             end
 
-            classMeta = meta.class.fromName('model.EFDBase');
+            classMeta = meta.class.fromName('model.EFDIBase');
 
             tableIdPrefix = 'x';
             prefixedProps = classMeta.PropertyList(startsWith({classMeta.PropertyList.Name}, tableIdPrefix));
@@ -1188,12 +1188,12 @@ classdef (Abstract) EFDBase
 
         %-------------------------------------------------------%
         function [status, missingFields] = validateFieldMapping()
-            implementedTableIds = model.EFDBase.getImplementedTableIds(false);
-            availableFieldNames = model.EFDBase.FieldSpecification.Field;
+            implementedTableIds = model.EFDIBase.getImplementedTableIds(false);
+            availableFieldNames = model.EFDIBase.FieldSpecification.Field;
 
             mappedFields = {};        
             for ii = 1:numel(implementedTableIds)
-                tableFieldSubset = model.EFDBase.(implementedTableIds{ii})(:, 2:3);
+                tableFieldSubset = model.EFDIBase.(implementedTableIds{ii})(:, 2:3);
                 mappedFields = [mappedFields, horzcat(tableFieldSubset{:})];
             end        
             mappedFields = unique(mappedFields)';
@@ -1221,53 +1221,16 @@ classdef (Abstract) EFDBase
                 field = cellstr(field);
             end
 
-            tbl = model.EFDBase.FieldSpecification;
+            tbl = model.EFDIBase.FieldSpecification;
             [isFound, indexes] = ismember(field, tbl.Field);
 
             if any(~isFound)
-                error("EFDBase:getFieldSpecification:UnknownField", "Unknown field(s): %s", strjoin(field(~isFound), ", "));
+                error("EFDIBase:getFieldSpecification:UnknownField", "Unknown field(s): %s", strjoin(field(~isFound), ", "));
             end
 
             spec = tbl.(specType)(indexes)';
             if scalarInput && isscalar(spec)
                 spec = spec{1};
-            end
-        end
-
-        %-----------------------------------------------------------------%
-        function value = defaultValue(dataType)
-            switch dataType
-                case 'cell'
-                    value = {''};
-                case 'datetime'
-                    value = datetime([0,0,0,0,0,0]);
-                case 'double'
-                    value = -1;
-                otherwise
-                    error('EFDBase:UnexpectedDataType', 'Unexpected data type "%s"', dataType)
-            end
-        end
-
-        %-----------------------------------------------------------------%
-        function tableOut = cellToTable(blockData, columnSpec)
-            numInputColumns = width(blockData);
-            numRequiredColumns = numel(columnSpec.required);
-            numCompleteColumns = numel(columnSpec.complete);
-
-            switch numInputColumns
-                case numRequiredColumns
-                    tableOut = cell2table(blockData, 'VariableNames', columnSpec.required);
-    
-                    for ii = 1:numel(columnSpec.optional)
-                        columnName = columnSpec.optional{ii};
-                        tableOut.(columnName) = repmat({''}, height(tableOut), 1);
-                    end
-    
-                case numCompleteColumns
-                    tableOut = cell2table(blockData, 'VariableNames', columnSpec.complete);
-    
-                otherwise
-                         error('EFDBase:UnexpectedTableWidth', 'Unexpected table width - Expected: %d or %d, Received: %d', numRequiredColumns, numCompleteColumns, numInputColumns)
             end
         end
 
@@ -1363,9 +1326,9 @@ classdef (Abstract) EFDBase
         end
 
         %-----------------------------------------------------------------%
-        function compositeSheets = efdCompositeSheets()
+        function compositeSheets = efdiCompositeSheets()
             % Registros SPED EFD (ICMS/IPI) que compõem cada tabela composta (mesclada).
-            % Compartilhado entre util.fileread_EFD e model.EFD.parseTable, de forma que
+            % Compartilhado entre util.fileread_EFDI e model.EFDI.parseTable, de forma que
             % ambos concordem sobre quais registros ordinários precisam ser relidos para
             % reconstruir corretamente uma tabela composta específica.
             compositeSheets = struct( ...

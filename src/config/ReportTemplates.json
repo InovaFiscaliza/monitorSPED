@@ -46,12 +46,23 @@
     {
         "Name": "Análise contábil (EFDI)",
         "File": "RA - Análise contábil (EFDI).json",
-        "Module": "EFD",
+        "Module": "EFDI",
         "DocumentType": "Relatório de Atividades",
         "Description": "...",
         "Author": "...",
         "Version": "1.00",
         "Release": "09/09/2026",
+        "UserData": []
+    },
+    {
+        "Name": "Análise contábil (EFDC)",
+        "File": "RA - Análise contábil (EFDC).json",
+        "Module": "EFDC",
+        "DocumentType": "Relatório de Atividades",
+        "Description": "Relatório de análise de arquivos da EFD Contribuições (registro A100) para fins de apuração dos valores devidos de FUST e FUNTTEL.",
+        "Author": "...",
+        "Version": "1.00",
+        "Release": "09/10/2026",
         "UserData": []
     }
 ]

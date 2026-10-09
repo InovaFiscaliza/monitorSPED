@@ -1,4 +1,4 @@
-classdef winEFD_exported < matlab.apps.AppBase
+classdef winEFDI_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
@@ -74,7 +74,7 @@ classdef winEFD_exported < matlab.apps.AppBase
     properties (Access = private)
         %-----------------------------------------------------------------%
         Role = 'secondaryApp'
-        Context = 'EFD'
+        Context = 'EFDI'
     end
 
 
@@ -92,7 +92,7 @@ classdef winEFD_exported < matlab.apps.AppBase
     properties (Access = private)
         %-----------------------------------------------------------------%
         projectData
-        efdObj
+        efdiObj
     end
 
 
@@ -160,22 +160,22 @@ classdef winEFD_exported < matlab.apps.AppBase
                                 end
 
                             case 'onTableReadRequired'
-                                [selectedEFD, fileIndex] = getselectedEFD(app);
+                                [selectedEFDI, fileIndex] = getselectedEFDI(app);
                                 tableId = varargin{1};
 
                                 requestVisibilityChange(app.progressDialog, 'visible', 'unlocked')
                                 try
-                                    checkIfTableRead(app, selectedEFD, fileIndex, {tableId})
+                                    checkIfTableRead(app, selectedEFDI, fileIndex, {tableId})
                                 catch
                                 end
                                 requestVisibilityChange(app.progressDialog, 'hidden', 'unlocked')
 
                             case 'getTableColumnWidth'
-                                selectedEFD = getselectedEFD(app);
+                                selectedEFDI = getselectedEFDI(app);
                                 tableId = varargin{1};
                                 displayedColumnCount = varargin{2};
                                 columnWidths = varargin{3};
-                                update(selectedEFD, 'GUI.TableView.Width', 'updateColumnWidths', tableId, displayedColumnCount, columnWidths)
+                                update(selectedEFDI, 'GUI.TableView.Width', 'updateColumnWidths', tableId, displayedColumnCount, columnWidths)
 
                             % auxApp.dockReportLib >> winMonitorSPED >> auxApp.winECD
                             case {'onProjectRestart',        ...
@@ -184,8 +184,8 @@ classdef winEFD_exported < matlab.apps.AppBase
                                 % ...
 
                             case {'onReportGenerate', 'onFinalReportFileChanged'}
-                                selectedEFD = getselectedEFD(app);
-                                updateToolbar(app, selectedEFD)
+                                selectedEFDI = getselectedEFDI(app);
+                                updateToolbar(app, selectedEFDI)
 
                             case 'onFetchIssueDetails'
                                 system   = varargin{1};
@@ -266,7 +266,7 @@ classdef winEFD_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function initializeAppProperties(app)
             app.projectData = app.mainApp.projectData;
-            app.efdObj      = app.mainApp.spedObj;% array global (mesmos índices do mainApp), filtrado por FileType onde necessário
+            app.efdiObj      = app.mainApp.spedObj;% array global (mesmos índices do mainApp), filtrado por FileType onde necessário
         end
 
         %-----------------------------------------------------------------%
@@ -292,7 +292,7 @@ classdef winEFD_exported < matlab.apps.AppBase
                 selectionMode {mustBeMember(selectionMode, {'fromMainApp', 'keepIfPossible', 'keepCurrent'})} = 'fromMainApp'
             end
 
-            nonEmptyEFDObject = any(strcmp({app.efdObj.FileType}, 'EFDI'));
+            nonEmptyEFDIObject = any(strcmp({app.efdiObj.FileType}, 'EFDI'));
 
             renderedElements  = {
                 app.ExportButton;
@@ -321,9 +321,9 @@ classdef winEFD_exported < matlab.apps.AppBase
                 }];
             end
             
-            cellfun(@(x) set(x, 'Enable', nonEmptyEFDObject), renderedElements)
+            cellfun(@(x) set(x, 'Enable', nonEmptyEFDIObject), renderedElements)
 
-            if nonEmptyEFDObject
+            if nonEmptyEFDIObject
                 % Seleção inicial:
                 initialCompanyName = app.CompanyNameList.Value;
                 initialTimePeriod  = {};
@@ -332,8 +332,8 @@ classdef winEFD_exported < matlab.apps.AppBase
                 end
 
                 % Atualiza lista:
-                efdGlobalIndexes = find(strcmp({app.efdObj.FileType}, 'EFDI'));
-                idsList = {app.efdObj(efdGlobalIndexes).CompanyId};
+                efdGlobalIndexes = find(strcmp({app.efdiObj.FileType}, 'EFDI'));
+                idsList = {app.efdiObj(efdGlobalIndexes).CompanyId};
                 [ids, ~, idsIndexes] = unique(idsList);
 
                 idsNames = {};
@@ -341,11 +341,11 @@ classdef winEFD_exported < matlab.apps.AppBase
                 
                 for ii = 1:numel(ids)
                     idIndexes = efdGlobalIndexes(ii == idsIndexes);
-                    [~, idSortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.efdObj(idIndexes)));
+                    [~, idSortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.efdiObj(idIndexes)));
 
                     % Nome empresa que aparecerá no dropdown (idêntico à
                     % forma da uitree, no winMonitorSPED.mlapp)
-                    idsNames{end+1} = util.HtmlTextGenerator.generateTextId(app.efdObj(idIndexes(1)), 'company-oriented');
+                    idsNames{end+1} = util.HtmlTextGenerator.generateTextId(app.efdiObj(idIndexes(1)), 'company-oriented');
                     mappingIds = mappingIds.insert(string(ids{ii}), {idIndexes(idSortedIndexes)});
                 end
 
@@ -412,8 +412,8 @@ classdef winEFD_exported < matlab.apps.AppBase
                 end
             end
 
-            selectedEFD = getselectedEFD(app);
-            updateToolbar(app, selectedEFD)
+            selectedEFDI = getselectedEFDI(app);
+            updateToolbar(app, selectedEFDI)
         end
     end
 
@@ -426,14 +426,14 @@ classdef winEFD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function [selectedEFD, fileIndex] = getselectedEFD(app)
+        function [selectedEFDI, fileIndex] = getselectedEFDI(app)
             if isempty(app.CompanyNameList.Items)
-                selectedEFD = [];
+                selectedEFDI = [];
                 fileIndex   = [];
 
             else
                 companyIndexes  = getSelectedFileIdxsByCompany(app);
-                 [~, companySortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.efdObj(companyIndexes)));
+                 [~, companySortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.efdiObj(companyIndexes)));
                  companyIndexes = companyIndexes(companySortedIndexes);
     
                 if isnumeric(app.TimePeriodList.Value)
@@ -446,7 +446,7 @@ classdef winEFD_exported < matlab.apps.AppBase
                     fileIndex = fileIndex(1);
                 end
     
-                selectedEFD = app.efdObj(fileIndex);
+                selectedEFDI = app.efdiObj(fileIndex);
             end
         end
 
@@ -463,7 +463,7 @@ classdef winEFD_exported < matlab.apps.AppBase
         %-----------------------------------------------------------------%
         function updateTimePeriodList(app, fileIndex)
             companyIndexes = getSelectedFileIdxsByCompany(app);
-            [~, companySortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.efdObj(companyIndexes)));
+            [~, companySortedIndexes] = sort(arrayfun(@(x) x.Period(2), app.efdiObj(companyIndexes)));
             
             companyIndexes = companyIndexes(companySortedIndexes);
             if isempty(fileIndex)
@@ -475,7 +475,7 @@ classdef winEFD_exported < matlab.apps.AppBase
             periodList = {};
             for ii = 1:numel(companyIndexes)
                 idx = companyIndexes(ii);
-                periodList{end+1} = util.HtmlTextGenerator.generateTextId(app.efdObj(idx), 'period-oriented', true);
+                periodList{end+1} = util.HtmlTextGenerator.generateTextId(app.efdiObj(idx), 'period-oriented', true);
             end
 
             set(app.TimePeriodList, 'Items', periodList, 'ItemsData', 1:numel(periodList))
@@ -484,15 +484,15 @@ classdef winEFD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function updateSheetList(app)
-            selectedEFD = getselectedEFD(app);
+            selectedEFDI = getselectedEFDI(app);
 
-            if ~isfield(selectedEFD.GUI, 'tableIds') || isempty(selectedEFD.GUI.tableIds)
-                update(selectedEFD, 'GUI.TableIds', [], app.mainApp.General)
+            if ~isfield(selectedEFDI.GUI, 'tableIds') || isempty(selectedEFDI.GUI.tableIds)
+                update(selectedEFDI, 'GUI.TableIds', [], app.mainApp.General)
             end
-            sheetsSorted = selectedEFD.GUI.tableIds;
+            sheetsSorted = selectedEFDI.GUI.tableIds;
 
             selection1 = app.SheetList.Value;
-            if isempty(selection1) || ~ismember(selection1, sheetsSorted) || ~isfield(selectedEFD.Table, ['x' selection1])
+            if isempty(selection1) || ~ismember(selection1, sheetsSorted) || ~isfield(selectedEFDI.Table, ['x' selection1])
                 selection1 = '0000';
             end            
             set(app.SheetList, 'Items', sheetsSorted, 'Value', selection1)
@@ -502,7 +502,7 @@ classdef winEFD_exported < matlab.apps.AppBase
             % componente incompleto.
             if app.SubTabGroup.UserData.isTabInitialized(2)
                 selection2 = app.SheetView_Second.Value;
-                if isempty(selection2) || ~ismember(selection2, sheetsSorted) || ~isfield(selectedEFD.Table, ['x' selection2])
+                if isempty(selection2) || ~ismember(selection2, sheetsSorted) || ~isfield(selectedEFDI.Table, ['x' selection2])
                     selection2 = '0000';
                 end
 
@@ -515,29 +515,29 @@ classdef winEFD_exported < matlab.apps.AppBase
         function updateTable(app, hTable, hTableAccountInfo, hTableCountText, hTableFilterText, hTableFilterIcon, tableId)
             requestVisibilityChange(app.progressDialog, 'visible', 'unlocked')
 
-            [selectedEFD, fileIndex] = getselectedEFD(app);            
-            checkIfTableRead(app, selectedEFD, fileIndex, {tableId})
+            [selectedEFDI, fileIndex] = getselectedEFDI(app);            
+            checkIfTableRead(app, selectedEFDI, fileIndex, {tableId})
             
-            tableIdData = selectedEFD.Table.(['x' tableId]);
+            tableIdData = selectedEFDI.Table.(['x' tableId]);
 
             if ~istable(tableIdData)
                 tableIdData = table('Size', [0, 1], 'VariableTypes', {'cell'}, 'VariableNames', {'REG'});
             end
             
             % Filtra os dados, caso aplicável.
-            [filterIndex, filterStatus] = checkTableCustomFilter(app, selectedEFD, tableId, 'active');
+            [filterIndex, filterStatus] = checkTableCustomFilter(app, selectedEFDI, tableId, 'active');
 
             if filterStatus
-                filterObj = selectedEFD.GUI.tableView(filterIndex).filter;
+                filterObj = selectedEFDI.GUI.tableView(filterIndex).filter;
                 displayDataIdxs = find(run(filterObj, 'filterRules', tableIdData));                
-                filterIconTooltip = strjoin(getFilterList(filterObj, ['EFD.x' tableId], 'on'), '\n');
+                filterIconTooltip = strjoin(getFilterList(filterObj, ['EFDI.x' tableId], 'on'), '\n');
             else
                 displayDataIdxs = (1:height(tableIdData))';                
                 filterIconTooltip = '';
             end
 
             % Ordena os dados, caso aplicável.
-            displayDataIdxs = checkTableCustomSort(app, selectedEFD, tableId, displayDataIdxs);
+            displayDataIdxs = checkTableCustomSort(app, selectedEFDI, tableId, displayDataIdxs);
 
             % Número total de linhas da tabela e número de linhas visíveis.
             numRows = height(tableIdData);
@@ -548,7 +548,7 @@ classdef winEFD_exported < matlab.apps.AppBase
             %     variableNames = tableIdData.Properties.VariableNames;
             %     variableToAdd = 'CTA';
             %     if ismember('COD_CTA', variableNames) && ~ismember(variableToAdd, variableNames)
-            %         tableIdData = addAccountDescription(selectedEFD, tableIdData, variableNames, variableToAdd);
+            %         tableIdData = addAccountDescription(selectedEFDI, tableIdData, variableNames, variableToAdd);
             %     end
             % end
 
@@ -570,7 +570,7 @@ classdef winEFD_exported < matlab.apps.AppBase
             % - colunas editáveis identificadas pelo marcador (✎) no nome
             columnNames    = tableIdData.Properties.VariableNames;
             columnEditable = contains(columnNames, '✎');
-            columnWidth    = resolveTableColumnWidth(app, selectedEFD, tableId, columnNames, hTable);
+            columnWidth    = resolveTableColumnWidth(app, selectedEFDI, tableId, columnNames, hTable);
 
             % Verifica se a tabela suporta formatação customizável das suas
             % colunas, obtendo-se especificação de cada coluna. Caso todos os 
@@ -579,13 +579,13 @@ classdef winEFD_exported < matlab.apps.AppBase
             % (originalmente no formato "table") para "cell array".
             columnFormat = {};
             if ui.Table.hasCustomizableColumnFormat(tableIdData)
-                %columnFormat = model.EFDBase.getFieldSpecification(columnNames, 'Format');
+                %columnFormat = model.EFDIBase.getFieldSpecification(columnNames, 'Format');
                 % Tabelas mescladas incluem colunas internas de rastreio
                 % (CHAVE_PAI, *_ARQ_IDX, *_LINHA_TXT) que não são campos SPED
                 % e, por isso, não existem em FieldSpecification.
-                knownFieldMask = ismember(columnNames, model.EFDBase.FieldSpecification.Field);
+                knownFieldMask = ismember(columnNames, model.EFDIBase.FieldSpecification.Field);
                 columnFormat = repmat({''}, 1, numel(columnNames));
-                columnFormat(knownFieldMask) = model.EFDBase.getFieldSpecification(columnNames(knownFieldMask), 'Format');
+                columnFormat(knownFieldMask) = model.EFDIBase.getFieldSpecification(columnNames(knownFieldMask), 'Format');
                 if isempty(columnFormat) || all(cellfun(@isempty, columnFormat))
                     columnFormat = {};
                 end
@@ -637,7 +637,7 @@ classdef winEFD_exported < matlab.apps.AppBase
             set(hTableFilterIcon, 'ImageSource', filterIconImageSource, 'Tooltip', filterIconTooltip)
 
             % Aplica estilo, normalizando-o p/ contemplar uma eventual filtragem.
-            applyTableStyle(app, selectedEFD, hTable, tableId)
+            applyTableStyle(app, selectedEFDI, hTable, tableId)
 
             requestVisibilityChange(app.progressDialog, 'hidden', 'unlocked')
         end
@@ -688,13 +688,13 @@ classdef winEFD_exported < matlab.apps.AppBase
                 selectedAccountDescription = '';
                 [~, accountColumnIdx] = ismember('COD_CTA', clickedTable.ColumnName);
                 if isscalar(selectedRows) && accountColumnIdx
-                    selectedEFD = getselectedEFD(app);
+                    selectedEFDI = getselectedEFDI(app);
 
                     selectedAccount = clickedTable.Data{selectedRows, accountColumnIdx};
-                    selectedAccountIndex = find(strcmp(selectedEFD.Table.x_CONTAS_DESCRICAO.("COD_CTA"), selectedAccount), 1);
+                    selectedAccountIndex = find(strcmp(selectedEFDI.Table.x_CONTAS_DESCRICAO.("COD_CTA"), selectedAccount), 1);
         
                     if ~isempty(selectedAccountIndex)
-                        selectedAccountDescription = sprintf('COD_CTA %s\n%s', char(selectedAccount), selectedEFD.Table.x_CONTAS_DESCRICAO.("DESCRIÇÃO"){selectedAccountIndex});
+                        selectedAccountDescription = sprintf('COD_CTA %s\n%s', char(selectedAccount), selectedEFDI.Table.x_CONTAS_DESCRICAO.("DESCRIÇÃO"){selectedAccountIndex});
                     end
                 end                    
                 tableSelectedAccount.Text = selectedAccountDescription;
@@ -752,11 +752,11 @@ classdef winEFD_exported < matlab.apps.AppBase
         end
       
         %------------------------------------------------------------------%
-        function checkIfTableRead(app, selectedEFD, fileIndex, tableIdList)
+        function checkIfTableRead(app, selectedEFDI, fileIndex, tableIdList)
             % Em arquivos grandes, o conteúdo textual completo não é mantido na
             % propriedade "Content". Assim, ao acessar um registro ainda não carregado,
             % o app precisará reler o arquivo, o que pode levar alguns segundos.
-            if isempty(selectedEFD.Content)
+            if isempty(selectedEFDI.Content)
                 requiresReloadConfirmation = false;
 
                 for ii = 1:numel(tableIdList)
@@ -766,9 +766,9 @@ classdef winEFD_exported < matlab.apps.AppBase
                     end
 
                     tableField = ['x' tableId];
-                    numExpectedRows = expectedRowsByTableId(selectedEFD, tableId);
+                    numExpectedRows = expectedRowsByTableId(selectedEFDI, tableId);
 
-                    if ~isfield(selectedEFD.Table, tableField) || (~isempty(numExpectedRows) && height(selectedEFD.Table.(tableField)) ~= numExpectedRows)
+                    if ~isfield(selectedEFDI.Table, tableField) || (~isempty(numExpectedRows) && height(selectedEFDI.Table.(tableField)) ~= numExpectedRows)
                         requiresReloadConfirmation = true;
                         break
                     end
@@ -784,17 +784,17 @@ classdef winEFD_exported < matlab.apps.AppBase
                     userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
                     
                     if userSelection == "Não"
-                        error('auxApp:winEFD:UserAbortedReload', 'Operação cancelada pelo usuário.')
+                        error('auxApp:winEFDI:UserAbortedReload', 'Operação cancelada pelo usuário.')
                     end
                 end
             end
 
-            if isTableRead(selectedEFD, tableIdList, app.mainApp.General)
+            if isTableRead(selectedEFDI, tableIdList, app.mainApp.General)
                 ipcMainMatlabCallsHandler(app.mainApp, app, 'onAccountingDataUpdated', fileIndex);
             end
 
-            updateFinanceFacts(app, selectedEFD)
-            updateToolbar(app, selectedEFD)
+            updateFinanceFacts(app, selectedEFDI)
+            updateToolbar(app, selectedEFDI)
         end
 
         %-----------------------------------------------------------------%
@@ -814,35 +814,35 @@ classdef winEFD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function [index, status] = checkTableCustomStyle(app, selectedEFD, tableId)
-            [~, index] = ismember(tableId, {selectedEFD.GUI.tableView.id});
-            status = index && isfield(selectedEFD.GUI.tableView(index), 'style') && ~isempty(selectedEFD.GUI.tableView(index).style);
+        function [index, status] = checkTableCustomStyle(app, selectedEFDI, tableId)
+            [~, index] = ismember(tableId, {selectedEFDI.GUI.tableView.id});
+            status = index && isfield(selectedEFDI.GUI.tableView(index), 'style') && ~isempty(selectedEFDI.GUI.tableView(index).style);
         end
 
         %-----------------------------------------------------------------%
-        function [index, status] = checkTableCustomFilter(app, selectedEFD, tableId, statusType)
+        function [index, status] = checkTableCustomFilter(app, selectedEFDI, tableId, statusType)
             arguments
                 app
-                selectedEFD
+                selectedEFDI
                 tableId
                 statusType char {mustBeMember(statusType, {'basic', 'active'})}
             end
 
-            [~, index] = ismember(tableId, {selectedEFD.GUI.tableView.id});
-            status = index && isfield(selectedEFD.GUI.tableView(index), 'filter') && ~isempty(selectedEFD.GUI.tableView(index).filter);
+            [~, index] = ismember(tableId, {selectedEFDI.GUI.tableView.id});
+            status = index && isfield(selectedEFDI.GUI.tableView(index), 'filter') && ~isempty(selectedEFDI.GUI.tableView(index).filter);
 
             if strcmp(statusType, 'active')
-                status = status && ~isempty(selectedEFD.GUI.tableView(index).filter.filterRules(selectedEFD.GUI.tableView(index).filter.filterRules.Enable, :));
+                status = status && ~isempty(selectedEFDI.GUI.tableView(index).filter.filterRules(selectedEFDI.GUI.tableView(index).filter.filterRules.Enable, :));
             end
         end
 
         %-----------------------------------------------------------------%
-        function [visibleRows, index, status] = checkTableCustomSort(app, selectedEFD, tableId, visibleRows)
-            [~, index] = ismember(tableId, {selectedEFD.GUI.tableView.id});
-            status = index && isfield(selectedEFD.GUI.tableView(index), 'sort') && ~isempty(selectedEFD.GUI.tableView(index).sort);
+        function [visibleRows, index, status] = checkTableCustomSort(app, selectedEFDI, tableId, visibleRows)
+            [~, index] = ismember(tableId, {selectedEFDI.GUI.tableView.id});
+            status = index && isfield(selectedEFDI.GUI.tableView(index), 'sort') && ~isempty(selectedEFDI.GUI.tableView(index).sort);
 
             if status
-                dataIdxs = selectedEFD.GUI.tableView(index).sort.dataIdxs;
+                dataIdxs = selectedEFDI.GUI.tableView(index).sort.dataIdxs;
 
                 if numel(visibleRows) == numel(dataIdxs) && all(ismember(visibleRows, dataIdxs))
                     visibleRows = dataIdxs;
@@ -851,22 +851,22 @@ classdef winEFD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function columnWidth = resolveTableColumnWidth(app, selectedEFD, targetTableId, columnNames, tableHandle)
+        function columnWidth = resolveTableColumnWidth(app, selectedEFDI, targetTableId, columnNames, tableHandle)
             previousTableId = tableHandle.UserData.tableId;
             previousColumnWidth = {};
         
             if ~isempty(previousTableId)
-                [~, previousWidthIdx] = ismember(previousTableId, {selectedEFD.GUI.tableView.id});
+                [~, previousWidthIdx] = ismember(previousTableId, {selectedEFDI.GUI.tableView.id});
         
                 if previousWidthIdx
-                    previousColumnWidth = selectedEFD.GUI.tableView(previousWidthIdx).width;
+                    previousColumnWidth = selectedEFDI.GUI.tableView(previousWidthIdx).width;
                 end
             end
         
-            [~, targetWidthIdx] = ismember(targetTableId, {selectedEFD.GUI.tableView.id});
+            [~, targetWidthIdx] = ismember(targetTableId, {selectedEFDI.GUI.tableView.id});
             
-            if targetWidthIdx && isfield(selectedEFD.GUI.tableView(targetWidthIdx),'width') && ~isempty(selectedEFD.GUI.tableView(targetWidthIdx).width) && numel(selectedEFD.GUI.tableView(targetWidthIdx).width) == numel(columnNames)
-                columnWidth = selectedEFD.GUI.tableView(targetWidthIdx).width;
+            if targetWidthIdx && isfield(selectedEFDI.GUI.tableView(targetWidthIdx),'width') && ~isempty(selectedEFDI.GUI.tableView(targetWidthIdx).width) && numel(selectedEFDI.GUI.tableView(targetWidthIdx).width) == numel(columnNames)
+                columnWidth = selectedEFDI.GUI.tableView(targetWidthIdx).width;
         
                 if ~isempty(previousColumnWidth)
                     previousFixedColumns  = find(cellfun(@isnumeric, previousColumnWidth));
@@ -881,17 +881,17 @@ classdef winEFD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function applyTableStyle(app, selectedEFD, hTable, tableId)
+        function applyTableStyle(app, selectedEFDI, hTable, tableId)
             if ~isempty(hTable.StyleConfigurations)
                 removeStyle(hTable)
             end
 
-            [styleIndex, styleStatus] = checkTableCustomStyle(app, selectedEFD, tableId);
+            [styleIndex, styleStatus] = checkTableCustomStyle(app, selectedEFDI, tableId);
 
             if styleStatus
                 d = getRowIndexMapping(app, 'modelToGui', hTable);
                 
-                styleConfig = selectedEFD.GUI.tableView(styleIndex).style;                
+                styleConfig = selectedEFDI.GUI.tableView(styleIndex).style;                
                 for ii = 1:height(styleConfig)
                     targetIndexes = styleConfig.TargetIndex{ii};
                     targetVisibleIndexes = isKey(d, targetIndexes(:, 1));
@@ -906,16 +906,16 @@ classdef winEFD_exported < matlab.apps.AppBase
         end
 
         %-----------------------------------------------------------------%
-        function updateFinanceFacts(app, selectedEFD)
-            if isfield(selectedEFD.Table, 'x_BALANCETE_RESULTADO')
-                periodResult = sum(selectedEFD.Table.x_BALANCETE_RESULTADO.TOTAL);
+        function updateFinanceFacts(app, selectedEFDI)
+            if isfield(selectedEFDI.Table, 'x_BALANCETE_RESULTADO')
+                periodResult = sum(selectedEFDI.Table.x_BALANCETE_RESULTADO.TOTAL);
                 if periodResult < 0
                     periodResult = sprintf('&thinsp;∑&thinsp;  <font style="color:red;">R$ %.2f</font>', periodResult);
                 else
                     periodResult = sprintf('&thinsp;∑&thinsp;  R$ %.2f', periodResult);
                 end
 
-                numAccounts = height(selectedEFD.Table.x_BALANCETE_RESULTADO);
+                numAccounts = height(selectedEFDI.Table.x_BALANCETE_RESULTADO);
                 switch numAccounts
                     case 0
                         numAccounts = '💵 <font style="color:red;">Nenhuma</font> conta movimentada';
@@ -930,7 +930,7 @@ classdef winEFD_exported < matlab.apps.AppBase
                 balanceteInfo = '⚠️ Balancete de resultado <font style="color:red;">pendente</font> de geração';
             end
             
-            numAttachedFiles = sum(selectedEFD.Table.x9900.('QTD_REG_BLC')(contains(selectedEFD.Table.x9900.('REG_BLC'), {'J800', 'J801'})));
+            numAttachedFiles = sum(selectedEFDI.Table.x9900.('QTD_REG_BLC')(contains(selectedEFDI.Table.x9900.('REG_BLC'), {'J800', 'J801'})));
             switch numAttachedFiles
                 case 0
                     numAttachedFiles = '🔗 Escrituração <font style="color:red;">não</font> possui arquivos .rtf';
@@ -979,7 +979,7 @@ classdef winEFD_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function exportFiles(app, fileIndex, rawTableIdFields)
-            selectedEFD     = app.efdObj(fileIndex);
+            selectedEFDI     = app.efdiObj(fileIndex);
 
             defaultBaseName =  appEngine.util.DefaultFileName(app.mainApp.General.fileFolder.userPath, 'monitorSPED');
             excelTempName   = [appEngine.util.DefaultFileName(app.mainApp.General.fileFolder.tempPath, 'monitorSPED') '.xlsx'];
@@ -993,7 +993,7 @@ classdef winEFD_exported < matlab.apps.AppBase
             tableIds = extractAfter(horzcat(tableIds{:}), 'x');
 
             try
-                checkIfTableRead(app, selectedEFD, fileIndex, tableIds)
+                checkIfTableRead(app, selectedEFDI, fileIndex, tableIds)
             catch ME
                 ui.Dialog(app.UIFigure, 'error', ME.message);
                 return
@@ -1009,7 +1009,7 @@ classdef winEFD_exported < matlab.apps.AppBase
                     for ii = 1:numel(tableIdFields)
                         tableId = tableIdFields{ii};
 
-                        tableData = selectedEFD.Table.(tableId);
+                        tableData = selectedEFDI.Table.(tableId);
                         if ~istable(tableData)
                             continue
                         end
@@ -1164,7 +1164,7 @@ classdef winEFD_exported < matlab.apps.AppBase
         function onPopupModuleRequest(app, event)
             
             context = app.Context;
-            [~, fileIndex] = getselectedEFD(app);
+            [~, fileIndex] = getselectedEFDI(app);
 
             switch event.Source
                 case app.ExportButton
@@ -1187,7 +1187,7 @@ classdef winEFD_exported < matlab.apps.AppBase
             
             switch event.Source
                 case app.tool_OpenPopupProject
-                    ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ReportLib', app.Context, app.efdObj(strcmp({app.efdObj.FileType}, 'EFDI')))
+                    ipcMainMatlabOpenPopupApp(app.mainApp, app, 'ReportLib', app.Context, app.efdiObj(strcmp({app.efdiObj.FileType}, 'EFDI')))
             end
 
         end
@@ -1196,7 +1196,7 @@ classdef winEFD_exported < matlab.apps.AppBase
         function Toolbar_ReportImageClicked(app, event)
             
             context = app.Context;
-            [selectedEFD, fileIndex] = getselectedEFD(app);
+            [selectedEFDI, fileIndex] = getselectedEFDI(app);
 
             % <VALIDAÇÕES>
             if ~validateReportRequirements(app.projectData, context, 'reportModel')
@@ -1206,7 +1206,7 @@ classdef winEFD_exported < matlab.apps.AppBase
                 criticalWarningMsg = '• Leia ao menos um arquivo de escrituração digital contábil.';
 
             else
-                [~, criticalWarningMsg] = validateReportGenerationRequirements(selectedEFD);
+                [~, criticalWarningMsg] = validateReportGenerationRequirements(selectedEFDI);
             end
 
             if ~isempty(criticalWarningMsg)
@@ -1292,10 +1292,10 @@ classdef winEFD_exported < matlab.apps.AppBase
                 return
             end
 
-            selectedEFD = getselectedEFD(app);
+            selectedEFDI = getselectedEFDI(app);
 
             storedReportHash  = app.projectData.modules.(context).generatedFiles.id;
-            currentReportHash = model.ProjectBase.computeReportAnalysisResultsHash(selectedEFD);
+            currentReportHash = model.ProjectBase.computeReportAnalysisResultsHash(selectedEFDI);
 
             if ~isequal(storedReportHash, currentReportHash)
                 [~, generatedHtmlFileName, generatedHtmlFileExt] = fileparts(generatedHtmlFilePath);
@@ -1360,10 +1360,10 @@ classdef winEFD_exported < matlab.apps.AppBase
             
             requestVisibilityChange(app.progressDialog, 'visible', 'locked')
             
-            selectedEFD = getselectedEFD(app);
+            selectedEFDI = getselectedEFDI(app);
 
             app.tool_CompanyInfo.Text = sprintf('<font style="font-size: 11px; font-weight: bold;">%s</font> CNPJ %s (%s) \n%s ', ...
-                upper(selectedEFD.CompanyName), selectedEFD.CompanyId, selectedEFD.State, strjoin(string(selectedEFD.Period), ' a '));
+                upper(selectedEFDI.CompanyName), selectedEFDI.CompanyId, selectedEFDI.State, strjoin(string(selectedEFDI.Period), ' a '));
             
             updateSheetList(app)
             SheetViewFirstValueChanged(app, struct('Source', app.SheetList))
@@ -1425,8 +1425,8 @@ classdef winEFD_exported < matlab.apps.AppBase
                 app.UITable2.Visible = 'on';                
                 rowHeight = {10,2,22};
 
-                selectedEFD = getselectedEFD(app);
-                if ~isempty(selectedEFD)
+                selectedEFDI = getselectedEFDI(app);
+                if ~isempty(selectedEFDI)
                     SheetViewSecondValueChanged(app)
                 end
                 
@@ -1462,9 +1462,9 @@ classdef winEFD_exported < matlab.apps.AppBase
         % Button pushed function: LogButton
         function LogButtonPushed(app, event)
             
-            selectedEFD = getselectedEFD(app);
+            selectedEFDI = getselectedEFDI(app);
 
-            htmlContent = util.HtmlTextGenerator.Warnings(selectedEFD);
+            htmlContent = util.HtmlTextGenerator.Warnings(selectedEFDI);
             ui.Dialog(app.UIFigure, 'info', htmlContent);
 
         end
@@ -1551,16 +1551,16 @@ classdef winEFD_exported < matlab.apps.AppBase
             end
 
             clickedTable = event.Source;            
-            selectedEFD = getselectedEFD(app);            
+            selectedEFDI = getselectedEFDI(app);            
             tableId = getSelectedTableId(app, clickedTable);
             
             columnName = event.InteractionVariable;
-            initialDataIdxs = (1:height(selectedEFD.Table.(['x' tableId])))';
+            initialDataIdxs = (1:height(selectedEFDI.Table.(['x' tableId])))';
 
             if ~isequal(initialDataIdxs, displayDataIdxs)
-                update(selectedEFD, 'GUI.TableView.Sort', 'applySort', tableId, columnName, displayDataIdxs)
+                update(selectedEFDI, 'GUI.TableView.Sort', 'applySort', tableId, columnName, displayDataIdxs)
             else
-                update(selectedEFD, 'GUI.TableView.Sort', 'clearSort', tableId)
+                update(selectedEFDI, 'GUI.TableView.Sort', 'clearSort', tableId)
             end
             
         end
@@ -1569,14 +1569,14 @@ classdef winEFD_exported < matlab.apps.AppBase
         function TableSortRefresh(app, event)
             
             activeTable = onFocusTable(app);
-            selectedEFD = getselectedEFD(app);
+            selectedEFDI = getselectedEFDI(app);
             tableId     = getSelectedTableId(app, activeTable);
             visibleRows = activeTable.UserData.visibleRows;
 
-            [~, ~, status] = checkTableCustomSort(app, selectedEFD, tableId, visibleRows);
+            [~, ~, status] = checkTableCustomSort(app, selectedEFDI, tableId, visibleRows);
 
             if status
-                update(selectedEFD, 'GUI.TableView.Sort', 'clearSort', tableId)
+                update(selectedEFDI, 'GUI.TableView.Sort', 'clearSort', tableId)
                 forceUpdateTable(app)
             end
 
@@ -1623,12 +1623,12 @@ classdef winEFD_exported < matlab.apps.AppBase
                 return
             end
 
-            selectedEFD = getselectedEFD(app);
+            selectedEFDI = getselectedEFDI(app);
             tableId = getSelectedTableId(app, clickedTable);
 
-            styleIndex = checkTableCustomStyle(app, selectedEFD, tableId);
+            styleIndex = checkTableCustomStyle(app, selectedEFDI, tableId);
             if ~styleIndex
-                styleIndex = numel(selectedEFD.GUI.tableView)+1;
+                styleIndex = numel(selectedEFDI.GUI.tableView)+1;
             end
             
             % Estilo novo:
@@ -1723,7 +1723,7 @@ classdef winEFD_exported < matlab.apps.AppBase
                 styleConfig.TargetIndex{ii}(:, 1) = d(styleConfig.TargetIndex{ii}(:, 1));
             end
 
-            update(selectedEFD, 'GUI.TableView.Style', 'addStyle', tableId, styleIndex, styleConfig)
+            update(selectedEFDI, 'GUI.TableView.Style', 'addStyle', tableId, styleIndex, styleConfig)
             
         end
 
@@ -1731,11 +1731,11 @@ classdef winEFD_exported < matlab.apps.AppBase
         function TableStyleDeleteOrRefresh(app, event)
             
             clickedTable = onFocusTable(app);
-            selectedEFD = getselectedEFD(app);
+            selectedEFDI = getselectedEFDI(app);
             tableId = getSelectedTableId(app, clickedTable);
 
             % Lista atual de estilos:
-            [styleIndex, styleStatus] = checkTableCustomStyle(app, selectedEFD, tableId);
+            [styleIndex, styleStatus] = checkTableCustomStyle(app, selectedEFDI, tableId);
 
             if styleStatus
                 switch app.StyleDeleteScope.Value
@@ -1746,7 +1746,7 @@ classdef winEFD_exported < matlab.apps.AppBase
 
                         d = getRowIndexMapping(app, 'guiToModel', clickedTable);
 
-                        currentStyleTable = selectedEFD.GUI.tableView(styleIndex).style;
+                        currentStyleTable = selectedEFDI.GUI.tableView(styleIndex).style;
                         userCellSelection = clickedTable.Selection;
                         userCellSelection(:, 1) = d(userCellSelection(:, 1));
 
@@ -1772,18 +1772,18 @@ classdef winEFD_exported < matlab.apps.AppBase
                         end
 
                         if rerenderizationFlag
-                            update(selectedEFD, 'GUIselectedECD.TableView.Style', 'removeSelectedCellStyle', styleIndex, currentStyleTable)
-                            applyTableStyle(app, selectedEFD, clickedTable, tableId)
+                            update(selectedEFDI, 'GUIselectedECD.TableView.Style', 'removeSelectedCellStyle', styleIndex, currentStyleTable)
+                            applyTableStyle(app, selectedEFDI, clickedTable, tableId)
 
                             if strcmp(app.SheetList.Value, app.SheetView_Second.Value)
                                 otherTable = setdiff([app.UITable1, app.UITable2], clickedTable);
-                                applyTableStyle(app, selectedEFD, otherTable, tableId)
+                                applyTableStyle(app, selectedEFDI, otherTable, tableId)
                             end
                         end
 
                     case 'tabela'
                         removeStyle(clickedTable)
-                        update(selectedEFD, 'GUI.TableView.Style', 'removeTableStyle', styleIndex)
+                        update(selectedEFDI, 'GUI.TableView.Style', 'removeTableStyle', styleIndex)
 
                         if strcmp(app.SheetList.Value, app.SheetView_Second.Value)
                             otherTable = setdiff([app.UITable1, app.UITable2], clickedTable);
@@ -2435,7 +2435,7 @@ classdef winEFD_exported < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = winEFD_exported(Container, varargin)
+        function app = winEFDI_exported(Container, varargin)
 
             % Create UIFigure and components
             createComponents(app, Container)

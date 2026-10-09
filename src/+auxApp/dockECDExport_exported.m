@@ -65,7 +65,7 @@ classdef dockECDExport_exported < matlab.apps.AppBase
 
             context = app.inputArgs.context;
 
-            if strcmp(context, 'EFD')
+            if ismember(context, {'EFDI', 'EFDC'})
                 % A árvore criada em tempo de design contempla apenas os
                 % registros do ECD; substitui-se pelos mesmos registros
                 % exibidos no SheetList do winEFD (selectedECD.GUI.tableIds),

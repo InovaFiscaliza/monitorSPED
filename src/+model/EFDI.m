@@ -1,8 +1,8 @@
-classdef EFD < model.SPED
+classdef EFDI < model.SPED
 
     % SINTAXE:
-    % >> efdObj = model.EFD.empty;
-    % >> efdObj = addFiles(efdObj, {'Filename1.txt', 'Filename2.txt'});
+    % >> efdiObj = model.EFDI.empty;
+    % >> efdiObj = addFiles(efdiObj, {'Filename1.txt', 'Filename2.txt'});
 
     properties
         %-----------------------------------------------------------------%
@@ -45,12 +45,12 @@ classdef EFD < model.SPED
                 idx = numel(obj)+1;                
 
                 try
-                    obj(idx) = model.EFD(); % constrói explicitamente; evita o getDefaultScalarElement (model.SPED) do array heterogêneo
+                    obj(idx) = model.EFDI(); % constrói explicitamente; evita o getDefaultScalarElement (model.SPED) do array heterogêneo
                     obj(idx).FileName = fileName;
                     obj(idx).FileFullName = fileFullName;
                     obj(idx).FileType = 'EFDI'; % 'EFD ICMS/IPI'
 
-                    util.fileread_EFD(obj(idx), fileFullName, generalSettings);
+                    util.fileread_EFDI(obj(idx), fileFullName, generalSettings);
                     initializeCompanyContext(obj(idx), generalSettings, receitaFederalObj)
 
                 catch ME
@@ -74,7 +74,7 @@ classdef EFD < model.SPED
 
             if isequal(tableIdList, {'all'})
                 isRead = true;
-                tableIdList = model.EFDBase.getImplementedTableIds();
+                tableIdList = model.EFDIBase.getImplementedTableIds();
             end
 
             for ii = 1:numel(obj)
@@ -143,7 +143,7 @@ classdef EFD < model.SPED
 
             for ii = 1:numel(tableIdList)
                 tableId = tableIdList{ii};
-                definition = model.EFDBase.(['x' tableId]);
+                definition = model.EFDIBase.(['x' tableId]);
                 layoutIdx = find(cellfun(@(x) ismember(obj.Layout, x), definition(:, 1)), 1);
                 if isempty(layoutIdx)
                     layoutIdx = size(definition, 1);
@@ -211,7 +211,7 @@ classdef EFD < model.SPED
 
                     sheetsSorted = extractAfter(fieldnames(obj.Table), 'x');
                     if ~isempty(obj.Content)
-                        sheetsSorted = [sheetsSorted; getTableIds(obj); generalSettings.context.EFD.customTables.expected];
+                        sheetsSorted = [sheetsSorted; getTableIds(obj); generalSettings.context.EFDI.customTables.expected];
                     end
                     sheetsSorted = unique(sheetsSorted);
                     sheetsSorted = [sheetsSorted(startsWith(sheetsSorted, '_')); sheetsSorted(~startsWith(sheetsSorted, '_'))];
@@ -227,7 +227,7 @@ classdef EFD < model.SPED
                             obj.GUI.tableView(filterIdx).filter = tableFiltering;
 
                         otherwise
-                            error('model:EFD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
+                            error('model:EFDI:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
                     end
 
                 case 'GUI.TableView.Style'
@@ -249,7 +249,7 @@ classdef EFD < model.SPED
                             obj.GUI.tableView(styleIdx).style = {};
 
                         otherwise
-                            error('model:EFD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
+                            error('model:EFDI:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
                     end
 
                 case 'GUI.TableView.Sort'
@@ -277,7 +277,7 @@ classdef EFD < model.SPED
                             end
 
                         otherwise
-                            error('model:EFD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
+                            error('model:EFDI:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
                     end
 
                 case 'GUI.TableView.Width'
@@ -315,7 +315,7 @@ classdef EFD < model.SPED
                             end
 
                         otherwise
-                            error('model:EFD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
+                            error('model:EFDI:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
                     end
 
                 case 'Table.NonEssentialFiles'
@@ -331,11 +331,11 @@ classdef EFD < model.SPED
                             obj.Table = rmfield(obj.Table, tableIdList);
 
                         otherwise
-                            error('model:EFD:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
+                            error('model:EFDI:UnexpectedUpdateType', 'Unexpected update type "%s" for property "%s".', updateType, propertyName);
                     end
 
                 otherwise
-                    error('model:EFD:UnexpectedPropertyName', 'Unexpected property name "%s".', propertyName);
+                    error('model:EFDI:UnexpectedPropertyName', 'Unexpected property name "%s".', propertyName);
             end
         end
     end
@@ -394,15 +394,15 @@ classdef EFD < model.SPED
     methods (Access = protected)
         %-----------------------------------------------------------------%
         function parseTable(obj, tableId, generalSettings)
-            % Ao contrário do ECD, o EFD não tem parser incremental nativo por
-            % registro; fileread_EFD sempre relê o arquivo por completo. Para
+            % Ao contrário do ECD, o EFDI não tem parser incremental nativo por
+            % registro; fileread_EFDI sempre relê o arquivo por completo. Para
             % que apenas o registro solicitado (removido do cache via
             % "onCacheCleanup") seja reconstruído — preservando os demais já
             % cacheados —, restringe-se "recordIds" aos registros ordinários
             % que compõem especificamente "tableId".
             checkIfScalar(obj)
 
-            compositeSheets = model.EFDBase.efdCompositeSheets();
+            compositeSheets = model.EFDIBase.efdiCompositeSheets();
             compositeField  = ['x' tableId];
             if isfield(compositeSheets, compositeField)
                 recordIds = compositeSheets.(compositeField);
@@ -410,7 +410,7 @@ classdef EFD < model.SPED
                 recordIds = {tableId};
             end
 
-            util.fileread_EFD(obj, obj.FileFullName, generalSettings, false, recordIds)
+            util.fileread_EFDI(obj, obj.FileFullName, generalSettings, false, recordIds)
         end
     end
 end

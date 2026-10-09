@@ -132,7 +132,17 @@
             },
             "accountDescriptionScope": false
         },
-        "EFD": {
+        "EFDI": {
+            "customTables": {
+                "expected": [],
+                "autoload": []
+            },
+            "cacheTables": [
+                "0000",
+                "9900"
+            ]
+        },
+        "EFDC": {
             "customTables": {
                 "expected": [],
                 "autoload": []

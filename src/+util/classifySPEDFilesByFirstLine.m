@@ -1,6 +1,6 @@
 function [fileType, has0000, reason] = classifySPEDFilesByFirstLine(filePath)
 % classifySPEDFilesByFirstLine
-% Classifica arquivos SPED (ECD, ECF, EFD contribuições, EFD ICMS/IPI)
+    % Classifica arquivos SPED (ECD, ECF, EFD contribuições, EFD ICMS/IPI)
 % pela primeira linha (registro 0000).
 
     firstLine = readFirstLine(filePath);

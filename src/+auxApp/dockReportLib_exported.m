@@ -195,12 +195,10 @@ classdef dockReportLib_exported < matlab.apps.AppBase
                 
                 % "context" define o subconjunto de app.mainApp.spedObj a ser
                 % substituído: 'FILE' abrange o projeto completo (ECD + EFD);
-                % 'ECD'/'EFD' preservam o restante do array intacto.
+                % 'ECD', 'EFDI' e 'EFDC' preservam o restante do array intacto.
                 switch context
-                    case 'ECD'
-                        app.mainApp.spedObj = [app.mainApp.spedObj(~strcmp({app.mainApp.spedObj.FileType}, 'ECD')), updatedSubset];
-                    case 'EFD'
-                        app.mainApp.spedObj = [app.mainApp.spedObj(~strcmp({app.mainApp.spedObj.FileType}, 'EFDI')), updatedSubset];
+                    case {'ECD', 'EFDI', 'EFDC'}
+                        app.mainApp.spedObj = [app.mainApp.spedObj(~strcmp({app.mainApp.spedObj.FileType}, context)), updatedSubset];
                     otherwise % 'FILE'
                         app.mainApp.spedObj = updatedSubset;
                 end

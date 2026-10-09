@@ -37,7 +37,7 @@ classdef (Abstract) Controller
             arguments
                 mainApp
                 callingApp
-                context {mustBeMember(context, {'FILE', 'ECD', 'EFD'})} % Todo: Migrar EFD p/ EFDI
+                context {mustBeMember(context, {'FILE', 'ECD', 'EFDI', 'EFDC'})}
                 spedObj
             end
 
