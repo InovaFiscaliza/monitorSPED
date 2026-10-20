@@ -136,8 +136,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                             deleteContextMenu(app.tabGroupController, hApp.UIFigure, popupCurrentAppTag)
                         end
 
-                        delete(app.popupCurrentApp)
-                        app.popupCurrentApp = [];
+                        if contains(class(app.popupCurrentApp), popupCurrentAppTag)
+                            delete(app.popupCurrentApp)
+                            app.popupCurrentApp = [];
+                        end
 
                     case 'syncPopupWithPanel'
                         if ~isempty(app.popupCurrentApp) && isvalid(app.popupCurrentApp)
@@ -1235,10 +1237,14 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 return
             end
 
-            d = ui.Dialog(app.UIFigure, "progressdlg", "Em andamento...");            
+            d = ui.Dialog(app.UIFigure, 'progressdlg', 'Em andamento...', 'Cancelable', 'on');
             filesError = struct('File', {}, 'Error', {});
 
             for ii = 1:numel(fileFullName)
+                if d.CancelRequested
+                    break
+                end
+                
                 d.Message = textFormatGUI.HTMLParagraph(sprintf('Em andamento a leitura do arquivo %d de %d:<br>• <b>%s</b>', ii, numel(fileFullName), fileName{ii}));
 
                 % Verifica se arquivo já foi lido, comparando o seu nome com 
@@ -1583,11 +1589,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
             % Create file_Grid
             app.file_Grid = uigridlayout(app.Tab1_File);
-            app.file_Grid.ColumnWidth = {10, 360, '1x', 10, '0.25x', 360, 10};
-            app.file_Grid.RowHeight = {94, 10, '1x', 10, 34};
+            app.file_Grid.ColumnWidth = {20, 360, '1x', 10, '0.25x', 360, 20};
+            app.file_Grid.RowHeight = {94, 10, '1x', 20, 34};
             app.file_Grid.ColumnSpacing = 0;
             app.file_Grid.RowSpacing = 0;
-            app.file_Grid.Padding = [0 0 0 40];
+            app.file_Grid.Padding = [0 0 0 50];
             app.file_Grid.BackgroundColor = [1 1 1];
 
             % Create tool_Grid
@@ -1767,7 +1773,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.AppName.Layout.Row = [1 5];
             app.AppName.Layout.Column = [1 2];
             app.AppName.Interpreter = 'html';
-            app.AppName.Text = {'monitorSPED v. 1.00.0'; '<font style="font-size: 9px;">R2024a</font>'};
+            app.AppName.Text = {'monitorSPED v. 1.01.16'; '<font style="font-size: 9px;">R2024a</font>'};
 
             % Create Tab1Button
             app.Tab1Button = uibutton(app.NavBar, 'state');

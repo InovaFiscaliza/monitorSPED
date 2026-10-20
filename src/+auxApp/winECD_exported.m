@@ -1603,14 +1603,14 @@ classdef winECD_exported < matlab.apps.AppBase
             end
 
             SheetViewHeightValueChanged(app, struct('Source', app.SheetHeight_First))
-            app.GridLayout.RowHeight([9,11,12]) = rowHeight;
+            app.GridLayout.RowHeight([10,12,13]) = rowHeight;
             
         end
 
         % Value changed function: SheetHeight_First, SheetHeight_Second
         function SheetViewHeightValueChanged(app, event)
             
-            app.GridLayout.RowHeight([6,10]) = {sprintf('%dx', app.SheetHeight_First.Value), sprintf('%dx', app.SheetHeight_Second.Value)};
+            app.GridLayout.RowHeight([7,11]) = {sprintf('%dx', app.SheetHeight_First.Value), sprintf('%dx', app.SheetHeight_Second.Value)};
 
         end
 
@@ -2009,8 +2009,8 @@ classdef winECD_exported < matlab.apps.AppBase
 
             % Create GridLayout
             app.GridLayout = uigridlayout(app.Container);
-            app.GridLayout.ColumnWidth = {10, 18, 320, '1x', 290, 30, 18, 8, 2};
-            app.GridLayout.RowHeight = {2, 8, 24, 70, 10, '1x', 2, 22, 0, 0, 0, 0, 10, 34};
+            app.GridLayout.ColumnWidth = {20, 18, 320, '1x', 290, 20, 18, 10, 8, 2};
+            app.GridLayout.RowHeight = {2, 8, 10, 14, 80, 10, '1x', 2, 22, 0, 0, 0, 0, 20, 34};
             app.GridLayout.ColumnSpacing = 0;
             app.GridLayout.RowSpacing = 0;
             app.GridLayout.Padding = [0 0 0 0];
@@ -2020,7 +2020,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.SubTabGroup = uitabgroup(app.GridLayout);
             app.SubTabGroup.AutoResizeChildren = 'off';
             app.SubTabGroup.SelectionChangedFcn = createCallbackFcn(app, @SubTabGroupSelectionChanged, true);
-            app.SubTabGroup.Layout.Row = [3 4];
+            app.SubTabGroup.Layout.Row = [4 5];
             app.SubTabGroup.Layout.Column = [2 7];
 
             % Create SubTab1
@@ -2456,21 +2456,21 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable1.DisplayDataChangedFcn = createCallbackFcn(app, @TableDisplayDataChanged, true);
             app.UITable1.ForegroundColor = [0.149 0.149 0.149];
             app.UITable1.KeyReleaseFcn = createCallbackFcn(app, @TableClicked, true);
-            app.UITable1.Layout.Row = 6;
+            app.UITable1.Layout.Row = 7;
             app.UITable1.Layout.Column = [2 7];
-            app.UITable1.FontSize = 10.5;
+            app.UITable1.FontSize = 11;
 
             % Create UITable1_CountIcon
             app.UITable1_CountIcon = uiimage(app.GridLayout);
             app.UITable1_CountIcon.ScaleMethod = 'none';
-            app.UITable1_CountIcon.Layout.Row = 8;
+            app.UITable1_CountIcon.Layout.Row = 9;
             app.UITable1_CountIcon.Layout.Column = 2;
             app.UITable1_CountIcon.ImageSource = 'selectColumn.png';
 
             % Create UITable1_CountText
             app.UITable1_CountText = uilabel(app.GridLayout);
             app.UITable1_CountText.FontSize = 10;
-            app.UITable1_CountText.Layout.Row = 8;
+            app.UITable1_CountText.Layout.Row = 9;
             app.UITable1_CountText.Layout.Column = 3;
             app.UITable1_CountText.Text = ' CONTAGEM : 0';
 
@@ -2478,14 +2478,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable1_FilterText = uilabel(app.GridLayout);
             app.UITable1_FilterText.HorizontalAlignment = 'right';
             app.UITable1_FilterText.FontSize = 10;
-            app.UITable1_FilterText.Layout.Row = 8;
+            app.UITable1_FilterText.Layout.Row = 9;
             app.UITable1_FilterText.Layout.Column = [5 6];
             app.UITable1_FilterText.Text = '0 DE 0 ';
 
             % Create UITable1_FilterIcon
             app.UITable1_FilterIcon = uiimage(app.GridLayout);
             app.UITable1_FilterIcon.ScaleMethod = 'none';
-            app.UITable1_FilterIcon.Layout.Row = 8;
+            app.UITable1_FilterIcon.Layout.Row = 9;
             app.UITable1_FilterIcon.Layout.Column = 7;
             app.UITable1_FilterIcon.ImageSource = 'Filter_18.png';
 
@@ -2494,7 +2494,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable1_AccountInfo.HorizontalAlignment = 'center';
             app.UITable1_AccountInfo.FontSize = 10;
             app.UITable1_AccountInfo.FontColor = [0.502 0.502 0.502];
-            app.UITable1_AccountInfo.Layout.Row = 8;
+            app.UITable1_AccountInfo.Layout.Row = 9;
             app.UITable1_AccountInfo.Layout.Column = [3 6];
             app.UITable1_AccountInfo.Text = '';
 
@@ -2510,21 +2510,21 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable2.ForegroundColor = [0.149 0.149 0.149];
             app.UITable2.Visible = 'off';
             app.UITable2.KeyReleaseFcn = createCallbackFcn(app, @TableClicked, true);
-            app.UITable2.Layout.Row = 10;
+            app.UITable2.Layout.Row = 11;
             app.UITable2.Layout.Column = [2 7];
-            app.UITable2.FontSize = 10.5;
+            app.UITable2.FontSize = 11;
 
             % Create UITable2_CountIcon
             app.UITable2_CountIcon = uiimage(app.GridLayout);
             app.UITable2_CountIcon.ScaleMethod = 'none';
-            app.UITable2_CountIcon.Layout.Row = 12;
+            app.UITable2_CountIcon.Layout.Row = 13;
             app.UITable2_CountIcon.Layout.Column = 2;
             app.UITable2_CountIcon.ImageSource = 'selectColumn.png';
 
             % Create UITable2_CountText
             app.UITable2_CountText = uilabel(app.GridLayout);
             app.UITable2_CountText.FontSize = 10;
-            app.UITable2_CountText.Layout.Row = 12;
+            app.UITable2_CountText.Layout.Row = 13;
             app.UITable2_CountText.Layout.Column = 3;
             app.UITable2_CountText.Text = ' CONTAGEM: 0';
 
@@ -2532,14 +2532,14 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable2_FilterText = uilabel(app.GridLayout);
             app.UITable2_FilterText.HorizontalAlignment = 'right';
             app.UITable2_FilterText.FontSize = 10;
-            app.UITable2_FilterText.Layout.Row = 12;
+            app.UITable2_FilterText.Layout.Row = 13;
             app.UITable2_FilterText.Layout.Column = [5 6];
             app.UITable2_FilterText.Text = '0 DE 0 ';
 
             % Create UITable2_FilterIcon
             app.UITable2_FilterIcon = uiimage(app.GridLayout);
             app.UITable2_FilterIcon.ScaleMethod = 'none';
-            app.UITable2_FilterIcon.Layout.Row = 12;
+            app.UITable2_FilterIcon.Layout.Row = 13;
             app.UITable2_FilterIcon.Layout.Column = 7;
             app.UITable2_FilterIcon.ImageSource = 'Filter_18.png';
 
@@ -2548,7 +2548,7 @@ classdef winECD_exported < matlab.apps.AppBase
             app.UITable2_AccountInfo.HorizontalAlignment = 'center';
             app.UITable2_AccountInfo.FontSize = 10;
             app.UITable2_AccountInfo.FontColor = [0.502 0.502 0.502];
-            app.UITable2_AccountInfo.Layout.Row = 12;
+            app.UITable2_AccountInfo.Layout.Row = 13;
             app.UITable2_AccountInfo.Layout.Column = [3 6];
             app.UITable2_AccountInfo.Text = '';
 
@@ -2559,8 +2559,8 @@ classdef winECD_exported < matlab.apps.AppBase
             app.Toolbar.ColumnSpacing = 5;
             app.Toolbar.RowSpacing = 0;
             app.Toolbar.Padding = [10 5 10 5];
-            app.Toolbar.Layout.Row = 14;
-            app.Toolbar.Layout.Column = [1 9];
+            app.Toolbar.Layout.Row = 15;
+            app.Toolbar.Layout.Column = [1 10];
             app.Toolbar.BackgroundColor = [0.9412 0.9412 0.9412];
 
             % Create tool_OpenPopupIcmsRate
@@ -2659,8 +2659,8 @@ classdef winECD_exported < matlab.apps.AppBase
             app.DockModule.ColumnSpacing = 2;
             app.DockModule.Padding = [5 2 5 2];
             app.DockModule.Visible = 'off';
-            app.DockModule.Layout.Row = [2 3];
-            app.DockModule.Layout.Column = [6 8];
+            app.DockModule.Layout.Row = [2 4];
+            app.DockModule.Layout.Column = [6 9];
             app.DockModule.BackgroundColor = [0.2 0.2 0.2];
 
             % Create dockModule_Undock
