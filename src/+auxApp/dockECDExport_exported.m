@@ -135,6 +135,7 @@ classdef dockECDExport_exported < matlab.apps.AppBase
                 app.UIFigure.Position = [92 92 460 598];
                 app.UIFigure.Name = 'monitorSPED';
                 app.UIFigure.Icon = 'icon_16.png';
+                app.UIFigure.Resize = 'off';
                 app.UIFigure.CloseRequestFcn = createCallbackFcn(app, @closeFcn, true);
 
                 app.Container = app.UIFigure;
