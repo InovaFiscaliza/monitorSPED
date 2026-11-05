@@ -1086,34 +1086,40 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
         % Close request function: UIFigure
         function closeFcn(app, event)
 
-            if strcmp(app.progressDialog.Visible, 'visible')
-                app.progressDialog.Visible = 'hidden';
-                return
-            end
-
-            msgQuestion = '';
-            if checkIfUpdateNeeded(app.projectData, app.ecdObj)
-                msgQuestion = sprintf([ ...
-                    'O projeto "%s" foi modificado (nome, arquivo de saída, ' ...
-                    'lista de arquivos de entrada ou tabelas de anotação das ' ...
-                    'contas de resultado). Caso o aplicativo seja encerrado ' ...
-                    'agora, todas as alterações serão descartadas.\n\n' ...
-                    'Deseja realmente fechar o aplicativo?' ...
-                    ], app.projectData.name);
-            
-            elseif ~strcmp(app.executionMode, 'webApp')
-                msgQuestion = 'Deseja fechar o aplicativo?';
-            end
-
-            if ~isempty(msgQuestion)                
-                userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
-                if userSelection == "Não"
+            if exist('event', 'var') && event.Source == app.UIFigure
+                if strcmp(app.progressDialog.Visible, 'visible')
+                    app.progressDialog.Visible = 'hidden';
                     return
+                end
+    
+                msgQuestion = '';
+                if checkIfUpdateNeeded(app.projectData, app.ecdObj)
+                    msgQuestion = sprintf([ ...
+                        'O projeto "%s" foi modificado (nome, arquivo de saída, ' ...
+                        'lista de arquivos de entrada ou tabelas de anotação das ' ...
+                        'contas de resultado). Caso o aplicativo seja encerrado ' ...
+                        'agora, todas as alterações serão descartadas.\n\n' ...
+                        'Deseja realmente fechar o aplicativo?' ...
+                        ], app.projectData.name);
+                
+                elseif ~strcmp(app.executionMode, 'webApp')
+                    msgQuestion = 'Deseja fechar o aplicativo?';
+                end
+    
+                if ~isempty(msgQuestion)                
+                    userSelection = ui.Dialog(app.UIFigure, 'uiconfirm', msgQuestion, {'Sim', 'Não'}, 1, 2);
+                    if userSelection == "Não"
+                        return
+                    end
                 end
             end
 
-            % Aspectos gerais (comum em todos os apps):
-            appEngine.beforeDeleteApp(app.progressDialog, app.General_I.fileFolder.tempPath, app.tabGroupController, app.executionMode)
+            try
+                appEngine.beforeDeleteApp(app.progressDialog, app.General_I.fileFolder.tempPath, app.tabGroupController, app.executionMode)
+            catch ME
+                appEngine.util.killingMATLABRuntime(app.executionMode)
+            end
+            
             delete(app)
             
         end
@@ -1763,7 +1769,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.NavBar.Tag = 'COLORLOCKED';
             app.NavBar.Layout.Row = 1;
             app.NavBar.Layout.Column = 1;
-            app.NavBar.BackgroundColor = [0.2 0.2 0.2];
+            app.NavBar.BackgroundColor = [0.1294 0.2 0.2392];
 
             % Create AppName
             app.AppName = uilabel(app.NavBar);
@@ -1781,7 +1787,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab1Button.Tag = 'FILE';
             app.Tab1Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'folder-active-24px-yellow.svg');
             app.Tab1Button.Text = '';
-            app.Tab1Button.BackgroundColor = [0.2 0.2 0.2];
+            app.Tab1Button.BackgroundColor = [0.1294 0.2 0.2392];
             app.Tab1Button.Layout.Row = [2 4];
             app.Tab1Button.Layout.Column = 3;
             app.Tab1Button.Value = true;
@@ -1792,7 +1798,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab2Button.Tag = 'ECD';
             app.Tab2Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'graph-24px-white.svg');
             app.Tab2Button.Text = '';
-            app.Tab2Button.BackgroundColor = [0.2 0.2 0.2];
+            app.Tab2Button.BackgroundColor = [0.1294 0.2 0.2392];
             app.Tab2Button.Layout.Row = [2 4];
             app.Tab2Button.Layout.Column = 4;
 
@@ -1810,7 +1816,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
             app.Tab3Button.Tag = 'CONFIG';
             app.Tab3Button.Icon = fullfile(pathToMLAPP, 'resources', 'Icons', 'gear-24px-white.svg');
             app.Tab3Button.Text = '';
-            app.Tab3Button.BackgroundColor = [0.2 0.2 0.2];
+            app.Tab3Button.BackgroundColor = [0.1294 0.2 0.2392];
             app.Tab3Button.Layout.Row = [2 4];
             app.Tab3Button.Layout.Column = 6;
 
