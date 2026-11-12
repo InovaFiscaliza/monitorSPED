@@ -443,7 +443,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     'dockAppContainerDataTag', callingApp.popupContainer.UserData.id, ...
                     'sizing', sizing, ...
                     'context', context, ...
-                    'numCanvasElements', numel(findobj(app.popupCurrentApp.Container, 'Type', 'axes')) ...
+                    'numCanvasElements', ui.countCanvasElements(app.popupCurrentApp.Container) ...
                 ))
 
                 app.popupCurrentApp.GridLayout.UserData.auxDockAppName = auxDockAppName;
@@ -463,6 +463,11 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function applyJSCustomizations(app, tabIndex)
+            arguments
+                app
+                tabIndex = 1
+            end
+            
             if app.SubTabGroup.UserData.isTabInitialized(tabIndex)
                 return
             end
@@ -601,11 +606,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
 
         %-----------------------------------------------------------------%
         function initializeUIComponents(app)
-            app.tabGroupController = ui.TabNavigator(app.NavBar, app.TabGroup, app.progressDialog, app.jsBackDoor);
-            addComponent(app.tabGroupController, "Built-in", "",                 app.Tab1Button, "AlwaysOn", struct('On', '', 'Off', ''), matlab.graphics.GraphicsPlaceholder, 1)
-            addComponent(app.tabGroupController, "External", "auxApp.winECD",    app.Tab2Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      2)
-            addComponent(app.tabGroupController, "External", "auxApp.winConfig", app.Tab3Button, "AlwaysOn", struct('On', '', 'Off', ''), app.Tab1Button,                      3)
-            app.tabGroupController.inlineSVG = true;
+            app.tabGroupController = ui.TabNavigator(app);
+            addComponent(app.tabGroupController, "Built-in", "",                 app.Tab1Button, "AlwaysOn", matlab.graphics.GraphicsPlaceholder, 1)
+            addComponent(app.tabGroupController, "External", "auxApp.winECD",    app.Tab2Button, "AlwaysOn", app.Tab1Button,                      2)
+            addComponent(app.tabGroupController, "External", "auxApp.winConfig", app.Tab3Button, "AlwaysOn", app.Tab1Button,                      3)
 
             addStyle(app.FileTree, uistyle('Interpreter', 'html'))
         end
