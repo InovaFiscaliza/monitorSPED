@@ -821,7 +821,7 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                     loginMode = 'manual';
                 end
 
-                app.eFiscalizaObj = ws.eFiscaliza(loginMode, credentials.login, credentials.password);
+                app.eFiscalizaObj = ws.eFiscaliza(loginMode, credentials.login, credentials.password, credentials);
             end
         end
 
@@ -832,7 +832,10 @@ classdef winMonitorSPED_exported < matlab.apps.AppBase
                 if ~isempty(eventData)
                     eventData.uuid = eventName;
                     eventData.context = app.Context;
-                    eventData.varargin = varargin{:};
+                    
+                    if ~isempty(varargin)
+                        eventData.varargin = varargin;
+                    end
 
                     ipcMainJSEventsHandler(app, struct('HTMLEventName', 'customForm', 'HTMLEventData', eventData))
                 end
